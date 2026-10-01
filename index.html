@@ -58,10 +58,19 @@ main{padding:26px 0 70px}
 .compte b{color:var(--encre)}
 .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
 .carte{background:var(--carte);border:1px solid var(--trait);border-radius:12px;
-       padding:16px 16px 14px;display:flex;flex-direction:column;gap:9px;
+       overflow:hidden;display:flex;flex-direction:column;
        text-decoration:none;transition:.15s;box-shadow:0 1px 3px rgba(var(--ombre),.06)}
 .carte:hover{border-color:var(--violet);box-shadow:0 6px 18px rgba(var(--ombre),.12);
              transform:translateY(-2px)}
+.carte .miniature{aspect-ratio:900/620;background:var(--fond2);position:relative;overflow:hidden;
+                   border-bottom:1px solid var(--trait)}
+.carte .miniature img{width:100%;height:100%;object-fit:cover;object-position:top center;
+                       display:block;transition:transform .25s}
+.carte:hover .miniature img{transform:scale(1.035)}
+.carte .miniature.sans-image{display:flex;align-items:center;justify-content:center}
+.carte .miniature.sans-image svg{width:34px;height:34px;color:var(--trait);
+    stroke:currentColor;fill:none;stroke-width:1.6}
+.carte .corps{padding:14px 16px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
 .carte .ligne-haut{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .badge{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
        padding:3px 9px;border-radius:999px}
@@ -193,6 +202,17 @@ footer{border-top:1px solid var(--trait);padding:24px 0;text-align:center;
 
   const LABEL_TYPE = { simulation: "Simulation", paillasse: "Paillasse virtuelle" };
 
+  const ICONE_IMAGE =
+    '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/>' +
+    '<circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+
+  function miniature(e) {
+    if (e.vignette) {
+      return '<div class="miniature"><img src="' + e.vignette + '" alt="" loading="lazy" decoding="async"></div>';
+    }
+    return '<div class="miniature sans-image">' + ICONE_IMAGE + '</div>';
+  }
+
   function carte(e) {
     const a = document.createElement("a");
     a.className = "carte";
@@ -200,14 +220,17 @@ footer{border-top:1px solid var(--trait);padding:24px 0;text-align:center;
     a.target = "_blank";
     a.rel = "noopener";
     a.innerHTML =
-      '<div class="ligne-haut">' +
-        '<span class="badge n-' + e.niveau + '">' + e.niveau_libelle + '</span>' +
-        '<span class="id">' + e.id + '</span>' +
-      '</div>' +
-      '<h3>' + e.titre.replace(/</g, "&lt;") + '</h3>' +
-      '<div class="lecon">Leçon ' + e.lecon_num + '</div>' +
-      '<span class="badge type-' + e.type + '">' + LABEL_TYPE[e.type] + '</span>' +
-      '<span class="ouvrir">' + ICONE_OUVRIR + ' Ouvrir la simulation</span>';
+      miniature(e) +
+      '<div class="corps">' +
+        '<div class="ligne-haut">' +
+          '<span class="badge n-' + e.niveau + '">' + e.niveau_libelle + '</span>' +
+          '<span class="id">' + e.id + '</span>' +
+        '</div>' +
+        '<h3>' + e.titre.replace(/</g, "&lt;") + '</h3>' +
+        '<div class="lecon">Leçon ' + e.lecon_num + '</div>' +
+        '<span class="badge type-' + e.type + '">' + LABEL_TYPE[e.type] + '</span>' +
+        '<span class="ouvrir">' + ICONE_OUVRIR + ' Ouvrir la simulation</span>' +
+      '</div>';
     return a;
   }
 

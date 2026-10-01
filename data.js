@@ -1,4 +1,4 @@
-// Généré par build_catalogue.py — ne pas éditer à la main.
+// Généré par build_catalogue.py puis build_thumbnails.py — ne pas éditer à la main.
 const SIMULATIONS = [
  {
   "id": "E1AC-01",
@@ -9,7 +9,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le test de reconnaissance de l'eau",
   "titre_complet": "Paillasse virtuelle — E1AC-01 · le test de reconnaissance de l'eau",
-  "fichier": "sims/1AC/L01/enhanced_simulation_E1AC-01.html"
+  "fichier": "sims/1AC/L01/enhanced_simulation_E1AC-01.html",
+  "vignette": "thumbs/1AC/E1AC-01-paillasse.png"
  },
  {
   "id": "E1AC-01",
@@ -20,7 +21,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Test de reconnaissance de l'eau",
   "titre_complet": "Simulation — Test de reconnaissance de l'eau",
-  "fichier": "sims/1AC/L01/simulation_E1AC-01.html"
+  "fichier": "sims/1AC/L01/simulation_E1AC-01.html",
+  "vignette": "thumbs/1AC/E1AC-01-simulation.png"
  },
  {
   "id": "E1AC-02",
@@ -31,7 +33,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Forme propre et volume propre d'un solide",
   "titre_complet": "Paillasse virtuelle — E1AC-02 · forme propre et volume propre d'un solide",
-  "fichier": "sims/1AC/L02/enhanced_simulation_E1AC-02.html"
+  "fichier": "sims/1AC/L02/enhanced_simulation_E1AC-02.html",
+  "vignette": "thumbs/1AC/E1AC-02-paillasse.png"
  },
  {
   "id": "E1AC-02",
@@ -42,7 +45,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Les propriétés physiques d'un solide",
   "titre_complet": "Simulation — Les propriétés physiques d'un solide",
-  "fichier": "sims/1AC/L02/simulation_E1AC-02.html"
+  "fichier": "sims/1AC/L02/simulation_E1AC-02.html",
+  "vignette": "thumbs/1AC/E1AC-02-simulation.png"
  },
  {
   "id": "E1AC-03",
@@ -53,7 +57,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Volume propre, pas de forme propre",
   "titre_complet": "Paillasse virtuelle — E1AC-03 · volume propre, pas de forme propre",
-  "fichier": "sims/1AC/L02/enhanced_simulation_E1AC-03.html"
+  "fichier": "sims/1AC/L02/enhanced_simulation_E1AC-03.html",
+  "vignette": "thumbs/1AC/E1AC-03-paillasse.png"
  },
  {
   "id": "E1AC-04",
@@ -64,7 +69,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Ni forme propre ni volume propre",
   "titre_complet": "Paillasse virtuelle — E1AC-04 · ni forme propre ni volume propre",
-  "fichier": "sims/1AC/L02/enhanced_simulation_E1AC-04.html"
+  "fichier": "sims/1AC/L02/enhanced_simulation_E1AC-04.html",
+  "vignette": "thumbs/1AC/E1AC-04-paillasse.png"
  },
  {
   "id": "E1AC-04",
@@ -75,7 +81,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Les propriétés physiques d'un gaz",
   "titre_complet": "Simulation — Les propriétés physiques d'un gaz",
-  "fichier": "sims/1AC/L02/simulation_E1AC-04.html"
+  "fichier": "sims/1AC/L02/simulation_E1AC-04.html",
+  "vignette": "thumbs/1AC/E1AC-04-simulation.png"
  },
  {
   "id": "E1AC-05",
@@ -86,7 +93,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La division, le ménisque, la hauteur de l'œil",
   "titre_complet": "Paillasse virtuelle — E1AC-05 · la division, le ménisque, la hauteur de l'œil",
-  "fichier": "sims/1AC/L03/enhanced_simulation_E1AC-05.html"
+  "fichier": "sims/1AC/L03/enhanced_simulation_E1AC-05.html",
+  "vignette": "thumbs/1AC/E1AC-05-paillasse.png"
  },
  {
   "id": "E1AC-05",
@@ -97,7 +105,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Mesure du volume d'un liquide à l'éprouvette graduée",
   "titre_complet": "Simulation — Mesure du volume d'un liquide à l'éprouvette graduée",
-  "fichier": "sims/1AC/L03/simulation_E1AC-05.html"
+  "fichier": "sims/1AC/L03/simulation_E1AC-05.html",
+  "vignette": "thumbs/1AC/E1AC-05-simulation.png"
  },
  {
   "id": "E1AC-06",
@@ -108,7 +117,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "V = V₂ − V₁, et ce que la différence coûte",
   "titre_complet": "Paillasse virtuelle — E1AC-06 · V = V₂ − V₁, et ce que la différence coûte",
-  "fichier": "sims/1AC/L03/enhanced_simulation_E1AC-06.html"
+  "fichier": "sims/1AC/L03/enhanced_simulation_E1AC-06.html",
+  "vignette": "thumbs/1AC/E1AC-06-paillasse.png"
  },
  {
   "id": "E1AC-06",
@@ -119,7 +129,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Mesure du volume d'un solide de forme quelconque",
   "titre_complet": "Simulation — Mesure du volume d'un solide de forme quelconque",
-  "fichier": "sims/1AC/L03/simulation_E1AC-06.html"
+  "fichier": "sims/1AC/L03/simulation_E1AC-06.html",
+  "vignette": "thumbs/1AC/E1AC-06-simulation.png"
  },
  {
   "id": "E1AC-07",
@@ -130,7 +141,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La masse d'un solide",
   "titre_complet": "Paillasse virtuelle — E1AC-07 · La masse d'un solide",
-  "fichier": "sims/1AC/L04/enhanced_simulation_E1AC-07.html"
+  "fichier": "sims/1AC/L04/enhanced_simulation_E1AC-07.html",
+  "vignette": "thumbs/1AC/E1AC-07-paillasse.png"
  },
  {
   "id": "E1AC-07",
@@ -141,7 +153,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Mesure de la masse d'un solide",
   "titre_complet": "Simulation — Mesure de la masse d'un solide",
-  "fichier": "sims/1AC/L04/simulation_E1AC-07.html"
+  "fichier": "sims/1AC/L04/simulation_E1AC-07.html",
+  "vignette": "thumbs/1AC/E1AC-07-simulation.png"
  },
  {
   "id": "E1AC-08",
@@ -152,7 +165,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La masse d'un liquide",
   "titre_complet": "Paillasse virtuelle — E1AC-08 · La masse d'un liquide",
-  "fichier": "sims/1AC/L04/enhanced_simulation_E1AC-08.html"
+  "fichier": "sims/1AC/L04/enhanced_simulation_E1AC-08.html",
+  "vignette": "thumbs/1AC/E1AC-08-paillasse.png"
  },
  {
   "id": "E1AC-08",
@@ -163,7 +177,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Mesure de la masse d'un liquide",
   "titre_complet": "Simulation — Mesure de la masse d'un liquide",
-  "fichier": "sims/1AC/L04/simulation_E1AC-08.html"
+  "fichier": "sims/1AC/L04/simulation_E1AC-08.html",
+  "vignette": "thumbs/1AC/E1AC-08-simulation.png"
  },
  {
   "id": "E1AC-09",
@@ -174,7 +189,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La masse volumique d'un liquide",
   "titre_complet": "Paillasse virtuelle — E1AC-09 · La masse volumique d'un liquide",
-  "fichier": "sims/1AC/L05/enhanced_simulation_E1AC-09.html"
+  "fichier": "sims/1AC/L05/enhanced_simulation_E1AC-09.html",
+  "vignette": "thumbs/1AC/E1AC-09-paillasse.png"
  },
  {
   "id": "E1AC-09",
@@ -185,7 +201,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La masse volumique d'un liquide",
   "titre_complet": "Simulation — La masse volumique d'un liquide",
-  "fichier": "sims/1AC/L05/simulation_E1AC-09.html"
+  "fichier": "sims/1AC/L05/simulation_E1AC-09.html",
+  "vignette": "thumbs/1AC/E1AC-09-simulation.png"
  },
  {
   "id": "E1AC-10",
@@ -196,7 +213,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La masse volumique d'un solide",
   "titre_complet": "Paillasse virtuelle — E1AC-10 · La masse volumique d'un solide",
-  "fichier": "sims/1AC/L05/enhanced_simulation_E1AC-10.html"
+  "fichier": "sims/1AC/L05/enhanced_simulation_E1AC-10.html",
+  "vignette": "thumbs/1AC/E1AC-10-paillasse.png"
  },
  {
   "id": "E1AC-10",
@@ -207,7 +225,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La masse volumique d'un solide et l'identification d'un matériau",
   "titre_complet": "Simulation — La masse volumique d'un solide et l'identification d'un matériau",
-  "fichier": "sims/1AC/L05/simulation_E1AC-10.html"
+  "fichier": "sims/1AC/L05/simulation_E1AC-10.html",
+  "vignette": "thumbs/1AC/E1AC-10-simulation.png"
  },
  {
   "id": "E1AC-11",
@@ -218,7 +237,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Compression et detente d'un gaz",
   "titre_complet": "Paillasse virtuelle — E1AC-11 · Compression et detente d'un gaz",
-  "fichier": "sims/1AC/L06/enhanced_simulation_E1AC-11.html"
+  "fichier": "sims/1AC/L06/enhanced_simulation_E1AC-11.html",
+  "vignette": "thumbs/1AC/E1AC-11-paillasse.png"
  },
  {
   "id": "E1AC-11",
@@ -229,7 +249,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Compression et détente d'un gaz — la notion de pression",
   "titre_complet": "Simulation — Compression et détente d'un gaz — la notion de pression",
-  "fichier": "sims/1AC/L06/simulation_E1AC-11.html"
+  "fichier": "sims/1AC/L06/simulation_E1AC-11.html",
+  "vignette": "thumbs/1AC/E1AC-11-simulation.png"
  },
  {
   "id": "E1AC-12",
@@ -240,7 +261,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La pression atmospherique",
   "titre_complet": "Paillasse virtuelle — E1AC-12 · La pression atmospherique",
-  "fichier": "sims/1AC/L06/enhanced_simulation_E1AC-12.html"
+  "fichier": "sims/1AC/L06/enhanced_simulation_E1AC-12.html",
+  "vignette": "thumbs/1AC/E1AC-12-paillasse.png"
  },
  {
   "id": "E1AC-12",
@@ -251,7 +273,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Mise en évidence de la pression atmosphérique",
   "titre_complet": "Simulation — Mise en évidence de la pression atmosphérique",
-  "fichier": "sims/1AC/L06/simulation_E1AC-12.html"
+  "fichier": "sims/1AC/L06/simulation_E1AC-12.html",
+  "vignette": "thumbs/1AC/E1AC-12-simulation.png"
  },
  {
   "id": "E1AC-13",
@@ -262,7 +285,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Paillasse virtuelle — E1AC-13",
   "titre_complet": "Paillasse virtuelle — E1AC-13",
-  "fichier": "sims/1AC/L07/enhanced_simulation_E1AC-13.html"
+  "fichier": "sims/1AC/L07/enhanced_simulation_E1AC-13.html",
+  "vignette": "thumbs/1AC/E1AC-13-paillasse.png"
  },
  {
   "id": "E1AC-13",
@@ -273,7 +297,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Modélisation des trois états de la matière",
   "titre_complet": "Simulation — Modélisation des trois états de la matière",
-  "fichier": "sims/1AC/L07/simulation_E1AC-13.html"
+  "fichier": "sims/1AC/L07/simulation_E1AC-13.html",
+  "vignette": "thumbs/1AC/E1AC-13-simulation.png"
  },
  {
   "id": "E1AC-14",
@@ -284,7 +309,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Paillasse virtuelle — E1AC-14",
   "titre_complet": "Paillasse virtuelle — E1AC-14",
-  "fichier": "sims/1AC/L08/enhanced_simulation_E1AC-14.html"
+  "fichier": "sims/1AC/L08/enhanced_simulation_E1AC-14.html",
+  "vignette": "thumbs/1AC/E1AC-14-paillasse.png"
  },
  {
   "id": "E1AC-14",
@@ -295,7 +321,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le toucher trompe — mesurer une température au thermomètre",
   "titre_complet": "Simulation — Le toucher trompe — mesurer une température au thermomètre",
-  "fichier": "sims/1AC/L08/simulation_E1AC-14.html"
+  "fichier": "sims/1AC/L08/simulation_E1AC-14.html",
+  "vignette": "thumbs/1AC/E1AC-14-simulation.png"
  },
  {
   "id": "E1AC-15",
@@ -306,7 +333,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Paillasse virtuelle — E1AC-15",
   "titre_complet": "Paillasse virtuelle — E1AC-15",
-  "fichier": "sims/1AC/L08/enhanced_simulation_E1AC-15.html"
+  "fichier": "sims/1AC/L08/enhanced_simulation_E1AC-15.html",
+  "vignette": "thumbs/1AC/E1AC-15-paillasse.png"
  },
  {
   "id": "E1AC-15",
@@ -317,7 +345,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Chaleur et variation de température",
   "titre_complet": "Simulation — Chaleur et variation de température",
-  "fichier": "sims/1AC/L08/simulation_E1AC-15.html"
+  "fichier": "sims/1AC/L08/simulation_E1AC-15.html",
+  "vignette": "thumbs/1AC/E1AC-15-simulation.png"
  },
  {
   "id": "E1AC-16",
@@ -328,7 +357,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Paillasse virtuelle — E1AC-16",
   "titre_complet": "Paillasse virtuelle — E1AC-16",
-  "fichier": "sims/1AC/L09/enhanced_simulation_E1AC-16.html"
+  "fichier": "sims/1AC/L09/enhanced_simulation_E1AC-16.html",
+  "vignette": "thumbs/1AC/E1AC-16-paillasse.png"
  },
  {
   "id": "E1AC-16",
@@ -339,7 +369,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La fusion de la glace — conservation de la masse",
   "titre_complet": "Simulation — La fusion de la glace — conservation de la masse",
-  "fichier": "sims/1AC/L09/simulation_E1AC-16.html"
+  "fichier": "sims/1AC/L09/simulation_E1AC-16.html",
+  "vignette": "thumbs/1AC/E1AC-16-simulation.png"
  },
  {
   "id": "E1AC-17",
@@ -350,7 +381,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Paillasse virtuelle — E1AC-17",
   "titre_complet": "Paillasse virtuelle — E1AC-17",
-  "fichier": "sims/1AC/L09/enhanced_simulation_E1AC-17.html"
+  "fichier": "sims/1AC/L09/enhanced_simulation_E1AC-17.html",
+  "vignette": "thumbs/1AC/E1AC-17-paillasse.png"
  },
  {
   "id": "E1AC-17",
@@ -361,7 +393,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La solidification de l'eau — non-conservation du volume",
   "titre_complet": "Simulation — La solidification de l'eau — non-conservation du volume",
-  "fichier": "sims/1AC/L09/simulation_E1AC-17.html"
+  "fichier": "sims/1AC/L09/simulation_E1AC-17.html",
+  "vignette": "thumbs/1AC/E1AC-17-simulation.png"
  },
  {
   "id": "E1AC-22",
@@ -372,7 +405,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le changement d'état modélisé",
   "titre_complet": "Paillasse virtuelle — E1AC-22 · Le changement d'état modélisé",
-  "fichier": "sims/1AC/L10/enhanced_simulation_E1AC-22.html"
+  "fichier": "sims/1AC/L10/enhanced_simulation_E1AC-22.html",
+  "vignette": "thumbs/1AC/E1AC-22-paillasse.png"
  },
  {
   "id": "E1AC-22",
@@ -383,7 +417,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Modélisation d'un changement d'état — que devient chaque particule ?",
   "titre_complet": "Simulation — Modélisation d'un changement d'état — que devient chaque particule ?",
-  "fichier": "sims/1AC/L10/simulation_E1AC-22.html"
+  "fichier": "sims/1AC/L10/simulation_E1AC-22.html",
+  "vignette": "thumbs/1AC/E1AC-22-simulation.png"
  },
  {
   "id": "E1AC-23",
@@ -394,7 +429,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Homogène ou hétérogène ?",
   "titre_complet": "Paillasse virtuelle — E1AC-23 · Homogène ou hétérogène ?",
-  "fichier": "sims/1AC/L11/enhanced_simulation_E1AC-23.html"
+  "fichier": "sims/1AC/L11/enhanced_simulation_E1AC-23.html",
+  "vignette": "thumbs/1AC/E1AC-23-paillasse.png"
  },
  {
   "id": "E1AC-23",
@@ -405,7 +441,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Un solide et un liquide : quand distingue-t-on encore les constituants ?",
   "titre_complet": "Simulation — Un solide et un liquide : quand distingue-t-on encore les constituants ?",
-  "fichier": "sims/1AC/L11/simulation_E1AC-23.html"
+  "fichier": "sims/1AC/L11/simulation_E1AC-23.html",
+  "vignette": "thumbs/1AC/E1AC-23-simulation.png"
  },
  {
   "id": "E1AC-24",
@@ -416,7 +453,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Miscibles ou non miscibles ?",
   "titre_complet": "Paillasse virtuelle — E1AC-24 · Miscibles ou non miscibles ?",
-  "fichier": "sims/1AC/L11/enhanced_simulation_E1AC-24.html"
+  "fichier": "sims/1AC/L11/enhanced_simulation_E1AC-24.html",
+  "vignette": "thumbs/1AC/E1AC-24-paillasse.png"
  },
  {
   "id": "E1AC-24",
@@ -427,7 +465,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Deux liquides se mélangent-ils toujours ?",
   "titre_complet": "Simulation — Deux liquides se mélangent-ils toujours ?",
-  "fichier": "sims/1AC/L11/simulation_E1AC-24.html"
+  "fichier": "sims/1AC/L11/simulation_E1AC-24.html",
+  "vignette": "thumbs/1AC/E1AC-24-simulation.png"
  },
  {
   "id": "E1AC-18",
@@ -438,7 +477,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Soluble ou insoluble ?",
   "titre_complet": "Paillasse virtuelle — E1AC-18 · Soluble ou insoluble ?",
-  "fichier": "sims/1AC/L12/enhanced_simulation_E1AC-18.html"
+  "fichier": "sims/1AC/L12/enhanced_simulation_E1AC-18.html",
+  "vignette": "thumbs/1AC/E1AC-18-paillasse.png"
  },
  {
   "id": "E1AC-18",
@@ -449,7 +489,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Dissolution de solides dans l'eau : soluble ou insoluble ?",
   "titre_complet": "Simulation — Dissolution de solides dans l'eau : soluble ou insoluble ?",
-  "fichier": "sims/1AC/L12/simulation_E1AC-18.html"
+  "fichier": "sims/1AC/L12/simulation_E1AC-18.html",
+  "vignette": "thumbs/1AC/E1AC-18-simulation.png"
  },
  {
   "id": "E1AC-19",
@@ -460,7 +501,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Jusqu'où peut-on dissoudre ?",
   "titre_complet": "Paillasse virtuelle — E1AC-19 · Jusqu'où peut-on dissoudre ?",
-  "fichier": "sims/1AC/L12/enhanced_simulation_E1AC-19.html"
+  "fichier": "sims/1AC/L12/enhanced_simulation_E1AC-19.html",
+  "vignette": "thumbs/1AC/E1AC-19-paillasse.png"
  },
  {
   "id": "E1AC-19",
@@ -471,7 +513,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Jusqu'où peut-on dissoudre du sel dans l'eau ?",
   "titre_complet": "Simulation — Jusqu'où peut-on dissoudre du sel dans l'eau ?",
-  "fichier": "sims/1AC/L12/simulation_E1AC-19.html"
+  "fichier": "sims/1AC/L12/simulation_E1AC-19.html",
+  "vignette": "thumbs/1AC/E1AC-19-simulation.png"
  },
  {
   "id": "E1AC-20",
@@ -482,7 +525,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La decantation",
   "titre_complet": "Paillasse virtuelle — E1AC-20 · La decantation",
-  "fichier": "sims/1AC/L13/enhanced_simulation_E1AC-20.html"
+  "fichier": "sims/1AC/L13/enhanced_simulation_E1AC-20.html",
+  "vignette": "thumbs/1AC/E1AC-20-paillasse.png"
  },
  {
   "id": "E1AC-20",
@@ -493,7 +537,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Séparer une eau boueuse par décantation",
   "titre_complet": "Simulation — Séparer une eau boueuse par décantation",
-  "fichier": "sims/1AC/L13/simulation_E1AC-20.html"
+  "fichier": "sims/1AC/L13/simulation_E1AC-20.html",
+  "vignette": "thumbs/1AC/E1AC-20-simulation.png"
  },
  {
   "id": "E1AC-21",
@@ -504,7 +549,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La filtration",
   "titre_complet": "Paillasse virtuelle — E1AC-21 · La filtration",
-  "fichier": "sims/1AC/L13/enhanced_simulation_E1AC-21.html"
+  "fichier": "sims/1AC/L13/enhanced_simulation_E1AC-21.html",
+  "vignette": "thumbs/1AC/E1AC-21-paillasse.png"
  },
  {
   "id": "E1AC-21",
@@ -515,7 +561,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Rendre limpide une eau décantée par filtration",
   "titre_complet": "Simulation — Rendre limpide une eau décantée par filtration",
-  "fichier": "sims/1AC/L13/simulation_E1AC-21.html"
+  "fichier": "sims/1AC/L13/simulation_E1AC-21.html",
+  "vignette": "thumbs/1AC/E1AC-21-simulation.png"
  },
  {
   "id": "E1AC-25",
@@ -526,7 +573,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le palier d'ebullition",
   "titre_complet": "Paillasse virtuelle — E1AC-25 · Le palier d'ebullition",
-  "fichier": "sims/1AC/L14/enhanced_simulation_E1AC-25.html"
+  "fichier": "sims/1AC/L14/enhanced_simulation_E1AC-25.html",
+  "vignette": "thumbs/1AC/E1AC-25-paillasse.png"
  },
  {
   "id": "E1AC-25",
@@ -537,7 +585,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "L'ébullition de l'eau distillée et celle de l'eau salée",
   "titre_complet": "Simulation — L'ébullition de l'eau distillée et celle de l'eau salée",
-  "fichier": "sims/1AC/L14/simulation_E1AC-25.html"
+  "fichier": "sims/1AC/L14/simulation_E1AC-25.html",
+  "vignette": "thumbs/1AC/E1AC-25-simulation.png"
  },
  {
   "id": "E1AC-26",
@@ -548,7 +597,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Maquette de station",
   "titre_complet": "Paillasse virtuelle — E1AC-26 · Maquette de station",
-  "fichier": "sims/1AC/L15/enhanced_simulation_E1AC-26.html"
+  "fichier": "sims/1AC/L15/enhanced_simulation_E1AC-26.html",
+  "vignette": "thumbs/1AC/E1AC-26-paillasse.png"
  },
  {
   "id": "E1AC-26",
@@ -559,7 +609,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Maquette de station : rendre limpide l'eau boueuse d'un oued",
   "titre_complet": "Simulation — Maquette de station : rendre limpide l'eau boueuse d'un oued",
-  "fichier": "sims/1AC/L15/simulation_E1AC-26.html"
+  "fichier": "sims/1AC/L15/simulation_E1AC-26.html",
+  "vignette": "thumbs/1AC/E1AC-26-simulation.png"
  },
  {
   "id": "E1AC-27",
@@ -570,7 +621,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le circuit ferme et le circuit ouvert",
   "titre_complet": "Paillasse virtuelle — E1AC-27 · Le circuit ferme et le circuit ouvert",
-  "fichier": "sims/1AC/L17/enhanced_simulation_E1AC-27.html"
+  "fichier": "sims/1AC/L17/enhanced_simulation_E1AC-27.html",
+  "vignette": "thumbs/1AC/E1AC-27-paillasse.png"
  },
  {
   "id": "E1AC-27",
@@ -581,7 +633,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Réaliser un circuit électrique simple : circuit fermé, circuit ouvert",
   "titre_complet": "Simulation — Réaliser un circuit électrique simple : circuit fermé, circuit ouvert",
-  "fichier": "sims/1AC/L17/simulation_E1AC-27.html"
+  "fichier": "sims/1AC/L17/simulation_E1AC-27.html",
+  "vignette": "thumbs/1AC/E1AC-27-simulation.png"
  },
  {
   "id": "E1AC-28",
@@ -592,7 +645,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Polarise ou symetrique",
   "titre_complet": "Paillasse virtuelle — E1AC-28 · Polarise ou symetrique",
-  "fichier": "sims/1AC/L17/enhanced_simulation_E1AC-28.html"
+  "fichier": "sims/1AC/L17/enhanced_simulation_E1AC-28.html",
+  "vignette": "thumbs/1AC/E1AC-28-paillasse.png"
  },
  {
   "id": "E1AC-28",
@@ -603,7 +657,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Retourner un dipôle : polarisé ou symétrique ?",
   "titre_complet": "Simulation — Retourner un dipôle : polarisé ou symétrique ?",
-  "fichier": "sims/1AC/L17/simulation_E1AC-28.html"
+  "fichier": "sims/1AC/L17/simulation_E1AC-28.html",
+  "vignette": "thumbs/1AC/E1AC-28-simulation.png"
  },
  {
   "id": "E1AC-29",
@@ -614,7 +669,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Conducteurs et isolants",
   "titre_complet": "Paillasse virtuelle — E1AC-29 · Conducteurs et isolants",
-  "fichier": "sims/1AC/L17/enhanced_simulation_E1AC-29.html"
+  "fichier": "sims/1AC/L17/enhanced_simulation_E1AC-29.html",
+  "vignette": "thumbs/1AC/E1AC-29-paillasse.png"
  },
  {
   "id": "E1AC-29",
@@ -625,7 +681,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Conducteurs ou isolants : tester des matériaux à la lampe témoin",
   "titre_complet": "Simulation — Conducteurs ou isolants : tester des matériaux à la lampe témoin",
-  "fichier": "sims/1AC/L17/simulation_E1AC-29.html"
+  "fichier": "sims/1AC/L17/simulation_E1AC-29.html",
+  "vignette": "thumbs/1AC/E1AC-29-simulation.png"
  },
  {
   "id": "E1AC-30",
@@ -636,7 +693,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le montage en serie",
   "titre_complet": "Paillasse virtuelle — E1AC-30 · Le montage en serie",
-  "fichier": "sims/1AC/L18/enhanced_simulation_E1AC-30.html"
+  "fichier": "sims/1AC/L18/enhanced_simulation_E1AC-30.html",
+  "vignette": "thumbs/1AC/E1AC-30-paillasse.png"
  },
  {
   "id": "E1AC-30",
@@ -647,7 +705,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le montage en série : deux lampes l'une à la suite de l'autre",
   "titre_complet": "Simulation — Le montage en série : deux lampes l'une à la suite de l'autre",
-  "fichier": "sims/1AC/L18/simulation_E1AC-30.html"
+  "fichier": "sims/1AC/L18/simulation_E1AC-30.html",
+  "vignette": "thumbs/1AC/E1AC-30-simulation.png"
  },
  {
   "id": "E1AC-31",
@@ -658,7 +717,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le montage en derivation",
   "titre_complet": "Paillasse virtuelle — E1AC-31 · Le montage en derivation",
-  "fichier": "sims/1AC/L18/enhanced_simulation_E1AC-31.html"
+  "fichier": "sims/1AC/L18/enhanced_simulation_E1AC-31.html",
+  "vignette": "thumbs/1AC/E1AC-31-paillasse.png"
  },
  {
   "id": "E1AC-31",
@@ -669,7 +729,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le montage en dérivation : deux lampes côte à côte",
   "titre_complet": "Simulation — Le montage en dérivation : deux lampes côte à côte",
-  "fichier": "sims/1AC/L18/simulation_E1AC-31.html"
+  "fichier": "sims/1AC/L18/simulation_E1AC-31.html",
+  "vignette": "thumbs/1AC/E1AC-31-simulation.png"
  },
  {
   "id": "E1AC-32",
@@ -680,7 +741,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le sens du courant",
   "titre_complet": "Paillasse virtuelle — E1AC-32 · Le sens du courant",
-  "fichier": "sims/1AC/L19/enhanced_simulation_E1AC-32.html"
+  "fichier": "sims/1AC/L19/enhanced_simulation_E1AC-32.html",
+  "vignette": "thumbs/1AC/E1AC-32-paillasse.png"
  },
  {
   "id": "E1AC-32",
@@ -691,7 +753,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le sens du courant : la diode et le moteur comme témoins",
   "titre_complet": "Simulation — Le sens du courant : la diode et le moteur comme témoins",
-  "fichier": "sims/1AC/L19/simulation_E1AC-32.html"
+  "fichier": "sims/1AC/L19/simulation_E1AC-32.html",
+  "vignette": "thumbs/1AC/E1AC-32-simulation.png"
  },
  {
   "id": "E1AC-33",
@@ -702,7 +765,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'amperemetre",
   "titre_complet": "Paillasse virtuelle — E1AC-33 · L'amperemetre",
-  "fichier": "sims/1AC/L19/enhanced_simulation_E1AC-33.html"
+  "fichier": "sims/1AC/L19/enhanced_simulation_E1AC-33.html",
+  "vignette": "thumbs/1AC/E1AC-33-paillasse.png"
  },
  {
   "id": "E1AC-33",
@@ -713,7 +777,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Mesurer l'intensité du courant avec un ampèremètre",
   "titre_complet": "Simulation — Mesurer l'intensité du courant avec un ampèremètre",
-  "fichier": "sims/1AC/L19/simulation_E1AC-33.html"
+  "fichier": "sims/1AC/L19/simulation_E1AC-33.html",
+  "vignette": "thumbs/1AC/E1AC-33-simulation.png"
  },
  {
   "id": "E1AC-34",
@@ -724,7 +789,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le voltmetre",
   "titre_complet": "Paillasse virtuelle — E1AC-34 · Le voltmetre",
-  "fichier": "sims/1AC/L19/enhanced_simulation_E1AC-34.html"
+  "fichier": "sims/1AC/L19/enhanced_simulation_E1AC-34.html",
+  "vignette": "thumbs/1AC/E1AC-34-paillasse.png"
  },
  {
   "id": "E1AC-34",
@@ -735,7 +801,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Mesurer la tension aux bornes d'un dipôle avec un voltmètre",
   "titre_complet": "Simulation — Mesurer la tension aux bornes d'un dipôle avec un voltmètre",
-  "fichier": "sims/1AC/L19/simulation_E1AC-34.html"
+  "fichier": "sims/1AC/L19/simulation_E1AC-34.html",
+  "vignette": "thumbs/1AC/E1AC-34-simulation.png"
  },
  {
   "id": "E1AC-35",
@@ -746,7 +813,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'ohmmetre et le code des couleurs",
   "titre_complet": "Paillasse virtuelle — E1AC-35 · L'ohmmetre et le code des couleurs",
-  "fichier": "sims/1AC/L20/enhanced_simulation_E1AC-35.html"
+  "fichier": "sims/1AC/L20/enhanced_simulation_E1AC-35.html",
+  "vignette": "thumbs/1AC/E1AC-35-paillasse.png"
  },
  {
   "id": "E1AC-35",
@@ -757,7 +825,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Déterminer la valeur d'un conducteur ohmique : l'ohmmètre et le code des couleurs",
   "titre_complet": "Simulation — Déterminer la valeur d'un conducteur ohmique : l'ohmmètre et le code des couleurs",
-  "fichier": "sims/1AC/L20/simulation_E1AC-35.html"
+  "fichier": "sims/1AC/L20/simulation_E1AC-35.html",
+  "vignette": "thumbs/1AC/E1AC-35-simulation.png"
  },
  {
   "id": "E1AC-36",
@@ -768,7 +837,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La resistance freine le courant",
   "titre_complet": "Paillasse virtuelle — E1AC-36 · La resistance freine le courant",
-  "fichier": "sims/1AC/L20/enhanced_simulation_E1AC-36.html"
+  "fichier": "sims/1AC/L20/enhanced_simulation_E1AC-36.html",
+  "vignette": "thumbs/1AC/E1AC-36-paillasse.png"
  },
  {
   "id": "E1AC-36",
@@ -779,7 +849,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Influence de la résistance sur l'intensité du courant dans un circuit série",
   "titre_complet": "Simulation — Influence de la résistance sur l'intensité du courant dans un circuit série",
-  "fichier": "sims/1AC/L20/simulation_E1AC-36.html"
+  "fichier": "sims/1AC/L20/simulation_E1AC-36.html",
+  "vignette": "thumbs/1AC/E1AC-36-simulation.png"
  },
  {
   "id": "E1AC-37",
@@ -790,7 +861,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La loi des noeuds",
   "titre_complet": "Paillasse virtuelle — E1AC-37 · La loi des noeuds",
-  "fichier": "sims/1AC/L21/enhanced_simulation_E1AC-37.html"
+  "fichier": "sims/1AC/L21/enhanced_simulation_E1AC-37.html",
+  "vignette": "thumbs/1AC/E1AC-37-paillasse.png"
  },
  {
   "id": "E1AC-37",
@@ -801,7 +873,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Vérifier la loi des nœuds dans un circuit en dérivation",
   "titre_complet": "Simulation — Vérifier la loi des nœuds dans un circuit en dérivation",
-  "fichier": "sims/1AC/L21/simulation_E1AC-37.html"
+  "fichier": "sims/1AC/L21/simulation_E1AC-37.html",
+  "vignette": "thumbs/1AC/E1AC-37-simulation.png"
  },
  {
   "id": "E1AC-38",
@@ -812,7 +885,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'additivite des tensions",
   "titre_complet": "Paillasse virtuelle — E1AC-38 · L'additivite des tensions",
-  "fichier": "sims/1AC/L21/enhanced_simulation_E1AC-38.html"
+  "fichier": "sims/1AC/L21/enhanced_simulation_E1AC-38.html",
+  "vignette": "thumbs/1AC/E1AC-38-paillasse.png"
  },
  {
   "id": "E1AC-38",
@@ -823,7 +897,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Vérifier la loi d'additivité des tensions dans un circuit en série",
   "titre_complet": "Simulation — Vérifier la loi d'additivité des tensions dans un circuit en série",
-  "fichier": "sims/1AC/L21/simulation_E1AC-38.html"
+  "fichier": "sims/1AC/L21/simulation_E1AC-38.html",
+  "vignette": "thumbs/1AC/E1AC-38-simulation.png"
  },
  {
   "id": "E1AC-39",
@@ -834,7 +909,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'egalite des tensions en derivation",
   "titre_complet": "Paillasse virtuelle — E1AC-39 · L'egalite des tensions en derivation",
-  "fichier": "sims/1AC/L21/enhanced_simulation_E1AC-39.html"
+  "fichier": "sims/1AC/L21/enhanced_simulation_E1AC-39.html",
+  "vignette": "thumbs/1AC/E1AC-39-paillasse.png"
  },
  {
   "id": "E1AC-39",
@@ -845,7 +921,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Vérifier l'égalité des tensions aux bornes de dipôles en dérivation",
   "titre_complet": "Simulation — Vérifier l'égalité des tensions aux bornes de dipôles en dérivation",
-  "fichier": "sims/1AC/L21/simulation_E1AC-39.html"
+  "fichier": "sims/1AC/L21/simulation_E1AC-39.html",
+  "vignette": "thumbs/1AC/E1AC-39-simulation.png"
  },
  {
   "id": "E1AC-40",
@@ -856,7 +933,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La recherche de panne",
   "titre_complet": "Paillasse virtuelle — E1AC-40 · La recherche de panne",
-  "fichier": "sims/1AC/L22/enhanced_simulation_E1AC-40.html"
+  "fichier": "sims/1AC/L22/enhanced_simulation_E1AC-40.html",
+  "vignette": "thumbs/1AC/E1AC-40-paillasse.png"
  },
  {
   "id": "E1AC-40",
@@ -867,7 +945,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Rechercher une panne dans un circuit avec une lampe témoin",
   "titre_complet": "Simulation — Rechercher une panne dans un circuit avec une lampe témoin",
-  "fichier": "sims/1AC/L22/simulation_E1AC-40.html"
+  "fichier": "sims/1AC/L22/simulation_E1AC-40.html",
+  "vignette": "thumbs/1AC/E1AC-40-simulation.png"
  },
  {
   "id": "E1AC-41",
@@ -878,7 +957,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le court-circuit",
   "titre_complet": "Paillasse virtuelle — E1AC-41 · Le court-circuit",
-  "fichier": "sims/1AC/L22/enhanced_simulation_E1AC-41.html"
+  "fichier": "sims/1AC/L22/enhanced_simulation_E1AC-41.html",
+  "vignette": "thumbs/1AC/E1AC-41-paillasse.png"
  },
  {
   "id": "E1AC-41",
@@ -889,7 +969,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le court-circuit d'un dipôle en série et en dérivation",
   "titre_complet": "Simulation — Le court-circuit d'un dipôle en série et en dérivation",
-  "fichier": "sims/1AC/L22/simulation_E1AC-41.html"
+  "fichier": "sims/1AC/L22/simulation_E1AC-41.html",
+  "vignette": "thumbs/1AC/E1AC-41-simulation.png"
  },
  {
   "id": "E1AC-42",
@@ -900,7 +981,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le fusible et la paille de fer",
   "titre_complet": "Paillasse virtuelle — E1AC-42 · Le fusible et la paille de fer",
-  "fichier": "sims/1AC/L22/enhanced_simulation_E1AC-42.html"
+  "fichier": "sims/1AC/L22/enhanced_simulation_E1AC-42.html",
+  "vignette": "thumbs/1AC/E1AC-42-paillasse.png"
  },
  {
   "id": "E1AC-42",
@@ -911,7 +993,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le rôle protecteur du fusible — l'expérience de la paille de fer",
   "titre_complet": "Simulation — Le rôle protecteur du fusible — l'expérience de la paille de fer",
-  "fichier": "sims/1AC/L22/simulation_E1AC-42.html"
+  "fichier": "sims/1AC/L22/simulation_E1AC-42.html",
+  "vignette": "thumbs/1AC/E1AC-42-simulation.png"
  },
  {
   "id": "E2AC-01",
@@ -922,7 +1005,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Les mouvements verticaux de l'air",
   "titre_complet": "Paillasse virtuelle — E2AC-01 · Les mouvements verticaux de l'air",
-  "fichier": "sims/2AC/L01/enhanced_simulation_E2AC-01.html"
+  "fichier": "sims/2AC/L01/enhanced_simulation_E2AC-01.html",
+  "vignette": "thumbs/2AC/E2AC-01-paillasse.png"
  },
  {
   "id": "E2AC-01",
@@ -933,7 +1017,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Les mouvements verticaux de l'air",
   "titre_complet": "Simulation — Les mouvements verticaux de l'air",
-  "fichier": "sims/2AC/L01/simulation_E2AC-01.html"
+  "fichier": "sims/2AC/L01/simulation_E2AC-01.html",
+  "vignette": "thumbs/2AC/E2AC-01-simulation.png"
  },
  {
   "id": "E2AC-02",
@@ -944,7 +1029,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Les mouvements horizontaux de l'air : comment nait le vent ?",
   "titre_complet": "Paillasse virtuelle — E2AC-02 · Les mouvements horizontaux de l'air : comment nait le vent ?",
-  "fichier": "sims/2AC/L01/enhanced_simulation_E2AC-02.html"
+  "fichier": "sims/2AC/L01/enhanced_simulation_E2AC-02.html",
+  "vignette": "thumbs/2AC/E2AC-02-paillasse.png"
  },
  {
   "id": "E2AC-02",
@@ -955,7 +1041,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Les mouvements horizontaux de l'air — comment naît le vent ?",
   "titre_complet": "Simulation — Les mouvements horizontaux de l'air — comment naît le vent ?",
-  "fichier": "sims/2AC/L01/simulation_E2AC-02.html"
+  "fichier": "sims/2AC/L01/simulation_E2AC-02.html",
+  "vignette": "thumbs/2AC/E2AC-02-simulation.png"
  },
  {
   "id": "E2AC-03",
@@ -966,7 +1053,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'air a-t-il une masse ?",
   "titre_complet": "Paillasse virtuelle — E2AC-03 · L'air a-t-il une masse ?",
-  "fichier": "sims/2AC/L02/enhanced_simulation_E2AC-03.html"
+  "fichier": "sims/2AC/L02/enhanced_simulation_E2AC-03.html",
+  "vignette": "thumbs/2AC/E2AC-03-paillasse.png"
  },
  {
   "id": "E2AC-03",
@@ -977,7 +1065,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "L'air a-t-il une masse ?",
   "titre_complet": "Simulation — L'air a-t-il une masse ?",
-  "fichier": "sims/2AC/L02/simulation_E2AC-03.html"
+  "fichier": "sims/2AC/L02/simulation_E2AC-03.html",
+  "vignette": "thumbs/2AC/E2AC-03-simulation.png"
  },
  {
   "id": "E2AC-04",
@@ -988,7 +1077,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Quelle est la composition de l'air ?",
   "titre_complet": "Paillasse virtuelle — E2AC-04 · Quelle est la composition de l'air ?",
-  "fichier": "sims/2AC/L02/enhanced_simulation_E2AC-04.html"
+  "fichier": "sims/2AC/L02/enhanced_simulation_E2AC-04.html",
+  "vignette": "thumbs/2AC/E2AC-04-paillasse.png"
  },
  {
   "id": "E2AC-04",
@@ -999,7 +1089,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Quelle est la composition de l'air ?",
   "titre_complet": "Simulation — Quelle est la composition de l'air ?",
-  "fichier": "sims/2AC/L02/simulation_E2AC-04.html"
+  "fichier": "sims/2AC/L02/simulation_E2AC-04.html",
+  "vignette": "thumbs/2AC/E2AC-04-simulation.png"
  },
  {
   "id": "E2AC-05",
@@ -1010,7 +1101,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Construire les modèles compacts de quelques molécules",
   "titre_complet": "Paillasse virtuelle — E2AC-05 · Construire les modèles compacts de quelques molécules",
-  "fichier": "sims/2AC/L03/enhanced_simulation_E2AC-05.html"
+  "fichier": "sims/2AC/L03/enhanced_simulation_E2AC-05.html",
+  "vignette": "thumbs/2AC/E2AC-05-paillasse.png"
  },
  {
   "id": "E2AC-05",
@@ -1021,7 +1113,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Construire les modèles compacts de quelques molécules",
   "titre_complet": "Simulation — Construire les modèles compacts de quelques molécules",
-  "fichier": "sims/2AC/L03/simulation_E2AC-05.html"
+  "fichier": "sims/2AC/L03/simulation_E2AC-05.html",
+  "vignette": "thumbs/2AC/E2AC-05-simulation.png"
  },
  {
   "id": "E2AC-06",
@@ -1032,7 +1125,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La combustion du carbone",
   "titre_complet": "Paillasse virtuelle — E2AC-06 · La combustion du carbone",
-  "fichier": "sims/2AC/L04/enhanced_simulation_E2AC-06.html"
+  "fichier": "sims/2AC/L04/enhanced_simulation_E2AC-06.html",
+  "vignette": "thumbs/2AC/E2AC-06-paillasse.png"
  },
  {
   "id": "E2AC-06",
@@ -1043,7 +1137,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La combustion du carbone",
   "titre_complet": "Simulation — La combustion du carbone",
-  "fichier": "sims/2AC/L04/simulation_E2AC-06.html"
+  "fichier": "sims/2AC/L04/simulation_E2AC-06.html",
+  "vignette": "thumbs/2AC/E2AC-06-simulation.png"
  },
  {
   "id": "E2AC-07",
@@ -1054,7 +1149,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La combustion du butane",
   "titre_complet": "Paillasse virtuelle — E2AC-07 · La combustion du butane",
-  "fichier": "sims/2AC/L04/enhanced_simulation_E2AC-07.html"
+  "fichier": "sims/2AC/L04/enhanced_simulation_E2AC-07.html",
+  "vignette": "thumbs/2AC/E2AC-07-paillasse.png"
  },
  {
   "id": "E2AC-07",
@@ -1065,7 +1161,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La combustion du butane : complète ou incomplète ?",
   "titre_complet": "Simulation — La combustion du butane : complète ou incomplète ?",
-  "fichier": "sims/2AC/L04/simulation_E2AC-07.html"
+  "fichier": "sims/2AC/L04/simulation_E2AC-07.html",
+  "vignette": "thumbs/2AC/E2AC-07-simulation.png"
  },
  {
   "id": "E2AC-08",
@@ -1076,7 +1173,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La combustion d'une cigarette",
   "titre_complet": "Paillasse virtuelle — E2AC-08 · La combustion d'une cigarette",
-  "fichier": "sims/2AC/L04/enhanced_simulation_E2AC-08.html"
+  "fichier": "sims/2AC/L04/enhanced_simulation_E2AC-08.html",
+  "vignette": "thumbs/2AC/E2AC-08-paillasse.png"
  },
  {
   "id": "E2AC-08",
@@ -1087,7 +1185,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La combustion d'une cigarette",
   "titre_complet": "Simulation — La combustion d'une cigarette",
-  "fichier": "sims/2AC/L04/simulation_E2AC-08.html"
+  "fichier": "sims/2AC/L04/simulation_E2AC-08.html",
+  "vignette": "thumbs/2AC/E2AC-08-simulation.png"
  },
  {
   "id": "E2AC-09",
@@ -1098,7 +1197,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le fer et le soufre",
   "titre_complet": "Paillasse virtuelle — E2AC-09 · Le fer et le soufre",
-  "fichier": "sims/2AC/L05/enhanced_simulation_E2AC-09.html"
+  "fichier": "sims/2AC/L05/enhanced_simulation_E2AC-09.html",
+  "vignette": "thumbs/2AC/E2AC-09-paillasse.png"
  },
  {
   "id": "E2AC-09",
@@ -1109,7 +1209,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le fer réagit-il avec le soufre ?",
   "titre_complet": "Simulation — Le fer réagit-il avec le soufre ?",
-  "fichier": "sims/2AC/L05/simulation_E2AC-09.html"
+  "fichier": "sims/2AC/L05/simulation_E2AC-09.html",
+  "vignette": "thumbs/2AC/E2AC-09-simulation.png"
  },
  {
   "id": "E2AC-10",
@@ -1120,7 +1221,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le fer dans le dioxygène",
   "titre_complet": "Paillasse virtuelle — E2AC-10 · Le fer dans le dioxygène",
-  "fichier": "sims/2AC/L05/enhanced_simulation_E2AC-10.html"
+  "fichier": "sims/2AC/L05/enhanced_simulation_E2AC-10.html",
+  "vignette": "thumbs/2AC/E2AC-10-paillasse.png"
  },
  {
   "id": "E2AC-10",
@@ -1131,7 +1233,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le fer brûle-t-il dans le dioxygène ?",
   "titre_complet": "Simulation — Le fer brûle-t-il dans le dioxygène ?",
-  "fichier": "sims/2AC/L05/simulation_E2AC-10.html"
+  "fichier": "sims/2AC/L05/simulation_E2AC-10.html",
+  "vignette": "thumbs/2AC/E2AC-10-simulation.png"
  },
  {
   "id": "E2AC-11",
@@ -1142,7 +1245,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La masse se conserve-t-elle ?",
   "titre_complet": "Paillasse virtuelle — E2AC-11 · La masse se conserve-t-elle ?",
-  "fichier": "sims/2AC/L06/enhanced_simulation_E2AC-11.html"
+  "fichier": "sims/2AC/L06/enhanced_simulation_E2AC-11.html",
+  "vignette": "thumbs/2AC/E2AC-11-paillasse.png"
  },
  {
   "id": "E2AC-11",
@@ -1153,7 +1257,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La masse se conserve-t-elle au cours d'une réaction chimique ?",
   "titre_complet": "Simulation — La masse se conserve-t-elle au cours d'une réaction chimique ?",
-  "fichier": "sims/2AC/L06/simulation_E2AC-11.html"
+  "fichier": "sims/2AC/L06/simulation_E2AC-11.html",
+  "vignette": "thumbs/2AC/E2AC-11-simulation.png"
  },
  {
   "id": "E2AC-12",
@@ -1164,7 +1269,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Que deviennent les atomes ?",
   "titre_complet": "Paillasse virtuelle — E2AC-12 · Que deviennent les atomes ?",
-  "fichier": "sims/2AC/L06/enhanced_simulation_E2AC-12.html"
+  "fichier": "sims/2AC/L06/enhanced_simulation_E2AC-12.html",
+  "vignette": "thumbs/2AC/E2AC-12-paillasse.png"
  },
  {
   "id": "E2AC-12",
@@ -1175,7 +1281,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Que deviennent les atomes au cours d'une réaction chimique ?",
   "titre_complet": "Simulation — Que deviennent les atomes au cours d'une réaction chimique ?",
-  "fichier": "sims/2AC/L06/simulation_E2AC-12.html"
+  "fichier": "sims/2AC/L06/simulation_E2AC-12.html",
+  "vignette": "thumbs/2AC/E2AC-12-simulation.png"
  },
  {
   "id": "E2AC-14",
@@ -1186,7 +1293,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Fabriquer une matiere naturelle : la preparation du dioxygene",
   "titre_complet": "Paillasse virtuelle — E2AC-14 · Fabriquer une matiere naturelle : la preparation du dioxygene",
-  "fichier": "sims/2AC/L07/enhanced_simulation_E2AC-14.html"
+  "fichier": "sims/2AC/L07/enhanced_simulation_E2AC-14.html",
+  "vignette": "thumbs/2AC/E2AC-14-paillasse.png"
  },
  {
   "id": "E2AC-14",
@@ -1197,7 +1305,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Fabriquer une matière naturelle : la préparation du dioxygène",
   "titre_complet": "Simulation — Fabriquer une matière naturelle : la préparation du dioxygène",
-  "fichier": "sims/2AC/L07/simulation_E2AC-14.html"
+  "fichier": "sims/2AC/L07/simulation_E2AC-14.html",
+  "vignette": "thumbs/2AC/E2AC-14-simulation.png"
  },
  {
   "id": "E2AC-15",
@@ -1208,7 +1317,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Simuler l'effet de serre : deux bocaux, deux gaz, une seule lampe",
   "titre_complet": "Paillasse virtuelle — E2AC-15 · Simuler l'effet de serre : deux bocaux, deux gaz, une seule lampe",
-  "fichier": "sims/2AC/L08/enhanced_simulation_E2AC-15.html"
+  "fichier": "sims/2AC/L08/enhanced_simulation_E2AC-15.html",
+  "vignette": "thumbs/2AC/E2AC-15-paillasse.png"
  },
  {
   "id": "E2AC-15",
@@ -1219,7 +1329,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Simuler l'effet de serre : deux bocaux, deux gaz, une seule lampe",
   "titre_complet": "Simulation — Simuler l'effet de serre : deux bocaux, deux gaz, une seule lampe",
-  "fichier": "sims/2AC/L08/simulation_E2AC-15.html"
+  "fichier": "sims/2AC/L08/simulation_E2AC-15.html",
+  "vignette": "thumbs/2AC/E2AC-15-simulation.png"
  },
  {
   "id": "E2AC-16",
@@ -1230,7 +1341,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Source primaire ou source secondaire ? le test de l'obscurité",
   "titre_complet": "Paillasse virtuelle — E2AC-16 · Source primaire ou source secondaire ? le test de l'obscurité",
-  "fichier": "sims/2AC/L10/enhanced_simulation_E2AC-16.html"
+  "fichier": "sims/2AC/L10/enhanced_simulation_E2AC-16.html",
+  "vignette": "thumbs/2AC/E2AC-16-paillasse.png"
  },
  {
   "id": "E2AC-16",
@@ -1241,7 +1353,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Source primaire ou source secondaire ? le test de l'obscurité",
   "titre_complet": "Simulation — Source primaire ou source secondaire ? le test de l'obscurité",
-  "fichier": "sims/2AC/L10/simulation_E2AC-16.html"
+  "fichier": "sims/2AC/L10/simulation_E2AC-16.html",
+  "vignette": "thumbs/2AC/E2AC-16-simulation.png"
  },
  {
   "id": "E2AC-17",
@@ -1252,7 +1365,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La dispersion de la lumière blanche par un prisme",
   "titre_complet": "Paillasse virtuelle — E2AC-17 · La dispersion de la lumière blanche par un prisme",
-  "fichier": "sims/2AC/L11/enhanced_simulation_E2AC-17.html"
+  "fichier": "sims/2AC/L11/enhanced_simulation_E2AC-17.html",
+  "vignette": "thumbs/2AC/E2AC-17-paillasse.png"
  },
  {
   "id": "E2AC-17",
@@ -1263,7 +1377,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La dispersion de la lumière blanche par un prisme",
   "titre_complet": "Simulation — La dispersion de la lumière blanche par un prisme",
-  "fichier": "sims/2AC/L11/simulation_E2AC-17.html"
+  "fichier": "sims/2AC/L11/simulation_E2AC-17.html",
+  "vignette": "thumbs/2AC/E2AC-17-simulation.png"
  },
  {
   "id": "E2AC-18",
@@ -1274,7 +1389,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La recomposition de la lumière blanche — le disque de Newton",
   "titre_complet": "Paillasse virtuelle — E2AC-18 · La recomposition de la lumière blanche — le disque de Newton",
-  "fichier": "sims/2AC/L11/enhanced_simulation_E2AC-18.html"
+  "fichier": "sims/2AC/L11/enhanced_simulation_E2AC-18.html",
+  "vignette": "thumbs/2AC/E2AC-18-paillasse.png"
  },
  {
   "id": "E2AC-18",
@@ -1285,7 +1401,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La recomposition de la lumière blanche — le disque de Newton",
   "titre_complet": "Simulation — La recomposition de la lumière blanche — le disque de Newton",
-  "fichier": "sims/2AC/L11/simulation_E2AC-18.html"
+  "fichier": "sims/2AC/L11/simulation_E2AC-18.html",
+  "vignette": "thumbs/2AC/E2AC-18-simulation.png"
  },
  {
   "id": "E2AC-19",
@@ -1296,7 +1413,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Classer les milieux de propagation de la lumière",
   "titre_complet": "Paillasse virtuelle — E2AC-19 · Classer les milieux de propagation de la lumière",
-  "fichier": "sims/2AC/L12/enhanced_simulation_E2AC-19.html"
+  "fichier": "sims/2AC/L12/enhanced_simulation_E2AC-19.html",
+  "vignette": "thumbs/2AC/E2AC-19-paillasse.png"
  },
  {
   "id": "E2AC-19",
@@ -1307,7 +1425,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Classer les milieux de propagation de la lumière",
   "titre_complet": "Simulation — Classer les milieux de propagation de la lumière",
-  "fichier": "sims/2AC/L12/simulation_E2AC-19.html"
+  "fichier": "sims/2AC/L12/simulation_E2AC-19.html",
+  "vignette": "thumbs/2AC/E2AC-19-simulation.png"
  },
  {
   "id": "E2AC-20",
@@ -1318,7 +1437,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Vérifier la propagation rectiligne de la lumière",
   "titre_complet": "Paillasse virtuelle — E2AC-20 · Vérifier la propagation rectiligne de la lumière",
-  "fichier": "sims/2AC/L12/enhanced_simulation_E2AC-20.html"
+  "fichier": "sims/2AC/L12/enhanced_simulation_E2AC-20.html",
+  "vignette": "thumbs/2AC/E2AC-20-paillasse.png"
  },
  {
   "id": "E2AC-20",
@@ -1329,7 +1449,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Vérifier la propagation rectiligne de la lumière",
   "titre_complet": "Simulation — Vérifier la propagation rectiligne de la lumière",
-  "fichier": "sims/2AC/L12/simulation_E2AC-20.html"
+  "fichier": "sims/2AC/L12/simulation_E2AC-20.html",
+  "vignette": "thumbs/2AC/E2AC-20-simulation.png"
  },
  {
   "id": "E2AC-21",
@@ -1340,7 +1461,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La chambre noire : l'image d'un objet lumineux",
   "titre_complet": "Paillasse virtuelle — E2AC-21 · La chambre noire : l'image d'un objet lumineux",
-  "fichier": "sims/2AC/L13/enhanced_simulation_E2AC-21.html"
+  "fichier": "sims/2AC/L13/enhanced_simulation_E2AC-21.html",
+  "vignette": "thumbs/2AC/E2AC-21-paillasse.png"
  },
  {
   "id": "E2AC-21",
@@ -1351,7 +1473,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La chambre noire : l'image d'un objet lumineux",
   "titre_complet": "Simulation — La chambre noire : l'image d'un objet lumineux",
-  "fichier": "sims/2AC/L13/simulation_E2AC-21.html"
+  "fichier": "sims/2AC/L13/simulation_E2AC-21.html",
+  "vignette": "thumbs/2AC/E2AC-21-simulation.png"
  },
  {
   "id": "E2AC-22",
@@ -1362,7 +1485,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Les ombres : source ponctuelle, puis source étendue",
   "titre_complet": "Paillasse virtuelle — E2AC-22 · Les ombres : source ponctuelle, puis source étendue",
-  "fichier": "sims/2AC/L13/enhanced_simulation_E2AC-22.html"
+  "fichier": "sims/2AC/L13/enhanced_simulation_E2AC-22.html",
+  "vignette": "thumbs/2AC/E2AC-22-paillasse.png"
  },
  {
   "id": "E2AC-22",
@@ -1373,7 +1497,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Les ombres : source ponctuelle, puis source étendue",
   "titre_complet": "Simulation — Les ombres : source ponctuelle, puis source étendue",
-  "fichier": "sims/2AC/L13/simulation_E2AC-22.html"
+  "fichier": "sims/2AC/L13/simulation_E2AC-22.html",
+  "vignette": "thumbs/2AC/E2AC-22-simulation.png"
  },
  {
   "id": "E2AC-23",
@@ -1384,7 +1509,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Classer les lentilles minces",
   "titre_complet": "Paillasse virtuelle — E2AC-23 · Classer les lentilles minces",
-  "fichier": "sims/2AC/L14/enhanced_simulation_E2AC-23.html"
+  "fichier": "sims/2AC/L14/enhanced_simulation_E2AC-23.html",
+  "vignette": "thumbs/2AC/E2AC-23-paillasse.png"
  },
  {
   "id": "E2AC-23",
@@ -1395,7 +1521,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Classer les lentilles minces : convergentes ou divergentes",
   "titre_complet": "Simulation — Classer les lentilles minces : convergentes ou divergentes",
-  "fichier": "sims/2AC/L14/simulation_E2AC-23.html"
+  "fichier": "sims/2AC/L14/simulation_E2AC-23.html",
+  "vignette": "thumbs/2AC/E2AC-23-simulation.png"
  },
  {
   "id": "E2AC-24",
@@ -1406,7 +1533,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Déterminer une distance focale et comparer les vergences",
   "titre_complet": "Paillasse virtuelle — E2AC-24 · Déterminer une distance focale et comparer les vergences",
-  "fichier": "sims/2AC/L14/enhanced_simulation_E2AC-24.html"
+  "fichier": "sims/2AC/L14/enhanced_simulation_E2AC-24.html",
+  "vignette": "thumbs/2AC/E2AC-24-paillasse.png"
  },
  {
   "id": "E2AC-24",
@@ -1417,7 +1545,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Déterminer une distance focale et comparer les vergences de deux lentilles",
   "titre_complet": "Simulation — Déterminer une distance focale et comparer les vergences de deux lentilles",
-  "fichier": "sims/2AC/L14/simulation_E2AC-24.html"
+  "fichier": "sims/2AC/L14/simulation_E2AC-24.html",
+  "vignette": "thumbs/2AC/E2AC-24-simulation.png"
  },
  {
   "id": "E2AC-25",
@@ -1428,7 +1557,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'image d'un objet lumineux donnee par une lentille convergente",
   "titre_complet": "Paillasse virtuelle — E2AC-25 · L'image d'un objet lumineux donnee par une lentille convergente",
-  "fichier": "sims/2AC/L14/enhanced_simulation_E2AC-25.html"
+  "fichier": "sims/2AC/L14/enhanced_simulation_E2AC-25.html",
+  "vignette": "thumbs/2AC/E2AC-25-paillasse.png"
  },
  {
   "id": "E2AC-25",
@@ -1439,7 +1569,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "L'image d'un objet lumineux donnée par une lentille convergente",
   "titre_complet": "Simulation — L'image d'un objet lumineux donnée par une lentille convergente",
-  "fichier": "sims/2AC/L14/simulation_E2AC-25.html"
+  "fichier": "sims/2AC/L14/simulation_E2AC-25.html",
+  "vignette": "thumbs/2AC/E2AC-25-simulation.png"
  },
  {
   "id": "E2AC-26",
@@ -1450,7 +1581,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le principe de la loupe : l'objet entre le foyer et la lentille",
   "titre_complet": "Paillasse virtuelle — E2AC-26 · Le principe de la loupe : l'objet entre le foyer et la lentille",
-  "fichier": "sims/2AC/L15/enhanced_simulation_E2AC-26.html"
+  "fichier": "sims/2AC/L15/enhanced_simulation_E2AC-26.html",
+  "vignette": "thumbs/2AC/E2AC-26-paillasse.png"
  },
  {
   "id": "E2AC-26",
@@ -1461,7 +1593,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le principe de la loupe : l'objet entre le foyer et la lentille",
   "titre_complet": "Simulation — Le principe de la loupe : l'objet entre le foyer et la lentille",
-  "fichier": "sims/2AC/L15/simulation_E2AC-26.html"
+  "fichier": "sims/2AC/L15/simulation_E2AC-26.html",
+  "vignette": "thumbs/2AC/E2AC-26-simulation.png"
  },
  {
   "id": "E2AC-27",
@@ -1472,7 +1605,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'œil réduit : image nette, défauts de la vision et correction",
   "titre_complet": "Paillasse virtuelle — E2AC-27 · L'œil réduit : image nette, défauts de la vision et correction",
-  "fichier": "sims/2AC/L15/enhanced_simulation_E2AC-27.html"
+  "fichier": "sims/2AC/L15/enhanced_simulation_E2AC-27.html",
+  "vignette": "thumbs/2AC/E2AC-27-paillasse.png"
  },
  {
   "id": "E2AC-27",
@@ -1483,7 +1617,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "L'œil réduit : image nette, défauts de la vision et correction",
   "titre_complet": "Simulation — L'œil réduit : image nette, défauts de la vision et correction",
-  "fichier": "sims/2AC/L15/simulation_E2AC-27.html"
+  "fichier": "sims/2AC/L15/simulation_E2AC-27.html",
+  "vignette": "thumbs/2AC/E2AC-27-simulation.png"
  },
  {
   "id": "E2AC-28",
@@ -1494,7 +1629,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Que voit-on à l'oscilloscope : une pile, puis un générateur alternatif ?",
   "titre_complet": "Paillasse virtuelle — E2AC-28 · Que voit-on à l'oscilloscope : une pile, puis un générateur alternatif ?",
-  "fichier": "sims/2AC/L16/enhanced_simulation_E2AC-28.html"
+  "fichier": "sims/2AC/L16/enhanced_simulation_E2AC-28.html",
+  "vignette": "thumbs/2AC/E2AC-28-paillasse.png"
  },
  {
   "id": "E2AC-28",
@@ -1505,7 +1641,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Que voit-on à l'oscilloscope : une pile, puis un générateur alternatif ?",
   "titre_complet": "Simulation — Que voit-on à l'oscilloscope : une pile, puis un générateur alternatif ?",
-  "fichier": "sims/2AC/L16/simulation_E2AC-28.html"
+  "fichier": "sims/2AC/L16/simulation_E2AC-28.html",
+  "vignette": "thumbs/2AC/E2AC-28-simulation.png"
  },
  {
   "id": "E2AC-29",
@@ -1516,7 +1653,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Que lit-on sur un oscillogramme ?",
   "titre_complet": "Paillasse virtuelle — E2AC-29 · Que lit-on sur un oscillogramme ?",
-  "fichier": "sims/2AC/L16/enhanced_simulation_E2AC-29.html"
+  "fichier": "sims/2AC/L16/enhanced_simulation_E2AC-29.html",
+  "vignette": "thumbs/2AC/E2AC-29-paillasse.png"
  },
  {
   "id": "E2AC-29",
@@ -1527,7 +1665,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Que peut-on lire sur un oscillogramme ?",
   "titre_complet": "Simulation — Que peut-on lire sur un oscillogramme ?",
-  "fichier": "sims/2AC/L16/simulation_E2AC-29.html"
+  "fichier": "sims/2AC/L16/simulation_E2AC-29.html",
+  "vignette": "thumbs/2AC/E2AC-29-simulation.png"
  },
  {
   "id": "E2AC-30",
@@ -1538,7 +1677,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La valeur efficace",
   "titre_complet": "Paillasse virtuelle — E2AC-30 · La valeur efficace",
-  "fichier": "sims/2AC/L16/enhanced_simulation_E2AC-30.html"
+  "fichier": "sims/2AC/L16/enhanced_simulation_E2AC-30.html",
+  "vignette": "thumbs/2AC/E2AC-30-paillasse.png"
  },
  {
   "id": "E2AC-30",
@@ -1549,7 +1689,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Pourquoi le voltmètre n'affiche-t-il pas la valeur maximale ?",
   "titre_complet": "Simulation — Pourquoi le voltmètre n'affiche-t-il pas la valeur maximale ?",
-  "fichier": "sims/2AC/L16/simulation_E2AC-30.html"
+  "fichier": "sims/2AC/L16/simulation_E2AC-30.html",
+  "vignette": "thumbs/2AC/E2AC-30-simulation.png"
  },
  {
   "id": "E2AC-31",
@@ -1560,7 +1701,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Les trois fils d'une prise",
   "titre_complet": "Paillasse virtuelle — E2AC-31 · Les trois fils d'une prise",
-  "fichier": "sims/2AC/L17/enhanced_simulation_E2AC-31.html"
+  "fichier": "sims/2AC/L17/enhanced_simulation_E2AC-31.html",
+  "vignette": "thumbs/2AC/E2AC-31-paillasse.png"
  },
  {
   "id": "E2AC-31",
@@ -1571,7 +1713,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Les trois fils d'une prise se ressemblent : comment les distinguer ?",
   "titre_complet": "Simulation — Les trois fils d'une prise se ressemblent : comment les distinguer ?",
-  "fichier": "sims/2AC/L17/simulation_E2AC-31.html"
+  "fichier": "sims/2AC/L17/simulation_E2AC-31.html",
+  "vignette": "thumbs/2AC/E2AC-31-simulation.png"
  },
  {
   "id": "E2AC-32",
@@ -1582,7 +1725,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Les tensions d'une prise",
   "titre_complet": "Paillasse virtuelle — E2AC-32 · Les tensions d'une prise",
-  "fichier": "sims/2AC/L17/enhanced_simulation_E2AC-32.html"
+  "fichier": "sims/2AC/L17/enhanced_simulation_E2AC-32.html",
+  "vignette": "thumbs/2AC/E2AC-32-paillasse.png"
  },
  {
   "id": "E2AC-32",
@@ -1593,7 +1737,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Quelles tensions existent entre les trois fils d'une prise ?",
   "titre_complet": "Simulation — Quelles tensions existent entre les trois fils d'une prise ?",
-  "fichier": "sims/2AC/L17/simulation_E2AC-32.html"
+  "fichier": "sims/2AC/L17/simulation_E2AC-32.html",
+  "vignette": "thumbs/2AC/E2AC-32-simulation.png"
  },
  {
   "id": "E3AC-02",
@@ -1604,7 +1749,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Les facteurs de la rouille",
   "titre_complet": "Paillasse virtuelle — E3AC-02 · Les facteurs de la rouille",
-  "fichier": "sims/3AC/L03/enhanced_simulation_E3AC-02.html"
+  "fichier": "sims/3AC/L03/enhanced_simulation_E3AC-02.html",
+  "vignette": "thumbs/3AC/E3AC-02-paillasse.png"
  },
  {
   "id": "E3AC-03",
@@ -1615,7 +1761,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La couche d'alumine",
   "titre_complet": "Paillasse virtuelle — E3AC-03 · La couche d'alumine",
-  "fichier": "sims/3AC/L03/enhanced_simulation_E3AC-03.html"
+  "fichier": "sims/3AC/L03/enhanced_simulation_E3AC-03.html",
+  "vignette": "thumbs/3AC/E3AC-03-paillasse.png"
  },
  {
   "id": "E3AC-04",
@@ -1626,7 +1773,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Les produits de la combustion",
   "titre_complet": "Paillasse virtuelle — E3AC-04 · Les produits de la combustion",
-  "fichier": "sims/3AC/L03/enhanced_simulation_E3AC-04.html"
+  "fichier": "sims/3AC/L03/enhanced_simulation_E3AC-04.html",
+  "vignette": "thumbs/3AC/E3AC-04-paillasse.png"
  },
  {
   "id": "E3AC-05",
@@ -1637,7 +1785,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Mesurer le pH et classer les solutions",
   "titre_complet": "Paillasse virtuelle — E3AC-05 · Mesurer le pH et classer les solutions",
-  "fichier": "sims/3AC/L04/enhanced_simulation_E3AC-05.html"
+  "fichier": "sims/3AC/L04/enhanced_simulation_E3AC-05.html",
+  "vignette": "thumbs/3AC/E3AC-05-paillasse.png"
  },
  {
   "id": "E3AC-06",
@@ -1648,7 +1797,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La solution d'acide chlorhydrique attaque-t-elle tous les métaux ?",
   "titre_complet": "Paillasse virtuelle — E3AC-06 · La solution d'acide chlorhydrique attaque-t-elle tous les métaux ?",
-  "fichier": "sims/3AC/L05/enhanced_simulation_E3AC-06.html"
+  "fichier": "sims/3AC/L05/enhanced_simulation_E3AC-06.html",
+  "vignette": "thumbs/3AC/E3AC-06-paillasse.png"
  },
  {
   "id": "E3AC-07",
@@ -1659,7 +1809,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La reconnaissance des ions métalliques par la soude",
   "titre_complet": "Paillasse virtuelle — E3AC-07 · La reconnaissance des ions métalliques par la soude",
-  "fichier": "sims/3AC/L06/enhanced_simulation_E3AC-07.html"
+  "fichier": "sims/3AC/L06/enhanced_simulation_E3AC-07.html",
+  "vignette": "thumbs/3AC/E3AC-07-paillasse.png"
  },
  {
   "id": "E3AC-08",
@@ -1670,7 +1821,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La reconnaissance des ions chlorure par le nitrate d'argent",
   "titre_complet": "Paillasse virtuelle — E3AC-08 · La reconnaissance des ions chlorure par le nitrate d'argent",
-  "fichier": "sims/3AC/L06/enhanced_simulation_E3AC-08.html"
+  "fichier": "sims/3AC/L06/enhanced_simulation_E3AC-08.html",
+  "vignette": "thumbs/3AC/E3AC-08-paillasse.png"
  },
  {
   "id": "E3AC-09",
@@ -1681,7 +1833,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "L'identification des ions d'une solution inconnue",
   "titre_complet": "Paillasse virtuelle — E3AC-09 · L'identification des ions d'une solution inconnue",
-  "fichier": "sims/3AC/L06/enhanced_simulation_E3AC-09.html"
+  "fichier": "sims/3AC/L06/enhanced_simulation_E3AC-09.html",
+  "vignette": "thumbs/3AC/E3AC-09-paillasse.png"
  },
  {
   "id": "E3AC-10",
@@ -1692,7 +1845,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Biodégradable ou non ? Le devenir de six déchets enfouis",
   "titre_complet": "Paillasse virtuelle — E3AC-10 · Biodégradable ou non ? Le devenir de six déchets enfouis",
-  "fichier": "sims/3AC/L07/enhanced_simulation_E3AC-10.html"
+  "fichier": "sims/3AC/L07/enhanced_simulation_E3AC-10.html",
+  "vignette": "thumbs/3AC/E3AC-10-paillasse.png"
  },
  {
   "id": "E3AC-11",
@@ -1703,7 +1857,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le chariot, les deux figurines et l'élève qui marche",
   "titre_complet": "Paillasse virtuelle — E3AC-11 · Le chariot, les deux figurines et l'élève qui marche",
-  "fichier": "sims/3AC/L08/enhanced_simulation_E3AC-11.html"
+  "fichier": "sims/3AC/L08/enhanced_simulation_E3AC-11.html",
+  "vignette": "thumbs/3AC/E3AC-11-paillasse.png"
  },
  {
   "id": "E3AC-12",
@@ -1714,7 +1869,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La valve de la roue : la trajectoire dépend du référentiel",
   "titre_complet": "Paillasse virtuelle — E3AC-12 · La valve de la roue : la trajectoire dépend du référentiel",
-  "fichier": "sims/3AC/L08/enhanced_simulation_E3AC-12.html"
+  "fichier": "sims/3AC/L08/enhanced_simulation_E3AC-12.html",
+  "vignette": "thumbs/3AC/E3AC-12-paillasse.png"
  },
  {
   "id": "E3AC-12",
@@ -1725,7 +1881,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "La valve de la roue : matérialiser une trajectoire et montrer qu'elle dépend du référentiel",
   "titre_complet": "Simulation — La valve de la roue : matérialiser une trajectoire et montrer qu'elle dépend du référentiel",
-  "fichier": "sims/3AC/L08/simulation_E3AC-12.html"
+  "fichier": "sims/3AC/L08/simulation_E3AC-12.html",
+  "vignette": "thumbs/3AC/E3AC-12-simulation.png"
  },
  {
   "id": "E3AC-13",
@@ -1736,7 +1893,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Une bille, trois portions de piste",
   "titre_complet": "Paillasse virtuelle — E3AC-13 · Une bille, trois portions de piste",
-  "fichier": "sims/3AC/L08/enhanced_simulation_E3AC-13.html"
+  "fichier": "sims/3AC/L08/enhanced_simulation_E3AC-13.html",
+  "vignette": "thumbs/3AC/E3AC-13-paillasse.png"
  },
  {
   "id": "E3AC-13",
@@ -1747,7 +1905,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Une bille, trois portions de piste : reconnaître un mouvement uniforme, accéléré et retardé",
   "titre_complet": "Simulation — Une bille, trois portions de piste : reconnaître un mouvement uniforme, accéléré et retardé",
-  "fichier": "sims/3AC/L08/simulation_E3AC-13.html"
+  "fichier": "sims/3AC/L08/simulation_E3AC-13.html",
+  "vignette": "thumbs/3AC/E3AC-13-simulation.png"
  },
  {
   "id": "E3AC-14",
@@ -1758,7 +1917,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Notion d'action mécanique et ses effets",
   "titre_complet": "Paillasse virtuelle — E3AC-14 · Notion d'action mécanique et ses effets",
-  "fichier": "sims/3AC/L09/enhanced_simulation_E3AC-14.html"
+  "fichier": "sims/3AC/L09/enhanced_simulation_E3AC-14.html",
+  "vignette": "thumbs/3AC/E3AC-14-paillasse.png"
  },
  {
   "id": "E3AC-15",
@@ -1769,7 +1929,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Peut-on mesurer une force avec un nombre ? Le dynamomètre",
   "titre_complet": "Paillasse virtuelle — E3AC-15 · Peut-on mesurer une force avec un nombre ? Le dynamomètre",
-  "fichier": "sims/3AC/L10/enhanced_simulation_E3AC-15.html"
+  "fichier": "sims/3AC/L10/enhanced_simulation_E3AC-15.html",
+  "vignette": "thumbs/3AC/E3AC-15-paillasse.png"
  },
  {
   "id": "E3AC-15",
@@ -1780,7 +1941,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Peut-on mesurer une force avec un nombre ? Le dynamomètre",
   "titre_complet": "Simulation — Peut-on mesurer une force avec un nombre ? Le dynamomètre",
-  "fichier": "sims/3AC/L10/simulation_E3AC-15.html"
+  "fichier": "sims/3AC/L10/simulation_E3AC-15.html",
+  "vignette": "thumbs/3AC/E3AC-15-simulation.png"
  },
  {
   "id": "E3AC-16",
@@ -1791,7 +1953,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Que faut-il à deux forces pour qu'un solide reste immobile ?",
   "titre_complet": "Paillasse virtuelle — E3AC-16 · Que faut-il à deux forces pour qu'un solide reste immobile ?",
-  "fichier": "sims/3AC/L11/enhanced_simulation_E3AC-16.html"
+  "fichier": "sims/3AC/L11/enhanced_simulation_E3AC-16.html",
+  "vignette": "thumbs/3AC/E3AC-16-paillasse.png"
  },
  {
   "id": "E3AC-17",
@@ -1802,7 +1965,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Le peson du marchand et la balance du marchand",
   "titre_complet": "Paillasse virtuelle — E3AC-17 · Le peson du marchand et la balance du marchand",
-  "fichier": "sims/3AC/L12/enhanced_simulation_E3AC-17.html"
+  "fichier": "sims/3AC/L12/enhanced_simulation_E3AC-17.html",
+  "vignette": "thumbs/3AC/E3AC-17-paillasse.png"
  },
  {
   "id": "E3AC-17",
@@ -1813,7 +1977,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Le peson du marchand et la balance du marchand : la relation entre le poids et la masse",
   "titre_complet": "Simulation — Le peson du marchand et la balance du marchand : la relation entre le poids et la masse",
-  "fichier": "sims/3AC/L12/simulation_E3AC-17.html"
+  "fichier": "sims/3AC/L12/simulation_E3AC-17.html",
+  "vignette": "thumbs/3AC/E3AC-17-simulation.png"
  },
  {
   "id": "E3AC-18",
@@ -1824,7 +1989,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Vérification expérimentale de la loi d'Ohm",
   "titre_complet": "Paillasse virtuelle — E3AC-18 · Vérification expérimentale de la loi d'Ohm",
-  "fichier": "sims/3AC/L13/enhanced_simulation_E3AC-18.html"
+  "fichier": "sims/3AC/L13/enhanced_simulation_E3AC-18.html",
+  "vignette": "thumbs/3AC/E3AC-18-paillasse.png"
  },
  {
   "id": "E3AC-18",
@@ -1835,7 +2001,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "Vérification expérimentale de la loi d'Ohm",
   "titre_complet": "Simulation — Vérification expérimentale de la loi d'Ohm",
-  "fichier": "sims/3AC/L13/simulation_E3AC-18.html"
+  "fichier": "sims/3AC/L13/simulation_E3AC-18.html",
+  "vignette": "thumbs/3AC/E3AC-18-simulation.png"
  },
  {
   "id": "E3AC-19",
@@ -1846,7 +2013,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "D'où vient le nombre écrit en watts ?",
   "titre_complet": "Paillasse virtuelle — E3AC-19 · D'où vient le nombre écrit en watts ?",
-  "fichier": "sims/3AC/L14/enhanced_simulation_E3AC-19.html"
+  "fichier": "sims/3AC/L14/enhanced_simulation_E3AC-19.html",
+  "vignette": "thumbs/3AC/E3AC-19-paillasse.png"
  },
  {
   "id": "E3AC-19",
@@ -1857,7 +2025,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "D'où vient le nombre écrit en watts sur un appareil électrique ?",
   "titre_complet": "Simulation — D'où vient le nombre écrit en watts sur un appareil électrique ?",
-  "fichier": "sims/3AC/L14/simulation_E3AC-19.html"
+  "fichier": "sims/3AC/L14/simulation_E3AC-19.html",
+  "vignette": "thumbs/3AC/E3AC-19-simulation.png"
  },
  {
   "id": "E3AC-20",
@@ -1868,7 +2037,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "La tension nominale d'un appareil",
   "titre_complet": "Paillasse virtuelle — E3AC-20 · La tension nominale d'un appareil",
-  "fichier": "sims/3AC/L14/enhanced_simulation_E3AC-20.html"
+  "fichier": "sims/3AC/L14/enhanced_simulation_E3AC-20.html",
+  "vignette": "thumbs/3AC/E3AC-20-paillasse.png"
  },
  {
   "id": "E3AC-21",
@@ -1879,7 +2049,8 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "De quoi dépend l'énergie qu'un appareil consomme ?",
   "titre_complet": "Paillasse virtuelle — E3AC-21 · De quoi dépend l'énergie qu'un appareil consomme ?",
-  "fichier": "sims/3AC/L15/enhanced_simulation_E3AC-21.html"
+  "fichier": "sims/3AC/L15/enhanced_simulation_E3AC-21.html",
+  "vignette": "thumbs/3AC/E3AC-21-paillasse.png"
  },
  {
   "id": "E3AC-21",
@@ -1890,7 +2061,8 @@ const SIMULATIONS = [
   "type": "simulation",
   "titre": "De quoi dépend l'énergie qu'un appareil consomme : de sa puissance, de la durée, ou des deux ?",
   "titre_complet": "Simulation — De quoi dépend l'énergie qu'un appareil consomme : de sa puissance, de la durée, ou des deux ?",
-  "fichier": "sims/3AC/L15/simulation_E3AC-21.html"
+  "fichier": "sims/3AC/L15/simulation_E3AC-21.html",
+  "vignette": "thumbs/3AC/E3AC-21-simulation.png"
  },
  {
   "id": "E3AC-22",
@@ -1901,6 +2073,7 @@ const SIMULATIONS = [
   "type": "paillasse",
   "titre": "Que compte le compteur de la maison ?",
   "titre_complet": "Paillasse virtuelle — E3AC-22 · Que compte le compteur de la maison ?",
-  "fichier": "sims/3AC/L15/enhanced_simulation_E3AC-22.html"
+  "fichier": "sims/3AC/L15/enhanced_simulation_E3AC-22.html",
+  "vignette": "thumbs/3AC/E3AC-22-paillasse.png"
  }
 ];

@@ -15,6 +15,7 @@ ici). Après ajout ou modification de simulations :
 ```
 cd "College valise/app-demo" && node tools/titres.js   # réindexe les titres
 python build_catalogue.py                              # copie + data.js
+python build_thumbnails.py                              # vignette PNG par simulation
 ```
 
 `build_catalogue.py` lit `simulations/_titres.json`, ne retient que les
@@ -28,12 +29,21 @@ hors `.bak`), et écrit :
 **Rien ne se corrige dans `sims/` ni dans `data.js`** : ils sont régénérés
 en entier à chaque exécution du script.
 
+`build_thumbnails.py` capture ensuite une vignette par simulation — Chrome
+headless, `--screenshot`, 900×620 — dans `thumbs/<niveau>/<id>-<type>.png`,
+et ajoute le champ `vignette` à chaque entrée de `data.js`. **Une vignette
+déjà présente n'est pas régénérée** : supprimer `thumbs/` force une capture
+complète. Prévoir quelques minutes pour les ~170 captures au premier passage.
+
 ## Structure
 
 ```
-index.html     le catalogue (HTML/CSS/JS autonome, pas de dépendance externe)
-data.js        le manifeste des 173 simulations
-sims/          les fichiers, par niveau puis par leçon
+index.html          le catalogue (HTML/CSS/JS autonome, pas de dépendance externe)
+data.js              le manifeste des 173 simulations (titres + vignettes)
+sims/                les fichiers, par niveau puis par leçon
+thumbs/              une vignette PNG par simulation
+build_catalogue.py   copie les simulations et écrit data.js
+build_thumbnails.py  capture les vignettes
 ```
 
 Aucune étape de build côté serveur : GitHub Pages sert ces fichiers tels quels.
