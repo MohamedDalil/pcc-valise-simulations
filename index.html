@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCC Valise — Catalogue des simulations</title>
+<meta name="description" content="173 simulations et paillasses virtuelles de Physique-Chimie, cycle collégial — 1APIC, 2APIC, 3APIC. Manipulables directement dans le navigateur.">
+<style>
+:root{
+  --encre:#12203a; --doux:#6b7686; --trait:#e3e7ee; --fond:#fff; --fond2:#f6f8fb;
+  --carte:#fff; --violet:#7d2ae8; --violet-fonce:#6a1fc7; --or:#c8912a; --ombre:18,32,58;
+  --vert:#1f8a5f; --vert-bg:#e8f7f0;
+}
+@media (prefers-color-scheme: dark){
+  :root{--encre:#e8ecf3;--doux:#9aa6b8;--trait:#243049;--fond:#0e1420;--fond2:#111a2a;--carte:#141c2c;--ombre:0,0,0;--vert-bg:#10291f}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.6 system-ui,"Segoe UI",Roboto,sans-serif;color:var(--encre);
+     background:var(--fond2);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.zone{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* ---------------------------------------------------------- en-tête */
+header{background:linear-gradient(165deg,var(--encre),#1c2f52 60%,#26406e);color:#fff;
+       padding:40px 0 30px}
+header h1{margin:0 0 6px;font-size:28px;font-weight:800;letter-spacing:-.3px}
+header p{margin:0;color:#c9d3e6;font-size:15px;max-width:640px}
+header .chiffres{display:flex;gap:22px;margin-top:20px;flex-wrap:wrap}
+header .chiffre{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+                 border-radius:10px;padding:10px 16px;min-width:108px}
+header .chiffre b{display:block;font-size:22px;font-weight:800;color:#fff}
+header .chiffre span{font-size:11.5px;color:#aebcd6;text-transform:uppercase;letter-spacing:.06em}
+
+/* ---------------------------------------------------------- filtres */
+.barre{position:sticky;top:0;z-index:5;background:var(--fond);border-bottom:1px solid var(--trait);
+       box-shadow:0 2px 10px rgba(var(--ombre),.06)}
+.barre .zone{padding:14px 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.recherche{flex:1 1 220px;position:relative}
+.recherche input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--trait);
+                  border-radius:8px;background:var(--fond2);color:var(--encre);font-size:14px}
+.recherche input:focus{outline:2px solid var(--violet);outline-offset:-1px}
+.recherche::before{content:"";position:absolute;left:11px;top:50%;width:14px;height:14px;
+    margin-top:-7px;border:2px solid var(--doux);border-radius:50%;
+    box-shadow:5px 5px 0 -3px var(--doux)}
+.groupe{display:flex;gap:6px;flex-wrap:wrap}
+.puce{border:1px solid var(--trait);background:var(--fond2);color:var(--doux);
+      padding:7px 13px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;
+      transition:.15s}
+.puce:hover{border-color:var(--violet)}
+.puce.actif{background:var(--violet);border-color:var(--violet);color:#fff}
+select{border:1px solid var(--trait);background:var(--fond2);color:var(--encre);
+       padding:8px 10px;border-radius:8px;font-size:13px;font-weight:600}
+
+/* ---------------------------------------------------------- résultats */
+main{padding:26px 0 70px}
+.compte{color:var(--doux);font-size:13.5px;margin-bottom:16px}
+.compte b{color:var(--encre)}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:12px;
+       padding:16px 16px 14px;display:flex;flex-direction:column;gap:9px;
+       text-decoration:none;transition:.15s;box-shadow:0 1px 3px rgba(var(--ombre),.06)}
+.carte:hover{border-color:var(--violet);box-shadow:0 6px 18px rgba(var(--ombre),.12);
+             transform:translateY(-2px)}
+.carte .ligne-haut{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.badge{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+       padding:3px 9px;border-radius:999px}
+.badge.n-1AC{background:#eaf1fb;color:#2d5ea8}
+.badge.n-2AC{background:#fdf1e7;color:var(--or)}
+.badge.n-3AC{background:#f3eaff;color:var(--violet-fonce)}
+@media (prefers-color-scheme: dark){
+  .badge.n-1AC{background:#152840;color:#7fb0ef}
+  .badge.n-2AC{background:#30220f;color:#e0ad5f}
+  .badge.n-3AC{background:#241a3d;color:#b690f5}
+}
+.badge.type-simulation{background:var(--vert-bg);color:var(--vert)}
+.badge.type-paillasse{background:#eee7fb;color:var(--violet-fonce)}
+@media (prefers-color-scheme: dark){.badge.type-paillasse{background:#241a3d;color:#b690f5}}
+.id{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--doux)}
+.carte h3{margin:0;font-size:15.5px;line-height:1.35;font-weight:700;color:var(--encre)}
+.carte .lecon{font-size:12.5px;color:var(--doux)}
+.carte .ouvrir{margin-top:auto;font-size:12.5px;font-weight:700;color:var(--violet);
+               display:flex;align-items:center;gap:5px}
+.carte .ouvrir svg{width:13px;height:13px}
+
+.vide{text-align:center;padding:60px 20px;color:var(--doux)}
+.vide b{display:block;color:var(--encre);font-size:16px;margin-bottom:6px}
+
+footer{border-top:1px solid var(--trait);padding:24px 0;text-align:center;
+       color:var(--doux);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="zone">
+    <h1>Catalogue des simulations — PCC Valise</h1>
+    <p>Physique-Chimie, cycle collégial. Chaque simulation s'ouvre directement
+       dans le navigateur — rien à installer, rien à télécharger.</p>
+    <div class="chiffres">
+      <div class="chiffre"><b id="n-total">—</b><span>au total</span></div>
+      <div class="chiffre"><b id="n-1AC">—</b><span>1APIC</span></div>
+      <div class="chiffre"><b id="n-2AC">—</b><span>2APIC</span></div>
+      <div class="chiffre"><b id="n-3AC">—</b><span>3APIC</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="barre">
+  <div class="zone">
+    <div class="recherche">
+      <input type="search" id="recherche" placeholder="Chercher un titre, un identifiant…" aria-label="Rechercher">
+    </div>
+    <div class="groupe" id="filtre-niveau" role="group" aria-label="Filtrer par niveau">
+      <button class="puce actif" data-niveau="">Tous les niveaux</button>
+      <button class="puce" data-niveau="1AC">1APIC</button>
+      <button class="puce" data-niveau="2AC">2APIC</button>
+      <button class="puce" data-niveau="3AC">3APIC</button>
+    </div>
+    <div class="groupe" id="filtre-type" role="group" aria-label="Filtrer par type">
+      <button class="puce actif" data-type="">Tout type</button>
+      <button class="puce" data-type="simulation">Simulations</button>
+      <button class="puce" data-type="paillasse">Paillasses virtuelles</button>
+    </div>
+    <select id="tri" aria-label="Trier">
+      <option value="niveau">Trier : niveau, leçon</option>
+      <option value="titre">Trier : titre (A→Z)</option>
+      <option value="id">Trier : identifiant</option>
+    </select>
+  </div>
+</div>
+
+<main class="zone">
+  <p class="compte"><b id="n-affiche">—</b> simulation(s) affichée(s)</p>
+  <div class="grille" id="grille"></div>
+  <div class="vide" id="vide" hidden>
+    <b>Aucun résultat</b>
+    Essayez un autre terme, ou réinitialisez les filtres.
+  </div>
+</main>
+
+<footer>
+  PCC Valise — Physique-Chimie, cycle collégial · catalogue généré automatiquement
+</footer>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const grille = document.getElementById("grille");
+  const vide = document.getElementById("vide");
+  const champRecherche = document.getElementById("recherche");
+  const selectTri = document.getElementById("tri");
+  const groupeNiveau = document.getElementById("filtre-niveau");
+  const groupeType = document.getElementById("filtre-type");
+
+  let niveau = "";
+  let type = "";
+  let recherche = "";
+  let tri = "niveau";
+
+  function normaliser(s) {
+    return (s || "").toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  function puceClic(groupe, attr, callback) {
+    groupe.addEventListener("click", function (e) {
+      const btn = e.target.closest(".puce");
+      if (!btn) return;
+      groupe.querySelectorAll(".puce").forEach(function (b) { b.classList.remove("actif"); });
+      btn.classList.add("actif");
+      callback(btn.dataset[attr] || "");
+      rendre();
+    });
+  }
+  puceClic(groupeNiveau, "niveau", function (v) { niveau = v; });
+  puceClic(groupeType, "type", function (v) { type = v; });
+
+  champRecherche.addEventListener("input", function () {
+    recherche = normaliser(champRecherche.value);
+    rendre();
+  });
+  selectTri.addEventListener("change", function () {
+    tri = selectTri.value;
+    rendre();
+  });
+
+  const ICONE_OUVRIR =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>' +
+    '<polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+
+  const LABEL_TYPE = { simulation: "Simulation", paillasse: "Paillasse virtuelle" };
+
+  function carte(e) {
+    const a = document.createElement("a");
+    a.className = "carte";
+    a.href = e.fichier;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.innerHTML =
+      '<div class="ligne-haut">' +
+        '<span class="badge n-' + e.niveau + '">' + e.niveau_libelle + '</span>' +
+        '<span class="id">' + e.id + '</span>' +
+      '</div>' +
+      '<h3>' + e.titre.replace(/</g, "&lt;") + '</h3>' +
+      '<div class="lecon">Leçon ' + e.lecon_num + '</div>' +
+      '<span class="badge type-' + e.type + '">' + LABEL_TYPE[e.type] + '</span>' +
+      '<span class="ouvrir">' + ICONE_OUVRIR + ' Ouvrir la simulation</span>';
+    return a;
+  }
+
+  function comparer(a, b) {
+    if (tri === "titre") return a.titre.localeCompare(b.titre, "fr");
+    if (tri === "id") return a.id.localeCompare(b.id, "fr", { numeric: true });
+    // "niveau" : 1AC avant 2AC avant 3AC, puis leçon, puis id
+    if (a.niveau !== b.niveau) return a.niveau.localeCompare(b.niveau);
+    if (a.lecon_num !== b.lecon_num) return a.lecon_num - b.lecon_num;
+    return a.id.localeCompare(b.id, "fr", { numeric: true });
+  }
+
+  function rendre() {
+    let liste = SIMULATIONS.filter(function (e) {
+      if (niveau && e.niveau !== niveau) return false;
+      if (type && e.type !== type) return false;
+      if (recherche) {
+        const champ = normaliser(e.titre + " " + e.id + " " + e.titre_complet);
+        if (champ.indexOf(recherche) === -1) return false;
+      }
+      return true;
+    });
+    liste.sort(comparer);
+
+    grille.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    liste.forEach(function (e) { frag.appendChild(carte(e)); });
+    grille.appendChild(frag);
+
+    document.getElementById("n-affiche").textContent = liste.length;
+    vide.hidden = liste.length !== 0;
+    grille.hidden = liste.length === 0;
+  }
+
+  function compterPar(cle, valeur) {
+    return SIMULATIONS.filter(function (e) { return e[cle] === valeur; }).length;
+  }
+
+  document.getElementById("n-total").textContent = SIMULATIONS.length;
+  document.getElementById("n-1AC").textContent = compterPar("niveau", "1AC");
+  document.getElementById("n-2AC").textContent = compterPar("niveau", "2AC");
+  document.getElementById("n-3AC").textContent = compterPar("niveau", "3AC");
+
+  rendre();
+})();
+</script>
+</body>
+</html>

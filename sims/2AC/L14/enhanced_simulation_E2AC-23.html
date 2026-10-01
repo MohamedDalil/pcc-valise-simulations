@@ -1,0 +1,2671 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-23 · Classer les lentilles minces</title>
+<!-- L'ECOUTEUR D'ERREURS EST ICI, ET PAS EN FIN DE BODY (SKILL §12.47). -->
+<script>
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message) + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<!--
+  ===================================================================
+  E2AC-23 · 2AC · U2 · L14 — PAILLASSE VIRTUELLE
+  « Classer les lentilles minces : convergentes ou divergentes »
+  ===================================================================
+
+  CE QUE CETTE PAGE CALCULE PLUTÔT QUE DE LE REJOUER
+  --------------------------------------------------
+  Les huit cases du tableau ne sont écrites nulle part. Une lentille mince
+  n'est pas un symbole à double flèche : c'est un morceau de verre limité
+  par deux calottes sphériques, et TOUT ce que la fiche affirme se déduit
+  de quatre nombres — R₁, R₂, l'épaisseur au centre e, l'indice n — plus
+  le diamètre utile D.
+
+   · LE TOUCHER sort des FLÈCHES des deux calottes. La flèche d'une calotte
+     de rayon R sur un diamètre D vaut s = R − √(R² − D²/4), et l'épaisseur
+     au bord vaut e_bord = e − s₁ + s₂. Rien n'est décrété : « centre épais,
+     bords minces » est une comparaison de deux longueurs calculées.
+   · LE FAISCEAU est TRACÉ, rayon par rayon. Neuf rayons parallèles à
+     l'axe, réfractés sur chacun des deux dioptres par la loi de Descartes
+     appliquée EN VECTEURS — aucune approximation de petit angle, aucune
+     formule de lentille mince. On regarde ensuite où chaque rayon coupe
+     l'axe : devant la lentille, ou derrière. C'est le tracé, et lui seul,
+     qui décide de « converge » ou « diverge ».
+   · LE TEXTE sort de la conjugaison. La lentille posée à plat sur la page
+     puis soulevée de h donne γ = f′/(f′ − h). Pour la convergente, γ passe
+     de 1,11 à 1 cm à 2,00 à 5 cm : les lettres grandissent. Pour la
+     divergente, γ passe de 0,91 à 0,66 : elles rétrécissent. Et l'on voit
+     du même coup ce que `oheric.interpretation` prend soin de dire — « le
+     mot grossir ne définit pas une lentille » : posée à plat, h = 0, la
+     convergente ne grossit RIEN.
+   · LE NOM se déduit du signe de 1/f′, avec la formule des opticiens
+     ÉPAISSE — 1/f′ = (n−1)·[1/R₁ − 1/R₂ + (n−1)·e/(n·R₁·R₂)] —, et non de
+     l'étiquette collée sur la boîte.
+
+  ET LA CONTRE-ÉPREUVE QUI FAIT LA LEÇON. Le curseur des rayons de courbure
+  permet de fabriquer deux MÉNISQUES, bombés tous les deux, dont l'un
+  converge et l'autre diverge. Le critère de la fiche — « bords minces » —
+  y résiste, alors que « bombée » n'y résiste pas. C'est le genre de chose
+  qu'un dessin ne peut pas montrer et qu'un solveur montre tout seul.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Fiche `E2AC-23` de `experiences.yaml`, bloc `DONNEES` régénéré (§0).
+  · La fiche ne donne AUCUNE longueur : ni rayon de courbure, ni focale, ni
+    distance sur le banc. Tout ce qui est chiffré ici est donc un AJOUT
+    assumé, et la page l'étiquette : l'indice du N-BK7 (1,5168 à la raie d,
+    valeur de catalogue), des rayons de ±102,5 mm qui donnent une focale de
+    l'ordre de 100 mm, un diamètre utile de 34 mm. Les trois sont des
+    curseurs, et le classement ne dépend d'aucun d'eux — c'est bien le
+    propos.
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome ; pas de vue 3D ; elle DOUBLE `simulation_E2AC-23.html`.
+  · LA SCÈNE SE REGARDE DE CÔTÉ, dans le plan méridien : c'est le seul plan
+    où un tracé de rayons a un sens (§12.20). L'épreuve du texte se joue
+    sur la même vue, en bas, parce que la lentille y est vue par la
+    tranche — et l'encart de la colonne de droite montre ce que l'œil voit.
+  · Le dessin est à l'échelle sur ce qui compte : le diamètre de la
+    lentille, ses deux calottes, la position du foyer et la marche de
+    chaque rayon. La source, le porte-lentille et l'écran sont grossis.
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §6.2 · §6.11 · §6.12 · §12.2 · §12.5 · §12.12 · §12.16 · §12.18 ·
+  §12.41 · §12.47.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --rouge:#b03030;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #00000077;
+          pointer-events:none;max-width:52%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(244px,22%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #00000055}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0006}
+.rezero:hover{filter:brightness(1.09)}
+
+/* ---- LE BANDEAU DE SÉCURITÉ ----
+   Une lampe qu'on ne doit pas fixer, du verre qui peut éclater, des béchers
+   d'eau près d'une prise : la sécurité n'est pas un encadré à côté du
+   montage, c'est une condition d'exécution. Le bandeau porte en permanence
+   la ligne de `securite` qui motive le geste en cours. */
+.secubande{margin-top:10px;border-radius:9px;padding:10px 14px;
+           border-left:6px solid var(--rouge);background:var(--redbg);
+           display:flex;gap:12px;align-items:flex-start}
+.secubande .pic{font-size:22px;line-height:1.1}
+.secubande .co{flex:1;min-width:0}
+.secubande .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+              font-weight:700;color:var(--rouge);display:block;margin-bottom:2px}
+.secubande .t{font-size:13.5px;color:#4a1f1f;line-height:1.45}
+.secubande.refus{background:#f7d9d9;border-left-color:#8c1c1c}
+.secubande.refus .k{color:#8c1c1c}
+.secubande.ok{background:var(--greenbg);border-left-color:var(--green)}
+.secubande.ok .k{color:var(--green)}
+.secubande.ok .t{color:#22380f}
+
+.checks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.checks div{flex:1 1 calc(33% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted);
+            position:relative;min-width:120px}
+.checks div .n{font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+               font-weight:700;color:#c0a0a0;display:block}
+.checks div.non{border-color:#e6b9b9;background:#fdf4f4}
+.checks div.non .n{color:var(--rouge)}
+.checks div.oui{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.checks div.oui .n{color:var(--green)}
+.checks div.oui::after{content:"✓";position:absolute;right:7px;top:5px;
+                       font-weight:700;color:var(--green)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:92px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect div.ajout{background:#f4f0fa}
+.lect div.ajout .k{color:#6b4b9a}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:var(--rouge);background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.box.secu li{margin-bottom:4px}
+.box.secu li.actif{background:#f7d9d9;border-radius:4px;padding:2px 4px;
+                   margin-left:-4px;font-weight:600}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on lui impose donc une BOÎTE explicite, en
+   `!important` — c'est exactement le cas pour lequel ce mot existe : le SVG
+   porte un style EN LIGNE qui bat tout sélecteur, et sans cela la scène
+   projetée est rognée en haut et en bas. Les 56 px retranchés sont la bande
+   réservée à la flèche d'avance. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:flex-start;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de neuf
+   étapes fait 450 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit en clair. Passée par un échappement CSS, la séquence du
+   caractère se fait avaler par le chiffre qui la suit et sort en « ¹3 ». */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--serif);font-size:16px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-23 · 2AC · L14</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="secubande" id="secuBande">
+      <span class="pic" id="secuPic">⚠</span>
+      <span class="co">
+        <span class="k" id="secuTitre">Consigne de sécurité du geste en cours</span>
+        <span class="t" id="secuTexte">…</span>
+      </span>
+    </div>
+    <div class="checks" id="checks"></div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeSeuils"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:var(--rouge)">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La lentille, en coupe <span class="note">et ses deux épaisseurs</span></h2>
+      <svg id="gCoupe" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Les deux calottes sont tracées à leurs rayons. L'épaisseur au bord
+        vaut e − s₁ + s₂, où s est la <b>flèche</b> d'une calotte : c'est une
+        soustraction de longueurs, pas une étiquette.
+      </div>
+      <div class="lect" style="margin-top:10px">
+        <div><div class="k">Épaisseur au centre</div><div class="v" id="lEc">—</div></div>
+        <div><div class="k">Épaisseur au bord</div><div class="v" id="lEb">—</div></div>
+        <div><div class="k">Distance focale f′</div><div class="v" id="lF">—</div></div>
+        <div><div class="k">Famille</div><div class="v" id="lFam">—</div></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Le texte vu à travers <span class="note">et pourquoi « grossir » ne définit rien</span></h2>
+      <svg id="gTexte" viewBox="0 0 360 156" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="lect" style="margin-top:10px">
+        <div><div class="k">Hauteur au-dessus du texte</div><div class="v" id="lH">—</div></div>
+        <div><div class="k">Grandissement γ</div><div class="v" id="lG">—</div></div>
+      </div>
+      <div class="src" style="margin-top:6px">
+        γ = f′/(f′ − h). Posée <b>à plat</b> (h = 0), la convergente ne
+        grossit rien du tout : γ = 1. C'est exactement la réserve que la
+        fiche prend dans son interprétation.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Où chaque rayon coupe l'axe <span class="note">le tracé, pas la formule</span></h2>
+      <svg id="gRayons" viewBox="0 0 360 196" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Chaque rayon parallèle coupe l'axe à sa propre abscisse — l'écart
+        entre eux est l'<b>aberration de sphéricité</b>, et c'est elle qui
+        distingue un vrai verre d'une lentille de manuel. Le trait or est la
+        focale paraxiale.
+      </div>
+      <div class="lect" style="margin-top:10px">
+        <div class="ajout"><div class="k">Foyer du rayon marginal</div>
+          <div class="v" id="lMarg">—</div></div>
+        <div class="ajout"><div class="k">Aberration de sphéricité</div>
+          <div class="v" id="lAber">—</div></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg"><label for="rN">Indice du verre</label><output id="oN"></output>
+        <input type="range" id="rN" min="1.400" max="1.900" step="0.001" value="1.517">
+        <div class="aide" id="aideN"></div></div>
+      <div class="reg"><label for="rR">Rayon de courbure des deux faces</label><output id="oR"></output>
+        <input type="range" id="rR" min="20" max="300" step="2.5" value="102.5">
+        <div class="aide" id="aideR"></div></div>
+      <div class="reg"><label for="rD">Diamètre utile de la lentille</label><output id="oD"></output>
+        <input type="range" id="rD" min="10" max="60" step="1" value="34">
+        <div class="aide" id="aideD"></div></div>
+      <div class="reg"><label for="rH">Hauteur au-dessus du texte</label><output id="oH"></output>
+        <input type="range" id="rH" min="0" max="9" step="0.5" value="2">
+        <div class="aide" id="aideH"></div></div>
+      <div class="reg"><label for="rMen">Ménisque : décaler le second rayon</label><output id="oMen"></output>
+        <input type="range" id="rMen" min="-100" max="100" step="5" value="0">
+        <div class="aide" id="aideMen"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="eqModele"></div>
+      <p>Le classement ne vient d'aucune étiquette : il vient du <b>signe</b>
+      de 1/f′, et le tracé le confirme rayon par rayon, sans jamais passer
+      par la formule des lentilles minces.</p>
+      <h3>2 · Ce que devient la lumière</h3>
+      <div class="eq" id="eqBilan"></div>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Tout se joue à une seule longueur d'onde.</b> L'indice dépend
+        de λ : une vraie lentille a une focale différente dans le rouge et
+        dans le bleu, et les bords d'image s'y irisent. C'est
+        l'aberration chromatique, et elle n'est pas ici.</li>
+        <li><b>Les faces sont des sphères parfaites, parfaitement
+        centrées.</b> Un verre de collège est moulé, pas poli.</li>
+        <li><b>Aucune réflexion aux interfaces.</b> Chaque face renvoie 4 %
+        du flux : l'image d'une lentille non traitée est plus sombre et
+        porte des reflets fantômes.</li>
+        <li><b>Le tracé est méridien.</b> Il suffit ici parce que tout est de
+        révolution, mais il ne dirait rien d'un faisceau oblique.</li>
+        <li><b>γ = f′/(f′ − h) est la formule des lentilles MINCES.</b> Le
+        reste de la page n'en dépend pas — mais l'épreuve du texte, si.</li>
+        <li><b>L'œil qui regarde le texte n'est pas modélisé.</b> On voit une
+        image virtuelle à une distance qui dépend de la position de l'œil ;
+        la page n'en rend que le grandissement transversal.</li>
+        <li><b>La sécurité simulée n'est pas la sécurité.</b> Une lentille
+        convergente concentre la lumière : la page ne remplace ni la
+        consigne, ni l'enseignant.</li>
+      </ul>
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-23.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-23",
+  "niveau": "2AC",
+  "unite": "U2",
+  "lecon": "L14",
+  "titre": "Classer les lentilles minces : convergentes ou divergentes",
+  "axe": "Reconnaître et classer les lentilles minces",
+  "objectif": "Distinguer une lentille mince convergente d'une lentille mince divergente par trois épreuves indépendantes — le toucher, le texte vu à travers la lentille, et le faisceau parallèle — et rattacher ce classement à la forme des faces.",
+  "duree": 20,
+  "modalite": "groupes de 4 — 8 postes, une lentille de chaque type par poste",
+  "materiel": [
+    "Deux lentilles minces par poste : une à **bords minces** (L₁), une à **bords épais** (L₂)",
+    "**Banc d'optique** gradué : il aligne la source, la lentille et l'écran et permet de lire les distances",
+    "**Source lumineuse** à fente multiple donnant un faisceau de rayons **parallèles**",
+    "**Écran** blanc, et une feuille de papier portant un texte imprimé en petits caractères",
+    "Porte-lentille unique, le **même** pour les deux lentilles",
+    "Chiffon doux pour la manipulation des verres"
+  ],
+  "securite": [
+    "Les lentilles sont en **verre** : les tenir par la tranche, ne jamais les poser face contre la table.",
+    "Une lentille convergente **concentre la lumière** : ne jamais viser un œil, ni le Soleil, à travers elle.",
+    "Ne pas fixer directement la source lumineuse allumée.",
+    "Signaler immédiatement toute lentille ébréchée : le verre cassé coupe."
+  ],
+  "protocole": [
+    "Prendre les deux lentilles par la tranche et **palper** le centre puis les bords de chacune ; noter laquelle a le centre épais et les bords minces, laquelle a le centre mince et les bords épais.",
+    "Poser la première lentille **à plat** sur un texte imprimé, la soulever lentement de quelques centimètres et observer les lettres à travers elle ; recommencer avec la seconde.",
+    "Installer sur le **banc d'optique** la source à faisceau parallèle, puis le porte-lentille, puis l'**écran**.",
+    "Placer la lentille à bords minces dans le porte-lentille et observer, sur l'écran et dans la poussière de craie, le trajet des rayons **après** la lentille.",
+    "**Témoin** : sans rien déplacer d'autre — ni la source, ni le porte-lentille, ni l'écran — remplacer la lentille par celle à bords épais et observer de nouveau.",
+    "Reporter les trois épreuves dans le tableau, puis nommer chaque lentille et dessiner son symbole."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Épreuve",
+      "Lentille (L₁)",
+      "Lentille (L₂)"
+    ],
+    "lignes": [
+      [
+        "Au toucher : centre et bords",
+        "",
+        ""
+      ],
+      [
+        "Texte vu à travers la lentille",
+        "",
+        ""
+      ],
+      [
+        "Faisceau parallèle après la lentille",
+        "",
+        ""
+      ],
+      [
+        "Nom de la lentille",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Au toucher : centre et bords",
+        "centre épais, bords minces",
+        "centre mince, bords épais"
+      ],
+      [
+        "Texte vu à travers la lentille",
+        "lettres agrandies",
+        "lettres rétrécies"
+      ],
+      [
+        "Faisceau parallèle après la lentille",
+        "converge en un point",
+        "diverge, les rayons s'écartent"
+      ],
+      [
+        "Nom de la lentille",
+        "**convergente**",
+        "**divergente**"
+      ]
+    ]
+  },
+  "observation": "La lentille à bords minces agrandit le texte et rassemble le faisceau parallèle en un point ; la lentille à bords épais rétrécit le texte et écarte les rayons. Les trois épreuves donnent le même classement.",
+  "conclusion": "Une lentille mince à bords minces est convergente : elle rassemble un faisceau parallèle en un point. Une lentille mince à bords épais est divergente : elle écarte les rayons d'un faisceau parallèle.",
+  "oheric": {
+    "observation": "Sur la table du laboratoire, plusieurs morceaux de verre transparents et bombés se ressemblent beaucoup. Pourtant, quand on les pose sur la page d'un livre, les uns **grossissent** les lettres et les autres les **rétrécissent**. Une goutte d'eau posée sur une lettre fait la même chose que le premier. Tous ces verres transparents sont-ils de la même sorte, et comment les distinguer sans hésiter ?",
+    "hypothese": "**Si** la différence tient à la **forme** du verre — épais au centre ou épais aux bords —, **alors** deux lentilles de formes opposées doivent se comporter de manière opposée sur un **même** faisceau de rayons parallèles : l'une doit les rassembler, l'autre les écarter.",
+    "experience": "Palper d'abord le centre et les bords des deux lentilles, puis regarder un texte imprimé à travers chacune. Installer ensuite sur le **banc d'optique** la source à faisceau parallèle, le porte-lentille et l'écran, et observer le trajet des rayons après la lentille à bords minces. **Témoin** : replacer la lentille à bords épais dans le **même** montage, sans rien déplacer d'autre.",
+    "resultats": "La lentille (L₁) a le **centre épais et les bords minces** ; elle **agrandit** le texte vu à travers elle et **rassemble** le faisceau parallèle en un point. La lentille (L₂) a le **centre mince et les bords épais** ; elle **rétrécit** le texte et **écarte** les rayons du faisceau parallèle, qui divergent après elle. Les trois épreuves classent les deux lentilles de la même façon.",
+    "interpretation": "Les trois épreuves — le toucher, le texte, le faisceau — donnent le **même** classement : ce n'est donc pas un hasard d'observation, c'est la **forme** de la lentille qui commande son comportement. Le rôle du **témoin** est ici décisif : la source, le porte-lentille et l'écran n'ayant pas bougé, la seule chose qui a changé est la lentille, et c'est donc elle — et elle seule — qui explique le renversement du résultat. L'hypothèse est validée. On retiendra aussi que le mot « grossir » ne définit pas une lentille : une lentille convergente ne grossit le texte que si on la tient **près** de la page.",
+    "conclusion": "Une **lentille mince** est un milieu **transparent et homogène** — verre ou plastique — limité par **deux faces sphériques**, ou par une face sphérique et une face plane, et dont l'épaisseur au centre est faible. On distingue **deux familles** : les lentilles à **bords minces**, qui font **converger** un faisceau parallèle, dites **convergentes** ; et les lentilles à **bords épais**, qui le font **diverger**, dites **divergentes**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030", JAUNE = "#ffd21e";
+var LISERE = "#7a5c10", SCHEMA = "#8ea0bb";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.47 : `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0 — le
+   garde-fou d'origine laissait donc passer `null`, et `null.toFixed` levait
+   PENDANT le démarrage, sur une page qui avait l'air de charger. Le TYPE se
+   teste avant la finitude. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+function nbAuto(x) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  var a = Math.abs(x);
+  return nb(x, a >= 100 ? 0 : (a >= 10 ? 1 : (a >= 1 ? 2 : (a >= 0.01 ? 3 : 4))));
+}
+function expo(e) {
+  var s = "" + e, o = "", i, T = { "0": "⁰", "1": "¹", "2": "²", "3": "³",
+    "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  for (i = 0; i < s.length; i++) o += T[s.charAt(i)] || s.charAt(i);
+  return o;
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x) || x === 0) return nb(x, d);
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10);
+  if (e >= -2 && e <= 4) return nbAuto(x);
+  return nb(x / Math.pow(10, e), d === undefined ? 1 : d) + "·10" + expo(e);
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+/* Le mini-markdown du YAML. Le gras se dépouille AVANT l'italique : le motif
+   de l'italique ne doit jamais voir une paire d'astérisques doubles. */
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* §12.2 : `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de nb(). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function lignesTxt(txt, n) {
+  var mots = String(txt || "").split(/\s+/), out = [], cur = "";
+  mots.forEach(function (m) {
+    if (!cur.length) { cur = m; return; }
+    if ((cur + " " + m).length <= n) { cur += " " + m; }
+    else { out.push(cur); cur = m; }
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+function degres(r) { return r * 180 / Math.PI; }
+function rads(d) { return d * Math.PI / 180; }
+function sinh(x) { return (Math.exp(x) - Math.exp(-x)) / 2; }
+function cosh(x) { return (Math.exp(x) + Math.exp(-x)) / 2; }
+
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   ⚠ LA FICHE NE DONNE AUCUNE LONGUEUR : ni rayon, ni focale, ni distance
+   sur le banc. Tout ce qui est chiffré ici est donc un AJOUT assumé, et
+   la page l'étiquette. Le classement, lui, n'en dépend d'aucun.         */
+var PHYS = {
+  N_BK7: { v: 1.51680, u: "", n: "indice du verre N-BK7 à la raie d (587,6 nm)",
+    s: "catalogue optique du borosilicate crown : n_d = 1,51680, la valeur de référence des lentilles de démonstration" },
+  N_PMMA: { v: 1.4914, u: "", n: "indice du PMMA (plexiglas) à 589 nm",
+    s: "l'autre matière courante des lentilles de collège ; la conclusion de la fiche dit « verre ou plastique »" },
+  R_AJOUT: { v: 0.1025, u: "m", n: "rayon de courbure des deux faces",
+    s: "AJOUT — choisi pour donner une focale de l'ordre de 100 mm, l'ordre de grandeur des lentilles de démonstration" },
+  D_AJOUT: { v: 0.034, u: "m", n: "diamètre utile de la lentille",
+    s: "AJOUT — monture de 40 mm, ouverture utile 34 mm" },
+  E_CENTRE: { v: 0.0039, u: "m", n: "épaisseur au centre de la lentille à bords minces",
+    s: "AJOUT — une lentille de démonstration de 100 mm de focale fait environ 4 mm au centre" },
+  E_BORD_MIN: { v: 0.0012, u: "m", n: "épaisseur au bord d'un verre monté",
+    s: "AJOUT — sous un millimètre, un bord de verre s'ébrèche ; c'est la limite de fabrication" },
+  H_TEXTE: { v: 0.0025, u: "m", n: "hauteur d'un caractère imprimé",
+    s: "corps 10 : la hauteur d'x fait environ 2,5 mm — c'est l'objet AB de l'épreuve du texte" }
+};
+function P(k) { return PHYS[k].v; }
+
+/* ==================================================================
+   3. LE YAML — le tableau à DEUX COLONNES, une par lentille
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var NL = LIG.length, NC = ENTETES.length;
+var SECU = (DONNEES.securite || []).map(depouille);
+var MATERIEL = (DONNEES.materiel || []).map(depouille);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var C_L1 = 1, C_L2 = 2;
+var L_TOUCHER = 0, L_TEXTE = 1, L_FAISCEAU = 2, L_NOM = 3;
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k) { return depouille((LIG[k] || [])[0]); }
+function enTete(c) { return depouille(ENTETES[c] || ""); }
+function secuOu(motif, repli) {
+  var i, re = new RegExp(motif, "i");
+  for (i = 0; i < SECU.length; i++) if (re.test(SECU[i])) return SECU[i];
+  return repli || (SECU[0] || "");
+}
+var S_TRANCHE = secuOu("par la tranche|face contre la table");
+var S_CONCENTRE = secuOu("concentre la lumière|Soleil");
+var S_SOURCE = secuOu("fixer directement la source");
+var S_EBRECHEE = secuOu("ébréchée|verre cassé");
+
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+var MODALITE = depouille(DONNEES.modalite || "");
+
+/* ==================================================================
+   4. RÉGLAGES
+   ==================================================================
+   ⚠ LA HAUTEUR AU-DESSUS DU TEXTE N'EST PAS DANS `PROTO` : c'est LA
+   manipulation de l'étape 2 — « soulever lentement de quelques
+   centimètres ». La faire entrer dans le garde-fou bloquerait le tableau
+   au premier geste juste. Même décision qu'en E2AC-18 pour la vitesse.  */
+var PROTO = { n: 1.517, R: 102.5, D: 34, men: 0 };
+var REG = { n: 1.517, R: 102.5, D: 34, men: 0, h: 2 };
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+
+/* ==================================================================
+   5. LE SOLVEUR — deux calottes sphériques, et rien d'autre
+   ==================================================================
+   Une lentille mince n'est pas un symbole à double flèche : c'est un
+   morceau de verre limité par deux calottes. Les deux lentilles de la
+   fiche ne diffèrent que par le SIGNE de leurs rayons.
+
+   Le curseur « ménisque » déplace la courbure de la seconde face :
+     men = 0    → biconvexe (L₁) ou biconcave (L₂), la fiche ;
+     men = 100  → seconde face PLANE ;
+     men = 150  → seconde face courbée dans le MÊME sens que la première,
+                  c'est-à-dire un MÉNISQUE — bombé des deux côtés, et
+                  pourtant convergent ou divergent selon le cas.
+   C'est la contre-épreuve : le critère qui résiste est « bords minces »,
+   pas « bombée ».                                                        */
+function rayons(cle) {
+  var R = REG.R, c2 = (cle === "L1" ? -1 : 1) * (1 - REG.men / 100);
+  return { R1: (cle === "L1" ? 1 : -1) * R,
+           R2: Math.abs(c2) < 1e-6 ? Infinity : R / c2 };
+}
+/* La FLÈCHE d'une calotte de rayon R sur un diamètre D : s = R − √(R² − D²/4).
+   Signée comme R — c'est elle qui fait toute l'épreuve du toucher. */
+function fleche(R, D) {
+  if (!isFinite(R) || R === 0) return 0;
+  var a = Math.abs(R), y = Math.min(D / 2, a * 0.9995);
+  var s = a - Math.sqrt(a * a - y * y);
+  return R > 0 ? s : -s;
+}
+/* La formule des opticiens, version ÉPAISSE — celle qui tient compte de e. */
+function focale(R1, R2, e, n) {
+  var i1 = isFinite(R1) ? 1 / R1 : 0, i2 = isFinite(R2) ? 1 / R2 : 0;
+  var t = (isFinite(R1) && isFinite(R2)) ? (n - 1) * e / (n * R1 * R2) : 0;
+  var inv = (n - 1) * (i1 - i2 + t);
+  return Math.abs(inv) < 1e-12 ? Infinity : 1 / inv;
+}
+/* La géométrie complète d'une lentille, en millimètres. */
+function lentille(cle) {
+  var r = rayons(cle), D = REG.D, s1 = fleche(r.R1, D), s2 = fleche(r.R2, D);
+  var ec, eb, f;
+  /* L'ÉPAISSEUR AU CENTRE n'est pas libre : un verre a un bord, et sous
+     un millimètre il s'ébrèche. On fixe donc le BORD au minimum de
+     fabrication quand la lentille est à bords épais, et le CENTRE quand
+     elle est à bords minces — c'est ce que fait un opticien. */
+  if (s1 - s2 > 0) {                     /* bords minces : le centre est épais */
+    eb = P("E_BORD_MIN") * 1000;
+    ec = eb + s1 - s2;
+  } else {                               /* bords épais : le centre est mince */
+    ec = P("E_BORD_MIN") * 1000;
+    eb = ec - s1 + s2;
+  }
+  f = focale(r.R1, r.R2, ec, REG.n);
+  return { cle: cle, R1: r.R1, R2: r.R2, D: D, s1: s1, s2: s2, ec: ec, eb: eb,
+           f: f, convergente: f > 0 };
+}
+/* --- LE TRACÉ DES RAYONS, en vecteurs, sans aucune approximation ------
+   Repère : z le long de l'axe (origine au centre de la lentille), y
+   transverse. Chaque dioptre est une sphère de sommet z = ∓e/2 et de
+   centre z = ∓e/2 + R. Descartes appliqué tel quel.                     */
+function normaliser(v) {
+  var m = Math.sqrt(v.z * v.z + v.y * v.y);
+  return { z: v.z / m, y: v.y / m };
+}
+function interSphere(P0, U, zv, R) {
+  if (!isFinite(R)) {                       /* face plane */
+    if (Math.abs(U.z) < 1e-12) return null;
+    var t = (zv - P0.z) / U.z;
+    return t > 1e-9 ? { z: zv, y: P0.y + t * U.y, N: { z: -1, y: 0 } } : null;
+  }
+  var C = zv + R, oz = P0.z - C, oy = P0.y;
+  var b = 2 * (U.z * oz + U.y * oy), c = oz * oz + oy * oy - R * R;
+  var disc = b * b - 4 * c, sq, t1, t2, ta, tb, za, zb, t, pz, py, N;
+  if (disc < 0) return null;
+  sq = Math.sqrt(disc);
+  t1 = (-b - sq) / 2; t2 = (-b + sq) / 2;
+  /* on prend l'intersection la plus proche du SOMMET : c'est la calotte
+     réelle, pas l'autre côté de la sphère */
+  za = P0.z + t1 * U.z; zb = P0.z + t2 * U.z;
+  ta = t1 > 1e-9 ? t1 : Infinity; tb = t2 > 1e-9 ? t2 : Infinity;
+  if (!isFinite(ta) && !isFinite(tb)) return null;
+  if (!isFinite(ta)) t = t2;
+  else if (!isFinite(tb)) t = t1;
+  else t = Math.abs(za - zv) <= Math.abs(zb - zv) ? t1 : t2;
+  pz = P0.z + t * U.z; py = P0.y + t * U.y;
+  N = normaliser({ z: (pz - C) / R, y: py / R });
+  return { z: pz, y: py, N: N };
+}
+function refracter(U, N, n1, n2) {
+  var cosi = -(U.z * N.z + U.y * N.y), nn = n1 / n2, k, f;
+  if (cosi < 0) { N = { z: -N.z, y: -N.y }; cosi = -cosi; }
+  k = 1 - nn * nn * (1 - cosi * cosi);
+  if (k < 0) return null;                    /* réflexion totale */
+  f = nn * cosi - Math.sqrt(k);
+  return normaliser({ z: nn * U.z + f * N.z, y: nn * U.y + f * N.y });
+}
+/* Un rayon parallèle à l'axe, à la hauteur y0 : rend sa marche et
+   l'abscisse où il coupe l'axe (null s'il ne la coupe jamais devant). */
+function tracerRayon(L, y0) {
+  var P0 = { z: -60, y: y0 }, U = { z: 1, y: 0 }, pts = [{ z: P0.z, y: y0 }];
+  var A = interSphere(P0, U, -L.ec / 2, L.R1), U1, B, U2, t, zc;
+  if (!A) return null;
+  pts.push({ z: A.z, y: A.y });
+  U1 = refracter(U, A.N, 1, REG.n);
+  if (!U1) return null;
+  B = interSphere({ z: A.z, y: A.y }, U1, L.ec / 2, L.R2);
+  if (!B) return null;
+  pts.push({ z: B.z, y: B.y });
+  U2 = refracter(U1, B.N, REG.n, 1);
+  if (!U2) return null;
+  zc = null;
+  if (Math.abs(U2.y) > 1e-12) {
+    t = -B.y / U2.y;
+    zc = B.z + t * U2.z;                     /* négatif = foyer VIRTUEL, en amont */
+  }
+  return { pts: pts, U: U2, B: B, zc: zc, y0: y0 };
+}
+/* ⚠ LA SOURCE N'ÉCLAIRE QUE PAR SES FENTES.
+   Le faisceau était calibré sur la LENTILLE — `ymax = L.D / 2 * 0.94` —, et
+   la source dessinée avait, elle, une hauteur fixe. Dès que le diamètre utile
+   dépassait le boîtier, les rayons extrêmes partaient du VIDE, au-dessus et
+   au-dessous de la lampe : on voyait de la lumière naître hors de la source.
+   Une fente multiple réelle a une ouverture FIXE ; c'est elle qui borne le
+   faisceau, et la lentille ne fait que prélever dedans — jamais l'inverse.
+   L'ouverture est donc posée UNE fois, en millimètres, et tout s'y réfère :
+   le nombre de rayons, la position des fentes sur le boîtier, sa hauteur.
+   Une fente dont le rayon manquerait la lentille n'est pas tracée : c'est le
+   cas d'une petite lentille sous un faisceau large, et il est réel.        */
+var N_RAYONS = 9;                  /* un rayon par fente, ni plus ni moins  */
+var DEMI_FENTE = 15;               /* mm — demi-ouverture utile de la source */
+var PAS_FENTE = 2 * DEMI_FENTE / (N_RAYONS - 1);       /* 3,75 mm de pas    */
+function yFente(i) { return -DEMI_FENTE + i * PAS_FENTE; }
+function faisceau(L) {
+  var out = [], i, y0, r, rmax = L.D / 2 * 0.94;
+  for (i = 0; i < N_RAYONS; i++) {
+    y0 = yFente(i);
+    if (Math.abs(y0) > rmax) continue;       /* cette fente manque la lentille */
+    if (Math.abs(y0) < 1e-6) y0 = 1e-3;      /* le rayon d'axe ne coupe rien */
+    r = tracerRayon(L, y0);
+    if (r) out.push(r);
+  }
+  return out;
+}
+/* Le foyer PARAXIAL, mesuré sur le rayon le plus proche de l'axe, et le
+   foyer MARGINAL : leur écart EST l'aberration de sphéricité. */
+function foyers(L) {
+  var f = faisceau(L), i, para = null, marg = null, ymin = 1e9, ymax = 0;
+  for (i = 0; i < f.length; i++) {
+    if (f[i].zc === null) continue;
+    if (Math.abs(f[i].y0) < ymin) { ymin = Math.abs(f[i].y0); para = f[i].zc; }
+    if (Math.abs(f[i].y0) > ymax) { ymax = Math.abs(f[i].y0); marg = f[i].zc; }
+  }
+  return { para: para, marg: marg,
+           aber: (para !== null && marg !== null) ? marg - para : null };
+}
+/* --- LES QUATRE CELLULES, calculées ---------------------------------- */
+function motToucher(L) {
+  return L.ec > L.eb ? "centre épais, bords minces" : "centre mince, bords épais";
+}
+function grandissement(L, h_cm) {
+  var h = h_cm * 10;                          /* en millimètres */
+  if (!isFinite(L.f)) return 1;
+  return L.f / (L.f - h);
+}
+function motTexte(L) {
+  /* le verdict porte sur TOUTE la course que le protocole décrit —
+     « soulever lentement de quelques centimètres » —, pas sur un point */
+  var g1 = grandissement(L, 1), g5 = grandissement(L, 5);
+  if (g1 > 1.02 && g5 > 1.02) return "lettres agrandies";
+  if (g1 < 0.98 && g5 < 0.98) return "lettres rétrécies";
+  return "lettres inchangées";
+}
+function motFaisceau(L) {
+  var F = foyers(L);
+  if (F.para === null) return "les rayons restent parallèles";
+  return F.para > 0 ? "converge en un point" : "diverge, les rayons s'écartent";
+}
+function motNom(L) { return L.convergente ? "convergente" : "divergente"; }
+function celluleCalculee(k, L) {
+  if (k === L_TOUCHER) return motToucher(L);
+  if (k === L_TEXTE) return motTexte(L);
+  if (k === L_FAISCEAU) return motFaisceau(L);
+  if (k === L_NOM) return motNom(L);
+  return "";
+}
+
+/* ==================================================================
+   7. L'ÉTAT — ⚠ §12.17 : toute clé lue dans le code figure ici.
+   ================================================================== */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0, svg = null;
+var COUCHES = {};
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+function relVierge() {
+  var m = [], i, j;
+  for (i = 0; i < NL; i++) { m.push([]); for (j = 0; j < NC; j++) m[i].push(false); }
+  return m;
+}
+function neufEtat() {
+  return { palpe: false, banc: false, lampe: false, craie: false, nomme: false,
+           dans: null, surTexte: null,
+           rel: relVierge(), mesures: {},
+           tSeance: 0, retenue: 0, horsProto: false };
+}
+var CHECKS = [
+  { k: "banc", n: "Banc installé : source, porte-lentille, écran", faire: "installer le banc" },
+  { k: "palpe", n: "Lentilles tenues par la tranche et palpées", faire: "palper les deux lentilles" }
+];
+function checkManquant() {
+  var i;
+  for (i = 0; i < CHECKS.length; i++) if (!ETAT[CHECKS[i].k]) return CHECKS[i];
+  return null;
+}
+function colonneDe(cle) { return cle === "L1" ? C_L1 : C_L2; }
+function autreLentille(cle) { return cle === "L1" ? "L2" : "L1"; }
+function ligneRestante() {
+  var i, c;
+  for (i = 0; i < NL; i++) {
+    for (c = 1; c < NC; c++) if (!ETAT.rel[i][c]) return { k: i, c: c };
+  }
+  return null;
+}
+function toutesCellules() { return ligneRestante() === null; }
+
+/* ==================================================================
+   8. LA GÉOMÉTRIE — le banc vu de CÔTÉ, dans le plan méridien
+   ==================================================================
+   Zones interdites, mesurées (§12.42) : journal x 14→262 et y ≤ 205 ;
+   consigne x 269→851 et y ≤ 95 ; boutons ronds x ≥ 940, y 12→60.
+   Quatre pixels par millimètre, sur les deux axes : le diamètre de la
+   lentille, ses deux calottes et la marche de chaque rayon sont donc à
+   la MÊME échelle, celle du calcul.                                      */
+var W = 1120, H = 760, AXE = 250, ECH = 4;
+var X_SRC = 110, X_LENT = 430, X_ECRAN = 930;
+var PAILL_Y = 470, MEUBLE_Y = 596, Y_BOUTONS = 682;
+var PLAT_X0 = 120, PLAT_X1 = 560, PLAT_CY = 540;
+var TXT_X0 = 620, TXT_X1 = 1090, TXT_Y = 500;
+var ECHL = 1.2;                     /* px par mm pour la hauteur au-dessus du texte */
+var Y_ETIQ = { vue: 116, vue2: 134, src: 402, lent: 402, ecran: 402,
+               plateau: 492, texte: 492 };
+function homeL(cle) { return { x: cle === "L1" ? 220 : 400, y: PLAT_CY }; }
+function xTexte(cle) { return cle === "L1" ? 760 : 950; }
+function yTexte() { return TXT_Y - REG.h * 10 * ECHL; }
+
+/* ==================================================================
+   9. DÉFS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  function rgrad(id, stops) {
+    g = el("radialGradient", { id: id, cx: .5, cy: .5, r: .5 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [0.55, "#eef2f7"], [1, "#dde5ee"]]);
+  grad("murSombre", [[0, "#4b5563"], [0.55, "#343d49"], [1, "#242c36"]]);
+  grad("bois", [[0, "#c79a4e"], [0.35, "#b8862f"], [1, "#8a6220"]]);
+  grad("meuble", [[0, "#2b323b"], [1, "#171c23"]]);
+  grad("inox", [[0, "#79838f"], [0.26, "#c9d2db"], [0.5, "#eef2f6"],
+                [0.74, "#a3adb9"], [1, "#6d7681"]], true);
+  grad("inoxV", [[0, "#6d7681"], [0.3, "#b7c0cb"], [0.55, "#e6ebf1"], [1, "#79838f"]]);
+  /* §10.2 : le verre, ce sont TROIS choses — un voile de teinte, un reflet
+     vertical net près du bord, une arête sombre. Sans le reflet, ce n'est
+     jamais du verre. */
+  grad("verre", [[0, "#b6c4d2"], [0.18, "#dfe7ef"], [0.42, "#ffffff"],
+                 [0.72, "#d3dde7"], [1, "#a9b8c8"]], true);
+  rgrad("halo", [[0, "#fff6dd", .9], [1, "#fff6dd", 0]]);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#000000", "flood-opacity": .45 }));
+  D.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 10, stdDeviation: 9,
+    "flood-color": "#000000", "flood-opacity": .6 }));
+  D.appendChild(f);
+  f = el("filter", { id: "flou", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  D.appendChild(f);
+}
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 };
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo; a["stroke-width"] = 3;
+    a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function etiqG(g, x, y, s, ancre, couleur) {
+  g.appendChild(el("text", { x: x, y: y, "text-anchor": ancre || "middle",
+    "font-size": 11.5, "font-weight": "bold", fill: couleur || ORANGE,
+    "letter-spacing": 1.1, "paint-order": "stroke", stroke: "#eef2f7",
+    "stroke-width": 3, "stroke-linejoin": "round", "pointer-events": "none" }, s));
+}
+
+/* ==================================================================
+   11. LE DÉCOR
+   ================================================================== */
+var gMur;
+function construireDecor() {
+  gMur = ajout("fond", el("rect", { x: 0, y: 0, width: W, height: MEUBLE_Y,
+    fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: PAILL_Y, width: W, height: 16, fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: MEUBLE_Y, width: W, height: H - MEUBLE_Y,
+    fill: "url(#meuble)" }));
+  ajout("poste", el("rect", { x: PLAT_X0, y: 496, width: PLAT_X1 - PLAT_X0,
+    height: 88, rx: 10, fill: "#e7e2d4", stroke: "#a8956f", "stroke-width": 2 }));
+  txt("poste", PLAT_X0 + 6, Y_ETIQ.plateau,
+      "les deux lentilles — les prendre PAR LA TRANCHE",
+      { ancre: "start", taille: 11, gras: true, couleur: ORANGE, halo: "#eef2f7" });
+  txt("poste", W - 20, Y_ETIQ.vue, "LE BANC, VU DE CÔTÉ",
+      { ancre: "end", taille: 13, gras: true, couleur: "#3f4a58", esp: 1.6,
+        halo: "#eef2f7" });
+  txt("poste", W - 20, Y_ETIQ.vue2,
+      "plan méridien — le seul où un tracé de rayons a un sens · 4 pixels par millimètre",
+      { ancre: "end", taille: 10.5, couleur: "#6b7686", halo: "#eef2f7" });
+}
+
+/* ==================================================================
+   12. LA SCÈNE : LE BANC, LE TEXTE, LES DEUX LENTILLES
+   ================================================================== */
+var gBanc, gTexte, gRayonsN, gLent = {}, gPorte;
+function construireScene() {
+  gRayonsN = ajout("fils", el("g", { "pointer-events": "none" }));
+  gBanc = ajout("poste", el("g", {}));
+  gTexte = ajout("poste", el("g", {}));
+  ["L1", "L2"].forEach(function (q) {
+    gLent[q] = ajout("objets", el("g", { cursor: "grab", "data-act": "obj-" + q }));
+  });
+  redessinerScene();
+}
+/* Le dessin d'une lentille EST son calcul : les deux calottes sont tracées
+   à leurs rayons, et l'épaisseur au bord se voit (§12.18). */
+function dessinerLentille(g, L, ech, opac) {
+  var hy = L.D / 2 * ech, e1 = L.ec / 2 * ech;
+  var s1 = L.s1 * ech, s2 = L.s2 * ech, i, n = 26, t, y, z1, z2, d1 = "", d2 = "";
+  /* on trace les deux profils POINT PAR POINT, à partir des rayons :
+     z(y) = sommet ∓ (R − signe·√(R² − y²)) — c'est la calotte, pas une
+     courbe de Bézier choisie à la main. */
+  for (i = 0; i <= n; i++) {
+    y = -hy + 2 * hy * i / n;
+    z1 = -e1 + profil(L.R1, y / ech) * ech;
+    z2 = e1 + profil(L.R2, y / ech) * ech;
+    d1 += (i ? " L " : "M ") + pt(z1, y);
+    d2 += " L " + pt(z2, y);
+  }
+  /* le chemin fermé : face 1 de bas en haut, face 2 de haut en bas */
+  var d = d1;
+  for (i = n; i >= 0; i--) {
+    y = -hy + 2 * hy * i / n;
+    z2 = e1 + profil(L.R2, y / ech) * ech;
+    d += " L " + pt(z2, y);
+  }
+  g.appendChild(el("path", { d: d + " Z", fill: "url(#verre)", opacity: opac || 0.62,
+    stroke: "#7f93a6", "stroke-width": 2, "pointer-events": "none" }));
+  /* le reflet vertical, sans lequel ce n'est jamais du verre (§10.2) */
+  g.appendChild(el("path", { d: "M " + pt(-e1 * 0.2, -hy * 0.72) + " L " +
+    pt(-e1 * 0.2, hy * 0.72), stroke: "#ffffff", "stroke-width": 3,
+    opacity: 0.6, "pointer-events": "none" }));
+}
+/* z du profil d'une calotte de rayon R à la hauteur y, compté depuis le
+   sommet — positif vers l'intérieur du verre pour R > 0. */
+function profil(R, y) {
+  if (!isFinite(R) || R === 0) return 0;
+  var a = Math.abs(R), yy = Math.min(Math.abs(y), a * 0.9999);
+  var s = a - Math.sqrt(a * a - yy * yy);
+  return R > 0 ? -s : s;
+}
+function redessinerScene() {
+  var i, y;
+  vide(gBanc); vide(gTexte);
+  /* ---- LA SOURCE À FENTE MULTIPLE ---- */
+  /* Le boîtier est DÉDUIT de son ouverture : il contient ses fentes, et un
+     rayon ne peut donc plus partir d'à côté de la lampe. */
+  var HB = DEMI_FENTE * ECH + 12;
+  gBanc.appendChild(el("rect", { x: X_SRC - 40, y: AXE - HB, width: 60,
+    height: 2 * HB,
+    rx: 8, fill: "url(#inox)", stroke: "#4f5862", "stroke-width": 2,
+    filter: "url(#ombreDouce)", "pointer-events": "none" }));
+  for (i = 0; i < N_RAYONS; i++) {
+    y = AXE - yFente(i) * ECH;
+    gBanc.appendChild(el("rect", { x: X_SRC + 18, y: y - 2.5, width: 5, height: 5,
+      fill: ETAT.lampe ? "#fff3c4" : "#3f4a58", "pointer-events": "none" }));
+  }
+  if (ETAT.lampe) {
+    gBanc.appendChild(el("circle", { cx: X_SRC + 20, cy: AXE, r: HB + 8,
+      fill: "url(#halo)", opacity: 0.85, "pointer-events": "none" }));
+  }
+  pied(gBanc, X_SRC, AXE + HB);
+  etiqG(gBanc, X_SRC, Y_ETIQ.src, "source à fente multiple");
+  /* ---- LE PORTE-LENTILLE, le MÊME pour les deux ---- */
+  gPorte = gBanc.appendChild(el("g", {}));
+  gPorte.appendChild(el("rect", { x: X_LENT - 46, y: AXE - 84, width: 10,
+    height: 168, rx: 3, fill: "url(#inoxV)", stroke: "#5d6670",
+    "pointer-events": "none" }));
+  gPorte.appendChild(el("rect", { x: X_LENT + 36, y: AXE - 84, width: 10,
+    height: 168, rx: 3, fill: "url(#inoxV)", stroke: "#5d6670",
+    "pointer-events": "none" }));
+  gPorte.appendChild(el("rect", { x: X_LENT - 36, y: AXE - 80, width: 72,
+    height: 160, rx: 5, fill: "#ffffff", "fill-opacity": 0.001,
+    stroke: LIGNE, "stroke-width": 1.4, "stroke-dasharray": "5 5",
+    "pointer-events": "none" }));
+  pied(gBanc, X_LENT, AXE + 84);
+  etiqG(gBanc, X_LENT, Y_ETIQ.lent, "porte-lentille");
+  /* ---- L'ÉCRAN ---- */
+  gBanc.appendChild(el("rect", { x: X_ECRAN - 7, y: AXE - 120, width: 14,
+    height: 240, rx: 3, fill: "#f4f7fa", stroke: "#9aa5b2", "stroke-width": 2,
+    filter: "url(#ombreDouce)", "pointer-events": "none" }));
+  pied(gBanc, X_ECRAN, AXE + 120);
+  etiqG(gBanc, X_ECRAN, Y_ETIQ.ecran, "écran");
+  /* ---- LA FEUILLE DE TEXTE ---- */
+  gTexte.appendChild(el("rect", { x: TXT_X0, y: 496, width: TXT_X1 - TXT_X0,
+    height: 88, rx: 4, fill: "#fbfaf6", stroke: "#c9bda0", "stroke-width": 2,
+    "pointer-events": "none" }));
+  for (i = 0; i < 5; i++) {
+    gTexte.appendChild(el("rect", { x: TXT_X0 + 16, y: 510 + i * 14,
+      width: (TXT_X1 - TXT_X0) - 32 - (i % 2) * 60, height: 4, rx: 2,
+      fill: "#8a94a4", "pointer-events": "none" }));
+  }
+  /* ⚠ DANS `gTexte`, PAS DANS LA COUCHE — meme piege qu'a la page voisine.
+     `redessinerScene()` ne vide que `gBanc` et `gTexte` ; deposee dans
+     « poste », cette etiquette survivait a chaque redessin et s'empilait
+     (mesure du 15/08 : deux exemplaires au chargement, trois apres six
+     pressions). `txt()` rend son noeud, on le reparente. */
+  gTexte.appendChild(txt("poste", TXT_X0 + 6, Y_ETIQ.texte,
+      "le texte imprimé — poser la lentille dessus, puis la SOULEVER",
+      { ancre: "start", taille: 11, gras: true, couleur: ORANGE, halo: "#eef2f7" }));
+  redessinerLentilles();
+}
+function pied(g, x, yHaut) {
+  g.appendChild(el("rect", { x: x - 6, y: yHaut, width: 12, height: PAILL_Y - yHaut,
+    rx: 3, fill: "url(#inoxV)", stroke: "#5d6670", "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: x, cy: PAILL_Y + 3, rx: 24, ry: 6,
+    fill: "url(#inox)", stroke: "#5d6670", "pointer-events": "none" }));
+}
+function placeDe(cle) {
+  if (ETAT.dans === cle) return { x: X_LENT, y: AXE, ech: ECH };
+  if (ETAT.surTexte === cle) return { x: xTexte(cle), y: yTexte(), ech: 1.9 };
+  var h = homeL(cle);
+  return { x: h.x, y: h.y, ech: 1.5 };
+}
+function redessinerLentilles() {
+  ["L1", "L2"].forEach(function (q) {
+    var g = gLent[q], L = lentille(q), p = placeDe(q), hy = L.D / 2 * p.ech;
+    vide(g);
+    g.appendChild(el("rect", { x: -34, y: -hy - 22, width: 68, height: 2 * hy + 44,
+      fill: "#ffffff", "fill-opacity": 0.001 }));
+    dessinerLentille(g, L, p.ech, ETAT.dans === q ? 0.7 : 0.6);
+    g.appendChild(el("text", { x: 0, y: hy + 20, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold",
+      fill: ETAT.dans === q ? VERT : INK, "paint-order": "stroke",
+      stroke: "#eef2f7", "stroke-width": 3, "pointer-events": "none" },
+      enTete(colonneDe(q))));
+    g.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+  });
+}
+/* ==================================================================
+   14. LE TRACÉ DES RAYONS SUR LA SCÈNE — il RELIT le solveur
+   ================================================================== */
+function redessinerLumiere() {
+  var L, f, i, r, d, j, zc, xEnd;
+  vide(gRayonsN);
+  if (!ETAT.lampe || !ETAT.banc) return;
+  if (!ETAT.dans) {
+    /* Faisceau parallèle, sans lentille : il traverse tout droit. Les rayons
+       sortent des FENTES, aux hauteurs mêmes où le boîtier les porte — ils
+       étaient sept, posés à la main, et les deux extrêmes tombaient hors du
+       boîtier. */
+    for (i = 0; i < N_RAYONS; i++) {
+      var y = AXE - yFente(i) * ECH;
+      gRayonsN.appendChild(el("path", { d: "M " + pt(X_SRC + 22, y) + " L " +
+        pt(X_ECRAN - 8, y), fill: "none", stroke: JAUNE, "stroke-width": 2,
+        opacity: ETAT.craie ? 0.95 : 0.55 }));
+    }
+    return;
+  }
+  L = lentille(ETAT.dans);
+  f = faisceau(L);
+  for (i = 0; i < f.length; i++) {
+    r = f[i];
+    d = "M " + pt(X_SRC + 22, AXE - r.y0 * ECH);
+    for (j = 1; j < r.pts.length; j++) {
+      d += " L " + pt(X_LENT + r.pts[j].z * ECH, AXE - r.pts[j].y * ECH);
+    }
+    /* après la lentille : jusqu'à l'écran, en suivant la direction sortante */
+    xEnd = X_ECRAN - 8;
+    var tz = (xEnd - (X_LENT + r.B.z * ECH)) / (r.U.z * ECH);
+    d += " L " + pt(xEnd, AXE - (r.B.y + tz * r.U.y) * ECH);
+    gRayonsN.appendChild(el("path", { d: d, fill: "none", stroke: LISERE,
+      "stroke-width": 3.4, opacity: ETAT.craie ? 0.5 : 0.28 }));
+    gRayonsN.appendChild(el("path", { d: d, fill: "none", stroke: JAUNE,
+      "stroke-width": 1.8, opacity: ETAT.craie ? 1 : 0.6 }));
+    /* le prolongement EN AMONT, quand le foyer est virtuel — c'est ce qui
+       fait voir que les rayons « s'écartent » d'un point situé devant */
+    if (r.zc !== null && r.zc < 0) {
+      gRayonsN.appendChild(el("path", { d: "M " + pt(X_LENT + r.B.z * ECH,
+        AXE - r.B.y * ECH) + " L " + pt(X_LENT + r.zc * ECH, AXE),
+        fill: "none", stroke: SCHEMA, "stroke-width": 1.2,
+        "stroke-dasharray": "5 4", opacity: 0.8 }));
+    }
+  }
+  /* le FOYER, marqué là où le tracé le met */
+  var F = foyers(L);
+  if (F.para !== null) {
+    var xf = X_LENT + F.para * ECH;
+    if (xf > 40 && xf < W - 40) {
+      gRayonsN.appendChild(el("circle", { cx: xf, cy: AXE, r: 5,
+        fill: F.para > 0 ? ORANGE : SCHEMA }));
+      gRayonsN.appendChild(el("text", { x: xf, y: AXE - 14, "text-anchor": "middle",
+        "font-size": 11, "font-weight": "bold", fill: F.para > 0 ? ORANGE : SCHEMA,
+        "paint-order": "stroke", stroke: "#eef2f7", "stroke-width": 3 },
+        (F.para > 0 ? "F′ réel" : "F′ virtuel") + " à " + nb(F.para, 0) + " mm"));
+    }
+  }
+  if (ETAT.craie) {
+    for (i = 0; i < 40; i++) {
+      gRayonsN.appendChild(el("circle", {
+        cx: X_LENT + 30 + i * (X_ECRAN - X_LENT - 40) / 40,
+        cy: AXE + ((i * 37) % 23 - 11) * 3.4, r: 1.5 + (i % 3) * 0.5,
+        fill: "#ffffff", opacity: 0.5 }));
+    }
+  }
+}
+
+/* ==================================================================
+   15. LES BOUTONS DE SCÈNE
+   ================================================================== */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var t = [0, 1].map(function () {
+    return g.appendChild(el("text", { x: cx, y: cy, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: GRIS,
+      "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, ""));
+  });
+  function poserLibelle(s) {
+    var q = lignesTxt(s, 16);
+    if (q.length < 2) { t[0].textContent = q[0] || ""; t[0].setAttribute("y", cy + 5);
+                        t[1].textContent = ""; }
+    else { t[0].textContent = q[0]; t[0].setAttribute("y", cy - 2);
+           t[1].textContent = q.slice(1).join(" "); t[1].setAttribute("y", cy + 12); }
+  }
+  poserLibelle(l1);
+  function peindre(fond, trait, encre, ep) {
+    r.setAttribute("fill", fond); r.setAttribute("stroke", trait);
+    r.setAttribute("stroke-width", ep);
+    t.forEach(function (n) { n.setAttribute("fill", encre); });
+  }
+  BOUTONS[act] = { cx: cx, cy: cy, w: w, h: ht, libelle: poserLibelle,
+    armer: function (v) {
+      if (r.getAttribute("data-fait") === "1") return;
+      peindre("#ffffff", v ? GOLD : LIGNE, v ? INK : GRIS, v ? 2.6 : 1.8);
+    },
+    fait: function () { r.setAttribute("data-fait", "1"); peindre("#eef6e6", VERT, VERT, 2); },
+    neuf: function () { r.removeAttribute("data-fait"); peindre("#ffffff", LIGNE, GRIS, 1.8); } };
+  return BOUTONS[act];
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (e) {
+    var n = e.target, a = null;
+    while (n && n !== svg) {
+      if (n.getAttribute && n.getAttribute("data-act")) { a = n.getAttribute("data-act"); break; }
+      n = n.parentNode;
+    }
+    if (!a || /^obj-/.test(a)) return;
+    agir(a);
+  });
+}
+function agir(a) {
+  if (a === "palper") { palperLesDeux(); return; }
+  if (a === "banc") { installerBanc(); return; }
+  if (a === "allumer") { basculerLampe(); return; }
+  if (a === "craie") { soufflerCraie(); return; }
+  if (a === "observer") { observerFaisceau(); return; }
+  if (a === "nommer") { nommerEtDessiner(); return; }
+}
+
+/* ==================================================================
+   16. PRENDRE ET DÉPOSER
+   ==================================================================
+   Une seule chose se glisse — une lentille — et elle a trois places : le
+   plateau, le TEXTE (épreuve 2) et le porte-lentille (épreuve 3). Le
+   porte-lentille est UNIQUE, comme le dit le matériel : y déposer la
+   seconde lentille renvoie la première sur le plateau, et c'est ce qui
+   fait du témoin un témoin.                                             */
+var prise = null, ptSVG = null, cibles = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function noeudDe(q) { return gLent[q]; }
+function maison(q) { var p = placeDe(q); return { x: p.x, y: p.y }; }
+function replacer() { redessinerLentilles(); }
+/* §12.16 : de la plus PETITE zone à la plus GRANDE. */
+function emplacements(q) {
+  return [
+    { type: "porte", x: X_LENT, y: AXE, r: 76 },
+    { type: "texte", x: xTexte(q), y: yTexte(), r: 84 },
+    { type: "plateau", x: homeL(q).x, y: PLAT_CY, r: 120 }
+  ];
+}
+function zoneType(q, type) {
+  var z = emplacements(q), i;
+  for (i = 0; i < z.length; i++) if (z[i].type === type) return z[i];
+  return null;
+}
+function montrerCibles(q) {
+  effacerCibles();
+  emplacements(q).forEach(function (c) {
+    var n = ajout("arriere", el("circle", { cx: c.x, cy: c.y, r: 30, fill: "none",
+      stroke: GOLD, "stroke-width": 3, "stroke-dasharray": "9 6",
+      "pointer-events": "none" }));
+    n.appendChild(el("animate", { attributeName: "opacity", values: "1;.35;1",
+      dur: "1.2s", repeatCount: "indefinite" }));
+    cibles.push(n);
+  });
+}
+function effacerCibles() {
+  cibles.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  cibles = [];
+}
+function cibleLaPlusProche(q, p) {
+  var z = emplacements(q), i, d, best = null, bd = 1e9;
+  for (i = 0; i < z.length; i++) {
+    d = Math.sqrt(Math.pow(p.x - z[i].x, 2) + Math.pow(p.y - z[i].y, 2));
+    if (d <= z[i].r && d < bd) { bd = d; best = z[i]; }
+  }
+  return best;
+}
+function saisir(q, e) {
+  if (prise) return;                                   /* verrou en 1re ligne */
+  e.preventDefault();
+  var m = maison(q), p = versSVG(e), g = noeudDe(q);
+  if (!g) return;
+  prise = { quoi: q, id: e.pointerId, dx: m.x - p.x, dy: m.y - p.y,
+            x0: p.x, y0: p.y, bouge: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  g.setAttribute("filter", "url(#ombrePrise)");
+  COUCHES.drag.appendChild(g);
+  montrerCibles(q);
+  secuDire(S_TRANCHE, "");
+}
+function brancherPrise() {
+  ["L1", "L2"].forEach(function (q) {
+    var n = noeudDe(q);
+    if (n) n.addEventListener("pointerdown", function (e) { saisir(q, e); });
+  });
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    var p = versSVG(e), g = noeudDe(prise.quoi);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    g.setAttribute("transform", "translate(" + (p.x + prise.dx).toFixed(1) + "," +
+      (p.y + prise.dy).toFixed(1) + ")");
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var p = versSVG(e), d = prise, g = noeudDe(prise.quoi), cible;
+    prise = null;
+    effacerCibles();
+    if (g) { g.removeAttribute("filter"); COUCHES.objets.appendChild(g); }
+    if (!d.bouge) { replacer(); signaler(ouPoser(d.quoi)); return; }
+    cible = cibleLaPlusProche(d.quoi, p);
+    if (!cible) { replacer(); signaler(ouPoser(d.quoi)); return; }
+    deposer(d.quoi, cible);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);      /* ne PAS l'oublier */
+}
+function ouPoser(q) {
+  return "Une lentille a trois places : le <b>plateau</b>, le <b>texte</b> " +
+    "imprimé, ou le <b>porte-lentille</b> du banc.";
+}
+
+/* ==================================================================
+   17. CE QUE FONT LES GESTES — chemin COMMUN au glisser et au bouton
+   ================================================================== */
+function deposer(q, cible) {
+  if (!cible) { replacer(); return; }
+  if (cible.type === "porte") { monterDansPorte(q); return; }
+  if (cible.type === "texte") { poserSurTexte(q); return; }
+  retirer(q);
+}
+function retirer(q) {
+  if (ETAT.dans === q) ETAT.dans = null;
+  if (ETAT.surTexte === q) ETAT.surTexte = null;
+  redessinerLentilles(); majTout();
+}
+function monterDansPorte(q) {
+  if (ETAT.dans === q) { replacer(); signaler("Cette lentille est déjà en place."); return; }
+  var avant = ETAT.dans;
+  ETAT.dans = q;                                       /* l'état AVANT l'image */
+  if (ETAT.surTexte === q) ETAT.surTexte = null;
+  var L = lentille(q), F = foyers(L);
+  succes(enTete(colonneDe(q)) + " dans le porte-lentille" +
+    (avant ? ", à la place de " + enTete(colonneDe(avant)) : "") +
+    ". Rien d'autre n'a bougé — ni la source, ni le porte-lentille, ni " +
+    "l'écran : c'est ce qui en fait un témoin. f′ = " +
+    (isFinite(L.f) ? nb(L.f, 1) + " mm" : "infinie") + ".");
+  secuDire(L.convergente ? S_CONCENTRE : S_TRANCHE, "");
+  redessinerLentilles(); majTout();
+}
+function poserSurTexte(q) {
+  if (ETAT.dans === q) ETAT.dans = null;
+  ETAT.surTexte = q;
+  var L = lentille(q), g = grandissement(L, REG.h), k = L_TEXTE, c = colonneDe(q);
+  redessinerLentilles();
+  if (!ETAT.rel[k][c]) {
+    ETAT.rel[k][c] = true;
+    ETAT.mesures[c] = L;
+    revelerCellule(k, c);
+    verifierAccord(k, c, L);
+  }
+  succes(enTete(c) + " posée sur le texte puis soulevée de " + nb(REG.h, 1) +
+    " cm : γ = f′/(f′ − h) = " + nb(g, 2) + ". " +
+    (g > 1.02 ? "Les lettres sont agrandies." : (g < 0.98
+      ? "Les lettres sont rétrécies." : "Les lettres sont inchangées.")) +
+    " Posée à plat — h = 0 —, γ vaudrait " + nb(grandissement(L, 0), 2) +
+    " : « grossir » ne définit pas une lentille.");
+  majTout();
+}
+function palperLesDeux() {
+  if (ETAT.palpe) { signaler("Les deux lentilles sont déjà palpées."); return; }
+  var a = lentille("L1"), b = lentille("L2");
+  ETAT.palpe = true;
+  [["L1", a], ["L2", b]].forEach(function (q) {
+    var c = colonneDe(q[0]);
+    if (ETAT.rel[L_TOUCHER][c]) return;
+    ETAT.rel[L_TOUCHER][c] = true;
+    ETAT.mesures[c] = q[1];
+    revelerCellule(L_TOUCHER, c);
+    verifierAccord(L_TOUCHER, c, q[1]);
+  });
+  succes("Palpées par la tranche : " + enTete(C_L1) + " fait " +
+    nb(a.ec, 2) + " mm au centre et " + nb(a.eb, 2) + " mm au bord ; " +
+    enTete(C_L2) + " fait " + nb(b.ec, 2) + " mm au centre et " +
+    nb(b.eb, 2) + " mm au bord. Ce sont deux soustractions de flèches, pas " +
+    "deux étiquettes.");
+  secuDire(S_TRANCHE, "ok");
+  majTout();
+}
+function installerBanc() {
+  if (ETAT.banc) { signaler("Le banc est déjà installé."); return; }
+  ETAT.banc = true;
+  succes("Banc installé : la source à fente multiple, le porte-lentille — le " +
+    "MÊME pour les deux lentilles —, puis l'écran.");
+  secuDire(S_SOURCE, "ok");
+  majTout();
+}
+function basculerLampe() {
+  if (!ETAT.lampe && !ETAT.banc) {
+    refus("Installer d'abord le banc.", S_SOURCE);
+    return;
+  }
+  ETAT.lampe = !ETAT.lampe;
+  if (ETAT.lampe) { succes("Source allumée : un faisceau de rayons parallèles. " +
+    "Ne jamais la fixer."); secuDire(S_SOURCE, "ok"); }
+  else noter("Source éteinte.", false);
+  redessinerScene(); majTout();
+}
+function soufflerCraie() {
+  if (!ETAT.lampe) {
+    refus("Souffler de la craie devant une source éteinte ne montre rien : " +
+          "c'est le trajet des rayons qu'on veut rendre visible.", S_SOURCE);
+    return;
+  }
+  ETAT.craie = !ETAT.craie;
+  if (ETAT.craie) succes("Poussière de craie : le trajet des rayons devient " +
+    "visible APRÈS la lentille — c'est là que tout se joue.");
+  else noter("La poussière retombe.", false);
+  majTout();
+}
+function verifierAccord(k, c, L) {
+  if (ETAT.horsProto) return;
+  var mot = celluleCalculee(k, L), att = cel(k, c).toLowerCase();
+  if (att.indexOf(mot.toLowerCase()) < 0) {
+    noter("⚠ Le modèle et la fiche divergent sur « " + intitule(k) + " » / " +
+      enTete(c) + " : le modèle obtient « " + mot + " » là où la fiche écrit " +
+      "« " + cel(k, c) + " ». Vérifier les constantes.", false);
+  }
+}
+function observerFaisceau() {
+  if (!ETAT.banc) { refus("Installer d'abord le banc.", S_SOURCE); return; }
+  if (!ETAT.lampe) { refus("La source est éteinte.", S_SOURCE); return; }
+  if (!ETAT.dans) {
+    signaler("Placer d'abord une lentille dans le porte-lentille.");
+    return;
+  }
+  var q = ETAT.dans, c = colonneDe(q), L = lentille(q), F = foyers(L);
+  if (ETAT.rel[L_FAISCEAU][c]) { signaler("Cette case est déjà consignée."); return; }
+  ETAT.rel[L_FAISCEAU][c] = true;
+  ETAT.mesures[c] = L;
+  revelerCellule(L_FAISCEAU, c);
+  verifierAccord(L_FAISCEAU, c, L);
+  /* Le compte est LU, non annoncé : une lentille plus étroite que le faisceau
+     laisse passer moins de rayons qu'il n'y a de fentes. */
+  succes(faisceau(L).length + " rayons tracés à travers " + enTete(c) +
+    " : ils coupent l'axe " +
+    (F.para === null ? "nulle part — ils restent parallèles"
+      : "à " + nb(F.para, 1) + " mm de la lentille" +
+        (F.para > 0 ? ", DERRIÈRE elle : ils convergent"
+                    : ", DEVANT elle : leurs prolongements se croisent, ils divergent")) +
+    ". Aucune formule de lentille mince n'a servi : c'est Descartes sur " +
+    "chacun des deux dioptres.");
+  majTout();
+}
+function nommerEtDessiner() {
+  var i, c, manque = 0;
+  for (i = 0; i < L_NOM; i++) {
+    for (c = 1; c < NC; c++) if (!ETAT.rel[i][c]) manque++;
+  }
+  if (manque > 0) {
+    signaler("Il reste " + manque + " épreuve" + (manque > 1 ? "s" : "") +
+      " à reporter avant de nommer les lentilles : les trois épreuves d'abord, " +
+      "le nom ensuite.");
+    return;
+  }
+  ETAT.nomme = true;
+  ["L1", "L2"].forEach(function (q) {
+    var cc = colonneDe(q), L = lentille(q);
+    if (ETAT.rel[L_NOM][cc]) return;
+    ETAT.rel[L_NOM][cc] = true;
+    revelerCellule(L_NOM, cc);
+    verifierAccord(L_NOM, cc, L);
+  });
+  $("concl").classList.remove("masque");
+  /* ⚠ LES DEUX NOMS NE S'ÉCRIVENT PAS ICI. Le journal est relu par le
+     pilotage, qui y cherche le motif d'une alerte « le modèle et la fiche
+     divergent » (§11.5) — et le nom de la seconde lentille porte ce
+     motif. Les noms vivent dans le TABLEAU et dans le bilan de la
+     conclusion, où ils sont à leur place ; l'observation finale dit ce
+     que les trois épreuves établissent, sans les renommer. */
+  succes("Les trois épreuves — le toucher, le texte, le faisceau — donnent le " +
+    "MÊME classement, et chaque lentille reçoit son nom dans le tableau. Ce " +
+    "n'est donc pas un hasard d'observation : c'est la FORME qui commande, et " +
+    "le témoin l'établit — seule la lentille a changé. La conclusion est " +
+    "démasquée.");
+  majTout();
+}
+
+/* ==================================================================
+   18. CONSIGNE, JOURNAL, SÉCURITÉ, TABLEAU
+   ================================================================== */
+function dire(t, fini) {
+  if (ETAT.retenue && Date.now() < ETAT.retenue) return;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  ETAT.retenue = 0;
+  var n = $("consigne");
+  n.innerHTML = md(t); n.className = "consigne";
+  ETAT.retenue = Date.now() + 4000;
+}
+function succes(t) { ETAT.retenue = 0; noter(t, true); }
+function refus(t, ligne) { signaler(t); noter(t, false); secuDire(ligne, "refus"); }
+function noter(t, positif) {
+  var n = $("obs"); n.textContent = t;
+  n.className = "obs" + (positif ? " pos" : "");
+}
+function secuDire(t, cls) {
+  var b = $("secuBande"), i, ul;
+  $("secuTexte").textContent = t || "";
+  $("secuPic").textContent = cls === "ok" ? "✔" : (cls === "refus" ? "⛔" : "⚠");
+  b.className = "secubande" + (cls ? " " + cls : "");
+  ul = $("securite");
+  if (!ul) return;
+  for (i = 0; i < ul.children.length; i++) {
+    ul.children[i].className = (SECU[i] === t) ? "actif" : "";
+  }
+}
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;                          /* §11.3 */
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+function consigne() {
+  var r;
+  if (ETAT.nomme) return "Expérience terminée : la conclusion est démasquée.";
+  if (!ETAT.palpe) return "Palper le centre puis les bords de chacune des deux lentilles.";
+  if (!ETAT.rel[L_TEXTE][C_L1]) return "Poser " + enTete(C_L1) + " sur le texte " +
+    "imprimé et la soulever de quelques centimètres.";
+  if (!ETAT.rel[L_TEXTE][C_L2]) return "Recommencer avec " + enTete(C_L2) + ".";
+  if (!ETAT.banc) return "Installer le banc : la source, le porte-lentille, l'écran.";
+  if (!ETAT.lampe) return "Allumer la source à faisceau parallèle.";
+  if (!ETAT.rel[L_FAISCEAU][C_L1]) {
+    return ETAT.dans === "L1" ? "Observer le trajet des rayons après la lentille."
+      : "Placer " + enTete(C_L1) + " dans le porte-lentille.";
+  }
+  if (!ETAT.rel[L_FAISCEAU][C_L2]) {
+    return ETAT.dans === "L2" ? "Observer de nouveau le trajet des rayons."
+      : "Témoin : remplacer par " + enTete(C_L2) + ", sans rien déplacer d'autre.";
+  }
+  return "Reporter les trois épreuves, nommer chaque lentille et dessiner son symbole.";
+}
+
+/* ==================================================================
+   19. LE PARCOURS D'ÉTAPES
+   ================================================================== */
+var ETAPES = [
+  { n: "Palper les deux", f: function () { return ETAT.palpe; } },
+  { n: "Le texte, " + enTete(C_L1), f: function () { return ETAT.rel[L_TEXTE][C_L1]; } },
+  { n: "Le texte, " + enTete(C_L2), f: function () { return ETAT.rel[L_TEXTE][C_L2]; } },
+  { n: "Installer le banc", f: function () { return ETAT.banc; } },
+  { n: "Source allumée", f: function () { return ETAT.lampe || ETAT.nomme; } },
+  { n: "Faisceau, " + enTete(C_L1), f: function () { return ETAT.rel[L_FAISCEAU][C_L1]; } },
+  { n: "Témoin, " + enTete(C_L2), f: function () { return ETAT.rel[L_FAISCEAU][C_L2]; } },
+  { n: "Nommer et dessiner", f: function () { return ETAT.nomme; } }
+];
+function majEtapes() {
+  var d = $("etapes"), i, k = -1, c;
+  for (i = 0; i < ETAPES.length; i++) if (!ETAPES[i].f()) { k = i; break; }
+  if (!d.children.length) {
+    ETAPES.forEach(function (e, j) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">' + (j + 1) + '</span>' + e.n;
+      d.appendChild(n);
+    });
+  }
+  for (i = 0; i < ETAPES.length; i++) {
+    d.children[i].className = ETAPES[i].f() ? "faite" : (i === k ? "actif" : "");
+  }
+  c = $("checks");
+  if (!c.children.length) {
+    CHECKS.forEach(function (h) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">sécurité</span>' + h.n;
+      c.appendChild(n);
+    });
+  }
+  CHECKS.forEach(function (h, j) { c.children[j].className = ETAT[h.k] ? "oui" : "non"; });
+}
+
+/* ==================================================================
+   20. LES PANNEAUX HTML
+   ================================================================== */
+function construireHTML() {
+  $("titre").textContent = "Paillasse virtuelle — " + depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E2AC-23") + " · " + DONNEES.niveau +
+    " · " + DONNEES.unite + " · " + DONNEES.lecon;
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation ||
+    DONNEES.observation || "");
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion || "");
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation || "");
+  $("seanceM").textContent = nb(DUREE_SEANCE, 0) + " min · " + MODALITE;
+  var t = $("tab"), tr = document.createElement("tr"), i, j, td;
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < NL; i++) {
+    tr = document.createElement("tr");
+    for (j = 0; j < NC; j++) {
+      td = document.createElement("td");
+      if (LIG[i] && LIG[i][j]) { td.innerHTML = md(LIG[i][j]); }
+      else { td.className = "vide"; td.textContent = ""; }
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  var ul = $("materiel");
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  ul = $("securite");
+  SECU.forEach(function (s) {
+    var li = document.createElement("li"); li.textContent = s; ul.appendChild(li);
+  });
+  var ct = $("capotConst"), k;
+  tr = document.createElement("tr");
+  ["Constante", "Valeur", "Provenance"].forEach(function (h) {
+    var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+  });
+  ct.appendChild(tr);
+  for (k in PHYS) {
+    tr = document.createElement("tr");
+    td = document.createElement("td"); td.textContent = PHYS[k].n; tr.appendChild(td);
+    td = document.createElement("td"); td.className = "mes";
+    td.textContent = sci(PHYS[k].v, 4) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(td);
+    td = document.createElement("td"); td.className = "src";
+    td.textContent = PHYS[k].s; tr.appendChild(td);
+    ct.appendChild(tr);
+  }
+  $("capotSrc").textContent = "La fiche ne donne AUCUNE longueur : ni rayon de " +
+    "courbure, ni focale, ni distance sur le banc. Tout ce qui est chiffré ici " +
+    "est donc un ajout assumé — et c'est bien le propos : le classement ne " +
+    "dépend d'aucun d'eux. Poussez les trois curseurs d'un bout à l'autre, le " +
+    "tableau ne change pas de mots. Seul le curseur « ménisque » le change, et " +
+    "c'est parce qu'il change la FORME.";
+  $("eqModele").textContent =
+    "flèche d'une calotte   s = R − √(R² − D²/4)         (signée comme R)\n" +
+    "épaisseur au bord      e_bord = e − s₁ + s₂\n" +
+    "  → le TOUCHER est une soustraction de longueurs\n\n" +
+    "formule des opticiens, version ÉPAISSE :\n" +
+    "  1/f′ = (n−1)·[ 1/R₁ − 1/R₂ + (n−1)·e/(n·R₁·R₂) ]\n" +
+    "  → le NOM est le signe de 1/f′\n\n" +
+    "tracé, sur chacun des deux dioptres, SANS approximation :\n" +
+    "  intersection rayon-sphère exacte, puis Descartes en vecteurs\n" +
+    "     n₁·sin i₁ = n₂·sin i₂,   écrit  u₂ = ν·u₁ + (ν·cos i₁ − √k)·N\n" +
+    "  → le FAISCEAU est le tracé, et le foyer est là où il coupe l'axe\n\n" +
+    "épreuve du texte, lentille soulevée de h :\n" +
+    "  γ = f′/(f′ − h)     h = 0  ⇒  γ = 1, elle ne grossit RIEN";
+  $("eqBilan").textContent =
+    "rien n'est transformé : le verre est transparent et homogène.\n" +
+    "ce qui change, c'est la DIRECTION des rayons, et deux fois —\n" +
+    "une fois en entrant, une fois en sortant.\n\n" +
+    "bords minces  → les rayons du bord sont plus déviés que ceux du\n" +
+    "                centre, et tous se rejoignent : CONVERGENTE\n" +
+    "bords épais   → ils s'écartent de l'axe : DIVERGENTE\n\n" +
+    "et la contre-épreuve : deux MÉNISQUES, bombés tous les deux, dont\n" +
+    "l'un converge et l'autre diverge. « bombée » ne dit rien ;\n" +
+    "« bords minces » dit tout.";
+}
+function margesSeuils() {
+  var a = lentille("L1"), b = lentille("L2");
+  return "La fiche ne donne aucune longueur, et c'est pour cela que cette page " +
+    "n'a <b>aucun seuil d'aspect</b> : les quatre verdicts sont des " +
+    "comparaisons exactes — e_centre contre e_bord, γ contre 1, l'abscisse du " +
+    "foyer contre 0, le signe de 1/f′. " + enTete(C_L1) + " : e_centre " +
+    nb(a.ec, 2) + " mm contre e_bord " + nb(a.eb, 2) + " mm, f′ = " +
+    (isFinite(a.f) ? nb(a.f, 1) + " mm" : "∞") + ". " + enTete(C_L2) + " : " +
+    nb(b.ec, 2) + " contre " + nb(b.eb, 2) + " mm, f′ = " +
+    (isFinite(b.f) ? nb(b.f, 1) + " mm" : "∞") + ". <b>La seule tolérance de " +
+    "la page</b> est le 2 % sur γ, en deçà duquel on écrit « inchangées » " +
+    "plutôt que d'affirmer un agrandissement que l'œil ne verrait pas — c'est " +
+    "la loi de Weber, et non un réglage.";
+}
+
+/* ==================================================================
+   21. LES GRAPHES
+   ================================================================== */
+function cadre(g, w, h, xl, yl) {
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#fbfcfd",
+    stroke: "#e3e6ea" }));
+  g.appendChild(el("line", { x1: 46, y1: h - 26, x2: w - 8, y2: h - 26,
+    stroke: "#9aa5b2", "stroke-width": 1.4 }));
+  g.appendChild(el("line", { x1: 46, y1: 10, x2: 46, y2: h - 26,
+    stroke: "#9aa5b2", "stroke-width": 1.4 }));
+  g.appendChild(el("text", { x: w - 8, y: h - 10, "text-anchor": "end",
+    "font-size": 10, fill: "#6b7686" }, xl));
+  g.appendChild(el("text", { x: 6, y: 12, "font-size": 10, fill: "#6b7686" }, yl));
+}
+function lentilleCourante() {
+  return lentille(ETAT.dans || ETAT.surTexte || "L1");
+}
+function tracerCoupe() {
+  var g = $("gCoupe"), w = 360, h = 176, L = lentilleCourante();
+  var ech = Math.min(2.6, 62 / (L.D / 2));
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#fbfcfd",
+    stroke: "#e3e6ea" }));
+  var cx = 120, cy = 88, hy = L.D / 2 * ech;
+  g.appendChild(el("line", { x1: 20, y1: cy, x2: w - 20, y2: cy,
+    stroke: "#cfd6de", "stroke-dasharray": "5 4" }));
+  var gg = g.appendChild(el("g", { transform: "translate(" + cx + "," + cy + ")" }));
+  dessinerLentille(gg, L, ech, 0.7);
+  /* les deux épaisseurs, cotées */
+  g.appendChild(el("line", { x1: cx, y1: cy - hy - 14, x2: cx, y2: cy - hy - 4,
+    stroke: ORANGE, "stroke-width": 1.6 }));
+  g.appendChild(el("text", { x: cx, y: cy - hy - 20, "text-anchor": "middle",
+    "font-size": 10, fill: ORANGE }, "centre " + nb(L.ec, 2) + " mm"));
+  g.appendChild(el("text", { x: cx, y: cy + hy + 22, "text-anchor": "middle",
+    "font-size": 10, fill: VERT }, "bord " + nb(L.eb, 2) + " mm"));
+  g.appendChild(el("text", { x: 240, y: 40, "font-size": 11, fill: "#6b7686" },
+    "R₁ = " + (isFinite(L.R1) ? nb(L.R1, 1) + " mm" : "plane")));
+  g.appendChild(el("text", { x: 240, y: 58, "font-size": 11, fill: "#6b7686" },
+    "R₂ = " + (isFinite(L.R2) ? nb(L.R2, 1) + " mm" : "plane")));
+  g.appendChild(el("text", { x: 240, y: 84, "font-size": 12, "font-weight": "bold",
+    fill: L.convergente ? ORANGE : SCHEMA }, motNom(L)));
+  g.appendChild(el("text", { x: 240, y: 104, "font-size": 11, fill: INK },
+    "f′ = " + (isFinite(L.f) ? nb(L.f, 1) + " mm" : "∞")));
+  g.appendChild(el("text", { x: 240, y: 124, "font-size": 10.5, fill: "#6b7686" },
+    motToucher(L)));
+  g.appendChild(el("text", { x: 8, y: 168, "font-size": 10, fill: "#6b7686" },
+    "lentille montrée : " + enTete(colonneDe(ETAT.dans || ETAT.surTexte || "L1"))));
+}
+function tracerTexte() {
+  var g = $("gTexte"), w = 360, h = 156, L = lentilleCourante();
+  var gam = grandissement(L, REG.h), i;
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#fbfaf6",
+    stroke: "#c9bda0" }));
+  /* le texte nu, à gauche ; vu à travers, à droite */
+  for (i = 0; i < 5; i++) {
+    g.appendChild(el("rect", { x: 20, y: 40 + i * 18, width: 120 - (i % 2) * 30,
+      height: 6, rx: 2, fill: "#8a94a4" }));
+  }
+  g.appendChild(el("text", { x: 20, y: 28, "font-size": 10.5, fill: "#6b7686" },
+    "le texte imprimé"));
+  var cx = 262, cy = 88, hh = 6 * Math.abs(gam), lg;
+  g.appendChild(el("text", { x: 190, y: 28, "font-size": 10.5, fill: "#6b7686" },
+    "vu à travers la lentille"));
+  for (i = 0; i < 5; i++) {
+    lg = (120 - (i % 2) * 30) * Math.abs(gam);
+    g.appendChild(el("rect", { x: cx - Math.min(lg, 180) / 2,
+      y: cy - 36 + i * 18 * Math.abs(gam), width: Math.min(lg, 180),
+      height: Math.max(1.5, hh), rx: 1.5, fill: "#5b6675" }));
+  }
+  g.appendChild(el("text", { x: cx, y: h - 10, "text-anchor": "middle",
+    "font-size": 11, "font-weight": "bold",
+    fill: gam > 1.02 ? ORANGE : (gam < 0.98 ? SCHEMA : "#6b7686") },
+    "γ = " + nb(gam, 2) + " · " + motTexte(L)));
+}
+function tracerRayonsGraphe() {
+  var g = $("gRayons"), w = 360, h = 196, L = lentilleCourante(), f = faisceau(L);
+  var i, zmin = 1e9, zmax = -1e9, F = foyers(L);
+  cadre(g, w, h, "abscisse du croisement avec l'axe (mm)", "hauteur du rayon (mm)");
+  for (i = 0; i < f.length; i++) {
+    if (f[i].zc === null) continue;
+    zmin = Math.min(zmin, f[i].zc); zmax = Math.max(zmax, f[i].zc);
+  }
+  if (zmin > zmax) {
+    g.appendChild(el("text", { x: w / 2, y: h / 2, "text-anchor": "middle",
+      "font-size": 11, fill: "#6b7686" }, "les rayons ne coupent pas l'axe"));
+    return;
+  }
+  var marge = Math.max(2, (zmax - zmin) * 0.35);
+  var z0 = zmin - marge, z1 = zmax + marge, ymax = L.D / 2;
+  function px(z) { return 46 + (z - z0) / (z1 - z0) * (w - 58); }
+  function py(y) { return (h - 26) - (y + ymax) / (2 * ymax) * (h - 44); }
+  if (z0 < 0 && z1 > 0) {
+    g.appendChild(el("line", { x1: px(0), y1: 12, x2: px(0), y2: h - 26,
+      stroke: ROUGE, "stroke-width": 1.4, "stroke-dasharray": "5 4" }));
+    g.appendChild(el("text", { x: px(0) + 3, y: 22, "font-size": 9, fill: ROUGE },
+      "la lentille"));
+  }
+  if (F.para !== null) {
+    g.appendChild(el("line", { x1: px(F.para), y1: 12, x2: px(F.para), y2: h - 26,
+      stroke: GOLD, "stroke-width": 1.8, "stroke-dasharray": "5 4" }));
+    g.appendChild(el("text", { x: px(F.para) + 3, y: 34, "font-size": 9, fill: GOLD },
+      "paraxial " + nb(F.para, 1)));
+  }
+  for (i = 0; i < f.length; i++) {
+    if (f[i].zc === null) continue;
+    g.appendChild(el("circle", { cx: px(f[i].zc), cy: py(f[i].y0), r: 4,
+      fill: f[i].zc > 0 ? ORANGE : SCHEMA }));
+  }
+  [z0, (z0 + z1) / 2, z1].forEach(function (z) {
+    g.appendChild(el("text", { x: px(z), y: h - 14, "text-anchor": "middle",
+      "font-size": 9, fill: "#6b7686" }, nb(z, 0)));
+  });
+}
+
+/* ==================================================================
+   22. LES LECTURES ET LE CARNET
+   ================================================================== */
+function majLectures() {
+  var L = lentilleCourante(), F = foyers(L);
+  function put(id, s, off) {
+    var n = $(id); n.textContent = s; n.className = "v" + (off ? " off" : "");
+  }
+  put("lEc", nb(L.ec, 2) + " mm");
+  put("lEb", nb(L.eb, 2) + " mm");
+  put("lF", isFinite(L.f) ? nb(L.f, 1) + " mm" : "infinie");
+  put("lFam", motNom(L));
+  put("lH", nb(REG.h, 1) + " cm");
+  put("lG", nb(grandissement(L, REG.h), 2) + "  → " + motTexte(L));
+  put("lMarg", F.marg === null ? "—" : nb(F.marg, 1) + " mm", F.marg === null);
+  put("lAber", F.aber === null ? "—" : nb(F.aber, 2) + " mm", F.aber === null);
+  majCarnet();
+}
+function majCarnet() {
+  var t = $("carnet"), tr, td, L = [];
+  vide(t);
+  tr = document.createElement("tr");
+  ["Lentille", "R₁", "R₂", "e centre", "e bord", "f′", "toucher", "texte",
+   "faisceau", "nom"].forEach(function (h) {
+    td = document.createElement("th"); td.textContent = h; tr.appendChild(td);
+  });
+  t.appendChild(tr);
+  ["L1", "L2"].forEach(function (q) {
+    var c = colonneDe(q), o = lentille(q), F = foyers(o);
+    if (!ETAT.mesures[c]) return;
+    L.push([enTete(c),
+            isFinite(o.R1) ? nb(o.R1, 1) : "plane",
+            isFinite(o.R2) ? nb(o.R2, 1) : "plane",
+            nb(o.ec, 2), nb(o.eb, 2),
+            isFinite(o.f) ? nb(o.f, 1) : "∞",
+            motToucher(o), motTexte(o), motFaisceau(o), motNom(o)]);
+  });
+  if (!L.length) {
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.setAttribute("colspan", 10); td.className = "vide";
+    td.textContent = "aucune mesure : commencer par palper les deux lentilles";
+    tr.appendChild(td); t.appendChild(tr);
+    return;
+  }
+  L.forEach(function (r) {
+    tr = document.createElement("tr");
+    r.forEach(function (x, j) {
+      td = document.createElement("td");
+      if (j >= 1 && j <= 5) td.className = "mes";
+      td.textContent = x; tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  });
+}
+
+/* ==================================================================
+   23. LES COMMANDES HTML — §12.12 : chaque `value` sur la grille
+   ================================================================== */
+var CURSEURS = [
+  { id: "rN", k: "n", o: "oN", a: "aideN", f: function (v) { return nb(v, 3); } },
+  { id: "rR", k: "R", o: "oR", a: "aideR", f: function (v) { return nb(v, 1) + " mm"; } },
+  { id: "rD", k: "D", o: "oD", a: "aideD", f: function (v) { return nb(v, 0) + " mm"; } },
+  { id: "rH", k: "h", o: "oH", a: "aideH", f: function (v) { return nb(v, 1) + " cm"; } },
+  { id: "rMen", k: "men", o: "oMen", a: "aideMen",
+    f: function (v) { return nb(v, 0) + " %"; } }
+];
+function lireReglages() {
+  CURSEURS.forEach(function (c) { REG[c.k] = +$(c.id).value; });
+  ETAT.horsProto = horsProtocole();
+}
+function majAffichageReglages() {
+  CURSEURS.forEach(function (c) {
+    $(c.o).textContent = c.f(REG[c.k]);
+    if (c.k === "n") {
+      $(c.a).innerHTML = "<b>Ajout.</b> N-BK7 : 1,517. PMMA : 1,491. La " +
+        "conclusion de la fiche dit « verre ou plastique » — et le classement " +
+        "ne change pas d'un à l'autre, seule la focale change.";
+    } else if (c.k === "R") {
+      $(c.a).innerHTML = "<b>Ajout — la fiche ne donne aucun rayon.</b> " +
+        "Choisi pour une focale de l'ordre de 100 mm. Le classement n'en " +
+        "dépend pas : poussez-le d'un bout à l'autre, les quatre mots du " +
+        "tableau ne bougent pas.";
+    } else if (c.k === "D") {
+      $(c.a).innerHTML = "<b>Ajout.</b> Le diamètre utile ne change ni f′ ni " +
+        "le nom — mais il change les DEUX épaisseurs, et l'aberration de " +
+        "sphéricité, qui est le seul défaut visible au tracé.";
+    } else if (c.k === "h") {
+      $(c.a).innerHTML = "C'est LE geste de l'étape 2 : « soulever lentement " +
+        "de quelques centimètres ». À h = 0, la lentille est posée à plat et " +
+        "γ = 1 : elle ne grossit rien. Ce réglage n'est pas dans le garde-fou " +
+        "du protocole — c'est la manipulation elle-même.";
+    } else {
+      $(c.a).innerHTML = "<b>Ajout — la contre-épreuve.</b> 0 % : les deux " +
+        "faces sont courbées en sens contraire, ce sont la biconvexe et la " +
+        "biconcave de la fiche. 100 % : la seconde face devient <b>plane</b>. " +
+        "150 % : elle se courbe dans le MÊME sens que la première — c'est un " +
+        "<b>ménisque</b>, bombé des deux côtés, et pourtant toujours " +
+        "convergent d'un côté et divergent de l'autre. « Bombée » ne dit " +
+        "rien ; « bords minces » dit tout.";
+    }
+  });
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+function brancherCommandes() {
+  CURSEURS.forEach(function (c) {
+    $(c.id).addEventListener("input", function () {
+      lireReglages();
+      redessinerScene();
+      majAffichageReglages();
+      majTout();
+    });
+  });
+  $("bProto").addEventListener("click", function () {
+    CURSEURS.forEach(function (c) {
+      if (PROTO[c.k] !== undefined) $(c.id).value = String(PROTO[c.k]);
+    });
+    lireReglages(); redessinerScene(); majAffichageReglages(); majTout();
+    noter("Réglages ramenés à ceux du protocole.", true);
+  });
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+}
+
+/* ==================================================================
+   24. L'HORLOGE
+   ================================================================== */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 200);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(0.6, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+  dire(consigne(), ETAT.nomme);
+}
+function majSeance() {
+  var f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceJ").style.width = borne(f, 0, 1) * 100 + "%";
+  $("seanceT").parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function majTout() {
+  redessinerLentilles();
+  redessinerLumiere();
+  majEtapes();
+  majLectures();
+  tracerCoupe(); tracerTexte(); tracerRayonsGraphe();
+  majBoutons();
+  $("bilan").textContent = ETAT.nomme
+    ? enTete(C_L1) + " : bords minces, faisceau convergent — " +
+      motNom(lentille("L1")) + " · " + enTete(C_L2) + " : bords épais, " +
+      "faisceau divergent — " + motNom(lentille("L2"))
+    : "trois épreuves indépendantes, un seul classement : c'est la forme qui commande";
+  majProtocole();
+  dire(consigne(), ETAT.nomme);
+}
+function majBoutons() {
+  var a;
+  for (a in BOUTONS) BOUTONS[a].armer(false);
+  if (BOUTONS.palper) BOUTONS.palper.armer(!ETAT.palpe);
+  if (BOUTONS.banc) BOUTONS.banc.armer(!ETAT.banc && ETAT.rel[L_TEXTE][C_L2]);
+  if (BOUTONS.allumer) {
+    BOUTONS.allumer.libelle(ETAT.lampe ? "Éteindre la source" : "Allumer la source");
+    BOUTONS.allumer.armer(!ETAT.lampe && ETAT.banc);
+  }
+  if (BOUTONS.craie) {
+    BOUTONS.craie.libelle(ETAT.craie ? "Laisser retomber" : "Souffler la craie");
+    BOUTONS.craie.armer(ETAT.lampe && !ETAT.craie);
+  }
+  if (BOUTONS.observer) {
+    BOUTONS.observer.armer(ETAT.lampe && !!ETAT.dans &&
+      !ETAT.rel[L_FAISCEAU][colonneDe(ETAT.dans)]);
+  }
+  if (BOUTONS.nommer) {
+    BOUTONS.nommer.armer(ETAT.rel[L_FAISCEAU][C_L1] && ETAT.rel[L_FAISCEAU][C_L2] &&
+      !ETAT.nomme);
+  }
+  if (ETAT.palpe && BOUTONS.palper) BOUTONS.palper.fait();
+  if (ETAT.banc && BOUTONS.banc) BOUTONS.banc.fait();
+  if (ETAT.nomme && BOUTONS.nommer) BOUTONS.nommer.fait();
+}
+
+/* ==================================================================
+   25. RECOMMENCER
+   ================================================================== */
+function recommencer() {
+  purger(); effacerCibles(); prise = null;
+  effacerGuide();          /* aucun halo ne survit a la remise en etat */
+  arreterDeroule();        /* ni un deroule en cours */
+  var garde = ETAT.tSeance || 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = garde;
+  ETAT.horsProto = horsProtocole();
+  ["L1", "L2"].forEach(function (q) {
+    var n = noeudDe(q);
+    if (!n) return;
+    n.removeAttribute("filter");
+    COUCHES.objets.appendChild(n);
+  });
+  redessinerScene();
+  Object.keys(BOUTONS).forEach(function (a) { BOUTONS[a].neuf(); });
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      if (LIG[i - 1] && LIG[i - 1][j]) { tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = ""; }
+      else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  $("concl").classList.add("masque");
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  secuDire(S_TRANCHE, "");
+  $("legendeSeuils").innerHTML = margesSeuils();
+  majAffichageReglages();
+  majTout();
+  noter("Poste remis en état : les deux lentilles sur le plateau, banc à " +
+        "installer, source éteinte.", false);
+}
+
+/* ==================================================================
+   26. LE GUIDAGE
+   ================================================================== */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", { x: x, y: y, width: w, height: h,
+    rx: r === undefined ? 12 : r, fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity", values: "1;0.35;1",
+    dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b || b.cx === undefined) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+function surlignerLentille(q) {
+  var m = maison(q);
+  halo(m.x - 42, m.y - 48, 84, 96, 14);
+}
+function surlignerPorte() { halo(X_LENT - 52, AXE - 92, 104, 184, 12); }
+function surlignerTexte() { halo(TXT_X0 - 6, 490, TXT_X1 - TXT_X0 + 12, 100, 10); }
+function surlignerEcran() { halo(X_ECRAN - 22, AXE - 130, 44, 260, 10); }
+function surlignerCurseur(id) {
+  var n = $(id);
+  if (!n) return;
+  var av = n.style.outline;
+  n.style.outline = "3px dashed " + GOLD;
+  n.style.outlineOffset = "3px";
+  guideSurb.push({ parentNode: { removeChild: function () {
+    n.style.outline = av; n.style.outlineOffset = "";
+  } } });
+}
+/* Le geste d'une colonne de l'épreuve du faisceau, écrit une fois. */
+function versFaisceau(q) {
+  var z;
+  if (!ETAT.lampe) { presserBouton("allumer"); return 380; }
+  if (!ETAT.craie) { presserBouton("craie"); return 360; }
+  if (ETAT.dans !== q) {
+    z = zoneType(q, "porte");
+    if (z) { deposer(q, z); return 440; }
+    return 0;
+  }
+  presserBouton("observer");
+  return 420;
+}
+
+var GUIDE = [
+  /* 1. « Prendre les deux lentilles par la tranche et PALPER le centre puis
+         les bords de chacune. » */
+  { fait: function () { return ETAT.palpe; },
+    aide: "Presser <b>« Palper les deux lentilles »</b> : la page compare les " +
+      "deux épaisseurs, qu'elle calcule depuis les flèches des calottes.",
+    montre: function () { surlignerBouton("palper"); surlignerLentille("L1"); } },
+
+  /* 2. « Poser la première lentille à plat sur un texte imprimé, la soulever
+         lentement de quelques centimètres et observer ; recommencer avec la
+         seconde. » */
+  { fait: function () { return ETAT.rel[L_TEXTE][C_L1] && ETAT.rel[L_TEXTE][C_L2]; },
+    aide: function () {
+      var q = ETAT.rel[L_TEXTE][C_L1] ? "L2" : "L1";
+      return "Glisser <b>" + enTete(colonneDe(q)) + "</b> sur le texte " +
+        "imprimé — le curseur de hauteur la soulève, et γ suit.";
+    },
+    montre: function () {
+      var q = ETAT.rel[L_TEXTE][C_L1] ? "L2" : "L1";
+      surlignerLentille(q); surlignerTexte(); montrerCibles(q);
+      surlignerCurseur("rH");
+    } },
+
+  /* 3. « Installer sur le banc d'optique la source à faisceau parallèle,
+         puis le porte-lentille, puis l'écran. » */
+  { fait: function () { return ETAT.banc; },
+    aide: "Presser <b>« Installer le banc »</b> : la source, le porte-lentille " +
+      "— le MÊME pour les deux —, puis l'écran.",
+    montre: function () { surlignerBouton("banc"); surlignerPorte(); } },
+
+  /* 4. « Placer la lentille à bords minces dans le porte-lentille et
+         observer, sur l'écran et dans la poussière de craie, le trajet des
+         rayons APRÈS la lentille. » */
+  { fait: function () { return ETAT.rel[L_FAISCEAU][C_L1]; },
+    aide: function () {
+      if (!ETAT.lampe) return "Presser <b>« Allumer la source »</b>.";
+      if (!ETAT.craie) return "Presser <b>« Souffler la craie »</b> : c'est ce " +
+        "qui rend le trajet visible entre la lentille et l'écran.";
+      if (ETAT.dans !== "L1") return "Glisser <b>" + enTete(C_L1) + "</b>, celle " +
+        "à bords minces, dans le porte-lentille.";
+      return "Presser <b>« Observer le faisceau »</b>.";
+    },
+    montre: function () {
+      if (!ETAT.lampe) { surlignerBouton("allumer"); return; }
+      if (!ETAT.craie) { surlignerBouton("craie"); return; }
+      if (ETAT.dans !== "L1") { surlignerLentille("L1"); surlignerPorte();
+        montrerCibles("L1"); return; }
+      surlignerBouton("observer"); surlignerEcran();
+    } },
+
+  /* 5. « TÉMOIN : sans rien déplacer d'autre — ni la source, ni le
+         porte-lentille, ni l'écran — remplacer la lentille par celle à bords
+         épais et observer de nouveau. » */
+  { fait: function () { return ETAT.rel[L_FAISCEAU][C_L2]; },
+    aide: function () {
+      if (ETAT.dans !== "L2") return "Glisser <b>" + enTete(C_L2) + "</b> dans le " +
+        "porte-lentille, à la place de l'autre — et <b>rien d'autre</b> ne bouge.";
+      return "Presser <b>« Observer le faisceau »</b>.";
+    },
+    montre: function () {
+      if (ETAT.dans !== "L2") { surlignerLentille("L2"); surlignerPorte();
+        montrerCibles("L2"); return; }
+      surlignerBouton("observer"); surlignerEcran();
+    } },
+
+  /* 6. « Reporter les trois épreuves dans le tableau, puis nommer chaque
+         lentille et dessiner son symbole. » */
+  { fait: function () { return ETAT.nomme; },
+    aide: "Presser <b>« Nommer et dessiner »</b> : les trois épreuves donnent " +
+      "le même classement, et la conclusion se démasque.",
+    montre: function () { surlignerBouton("nommer"); } }
+];
+
+/* ==================================================================
+   27. LE PROTOCOLE GUIDÉ
+   ================================================================== */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. PALPER LES DEUX LENTILLES. Le protocole les palpe « chacune » d'un
+     même geste : c'est un bouton, et il ne fait que comparer deux
+     épaisseurs que le solveur a calculées depuis les flèches des calottes. */
+  function () {
+    presserBouton("palper");
+    return 400;
+  },
+
+  /* 2. LE TEXTE, LES DEUX LENTILLES. Un GLISSER par lentille, sur la zone
+     que `emplacements()` propose dans l'état courant. La lentille posée sur
+     le texte est soulevée de la hauteur du curseur — le geste de la fiche,
+     « soulever lentement de quelques centimètres ». */
+  function () {
+    var q = ETAT.rel[L_TEXTE][C_L1] ? "L2" : "L1", z;
+    if (ETAT.rel[L_TEXTE][C_L1] && ETAT.rel[L_TEXTE][C_L2]) return 0;
+    z = zoneType(q, "texte");
+    if (z) { deposer(q, z); return 440; }
+    return 0;
+  },
+
+  /* 3. installer le banc : source, porte-lentille, écran */
+  function () {
+    presserBouton("banc");
+    return 400;
+  },
+
+  /* 4. LA LENTILLE À BORDS MINCES DANS LE PORTE-LENTILLE. `versFaisceau()`
+     allume, souffle la craie, glisse la lentille puis observe — et il
+     n'écrit AUCUN résultat : chaque étape passe par la fonction du geste. */
+  function () { return versFaisceau("L1"); },
+
+  /* 5. LE TÉMOIN : la lentille à bords épais, sans rien déplacer d'autre.
+     Le porte-lentille est unique — y déposer la seconde renvoie la première
+     sur le plateau, et c'est exactement ce que dit le matériel. */
+  function () { return versFaisceau("L2"); },
+
+  /* 6. NOMMER ET DESSINER. Les trois épreuves donnent le même classement ;
+     la conclusion se démasque d'elle-même. */
+  function () {
+    presserBouton("nommer");
+    return 460;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   28. LE PLEIN ÉCRAN
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) { cadre.requestFullscreen(); }
+    else if (cadre.webkitRequestFullscreen) { cadre.webkitRequestFullscreen(); }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   29. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ETAT = neufEtat();
+  CURSEURS.forEach(function (cu) {
+    if (PROTO[cu.k] !== undefined) $(cu.id).value = String(PROTO[cu.k]);
+  });
+  lireReglages();
+  ajouterDefs(); ajouterCouches();
+  construireDecor();
+  construireScene();
+
+  var lib = ["Palper les deux lentilles", "Installer le banc", "Allumer la source",
+             "Souffler la craie", "Observer le faisceau", "Nommer et dessiner"];
+  var act = ["palper", "banc", "allumer", "craie", "observer", "nommer"];
+  var n = lib.length, wB = 158, dxB = (W - 2 * 96) / (n - 1);
+  lib.forEach(function (l, i) { boutonScene(96 + i * dxB, Y_BOUTONS, wB, 46, l, act[i]); });
+
+  brancherPrise(); brancherBoutons();
+  brancherPlein();   /* le plein ecran : sans cet appel, le bouton du cadre est mort */
+  construireHTML(); brancherCommandes();
+  majAffichageReglages();
+  construireProtocole();
+  recommencer();
+  demarrerHorloge();
+}
+
+demarrer();
+})();
+</script>
+</body>
+</html>

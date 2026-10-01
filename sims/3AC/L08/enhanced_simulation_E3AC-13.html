@@ -1,0 +1,2686 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-13 · Une bille, trois portions de piste</title>
+
+<!--
+  ===================================================================
+  E3AC-13 · 3AC · L08 — PAILLASSE VIRTUELLE
+  « Une bille, trois portions de piste : reconnaître un mouvement
+    uniforme, accéléré et retardé »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Une bille qui ROULE sans glisser sur un plan incliné de l'angle θ subit
+  l'accélération
+
+      a = (5/7) · g · (sin θ − c · cos θ)
+
+  Le facteur 5/7 vient du moment d'inertie d'une sphère pleine : une
+  partie de l'énergie part dans la rotation, et la bille descend moins
+  vite qu'un objet qui glisserait. Sur l'horizontale, sin θ = 0 et il ne
+  reste que le freinage : a = −(5/7)·g·c, très petit sur une piste lisse,
+  très grand sur un tapis.
+
+  L'intégration est EXACTE, pas approchée : l'accélération est constante
+  par morceaux, et la page résout analytiquement chaque morceau. Les
+  seuls événements sont les deux changements de surface, repérés par la
+  DISTANCE parcourue — jamais par le numéro de l'intervalle.
+
+  UNE HONNÊTETÉ QUI SE DÉCLARE : LES DEUX PERTES DE JONCTION
+  ----------------------------------------------------------
+  Le relevé de la fiche, lu comme un enregistrement, impose trois choses
+  incompatibles avec un raccordement parfait :
+
+      rampe   4 / 8 / 12 cm  ⟹  a = +1,00 m·s⁻² et v(M₃) = 0,70 m·s⁻¹
+      piste   12 / 12 / 12   ⟹  v = 0,60 m·s⁻¹ constante
+      tapis   9 / 6 / 3      ⟹  a = −0,75 m·s⁻² et v(M₆) = 0,525 m·s⁻¹
+
+  Entre la rampe et la piste, la vitesse tombe donc de 0,70 à 0,60 ; entre
+  la piste et le tapis, de 0,60 à 0,525. Ce ne sont pas des erreurs de la
+  fiche : ce sont deux PERTES DE JONCTION, et le montage les explique — la
+  lèvre du rail au pied de la rampe, le bord du tapis qu'il faut escalader.
+
+  Ces deux coefficients sont donc CALIBRÉS sur le relevé, et la page le
+  dit en clair sous le capot au lieu de les faire passer pour des
+  constantes de la nature. Sans eux, l'erreur sur le tapis atteint 3 cm,
+  six fois la précision d'une règle sur image projetée : la perte est
+  imposée par l'enregistrement, elle n'est pas un ajustement de confort.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  1. Il pose le mètre ruban le long du parcours — c'est l'ÉCHELLE.
+  2. Il cale le téléphone sur son support, perpendiculairement.
+  3. Il porte la bille en haut de la rampe et la LÂCHE : elle roule, et
+     la page l'intègre pour de vrai, image par image.
+  4. Il extrait une image toutes les N, ce qui fixe Δt.
+  5. Il mesure chaque intervalle à la règle, en la glissant dessus.
+
+  LE CŒUR DE LA LEÇON, RENDU MANIPULABLE
+  --------------------------------------
+  Le protocole insiste : la durée entre deux positions doit rester
+  CONSTANTE. Le curseur « une image sur N » permet de la changer — et le
+  tableau reste alors parfaitement lisible, ce qui est trompeur. C'est
+  pourquoi la page offre aussi un relevé À DURÉES INÉGALES : les
+  distances continuent d'augmenter puis de diminuer, mais elles ne
+  prouvent plus rien, et la page le dit.
+
+  ATTENTION — CE QUE LA PAGE NE FAIT PAS
+  --------------------------------------
+  * Elle ne modifie AUCUN fichier partagé.
+  * Elle ne parle jamais d'accélération en m·s⁻² à l'élève : hors
+    programme cette année. La fiche le dit, la page s'y tient — le mot
+    n'apparaît que sous le capot.
+  * Elle ne montre aucune vitesse avant que l'intervalle ait été mesuré.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E3AC-13.
+-->
+
+<style>
+
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.oui{color:var(--green)}
+.lect .v.non{color:#b03030}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.temoin td{background:#f4f6f9}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.rappel{background:var(--bluebg);border-left:3px solid var(--gold);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin-top:8px;
+        color:var(--muted)}
+.rappel b{color:var(--ink)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+
+.cases{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:14px;font-weight:700;color:var(--ink);margin-top:2px;
+          font-family:var(--mono)}
+.cases .u.nul{color:#9aa5b2;font-weight:600;font-family:inherit}
+.port{margin-top:9px}
+.port>div{display:grid;grid-template-columns:118px 1fr 96px;gap:8px;
+          align-items:center;margin-bottom:6px}
+.port .n{font-size:12px;font-weight:600}
+.port .b{display:flex;gap:3px;align-items:flex-end;height:34px}
+.port .b i{display:block;flex:1;border-radius:2px 2px 0 0;background:var(--line)}
+.port .v{font-size:11.5px;font-weight:700;text-align:right}
+.port .v.acc{color:var(--orange)}
+.port .v.uni{color:var(--green)}
+.port .v.ret{color:#2f6ea8}
+.port .v.att{color:#9aa5b2;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-13 · 3AC · L08</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite —
+        dénivelé de <span id="alDeniv"></span>, une image sur
+        <span id="alN"></span>, tapis ordinaire — et pas celui d'une variante.
+        Les mesures continuent, et le panneau des trois portions reste juste.
+      </div>
+      <div class="alerte" id="alerteDt">
+        <b>Les durées ne sont plus égales.</b> Les distances se comparent
+        encore, mais elles ne prouvent plus rien : une distance plus grande
+        peut venir d'une vitesse plus grande <i>ou</i> d'une durée plus longue.
+        C'est exactement la raison pour laquelle le protocole impose une durée
+        constante — et la page cesse donc de nommer la nature du mouvement.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>L'intervalle mesuré <span class="note" id="suiviNom">—</span></h2>
+      <p class="src" style="margin:0 0 2px">Glisser la règle sur un intervalle
+        du parcours pour le mesurer.</p>
+      <div class="cases" id="suiviCases"></div>
+      <p class="src" id="suiviPhrase" style="margin-top:9px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Les trois portions <span class="note">lues sur les distances</span></h2>
+      <p class="src" style="margin:0 0 4px">Une barre par intervalle mesuré.
+        Le verdict se lit sur leur suite, jamais sur autre chose.</p>
+      <div class="port" id="portions"></div>
+      <p class="src" id="portNote" style="margin-top:6px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rDeniv">Dénivelé de la rampe</label><output id="oDeniv"></output>
+        <input type="range" id="rDeniv" min="0" max="10" step="0.5" value="3.5">
+        <div class="aide">« incliné de quelques centimètres seulement ».</div>
+      </div>
+      <div class="reg">
+        <label for="rN">Une image extraite sur…</label><output id="oN"></output>
+        <input type="range" id="rN" min="1" max="10" step="1" value="5">
+        <div class="aide">La vidéo tourne à 25 images par seconde : c'est ce
+          réglage qui fixe Δt, et Δt doit rester le même partout.</div>
+      </div>
+      <div class="reg">
+        <label for="rTapis">Résistance au roulement du tapis</label>
+        <output id="oTapis"></output>
+        <input type="range" id="rTapis" min="0" max="0.25" step="0.001" value="0.107">
+        <div class="aide">À 0, le tapis ne freine plus : la troisième portion
+          devient uniforme, et la page le dit au lieu de le taire.</div>
+      </div>
+      <div class="reg">
+        <label for="rIneg">Relever à durées INÉGALES</label><output id="oIneg"></output>
+        <input type="range" id="rIneg" min="0" max="1" step="1" value="0">
+        <div class="aide">Le geste que le protocole interdit. À 1, chaque
+          intervalle reçoit une durée différente — et le tableau devient
+          inexploitable, ce qu'il faut voir une fois pour le comprendre.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · L'équation intégrée</h3>
+      <p class="fx" id="capotEq"></p>
+      <p>Le facteur <b>5/7</b> est celui d'une sphère pleine qui roule sans
+        glisser. L'intégration est exacte : l'accélération étant constante par
+        morceaux, chaque morceau se résout à la main, et les deux changements
+        de surface sont repérés par la <b>distance parcourue</b>, jamais par le
+        numéro de l'intervalle — sans quoi changer la pente déplacerait les
+        portions sans que le tableau s'en aperçoive.</p>
+
+      <h3>2 · Les deux pertes de jonction, et pourquoi elles sont déclarées</h3>
+      <p>Lu comme un enregistrement, le relevé de la fiche impose une vitesse
+        qui <b>chute</b> à chaque changement de surface :</p>
+      <table id="capotJonc"></table>
+      <p>Aucune constante physique ne produit ces sauts. Ce sont deux pertes
+        réelles — la lèvre du rail au pied de la rampe, le bord du tapis qu'il
+        faut escalader — et leurs valeurs sont <b>calibrées sur le relevé</b>,
+        non mesurées ailleurs. Elles dépendent du montage : une gouttière sans
+        lèvre et un tapis à ras du sol les rapprocheraient de 1.</p>
+      <p>Elles ne sont pas un ajustement de confort : <b>sans elles, l'erreur
+        sur le tapis atteint 3 cm</b>, six fois la précision d'une règle sur
+        image projetée. C'est l'enregistrement qui les impose.</p>
+
+      <h3>3 · Ce que la page retrouve, au protocole</h3>
+      <table id="capotAccord"></table>
+
+      <h3>4 · Les grandeurs du montage</h3>
+      <table id="capotVals"></table>
+
+      <h3>5 · Ce que le modèle simplifie</h3>
+      <ul>
+        <li><b>La bille roule sans jamais glisser</b>, dès le lâcher. Une bille
+        réelle patine sur les premiers centimètres d'une rampe lisse, et son
+        accélération y est un peu plus forte.</li>
+        <li><b>Les trois surfaces sont uniformes.</b> Une table réelle n'a pas
+        partout la même rugosité, et un tapis se tasse là où la bille passe.</li>
+        <li><b>Aucune résistance de l'air</b> : à 0,6 m·s⁻¹ sur 20 mm de
+        diamètre, elle est mille fois plus petite que le frottement de
+        roulement.</li>
+        <li><b>Le repérage des positions est parfait.</b> Sur une image
+        projetée, lire le centre d'une bille à mieux qu'un demi-centimètre
+        demande déjà du soin — c'est la précision annoncée.</li>
+      </ul>
+
+      <h3>6 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-13.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-13",
+  "niveau": "3AC",
+  "unite": "U2",
+  "lecon": "L08",
+  "titre": "Une bille, trois portions de piste : reconnaître un mouvement uniforme, accéléré et retardé",
+  "axe": "La nature du mouvement : uniforme, accéléré, retardé",
+  "objectif": "Déterminer la nature du mouvement d'un mobile en translation à partir d'un enregistrement de ses positions successives prises à intervalles de temps égaux, en comparant les distances parcourues et les vitesses moyennes calculées sur chaque intervalle.",
+  "duree": 26,
+  "modalite": "montage unique au bureau, filmé · exploitation en groupes de 4 sur les images projetées",
+  "materiel": [
+    "Une **bille** d'acier ou de verre de 15 à 20 mm, bien ronde",
+    "Une **rampe** : une règle-gouttière, un rail de rideau ou un morceau de tuyau fendu, incliné de quelques centimètres seulement",
+    "Une **piste lisse** : une table bien plane, ou une plaque de verre ou de mélaminé posée à plat, dans le prolongement de la rampe",
+    "Un **tapis** ou un morceau de **tissu épais** (serviette, moquette) posé à la suite de la piste lisse",
+    "Un **mètre ruban** ou une longue **règle graduée** posée le long du parcours : c'est l'**échelle** de l'enregistrement",
+    "Un **téléphone** en mode vidéo, posé sur un **support fixe** et perpendiculaire au parcours",
+    "Un **vidéoprojecteur** pour afficher les images extraites",
+    "Une **règle** et un **crayon** par groupe, et le tableau de mesures vierge",
+    "Une **butée** en fin de parcours (un livre posé de chant) pour arrêter la bille"
+  ],
+  "securite": [
+    "La bille **roule**, elle ne se **lance jamais** à la main : une bille lancée sur une table est un projectile.",
+    "Le parcours se termine par une **butée** ; personne ne se tient dans son prolongement.",
+    "Une bille tombée au sol se **ramasse immédiatement** : c'est la cause de chute la plus banale d'une salle de sciences.",
+    "Le montage est posé **loin du bord** de la paillasse et le téléphone est **calé**, jamais tenu à la main au-dessus du parcours.",
+    "L'usage du téléphone est **encadré par l'enseignant** : la vidéo ne sert qu'à la mesure, elle ne montre aucun visage et elle est effacée en fin de séance.",
+    "Les cartables restent sous les tables, l'allée reste dégagée."
+  ],
+  "protocole": [
+    "Aligner les trois portions dans le prolongement les unes des autres : la **rampe** inclinée, puis la **piste lisse** horizontale, puis le **tapis**.",
+    "Poser le mètre ruban le long du parcours, bien visible : il servira d'**échelle** à la mesure.",
+    "Caler le téléphone sur son support, **perpendiculairement** au parcours, de façon à voir les trois portions dans le champ.",
+    "Déclencher la vidéo, puis **lâcher la bille** en haut de la rampe **sans la pousser**.",
+    "Laisser la bille descendre la rampe, traverser la piste lisse, s'engager sur le tapis et s'y arrêter, puis arrêter la vidéo.",
+    "Extraire de la vidéo **une image toutes les cinq images** : la vidéo étant enregistrée à 25 images par seconde, la durée entre deux positions vaut alors **Δt = 0,2 s**, toujours la même.",
+    "Projeter les images et y repérer les positions successives de la bille, notées **M₀, M₁, M₂, …**",
+    "Mesurer à la règle, sur les images projetées et à l'aide du mètre ruban qui y figure, la **distance parcourue pendant chaque intervalle**, et la noter en centimètres.",
+    "Convertir chaque distance en mètres, puis calculer la **vitesse moyenne** de l'intervalle : v = d / Δt.",
+    "Comparer les distances, puis les vitesses, **à l'intérieur de chaque portion** du parcours."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Intervalle",
+      "Portion du parcours",
+      "Distance d (cm)",
+      "Durée Δt (s)",
+      "Vitesse v = d / Δt (m·s⁻¹)"
+    ],
+    "lignes": [
+      [
+        "M₀M₁",
+        "La rampe",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₁M₂",
+        "La rampe",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₂M₃",
+        "La rampe",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₃M₄",
+        "La piste lisse",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₄M₅",
+        "La piste lisse",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₅M₆",
+        "La piste lisse",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₆M₇",
+        "Le tapis",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₇M₈",
+        "Le tapis",
+        "",
+        "0,2",
+        ""
+      ],
+      [
+        "M₈M₉",
+        "Le tapis",
+        "",
+        "0,2",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "M₀M₁",
+        "La rampe",
+        "4",
+        "0,2",
+        "0,20"
+      ],
+      [
+        "M₁M₂",
+        "La rampe",
+        "8",
+        "0,2",
+        "0,40"
+      ],
+      [
+        "M₂M₃",
+        "La rampe",
+        "12",
+        "0,2",
+        "0,60"
+      ],
+      [
+        "M₃M₄",
+        "La piste lisse",
+        "12",
+        "0,2",
+        "0,60"
+      ],
+      [
+        "M₄M₅",
+        "La piste lisse",
+        "12",
+        "0,2",
+        "0,60"
+      ],
+      [
+        "M₅M₆",
+        "La piste lisse",
+        "12",
+        "0,2",
+        "0,60"
+      ],
+      [
+        "M₆M₇",
+        "Le tapis",
+        "9",
+        "0,2",
+        "0,45"
+      ],
+      [
+        "M₇M₈",
+        "Le tapis",
+        "6",
+        "0,2",
+        "0,30"
+      ],
+      [
+        "M₈M₉",
+        "Le tapis",
+        "3",
+        "0,2",
+        "0,15"
+      ]
+    ]
+  },
+  "observation": "Pour des durées toujours égales à 0,2 s, la bille parcourt 4, 8 puis 12 cm sur la rampe, trois fois 12 cm sur la piste lisse, puis 9, 6 et 3 cm sur le tapis : les vitesses passent de 0,20 à 0,60 m·s⁻¹, restent à 0,60 m·s⁻¹, puis retombent de 0,45 à 0,15 m·s⁻¹.",
+  "conclusion": "On lit la nature d'un mouvement sur les distances parcourues pendant des durées égales : égales, le mouvement est uniforme ; croissantes, il est accéléré ; décroissantes, il est retardé. Le type et la nature sont deux renseignements distincts, et il faut les donner tous les deux.",
+  "oheric": {
+    "observation": "Le car de la situation-problème démarre au village, roule un moment sur la ligne droite, puis freine quand l'enfant traverse. Dans ces trois moments, c'est le **même car**, en **translation rectiligne** : le type de son mouvement ne change pas. Pourtant, quelque chose change bel et bien — au démarrage il va de plus en plus vite, sur la ligne droite il garde son allure, au freinage il ralentit. Comment reconnaître, sur un enregistrement, si la vitesse d'un mobile augmente, reste constante ou diminue ?",
+    "hypothese": "Si la vitesse d'un mobile **augmente**, alors les distances qu'il parcourt pendant des **durées égales et successives** doivent **augmenter** elles aussi ; si sa vitesse **reste constante**, ces distances doivent être **égales** ; si sa vitesse **diminue**, elles doivent **diminuer**.",
+    "experience": "Une bille est lâchée, sans être poussée, en haut d'une **rampe** légèrement inclinée ; elle traverse ensuite une **piste lisse** horizontale, puis s'engage sur un **tapis** où elle s'arrête. Tout le parcours est filmé au téléphone, un mètre ruban posé le long de la piste servant d'échelle. On extrait une image toutes les cinq images, ce qui donne une durée **constante Δt = 0,2 s** entre deux positions successives, et l'on mesure à la règle, sur les images projetées, la distance parcourue pendant chaque intervalle.",
+    "resultats": "Sur la **rampe**, les distances mesurées valent **4 cm, 8 cm puis 12 cm** : elles **augmentent**, et les vitesses moyennes correspondantes sont **0,20 ; 0,40 ; 0,60 m·s⁻¹**. Sur la **piste lisse**, elles valent **12 cm, 12 cm et 12 cm** : elles sont **égales**, et la vitesse vaut trois fois **0,60 m·s⁻¹**. Sur le **tapis**, elles valent **9 cm, 6 cm puis 3 cm** : elles **diminuent**, et les vitesses sont **0,45 ; 0,30 ; 0,15 m·s⁻¹**. La bille finit par s'immobiliser.",
+    "interpretation": "La durée entre deux positions est **la même partout**, 0,2 s : c'est cette constance qui rend les distances **comparables entre elles**. Si la durée avait varié d'un intervalle à l'autre, une distance plus grande n'aurait plus signifié une vitesse plus grande, et l'ensemble des mesures aurait été inexploitable — c'est la condition sans laquelle cette expérience ne prouve rien. Cela posé, les trois portions se lisent d'elles-mêmes : sur la rampe la vitesse **augmente**, sur la piste lisse elle **reste constante**, sur le tapis elle **diminue**. L'hypothèse est validée. Un détail confirme la cohérence de l'ensemble : la bille arrive au bas de la rampe à **0,60 m·s⁻¹** et **conserve exactement cette valeur** sur la piste lisse, qui ne la freine presque pas ; c'est le **tapis** qui la freine. La piste lisse joue donc ici le rôle du **témoin** : elle montre ce que devient le mouvement quand on n'ajoute ni pente ni frottement notable, et c'est par comparaison avec elle que les deux autres portions prennent leur sens. **Ce que cette expérience ne dit pas :** de combien la vitesse augmente ou diminue par seconde. Cette grandeur — l'accélération — n'est pas au programme de cette année ; on se borne à constater le **sens** de la variation.",
+    "conclusion": "Un mouvement est **uniforme** lorsque le mobile parcourt des distances **égales** pendant des durées égales : sa vitesse **reste constante**. Il est **accéléré** lorsque ces distances **augmentent** : sa vitesse **augmente**. Il est **retardé** — ou ralenti — lorsqu'elles **diminuent** : sa vitesse **diminue**. La bille est donc en **translation rectiligne accélérée** sur la rampe, en **translation rectiligne uniforme** sur la piste lisse et en **translation rectiligne retardée** sur le tapis : décrire complètement un mouvement, c'est donner à la fois son **type** et sa **nature**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+
+
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ==================================================================
+   Chacune porte sa source. Les deux DERNIÈRES sont d'une autre nature :
+   ce sont des calibrages, et elles le disent.                           */
+var PHYS = {
+  G: { v: 9.81, u: "m·s⁻²", n: "intensité de la pesanteur",
+    s: "valeur usuelle au Maroc ; l'écart avec 9,8 est mille fois plus petit que la précision de la mesure" },
+  ROUL: { v: 5 / 7, u: "", n: "facteur de roulement d'une sphère pleine",
+    s: "a = (5/7)·g·sin θ : le moment d'inertie 2/5·m·r² d'une bille pleine emporte une part de l'énergie dans la rotation" },
+  L_RAMPE: { v: 0.24, u: "m", n: "longueur de la rampe",
+    s: "règle-gouttière de 24 cm — c'est ce que parcourt la bille pendant les trois premiers intervalles de la fiche" },
+  L_LISSE: { v: 0.36, u: "m", n: "longueur de la piste lisse",
+    s: "36 cm, soit trois intervalles de 12 cm : la portion témoin de l'expérience" },
+  C_LISSE: { v: 0.003, u: "", n: "résistance au roulement, bille sur mélaminé",
+    s: "0,001 à 0,005 pour un roulement acier sur surface dure et lisse ; la piste ne freine presque pas" },
+  C_TAPIS: { v: 0.107, u: "", n: "résistance au roulement, bille sur tapis",
+    s: "0,05 à 0,3 sur textile épais : la bille s'y enfonce, et c'est ce qui la freine" },
+  V0: { v: 0.10, u: "m·s⁻¹", n: "vitesse de la bille à la première position relevée",
+    s: "M₀ n'est pas le point de lâcher mais la première image exploitable : la bille y a déjà pris un peu de vitesse" },
+  DENIV: { v: 0.035, u: "m", n: "dénivelé de la rampe",
+    s: "3,5 cm sur 24 cm — « incliné de quelques centimètres seulement », dit la fiche" },
+  FPS: { v: 25, u: "images/s", n: "cadence de la vidéo",
+    s: "« la vidéo étant enregistrée à 25 images par seconde », dit le protocole" },
+  N_IMG: { v: 5, u: "images", n: "une image extraite sur N",
+    s: "« une image toutes les cinq images » : Δt = 5/25 = 0,2 s, la même partout" },
+  /* ---- Les deux calibrages, déclarés comme tels ---- */
+  K_LEVRE: { v: 0.60 / 0.70, u: "", n: "CALIBRAGE — perte de vitesse au pied de la rampe",
+    s: "la lèvre du rail : le relevé de la fiche impose 0,70 → 0,60 m·s⁻¹. Calibré sur ce relevé, PAS mesuré ailleurs — il dépend du montage" },
+  K_BORD: { v: 0.525 / 0.60, u: "", n: "CALIBRAGE — perte de vitesse au bord du tapis",
+    s: "le bord du tapis qu'il faut escalader : le relevé impose 0,60 → 0,525 m·s⁻¹. Même statut que le précédent" },
+  PREC: { v: 0.005, u: "m", n: "précision d'une règle sur image projetée",
+    s: "un demi-centimètre : c'est la tolérance à laquelle le modèle doit redonner la fiche, et il la tient à 0,2 cm" },
+  SEUIL: { v: 0.004, u: "m", n: "écart au-dessous duquel deux distances sont dites égales",
+    s: "0,4 cm, un peu moins que la précision de lecture — repère de LECTURE, pas constante physique" }
+};
+
+/* ==================================================================
+   2. CE QUE LA FICHE DIT (§0)
+   ================================================================== */
+function T(k) { return DONNEES[k] || ""; }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return TM().entetes || []; }
+function lignesFiche() { return TM().lignes || []; }
+function valeursFiche() { return TM().valeurs || []; }
+function nbIntervalles() { return lignesFiche().length; }
+function nomIntervalle(i) {
+  var l = lignesFiche()[i];
+  return l && l[0] ? String(l[0]) : "M" + i + "M" + (i + 1);
+}
+/* Les trois portions, dans l'ordre où la fiche les nomme, sans doublon.
+   C'est la fiche qui les nomme ; c'est le modèle qui dit où elles sont. */
+function nomsPortions() {
+  var l = lignesFiche(), out = [], i, n;
+  for (i = 0; i < l.length; i++) {
+    n = String(l[i][1] || "");
+    if (n && out.indexOf(n) < 0) out.push(n);
+  }
+  return out.length === 3 ? out : ["La rampe", "La piste lisse", "Le tapis"];
+}
+function distanceFiche(i) {
+  var v = valeursFiche()[i];
+  return v ? parseFloat(String(v[2]).replace(",", ".")) : NaN;
+}
+function vitesseFiche(i) {
+  var v = valeursFiche()[i];
+  return v ? parseFloat(String(v[4]).replace(",", ".")) : NaN;
+}
+function secu(motif) {
+  var s = L("securite"), i, re = new RegExp(motif, "i");
+  for (i = 0; i < s.length; i++) if (re.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+
+/* ==================================================================
+   3. LE SOLVEUR — intégration EXACTE, morceau par morceau
+   ================================================================== */
+var REG = { deniv: PHYS.DENIV.v, n: PHYS.N_IMG.v, cTapis: PHYS.C_TAPIS.v,
+            inegal: 0 };
+
+function dt() { return REG.n / PHYS.FPS.v; }
+/* La durée du k-ième intervalle. Égale partout — sauf si l'on a demandé
+   exprès le relevé que le protocole interdit. */
+function dtK(k) {
+  if (!REG.inegal) return dt();
+  return dt() * (0.6 + 0.28 * ((k * 7) % 5));
+}
+function pente() {
+  var s = borne(REG.deniv / PHYS.L_RAMPE.v, 0, 1);
+  return Math.asin(s);
+}
+function accel(theta, c) {
+  return PHYS.ROUL.v * PHYS.G.v * (Math.sin(theta) - c * Math.cos(theta));
+}
+/* Les trois accélérations, dans l'ordre des portions. */
+function accels() {
+  return [accel(pente(), PHYS.C_LISSE.v),
+          -PHYS.ROUL.v * PHYS.G.v * PHYS.C_LISSE.v,
+          -PHYS.ROUL.v * PHYS.G.v * REG.cTapis];
+}
+function bornesPortions() {
+  return [PHYS.L_RAMPE.v, PHYS.L_RAMPE.v + PHYS.L_LISSE.v, Infinity];
+}
+
+/* Avance de t secondes depuis (x, v) avec l'accélération a, en s'arrêtant
+   net si la vitesse s'annule : une bille qui s'arrête ne repart pas. */
+function avancer(x, v, a, t) {
+  if (a < 0 && v + a * t < 0) return { x: x - v * v / (2 * a), v: 0 };
+  return { x: x + v * t + a * t * t / 2, v: v + a * t };
+}
+/* Le temps qu'il faut pour atteindre l'abscisse xb, ou null. */
+function tempsVers(x, v, a, xb) {
+  var d = xb - x, disc, r;
+  if (d <= 0) return 0;
+  if (Math.abs(a) < 1e-12) return v > 0 ? d / v : null;
+  disc = v * v + 2 * a * d;
+  if (disc < 0) return null;
+  r = (-v + Math.sqrt(disc)) / a;
+  return r > 0 ? r : null;
+}
+
+/* L'enregistrement complet : pour chaque intervalle, la distance
+   parcourue ET la portion sur laquelle la bille a passé le plus de
+   temps. C'est la page qui trouve la portion, pas la fiche.            */
+function enregistrer() {
+  var a = accels(), b = bornesPortions(), n = nbIntervalles();
+  var x = 0, v = PHYS.V0.v, z = 0, out = [], i, reste, tps, t, r, x0;
+  for (i = 0; i < n; i++) {
+    x0 = x; reste = dtK(i); tps = [0, 0, 0];
+    while (reste > 1e-12) {
+      t = z < 2 ? tempsVers(x, v, a[z], b[z]) : null;
+      if (t !== null && t <= reste) {
+        r = avancer(x, v, a[z], t);
+        x = r.x; v = r.v; tps[z] += t; reste -= t;
+        z++;
+        /* La perte de jonction : la bille change de surface, et elle y
+           perd de la vitesse. Deux coefficients, deux jonctions. */
+        v *= (z === 1 ? PHYS.K_LEVRE.v : PHYS.K_BORD.v);
+      } else {
+        r = avancer(x, v, a[z], reste);
+        x = r.x; v = r.v; tps[z] += reste; reste = 0;
+      }
+    }
+    out.push({ d: x - x0, portion: indiceMax(tps), dt: dtK(i), v0: v });
+  }
+  return out;
+}
+function indiceMax(t) {
+  var k = 0, i;
+  for (i = 1; i < t.length; i++) if (t[i] > t[k]) k = i;
+  return k;
+}
+
+/* La distance MESURÉE : celle qu'on lit à la règle sur l'image projetée,
+   donc arrondie au demi-centimètre. C'est elle, et non la valeur exacte
+   du modèle, qui sert ensuite à comparer — comme en classe.            */
+function mesureCm(d) {
+  return Math.round(d * 100 / (PHYS.PREC.v * 100)) * (PHYS.PREC.v * 100);
+}
+
+/* ==================================================================
+   4. LA NATURE DU MOUVEMENT — lue sur la suite des distances
+   ==================================================================
+   Rien n'est décrété : on compare les distances mesurées à l'intérieur
+   d'une portion, deux à deux, et l'on regarde leur sens de variation.
+   Si les durées ne sont pas égales, la comparaison ne prouve rien et la
+   page REFUSE de nommer quoi que ce soit — c'est tout le propos.        */
+function natureDe(distances) {
+  var i, s = PHYS.SEUIL.v * 100, croit = true, decroit = true, egal = true;
+  if (distances.length < 2) return "incomplet";
+  if (REG.inegal) return "indecidable";
+  for (i = 0; i < distances.length - 1; i++) {
+    if (!(distances[i + 1] - distances[i] > s)) croit = false;
+    if (!(distances[i] - distances[i + 1] > s)) decroit = false;
+    if (Math.abs(distances[i + 1] - distances[i]) > s) egal = false;
+  }
+  if (croit) return "accelere";
+  if (decroit) return "retarde";
+  if (egal) return "uniforme";
+  return "irregulier";
+}
+/* Les mots de la conclusion, relus dans la fiche pour ne pas en inventer. */
+function motNature(k) {
+  var c = String(T("conclusion")) + " " + OH("conclusion");
+  function trouve(re, dflt) { var m = c.match(re); return m ? m[0] : dflt; }
+  if (k === "accelere") return trouve(/accéléré/i, "accéléré");
+  if (k === "uniforme") return trouve(/uniforme/i, "uniforme");
+  if (k === "retarde") return trouve(/retardé/i, "retardé");
+  if (k === "indecidable") return "indécidable";
+  if (k === "irregulier") return "irrégulier";
+  return "à mesurer";
+}
+
+function horsProtocole() {
+  return Math.abs(REG.deniv - PHYS.DENIV.v) > 1e-9
+      || REG.n !== PHYS.N_IMG.v
+      || Math.abs(REG.cTapis - PHYS.C_TAPIS.v) > 1e-9
+      || REG.inegal !== 0;
+}
+
+/* Contrôle interne : au protocole, les neuf distances calculées doivent
+   redonner celles de la fiche à la précision annoncée. */
+function accordAvecLaFiche() {
+  var rec = enregistrer(), i, e = 0;
+  for (i = 0; i < rec.length; i++) {
+    e = Math.max(e, Math.abs(rec[i].d * 100 - distanceFiche(i)));
+  }
+  return { ecart: e, ok: e <= PHYS.PREC.v * 100 };
+}
+
+/* ==================================================================
+   5. L'ÉTAT DE LA PAILLASSE
+   ================================================================== */
+var svg = null, COUCHES = {};
+var gBille = null, gRuban = null, gTel = null, gRegle = null, gMarques = null;
+var ETAT = null;
+
+function neufEtat() {
+  return {
+    ruban: false,        // le mètre ruban est posé le long du parcours
+    tel: false,          // le téléphone est calé sur son support
+    lache: false,        // la bille a été lâchée
+    roule: false,        // le trajet est terminé
+    extrait: false,      // les images ont été extraites : M₀…M₉ visibles
+    s: 0,                // abscisse curviligne de la bille, en mètres
+    mesure: {},          // les intervalles mesurés, par indice
+    suivi: -1,           // l'intervalle affiché à droite
+    conclu: false,
+    notes: []
+  };
+}
+
+/* ==================================================================
+   6. LA GÉOMÉTRIE
+   ==================================================================
+   ZONES INTERDITES, relevées sur capture :
+     · bandeau de consigne    x 224..896   y < 60
+     · journal d'observation  x < 278      y < 300
+     · plaque de sécurité     x < 276      y 316..452
+   Le parcours commence donc à x = 300.
+
+   L'ÉCHELLE EST VRAIE : 0,80 m de parcours sur 700 unités, soit
+   875 unités par mètre. Le dénivelé de 3,5 cm y fait 31 unités — la
+   rampe paraît presque plate, et c'est exact : la fiche dit « quelques
+   centimètres seulement ». On l'annote plutôt que de l'exagérer.        */
+var W = 1120, H = 760, BANC = 628;
+var Y_BT1 = 660, Y_BT2 = 700;
+var PX_M = 875;
+var X0 = 300;                                  // haut de la rampe
+var Y_PISTE = 486;                             // le plan horizontal
+var L_TAPIS = 0.20;
+function xDe(s) {                              // abscisse curviligne → écran
+  return X0 + s * PX_M;
+}
+function yDe(s) {
+  var lr = PHYS.L_RAMPE.v;
+  if (s >= lr) return Y_PISTE;
+  return Y_PISTE - (lr - s) * (REG.deniv / lr) * PX_M;
+}
+var X_FIN = function () { return xDe(PHYS.L_RAMPE.v + PHYS.L_LISSE.v + L_TAPIS); };
+var R_BILLE = 8;                               // bille de 18 mm à l'échelle
+var X_OUTILS = 1058, Y_RUBAN = 168, Y_TEL = 246, Y_REGLE = 322;
+var Y_SUPPORT = 214, X_SUPPORT = 640, Y_BRAS = 152;
+
+/* ==================================================================
+   7. DÉFINITIONS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("bois", [[0, "#c99a58"], [0.5, "#a97c3c"], [1, "#8a6128"]]);
+  grad("melamine", [[0, "#f2f5f8"], [0.5, "#dde4ec"], [1, "#bfc9d6"]]);
+  grad("acier", [[0, "#ffffff"], [0.22, "#d3dae2"], [0.6, "#8d97a5"], [1, "#5d6874"]]);
+  grad("tapis", [[0, "#8a6f5a"], [0.5, "#6f5643"], [1, "#4e3b2d"]]);
+  grad("ruban", [[0, "#fff8dd"], [1, "#efe4bd"]]);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .26 }));
+  D.appendChild(f);
+  /* Le tapis a du POIL, sans quoi c'est un rectangle brun. */
+  f = el("filter", { id: "poil", x: "-4%", y: "-30%", width: "108%", height: "160%" });
+  f.appendChild(el("feTurbulence", { type: "fractalNoise", baseFrequency: "0.9 0.35",
+    numOctaves: 3, seed: 11, result: "n" }));
+  f.appendChild(el("feDisplacementMap", { in: "SourceGraphic", in2: "n",
+    scale: "5", xChannelSelector: "R", yChannelSelector: "G" }));
+  D.appendChild(f);
+}
+function ajouterCouches() {
+  ["fond", "piste", "marques", "poste", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   8. LE DÉCOR
+   ================================================================== */
+function construireFond() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC, fill: "url(#banc)" }));
+}
+
+/* Les trois portions, alignées dans le prolongement les unes des autres.
+   La géométrie est REDESSINÉE quand le dénivelé change : sinon le curseur
+   modifierait le calcul sans rien changer au dessin, ce qui est un
+   mensonge silencieux (piège rencontré sur la valve d'E3AC-12).          */
+function construirePiste() {
+  ajout("piste", el("g", { id: "gPiste", "pointer-events": "none" }));
+  ajout("piste", el("g", { id: "gRuban", opacity: 0, "pointer-events": "none" }));
+  gRuban = svg.querySelector("#gRuban");
+  redessinerPiste();
+}
+function redessinerPiste() {
+  var g = svg.querySelector("#gPiste"), i, x;
+  vide(g);
+  var lr = PHYS.L_RAMPE.v, ll = PHYS.L_LISSE.v;
+  var xA = xDe(0), yA = yDe(0), xB = xDe(lr), xC = xDe(lr + ll), xD = xDe(lr + ll + L_TAPIS);
+  /* La rampe : une gouttière, avec sa lèvre au pied — celle qui coûte de
+     la vitesse, et qu'on doit donc voir. */
+  g.appendChild(el("path", { d: "M " + pt(xA, yA) + " L " + pt(xB, Y_PISTE)
+    + " L " + pt(xB, Y_PISTE + 11) + " L " + pt(xA, yA + 11) + " Z",
+    fill: "url(#acier)", stroke: "#5d6874", "stroke-width": 1.3 }));
+  g.appendChild(el("rect", { x: xB - 3, y: Y_PISTE - 5, width: 6, height: 6, rx: 1.5,
+    fill: "#8d97a5", stroke: "#5d6874", "stroke-width": 1 }));
+  /* Le support qui donne à la rampe son dénivelé : il doit MONTER quand
+     on tourne le curseur. */
+  g.appendChild(el("rect", { x: xA - 12, y: yA + 11, width: 22, height: Math.max(4, Y_PISTE - yA),
+    rx: 2, fill: "url(#bois)", stroke: "#6d4d1e", "stroke-width": 1.2 }));
+  /* La piste lisse. */
+  g.appendChild(el("rect", { x: xB, y: Y_PISTE, width: xC - xB, height: 11,
+    fill: "url(#melamine)", stroke: "#6b7686", "stroke-width": 1.6 }));
+  g.appendChild(el("line", { x1: xB, y1: Y_PISTE + 1.5, x2: xC, y2: Y_PISTE + 1.5,
+    stroke: "#ffffff", "stroke-width": 1.6, opacity: .9 }));
+  /* Le tapis, avec son BORD à escalader — l'autre perte de jonction. */
+  g.appendChild(el("rect", { x: xC, y: Y_PISTE - 4, width: xD - xC, height: 15,
+    fill: "url(#tapis)", stroke: "#3d2e22", "stroke-width": 1.2, filter: "url(#poil)" }));
+  /* La butée : « le parcours se termine par une butée ». */
+  g.appendChild(el("rect", { x: xD + 4, y: Y_PISTE - 40, width: 13, height: 51, rx: 2,
+    fill: "url(#bois)", stroke: "#6d4d1e", "stroke-width": 1.3 }));
+  txtIn(g, xD + 11, Y_PISTE - 46, "butée", { taille: 9, couleur: "#9aa5b2" });
+  /* La paillasse sous le tout. */
+  g.appendChild(el("rect", { x: X0 - 20, y: Y_PISTE + 11, width: xD - X0 + 60,
+    height: 13, fill: "url(#bois)", stroke: "#6d4d1e", "stroke-width": 1.2 }));
+  g.appendChild(el("rect", { x: X0 - 6, y: Y_PISTE + 24, width: 15, height: BANC - Y_PISTE - 24,
+    fill: "#7d5722", stroke: "#5f4118", "stroke-width": 1.1 }));
+  g.appendChild(el("rect", { x: xD + 16, y: Y_PISTE + 24, width: 15, height: BANC - Y_PISTE - 24,
+    fill: "#7d5722", stroke: "#5f4118", "stroke-width": 1.1 }));
+  /* Les trois portions, nommées : ce sont les noms de la fiche. */
+  var N = nomsPortions();
+  [[xA, xB, N[0]], [xB, xC, N[1]], [xC, xD, N[2]]].forEach(function (p) {
+    txtIn(g, (p[0] + p[1]) / 2, Y_PISTE + 68, p[2],
+      { taille: 10.5, couleur: "#6b7686" });
+  });
+  /* La cote du dénivelé : c'est elle qui rend la pente lisible, puisque
+     la pente elle-même est — à raison — presque invisible. */
+  g.appendChild(el("path", { d: "M " + pt(xA - 26, yA) + " L " + pt(xA - 26, Y_PISTE),
+    stroke: ORANGE, "stroke-width": 1.4, fill: "none" }));
+  g.appendChild(el("path", { d: "M " + pt(xA - 31, yA) + " L " + pt(xA - 21, yA)
+    + " M " + pt(xA - 31, Y_PISTE) + " L " + pt(xA - 21, Y_PISTE),
+    stroke: ORANGE, "stroke-width": 1.4 }));
+  txtIn(g, xA - 34, (yA + Y_PISTE) / 2 + 3.5, nb(REG.deniv * 100, 1) + " cm",
+    { taille: 9.5, couleur: ORANGE, ancre: "end", gras: true });
+  redessinerRuban();
+}
+
+/* Le mètre ruban : c'est l'ÉCHELLE de tout l'enregistrement, et la fiche
+   en fait le deuxième geste du protocole. */
+function redessinerRuban() {
+  var g = gRuban, i, s, x;
+  if (!g) return;
+  vide(g);
+  var xD = xDe(PHYS.L_RAMPE.v + PHYS.L_LISSE.v + L_TAPIS);
+  g.appendChild(el("rect", { x: X0, y: Y_PISTE + 24, width: xD - X0, height: 15, rx: 2,
+    fill: "url(#ruban)", stroke: "#b9a878", "stroke-width": 1.2 }));
+  for (i = 0; i <= 80; i++) {
+    s = i / 100;
+    x = xDe(s);
+    if (x > xD) break;
+    g.appendChild(el("line", { x1: x, y1: Y_PISTE + 24, x2: x,
+      y2: Y_PISTE + 24 + (i % 10 === 0 ? 11 : (i % 5 === 0 ? 8 : 5)),
+      stroke: "#8a7b52", "stroke-width": i % 10 === 0 ? 1.5 : 0.9 }));
+    if (i % 20 === 0) {
+      txtIn(g, x, Y_PISTE + 50, nb(s, 1) + (i === 0 ? " m" : ""),
+        { taille: 8.5, couleur: "#8a7b52" });
+    }
+  }
+}
+
+/* La bille : une sphère d'acier de 18 mm, à l'échelle. */
+function construireBille() {
+  var g = ajout("objets", el("g", { "data-act": "bille", cursor: "grab" }));
+  gBille = g;
+  g.appendChild(el("circle", { cx: 0, cy: 0, r: R_BILLE + 11, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("circle", { cx: 0, cy: 0, r: R_BILLE, fill: "url(#acier)",
+    stroke: "#5d6874", "stroke-width": 1.1 }));
+  d.appendChild(el("circle", { cx: -2.6, cy: -2.6, r: 2.4, fill: "#ffffff", opacity: .85 }));
+}
+
+/* Le téléphone et son support : « calé, perpendiculairement au parcours ». */
+function construireTelephone() {
+  var s = ajout("poste", el("g", { id: "support", "pointer-events": "none" }));
+  /* La traverse de la potence, et sa descente jusqu'au téléphone. */
+  s.appendChild(el("rect", { x: X_SUPPORT - 96, y: Y_BRAS - 5, width: 192,
+    height: 9, rx: 3, fill: "#8d97a5", stroke: "#5d6874", "stroke-width": 1.2 }));
+  [X_SUPPORT - 88, X_SUPPORT + 88].forEach(function (px) {
+    s.appendChild(el("line", { x1: px, y1: Y_BRAS - 5, x2: px, y2: 60,
+      stroke: "#9aa5b2", "stroke-width": 3 }));
+  });
+  s.appendChild(el("line", { x1: X_SUPPORT, y1: Y_BRAS + 4, x2: X_SUPPORT,
+    y2: Y_SUPPORT + 2, stroke: "#8d97a5", "stroke-width": 4 }));
+  s.appendChild(el("rect", { x: X_SUPPORT - 18, y: Y_SUPPORT - 2, width: 36,
+    height: 8, rx: 3, fill: "#6b7686" }));
+  txtIn(s, X_SUPPORT, Y_BRAS - 12, "support fixe, perpendiculaire au parcours",
+    { taille: 9, couleur: "#9aa5b2" });
+
+  var g = ajout("objets", el("g", { "data-act": "tel", cursor: "grab" }));
+  gTel = g;
+  g.appendChild(el("rect", { x: -22, y: -34, width: 44, height: 68, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -16, y: -30, width: 32, height: 60, rx: 5,
+    fill: "#2c3440", stroke: "#151a21", "stroke-width": 1.3 }));
+  d.appendChild(el("rect", { x: -13, y: -26, width: 26, height: 48, rx: 2,
+    fill: "#4b6b86" }));
+  d.appendChild(el("circle", { cx: 0, cy: 26, r: 3, fill: "#5d6874" }));
+  txt("poste", X_OUTILS, Y_TEL - 42, "téléphone", { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* La règle : c'est avec elle qu'on MESURE, un intervalle à la fois. */
+function construireRegle() {
+  var g = ajout("objets", el("g", { "data-act": "regle", cursor: "grab" }));
+  gRegle = g;
+  g.appendChild(el("rect", { x: -34, y: -14, width: 68, height: 28, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" })), i;
+  d.appendChild(el("rect", { x: -30, y: -6, width: 60, height: 12, rx: 2,
+    fill: "url(#ruban)", stroke: "#b9a878", "stroke-width": 1.2 }));
+  for (i = 0; i <= 10; i++) {
+    d.appendChild(el("line", { x1: -30 + i * 6, y1: -6, x2: -30 + i * 6,
+      y2: i % 5 === 0 ? 2 : -1, stroke: "#8a7b52", "stroke-width": 0.9 }));
+  }
+  txt("poste", X_OUTILS, Y_REGLE - 20, "règle", { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* Le mètre ruban, dans sa boîte, avant d'être posé. */
+function construireRubanOutil() {
+  var g = ajout("objets", el("g", { "data-act": "ruban", cursor: "grab" }));
+  g.id = "outilRuban";
+  g.appendChild(el("rect", { x: -22, y: -22, width: 44, height: 44, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -16, y: -14, width: 32, height: 28, rx: 5,
+    fill: "#d8a53a", stroke: "#8a6a1e", "stroke-width": 1.3 }));
+  d.appendChild(el("circle", { cx: 0, cy: 0, r: 8, fill: "#f3e3b8",
+    stroke: "#b9a878", "stroke-width": 1.1 }));
+  d.appendChild(el("rect", { x: 14, y: -3, width: 12, height: 6, rx: 1,
+    fill: "url(#ruban)", stroke: "#b9a878", "stroke-width": 1 }));
+  txt("poste", X_OUTILS, Y_RUBAN - 26, "mètre ruban", { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* Les positions successives M₀, M₁, … : elles n'apparaissent qu'une fois
+   les images extraites, et pas avant. */
+function construireMarques() {
+  gMarques = ajout("marques", el("g", { id: "marques", "pointer-events": "none" }));
+}
+
+function construireSecurite() {
+  var X = 20, Y = 316, LG = 254, HT = 136;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8, "pointer-events": "none" }));
+  txt("poste", X + 11, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.3 });
+  /* On vise la ligne par ce qu'elle DIT (§12.14). */
+  enrouler(secu("projectile|lance").replace(/\s*:.*$/, ""), 34, 4).forEach(function (s, i) {
+    txt("poste", X + 11, Y + 42 + i * 14, s, { ancre: "start", taille: 10,
+        gras: true, couleur: ROUGE });
+  });
+  txt("poste", X + 11, Y + 104, "Une bille tombée se ramasse", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+  txt("poste", X + 11, Y + 118, "immédiatement.", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+}
+
+function construireLegende() {
+  txt("ui", W / 2, 742, "schéma habillé — les longueurs, le dénivelé et la "
+    + "bille sont à l'échelle ; la pente paraît faible parce qu'elle l'est",
+    { taille: 9.5, couleur: "#8794a5" });
+}
+
+/* ==================================================================
+   9. L'ENREGISTREMENT COURANT
+   ==================================================================
+   On le recalcule à la demande plutôt que de le mémoriser : ainsi un
+   coup de curseur ne peut PAS laisser à l'écran un relevé périmé.       */
+var REC = null;
+function rec() {
+  if (!REC) REC = enregistrer();
+  return REC;
+}
+function invaliderRec() { REC = null; }
+/* Les abscisses M₀, M₁, … en mètres, cumulées depuis le départ. */
+function abscisses() {
+  var r = rec(), out = [0], i, s = 0;
+  for (i = 0; i < r.length; i++) { s += r[i].d; out.push(s); }
+  return out;
+}
+function distanceCm(i) { return mesureCm(rec()[i].d); }
+function vitesseDe(i) { return distanceCm(i) / 100 / rec()[i].dt; }
+function portionDe(i) { return rec()[i].portion; }
+
+/* ==================================================================
+   10. LE MOTEUR DE MANIPULATION
+   ================================================================== */
+var PRISE = null, SEUIL_PX = 5;
+function ptSvg(ev) {
+  var p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function noeudAct(n) {
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+function cible(x, y) {
+  var s = svg.createSVGPoint(), n;
+  s.x = x; s.y = y;
+  s = s.matrixTransform(svg.getScreenCTM());
+  n = noeudAct(document.elementFromPoint(s.x, s.y));
+  return n ? n.getAttribute("data-act") : null;
+}
+function brancherManipulation() {
+  svg.addEventListener("pointerdown", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act"), p;
+    if (!a) return;
+    p = ptSvg(ev);
+    PRISE = { act: a, x0: p.x, y0: p.y, bouge: false };
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
+  });
+  svg.addEventListener("pointermove", function (ev) {
+    if (!PRISE) return;
+    var p = ptSvg(ev), dx = p.x - PRISE.x0, dy = p.y - PRISE.y0;
+    if (!PRISE.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL_PX) return;
+    PRISE.bouge = true;
+    montrerFantome(PRISE.act, p.x, p.y);
+  });
+  function lacher(ev) {
+    if (!PRISE) return;
+    var pr = PRISE, p = ptSvg(ev);
+    PRISE = null;
+    effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (!pr.bouge) return;
+    deposer(pr.act, p.x, p.y);
+  }
+  svg.addEventListener("pointerup", lacher);
+  svg.addEventListener("pointercancel", function (ev) {
+    if (!PRISE) return;
+    PRISE = null; effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    redessiner();
+  });
+}
+var FANTOME = null;
+function montrerFantome(a, x, y) {
+  if (!FANTOME) {
+    FANTOME = COUCHES.drag.appendChild(el("g", { opacity: .8,
+      "pointer-events": "none" }));
+    var src = svg.querySelector('[data-act="' + a + '"]'), c;
+    if (src) {
+      c = src.cloneNode(true);
+      c.removeAttribute("data-act");
+      c.setAttribute("pointer-events", "none");
+      FANTOME.appendChild(c);
+    }
+  }
+  FANTOME.setAttribute("transform", "translate(" + pt(x, y) + ")");
+  surlignerZones(a, x, y);
+}
+function effacerFantome() {
+  if (FANTOME) { COUCHES.drag.removeChild(FANTOME); FANTOME = null; }
+  var z = svg.querySelector("#zones");
+  if (z) vide(z);
+}
+
+/* ==================================================================
+   11. LES ZONES
+   ==================================================================
+   Trois familles : le haut de la rampe (où l'on lâche la bille), le
+   support du téléphone, le long du parcours (pour le ruban), et les
+   neuf intervalles (pour la règle).                                     */
+function zoneHautRampe() {
+  return { type: "haut", x: xDe(0) + 14, y: yDe(0) - R_BILLE - 2, r: 44 };
+}
+function zoneSupport() {
+  return { type: "support", x: X_SUPPORT, y: Y_SUPPORT + 20, r: 62 };
+}
+function zoneParcours() {
+  return { type: "parcours", x: (X0 + xDe(0.8)) / 2, y: Y_PISTE + 30,
+           rx: (xDe(0.8) - X0) / 2, ry: 46 };
+}
+function zoneIntervalle(i) {
+  var A = abscisses();
+  return { type: "interv", i: i, x: (xDe(A[i]) + xDe(A[i + 1])) / 2,
+           y: Y_PISTE - 4, r: Math.max(11, (xDe(A[i + 1]) - xDe(A[i])) / 2 + 3) };
+}
+function emplacements(a) {
+  var out = [], i;
+  if (a === "bille") return [zoneHautRampe()];
+  if (a === "tel") return [zoneSupport()];
+  if (a === "ruban") return [zoneParcours()];
+  if (a === "regle") {
+    if (!ETAT.extrait) return [];
+    for (i = 0; i < nbIntervalles(); i++) out.push(zoneIntervalle(i));
+    return out;
+  }
+  return [];
+}
+function dansZone(z, x, y) {
+  if (z.rx) return Math.abs(x - z.x) < z.rx && Math.abs(y - z.y) < z.ry;
+  return Math.hypot(x - z.x, y - z.y) < z.r;
+}
+function zoneSous(a, x, y) {
+  var z = emplacements(a), i, meilleur = null, d, dm = 1e9;
+  for (i = 0; i < z.length; i++) {
+    if (!dansZone(z[i], x, y)) continue;
+    d = Math.hypot(x - z[i].x, y - z[i].y);
+    if (d < dm) { dm = d; meilleur = z[i]; }
+  }
+  return meilleur;
+}
+function surlignerZones(a, x, y) {
+  var g = svg.querySelector("#zones");
+  if (!g) g = COUCHES.ui.appendChild(el("g", { id: "zones", "pointer-events": "none" }));
+  vide(g);
+  var sous = zoneSous(a, x, y);
+  emplacements(a).forEach(function (z) {
+    var ok = sous && sous === z;
+    if (z.rx) {
+      g.appendChild(el("rect", { x: z.x - z.rx, y: z.y - z.ry, width: 2 * z.rx,
+        height: 2 * z.ry, rx: 6, fill: "none", stroke: ok ? GOLD : "#c8b98a",
+        "stroke-width": ok ? 2.4 : 1.4, "stroke-dasharray": "7 5" }));
+    } else {
+      g.appendChild(el("circle", { cx: z.x, cy: z.y, r: z.r, fill: "none",
+        stroke: ok ? GOLD : "#c8b98a", "stroke-width": ok ? 2.4 : 1.4,
+        "stroke-dasharray": "6 5" }));
+    }
+  });
+}
+
+/* ==================================================================
+   12. LES DÉPÔTS
+   ================================================================== */
+function accepte(a, z) {
+  if (!z) return false;
+  if (a === "ruban") return !ETAT.ruban;
+  if (a === "tel") return !ETAT.tel;
+  if (a === "bille") return ETAT.ruban && ETAT.tel && !ETAT.lache;
+  if (a === "regle") return ETAT.extrait && !ETAT.mesure[z.i];
+  return false;
+}
+function refus(a, z) {
+  if (a === "ruban") {
+    if (ETAT.ruban) return "Le mètre ruban est déjà posé.";
+    return "Poser le mètre ruban LE LONG du parcours : c'est lui qui donnera "
+         + "l'échelle des images, sans quoi aucune distance ne sera mesurable.";
+  }
+  if (a === "tel") {
+    if (ETAT.tel) return "Le téléphone est déjà calé.";
+    return "Caler le téléphone sur son SUPPORT, perpendiculairement au "
+         + "parcours : tenu à la main, l'image bougerait et les positions "
+         + "seraient fausses.";
+  }
+  if (a === "bille") {
+    if (ETAT.lache) return "La bille est déjà partie. Pour recommencer, "
+      + "la ramener en haut de la rampe.";
+    if (!ETAT.ruban) return "Poser d'abord le mètre ruban : sans échelle, "
+      + "l'enregistrement ne servirait à rien.";
+    if (!ETAT.tel) return "Caler d'abord le téléphone sur son support.";
+    return "Porter la bille en HAUT de la rampe, et l'y lâcher sans la pousser.";
+  }
+  if (a === "regle") {
+    if (!ETAT.extrait) return "Extraire d'abord les images de la vidéo : on "
+      + "mesure entre deux positions relevées, pas sur une bille en marche.";
+    if (z && ETAT.mesure[z.i]) return "Cet intervalle est déjà mesuré.";
+    return "Poser la règle sur un intervalle, entre deux positions successives.";
+  }
+  return "";
+}
+function deposer(a, x, y) {
+  var z = zoneSous(a, x, y);
+  if (!accepte(a, z)) { signaler(refus(a, z)); redessiner(); return; }
+  if (a === "ruban") {
+    ETAT.ruban = true;
+    noter("Mètre ruban posé le long du parcours : l'échelle est en place.");
+  } else if (a === "tel") {
+    ETAT.tel = true;
+    noter("Téléphone calé sur son support, perpendiculairement au parcours.");
+  } else if (a === "bille") {
+    lacherBille();
+    return;
+  } else if (a === "regle") {
+    mesurerIntervalle(z.i);
+    return;
+  }
+  succes();
+  redessiner();
+}
+
+/* ==================================================================
+   13. LÂCHER LA BILLE
+   ==================================================================
+   Le trajet n'est pas une animation décorative : c'est l'intégration du
+   modèle, jouée à l'échelle du temps réel. La bille s'arrête là où le
+   modèle dit qu'elle s'arrête.                                          */
+var ANIM_ON = false, ANIM_T0 = null, ANIM_DUREE = 0, ANIM_SMAX = 0;
+function lacherBille() {
+  if (ANIM_ON) return;
+  var A = abscisses(), i;
+  ETAT.lache = true;
+  ETAT.roule = false;
+  ETAT.s = 0;
+  noter("Bille lâchée en haut de la rampe, sans être poussée.");
+  succes();
+  ANIM_SMAX = A[A.length - 1];
+  ANIM_T0 = null;
+  ANIM_DUREE = 0;
+  for (i = 0; i < rec().length; i++) ANIM_DUREE += rec()[i].dt;
+  ANIM_ON = true;
+  ANIM_T0 = Date.now();
+  /* ⚠️ setTimeout et Date.now(), PAS requestAnimationFrame. Le pilote
+     tourne en Chrome sans tête avec un budget de temps virtuel : rAF n'y
+     est jamais appelé, et le trajet — qui EST l'expérience — ne se
+     jouait pas du tout, sans la moindre erreur. Une animation dont
+     dépend un résultat ne doit pas reposer sur le rendu. */
+  setTimeout(pasAnim, 16);
+}
+function pasAnim() {
+  if (!ANIM_ON) return;
+  var t = Date.now();
+  var u = ANIM_DUREE > 0
+    ? borne((t - ANIM_T0) / 1000 / ANIM_DUREE, 0, 1) : 1;
+  ETAT.s = positionA(u * ANIM_DUREE);
+  redessiner();
+  if (u >= 1) {
+    ANIM_ON = false;
+    ETAT.s = ANIM_SMAX;
+    ETAT.roule = true;
+    noter("La bille a franchi les trois portions et s'est arrêtée contre "
+        + "la butée. La vidéo est enregistrée.");
+    redessiner();
+    return;
+  }
+  setTimeout(pasAnim, 16);
+}
+/* La position à l'instant t : on rejoue l'intégration jusque-là. */
+function positionA(t) {
+  var a = accels(), b = bornesPortions(), x = 0, v = PHYS.V0.v, z = 0;
+  var reste = t, tb, r;
+  while (reste > 1e-12) {
+    tb = z < 2 ? tempsVers(x, v, a[z], b[z]) : null;
+    if (tb !== null && tb <= reste) {
+      r = avancer(x, v, a[z], tb);
+      x = r.x; v = r.v; reste -= tb; z++;
+      v *= (z === 1 ? PHYS.K_LEVRE.v : PHYS.K_BORD.v);
+    } else {
+      r = avancer(x, v, a[z], reste);
+      x = r.x; v = r.v; reste = 0;
+    }
+  }
+  return x;
+}
+
+/* ==================================================================
+   14. MESURER UN INTERVALLE
+   ================================================================== */
+function mesurerIntervalle(i) {
+  if (!ETAT.extrait) { signaler(refus("regle", null)); return; }
+  if (ETAT.mesure[i]) { signaler("Cet intervalle est déjà mesuré."); return; }
+  ETAT.mesure[i] = true;
+  ETAT.suivi = i;
+  var d = distanceCm(i);
+  noter(nomIntervalle(i) + " mesuré à la règle : " + nb(d, 1) + " cm en "
+      + nb(rec()[i].dt, 2) + " s.");
+  succes();
+  redessiner();
+}
+function toutMesure() {
+  var i;
+  for (i = 0; i < nbIntervalles(); i++) if (!ETAT.mesure[i]) return false;
+  return true;
+}
+function nbMesures() {
+  var i, n = 0;
+  for (i = 0; i < nbIntervalles(); i++) if (ETAT.mesure[i]) n++;
+  return n;
+}
+/* Les distances mesurées d'une portion, dans l'ordre — et seulement
+   celles qui ont été effectivement mesurées. */
+function distancesPortion(p) {
+  var out = [], i;
+  for (i = 0; i < nbIntervalles(); i++) {
+    if (portionDe(i) !== p || !ETAT.mesure[i]) continue;
+    out.push(distanceCm(i));
+  }
+  return out;
+}
+
+/* ==================================================================
+   15. LE CARNET ET LA CONSIGNE
+   ================================================================== */
+var MSG = null, MSG_JUSQUA = 0;
+function signaler(t) { MSG = t; MSG_JUSQUA = Date.now() + 4200; majConsigne(); }
+function succes() { MSG = null; MSG_JUSQUA = 0; majConsigne(); }
+function noter(t) {
+  ETAT.notes.push(t);
+  while (ETAT.notes.length > 2) ETAT.notes.shift();
+  var o = $("obs");
+  o.textContent = ETAT.notes.join(" ");
+  o.className = "obs pos";
+}
+function consigne() { return $("consigne").textContent; }
+function majConsigne() {
+  if (MSG && Date.now() < MSG_JUSQUA) { $("consigne").textContent = MSG; return; }
+  MSG = null;
+  $("consigne").textContent = consigneEtape();
+}
+function consigneEtape() {
+  if (!ETAT.ruban) return "Poser le mètre ruban le long du parcours : c'est "
+    + "l'échelle de l'enregistrement.";
+  if (!ETAT.tel) return "Caler le téléphone sur son support, perpendiculairement.";
+  if (!ETAT.lache) return "Porter la bille en haut de la rampe et l'y lâcher, "
+    + "sans la pousser.";
+  if (!ETAT.roule) return "La bille roule — laisser le parcours se dérouler "
+    + "en entier.";
+  if (!ETAT.extrait) return "Extraire une image sur " + REG.n + " : la durée "
+    + "entre deux positions vaudra alors " + nb(dt(), 2) + " s.";
+  if (!toutMesure()) return "Mesurer chaque intervalle à la règle : "
+    + nbMesures() + " sur " + nbIntervalles() + ".";
+  return "Comparer les distances à l'intérieur de chaque portion, et conclure.";
+}
+
+/* ==================================================================
+   16. LE RENDU
+   ================================================================== */
+function redessiner() {
+  var i;
+  gBille.setAttribute("transform", "translate("
+    + pt(xDe(ETAT.s) + (ETAT.s < 1e-9 && !ETAT.lache ? 14 : 0),
+         yDe(ETAT.s) - R_BILLE - 1) + ")");
+  gBille.setAttribute("opacity", ETAT.lache || ETAT.ruban ? 1 : 1);
+  gRuban.setAttribute("opacity", ETAT.ruban ? 1 : 0);
+  svg.querySelector("#outilRuban").setAttribute("opacity", ETAT.ruban ? .3 : 1);
+  svg.querySelector("#outilRuban").setAttribute("transform",
+    "translate(" + pt(X_OUTILS, Y_RUBAN) + ")");
+  gTel.setAttribute("transform", ETAT.tel
+    ? "translate(" + pt(X_SUPPORT, Y_SUPPORT + 32) + ")"
+    : "translate(" + pt(X_OUTILS, Y_TEL) + ")");
+  gRegle.setAttribute("transform", "translate(" + pt(X_OUTILS, Y_REGLE) + ")");
+  gRegle.setAttribute("opacity", ETAT.extrait ? 1 : .35);
+  dessinerMarques();
+  majTableau();
+  majPanneaux();
+  majBoutons();
+  majConsigne();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+  $("alerte").style.display = horsProtocole() && !REG.inegal ? "block" : "none";
+  $("alerteDt").style.display = REG.inegal ? "block" : "none";
+}
+
+/* Les positions successives : elles n'apparaissent qu'une fois les
+   images extraites. Un intervalle mesuré porte sa cote. */
+function dessinerMarques() {
+  var g = gMarques, A = abscisses(), i, x, y, xa, xb;
+  vide(g);
+  if (!ETAT.extrait) return;
+  for (i = 0; i < A.length; i++) {
+    x = xDe(A[i]); y = yDe(A[i]) - R_BILLE - 1;
+    g.appendChild(el("circle", { cx: x, cy: y, r: 3, fill: "#2c3440" }));
+    g.appendChild(el("line", { x1: x, y1: y - 6, x2: x, y2: y - 14,
+      stroke: "#8d97a5", "stroke-width": 1 }));
+    txtIn(g, x, y - 17, "M" + sup(i), { taille: 9.5, couleur: "#6b7686" });
+  }
+  for (i = 0; i < nbIntervalles(); i++) {
+    if (!ETAT.mesure[i]) continue;
+    xa = xDe(A[i]); xb = xDe(A[i + 1]);
+    /* ⚠️ Une seule hauteur de cote et les neuf nombres se marchaient
+       dessus, en plus des étiquettes M. On ALTERNE, comme sur tout
+       dessin coté. */
+    y = Y_PISTE - 44 - (i % 2) * 16;
+    g.appendChild(el("path", { d: "M " + pt(xa, y) + " L " + pt(xb, y),
+      stroke: ORANGE, "stroke-width": 1.5 }));
+    g.appendChild(el("path", { d: "M " + pt(xa, y - 4) + " L " + pt(xa, y + 4)
+      + " M " + pt(xb, y - 4) + " L " + pt(xb, y + 4),
+      stroke: ORANGE, "stroke-width": 1.5 }));
+    txtIn(g, (xa + xb) / 2, y - 6, nb(distanceCm(i), 1),
+      { taille: 9.5, couleur: ORANGE, gras: true });
+  }
+}
+
+/* ==================================================================
+   17. LES BOUTONS COLLECTIFS
+   ================================================================== */
+var BOUTONS = [
+  { id: "ruban", t: "Poser le mètre ruban", f: function () {
+      deposerDirect("ruban");
+    }, fait: function () { return ETAT.ruban; } },
+  { id: "tel", t: "Caler le téléphone", f: function () {
+      deposerDirect("tel");
+    }, fait: function () { return ETAT.tel; } },
+  { id: "lacher", t: "Lâcher la bille", f: function () {
+      deposerDirect("bille");
+    }, fait: function () { return ETAT.roule; } },
+  { id: "extraire", t: "Extraire une image sur " + PHYS.N_IMG.v, f: function () {
+      if (!ETAT.roule) { signaler("Filmer d'abord le parcours en entier."); return; }
+      if (ETAT.extrait) { signaler("Les images sont déjà extraites."); return; }
+      ETAT.extrait = true;
+      noter("Une image sur " + REG.n + " extraite : " + (nbIntervalles() + 1)
+          + " positions, séparées de " + nb(dt(), 2) + " s"
+          + (REG.inegal ? " — non, de durées INÉGALES, voir l'alerte." : " chacune."));
+      succes();
+    }, fait: function () { return ETAT.extrait; } },
+  { id: "mesurer", t: "Mesurer tous les intervalles", f: function () {
+      if (!ETAT.extrait) { signaler(refus("regle", null)); return; }
+      var i;
+      for (i = 0; i < nbIntervalles(); i++) if (!ETAT.mesure[i]) ETAT.mesure[i] = true;
+      ETAT.suivi = nbIntervalles() - 1;
+      noter("Les " + nbIntervalles() + " intervalles sont mesurés à la règle "
+          + "et convertis en mètres.");
+      succes();
+    }, fait: function () { return toutMesure(); } },
+  { id: "recommencer", t: "Ramener la bille", f: function () {
+      if (!ETAT.lache) { signaler("La bille n'est pas partie."); return; }
+      ETAT.lache = false; ETAT.roule = false; ETAT.extrait = false;
+      ETAT.s = 0; ETAT.mesure = {}; ETAT.suivi = -1; ANIM_ON = false;
+      noter("Bille ramenée en haut de la rampe ; l'enregistrement est effacé.");
+      succes();
+    }, fait: function () { return false; } },
+  { id: "conclure", t: "Comparer et conclure", f: function () {
+      if (!toutMesure()) {
+        signaler("Il reste " + (nbIntervalles() - nbMesures())
+          + " intervalle(s) à mesurer : on ne conclut pas sur une portion "
+          + "incomplète.");
+        return;
+      }
+      if (REG.inegal) {
+        signaler("Les durées ne sont pas égales : les distances ne se "
+          + "comparent plus. C'est justement ce que le protocole interdit.");
+        return;
+      }
+      ETAT.conclu = true;
+      var N = nomsPortions();
+      noter("Sur " + N[0].toLowerCase() + " les distances augmentent, sur "
+          + N[1].toLowerCase() + " elles sont égales, sur " + N[2].toLowerCase()
+          + " elles diminuent — et la durée est la même partout.");
+      succes();
+    }, fait: function () { return ETAT.conclu; } }
+];
+function deposerDirect(a) {
+  var z = emplacements(a)[0];
+  if (!z) { signaler(refus(a, null)); return; }
+  deposer(a, z.x, z.y);
+}
+function construireBoutons() {
+  var g = ajout("ui", el("g", { id: "boutons" })), b;
+  var rangs = [[], []];
+  BOUTONS.forEach(function (bt, i) { rangs[i < 4 ? 0 : 1].push(bt); });
+  rangs.forEach(function (rang, r) {
+    var y = r ? Y_BT2 : Y_BT1, tot = 0, x;
+    rang.forEach(function (bt) { bt.lg = 16 + bt.t.length * 6.35; tot += bt.lg + 9; });
+    x = (W - tot + 9) / 2;
+    rang.forEach(function (bt) {
+      b = g.appendChild(el("g", { "data-act": "bt-" + bt.id, cursor: "pointer",
+        id: "bt-" + bt.id }));
+      b.appendChild(el("rect", { x: x, y: y - 15, width: bt.lg, height: 30,
+        rx: 8, fill: "#eef4ea", stroke: "#9fb98a", "stroke-width": 1.4 }));
+      txtIn(b, x + bt.lg / 2, y + 5, bt.t, { taille: 11.5, couleur: "#2f4a1e" });
+      x += bt.lg + 9;
+    });
+  });
+}
+function majBoutons() {
+  BOUTONS.forEach(function (bt) {
+    var n = svg.querySelector("#bt-" + bt.id);
+    if (!n) return;
+    var r = n.querySelector("rect"), on = bt.fait();
+    r.setAttribute("fill", on ? "#d7e8c8" : "#eef4ea");
+    r.setAttribute("stroke", on ? "#5f8a3a" : "#9fb98a");
+    r.setAttribute("stroke-width", on ? 2.2 : 1.4);
+  });
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act");
+    if (!a || a.indexOf("bt-") !== 0) return;
+    var id = a.slice(3), i;
+    for (i = 0; i < BOUTONS.length; i++) {
+      if (BOUTONS[i].id === id) { BOUTONS[i].f(); redessiner(); return; }
+    }
+  });
+}
+
+/* ==================================================================
+   18. LE TABLEAU DE LA FICHE
+   ==================================================================
+   Une ligne par intervalle, remplie SEULEMENT quand la règle est passée
+   dessus. La colonne « portion » n'est pas recopiée de la fiche : elle
+   est calculée, avec les noms de la fiche. Aux réglages du protocole les
+   deux coïncident — le pilotage le vérifie ligne à ligne.               */
+function majTableau() {
+  var t = $("tab"), i, tr, td, N = nomsPortions();
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  entetes().forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = depouille(h);
+  });
+  for (i = 0; i < nbIntervalles(); i++) {
+    tr = t.appendChild(document.createElement("tr"));
+    if (i === ETAT.suivi) tr.className = "suivi";
+    tr.appendChild(document.createElement("td")).textContent = nomIntervalle(i);
+    td = tr.appendChild(document.createElement("td"));
+    if (ETAT.extrait) {
+      td.textContent = N[portionDe(i)];
+    } else {
+      td.className = "vide";
+    }
+    if (!ETAT.mesure[i]) {
+      tr.appendChild(document.createElement("td")).className = "vide";
+      td = tr.appendChild(document.createElement("td"));
+      td.textContent = ETAT.extrait ? nb(rec()[i].dt, 2) : "";
+      td.className = ETAT.extrait ? "mes" : "vide";
+      tr.appendChild(document.createElement("td")).className = "vide";
+      continue;
+    }
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = nb(distanceCm(i), 1);
+    td.className = "mes";
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = nb(rec()[i].dt, 2);
+    td.className = "mes";
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = nb(vitesseDe(i), 2);
+    td.className = "mes";
+  }
+  $("concl").className = ETAT.conclu ? "box" : "box masque";
+}
+
+/* ==================================================================
+   19. LES PANNEAUX DE DROITE
+   ================================================================== */
+function majPanneaux() { majSuivi(); majPortions(); }
+function el2(tag, cls, t) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (t !== undefined) n.textContent = t;
+  return n;
+}
+function majSuivi() {
+  var g = $("suiviCases"), i = ETAT.suivi, d, vu = i >= 0 && ETAT.mesure[i];
+  $("suiviNom").textContent = vu ? nomIntervalle(i) : "—";
+  vide(g);
+  [["distance mesurée", vu ? nb(distanceCm(i), 1) + " cm" : null],
+   ["durée Δt", vu ? nb(rec()[i].dt, 2) + " s" : null],
+   ["vitesse d = Δt", vu ? nb(vitesseDe(i), 2) + " m·s⁻¹" : null]
+  ].forEach(function (c, k) {
+    d = g.appendChild(el2("div"));
+    d.appendChild(el2("div", "t", k === 2 ? "vitesse  v = d / Δt" : c[0]));
+    d.appendChild(el2("div", "u" + (c[1] ? "" : " nul"), c[1] || "à mesurer"));
+  });
+  $("suiviPhrase").textContent = phraseSuivi(i, vu);
+}
+/* La comparaison avec l'intervalle précédent DE LA MÊME PORTION : c'est
+   la seule comparaison qui ait un sens, et c'est celle que la fiche
+   demande — « comparer à l'intérieur de chaque portion ». */
+function phraseSuivi(i, vu) {
+  if (!vu) return "Glisser la règle sur un intervalle du parcours : sa "
+    + "distance, sa durée et sa vitesse s'inscriront ici.";
+  var p = portionDe(i), j = -1, k, s = PHYS.SEUIL.v * 100;
+  for (k = i - 1; k >= 0; k--) {
+    if (portionDe(k) === p && ETAT.mesure[k]) { j = k; break; }
+  }
+  if (j < 0) return "Premier intervalle mesuré sur « "
+    + nomsPortions()[p].toLowerCase() + " » : il n'y a encore rien à quoi le "
+    + "comparer. C'est la SUITE des distances qui renseigne, jamais une seule.";
+  var dd = distanceCm(i) - distanceCm(j);
+  if (REG.inegal) {
+    return "Par rapport à " + nomIntervalle(j) + ", la distance a changé de "
+      + nb(dd, 1) + " cm — mais la durée aussi (" + nb(rec()[j].dt, 2) + " s puis "
+      + nb(rec()[i].dt, 2) + " s). La comparaison ne prouve donc rien.";
+  }
+  var sens = Math.abs(dd) <= s ? "la même" : (dd > 0 ? "plus grande" : "plus petite");
+  return "Pour la MÊME durée de " + nb(rec()[i].dt, 2) + " s, la distance est "
+    + sens + " qu'en " + nomIntervalle(j) + " (" + nb(distanceCm(j), 1) + " cm puis "
+    + nb(distanceCm(i), 1) + " cm) : la vitesse "
+    + (Math.abs(dd) <= s ? "reste donc constante." : (dd > 0 ? "augmente donc." : "diminue donc."))
+    + " C'est la comparaison qui conclut, pas la mesure isolée.";
+}
+
+/* Les trois portions : une barre par intervalle mesuré, et le verdict
+   lu sur leur suite. Rien ne s'affiche avant la mesure. */
+function majPortions() {
+  var g = $("portions"), N = nomsPortions(), p, ds, i, ligne, barres, v, nat;
+  vide(g);
+  var dmax = 1;
+  for (i = 0; i < nbIntervalles(); i++) {
+    if (ETAT.mesure[i]) dmax = Math.max(dmax, distanceCm(i));
+  }
+  for (p = 0; p < 3; p++) {
+    ds = distancesPortion(p);
+    ligne = g.appendChild(el2("div"));
+    ligne.appendChild(el2("div", "n", N[p]));
+    barres = ligne.appendChild(el2("div", "b"));
+    for (i = 0; i < nbIntervalles(); i++) {
+      if (portionDe(i) !== p) continue;
+      var b = el2("i");
+      if (ETAT.mesure[i]) {
+        b.style.height = Math.max(4, 34 * distanceCm(i) / dmax) + "px";
+        b.style.background = "var(--orange)";
+      } else {
+        b.style.height = "4px";
+      }
+      barres.appendChild(b);
+    }
+    nat = natureDe(ds);
+    v = ligne.appendChild(el2("div", "v " + classeNature(nat), motNature(nat)));
+  }
+  $("portNote").textContent = noteDesPortions();
+}
+function classeNature(k) {
+  if (k === "accelere") return "acc";
+  if (k === "uniforme") return "uni";
+  if (k === "retarde") return "ret";
+  return "att";
+}
+function noteDesPortions() {
+  if (REG.inegal) {
+    return "Les durées sont inégales : la page refuse de nommer la nature du "
+         + "mouvement, parce qu'aucune comparaison de distances n'est plus "
+         + "légitime. C'est exactement la raison d'être du « Δt constant ».";
+  }
+  if (nbMesures() < nbIntervalles()) {
+    return "Un verdict n'apparaît qu'une fois les trois intervalles d'une "
+         + "portion mesurés : on ne conclut pas sur une portion incomplète.";
+  }
+  return "Chaque verdict est lu sur la SUITE des distances de sa portion, "
+       + "toutes relevées pour la même durée de " + nb(dt(), 2) + " s.";
+}
+
+/* ==================================================================
+   20. LES CURSEURS
+   ==================================================================
+   ⚠️ Chaque valeur initiale tombe sur la grille de son pas (§12.12) :
+   3,5 est multiple de 0,5 ; 5 de 1 ; 0,107 de 0,001 ; 0 de 1. Vérifié
+   au calcul AVANT d'écrire la page, pas supposé.                        */
+function brancherCurseurs() {
+  function lier(id, out, cle, fmt, ech) {
+    var r = $(id), o = $(out);
+    function maj() {
+      REG[cle] = parseFloat(r.value) * (ech || 1);
+      o.textContent = fmt(parseFloat(r.value));
+      invaliderRec();
+      /* Un coup de curseur périme l'enregistrement : on efface les mesures
+         plutôt que de laisser à l'écran des distances qui ne correspondent
+         plus au parcours dessiné. */
+      if (ETAT) { ETAT.mesure = {}; ETAT.suivi = -1; ETAT.conclu = false; }
+      redessinerPiste();
+      if (ETAT) { ETAT.s = ETAT.roule ? abscisses()[nbIntervalles()] : 0; }
+      redessiner();
+    }
+    r.addEventListener("input", maj);
+    maj();
+  }
+  lier("rDeniv", "oDeniv", "deniv", function (v) {
+    return nb(v, 1) + " cm sur " + nb(PHYS.L_RAMPE.v * 100, 0) + " cm";
+  }, 0.01);
+  lier("rN", "oN", "n", function (v) {
+    return "1 image sur " + v + "  →  Δt = " + nb(v / PHYS.FPS.v, 2) + " s";
+  });
+  lier("rTapis", "oTapis", "cTapis", function (v) { return nb(v, 3); });
+  lier("rIneg", "oIneg", "inegal", function (v) {
+    return v ? "OUI — durées inégales" : "non — durée constante";
+  });
+}
+
+/* ==================================================================
+   21. SÉANCE, REMISE À ZÉRO, TEXTES
+   ================================================================== */
+var T0 = Date.now();
+function majSeance() {
+  var d = (DONNEES.duree || 26) * 60, e = (Date.now() - T0) / 1000;
+  $("seanceT").textContent = mmss(Math.min(e, d));
+  $("seanceJ").style.width = borne(100 * e / d, 0, 100) + "%";
+}
+function rezero() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  ETAT = neufEtat();
+  MSG = null; MSG_JUSQUA = 0; ANIM_ON = false;
+  invaliderRec();
+  $("obs").textContent = "—";
+  $("obs").className = "obs";
+  redessiner();
+}
+function remplirTextes() {
+  $("titre").textContent = depouille(T("titre"));
+  document.title = "Paillasse virtuelle — " + DONNEES.id + " · " + depouille(T("titre"));
+  $("ref").textContent = DONNEES.id + " · " + T("niveau") + " · " + T("lecon")
+    + " · résultats calculés";
+  $("objectif").innerHTML = md(T("objectif"));
+  $("observation").innerHTML = md(T("observation"));
+  $("conclTxt").innerHTML = md(T("conclusion"));
+  $("seanceB").textContent = "durée prescrite par la fiche";
+  $("seanceM").textContent = " " + (DONNEES.duree || 26) + " min · "
+    + depouille(T("modalite"));
+  ["materiel", "securite"].forEach(function (k) {
+    var u = $(k);
+    vide(u);
+    L(k).forEach(function (x) {
+      var li = document.createElement("li");
+      li.innerHTML = md(x);
+      u.appendChild(li);
+    });
+  });
+  $("alDeniv").textContent = nb(PHYS.DENIV.v * 100, 1) + " cm";
+  $("alN").textContent = PHYS.N_IMG.v;
+  $("capotEq").textContent =
+    "a = (5/7) · g · (sin θ − c · cos θ)      puis      x(t) = x₀ + v₀·t + a·t²/2";
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+  majCapotJonc();
+  majCapotAccord();
+  majCapotVals();
+}
+function majCapotJonc() {
+  var t = $("capotJonc"), tr;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Jonction", "Vitesse avant", "Vitesse après", "Coefficient", "Ce qui la produit"]
+    .forEach(function (h) {
+      tr.appendChild(document.createElement("th")).textContent = h;
+    });
+  [["pied de la rampe", 0.70, 0.60, PHYS.K_LEVRE.v, "la lèvre du rail de la gouttière"],
+   ["bord du tapis", 0.60, 0.525, PHYS.K_BORD.v, "l'épaisseur du tapis, qu'il faut escalader"]
+  ].forEach(function (r) {
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = r[0];
+    tr.appendChild(document.createElement("td")).textContent = nb(r[1], 3) + " m·s⁻¹";
+    tr.appendChild(document.createElement("td")).textContent = nb(r[2], 3) + " m·s⁻¹";
+    tr.appendChild(document.createElement("td")).textContent = nb(r[3], 4);
+    tr.appendChild(document.createElement("td")).textContent = r[4];
+  });
+}
+/* Ce que la page retrouve, comparé à ce que la fiche a consigné. C'est le
+   contrôle le plus important de la page, et il est VISIBLE. */
+function majCapotAccord() {
+  var t = $("capotAccord"), tr, i, calc, att, ecart, emax = 0;
+  var sauve = { d: REG.deniv, n: REG.n, c: REG.cTapis, g: REG.inegal };
+  REG.deniv = PHYS.DENIV.v; REG.n = PHYS.N_IMG.v;
+  REG.cTapis = PHYS.C_TAPIS.v; REG.inegal = 0;
+  invaliderRec();
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Intervalle", "Fiche (cm)", "Modèle (cm)", "Écart"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  for (i = 0; i < nbIntervalles(); i++) {
+    calc = rec()[i].d * 100;
+    att = distanceFiche(i);
+    ecart = Math.abs(calc - att);
+    emax = Math.max(emax, ecart);
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = nomIntervalle(i);
+    tr.appendChild(document.createElement("td")).textContent = nb(att, 1);
+    tr.appendChild(document.createElement("td")).textContent = nb(calc, 2);
+    tr.appendChild(document.createElement("td")).textContent = nb(ecart, 2);
+  }
+  tr = t.appendChild(document.createElement("tr"));
+  tr.appendChild(document.createElement("td")).textContent = "écart maximal";
+  tr.appendChild(document.createElement("td")).textContent = "";
+  tr.appendChild(document.createElement("td")).textContent = "";
+  tr.appendChild(document.createElement("td")).textContent =
+    nb(emax, 2) + " cm  (précision de lecture : " + nb(PHYS.PREC.v * 100, 1) + " cm)";
+  REG.deniv = sauve.d; REG.n = sauve.n; REG.cTapis = sauve.c; REG.inegal = sauve.g;
+  invaliderRec();
+}
+function majCapotVals() {
+  var t = $("capotVals"), tr, k;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Grandeur", "Valeur", "D'où elle vient"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  for (k in PHYS) {
+    if (!PHYS.hasOwnProperty(k)) continue;
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].n;
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(PHYS[k].v, PHYS[k].v >= 10 ? 0 : 4) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].s;
+  }
+}
+
+/* ==================================================================
+   22. DÉMARRAGE
+   ================================================================== */
+/* ==================================================================
+   24. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = W / s.width, ky = H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* Un bouton de scène : sa géométrie est lue sur le rectangle qu'il porte,
+   ce qui évite de toucher à construireBoutons(). */
+function surlignerBouton(id) {
+  var n = svg.querySelector("#bt-" + id), r = n && n.querySelector("rect");
+  if (!r) return null;
+  return haloGuide(+r.getAttribute("x") - 7, +r.getAttribute("y") - 7,
+                   +r.getAttribute("width") + 14,
+                   +r.getAttribute("height") + 14, 13);
+}
+/* La ZONE où poser : on réemploie le surligneur de la page — un second
+   mécanisme de cible ferait deux traits de couleurs différentes pour la
+   même chose — puis on confie ses rectangles à effacerGuide, pour
+   qu'aucun ne survive au guidage. */
+function montrerCibles(a, x, y) {
+  surlignerZones(a, x, y);
+  var g = svg.querySelector("#zones"), i;
+  if (!g) return;
+  for (i = 0; i < g.childNodes.length; i++) guideSurb.push(g.childNodes[i]);
+}
+
+function prochainIntervalle() {
+  var i;
+  for (i = 0; i < nbIntervalles(); i++) if (!ETAT.mesure[i]) return i;
+  return -1;
+}
+
+/* Les dix étapes de la fiche. La première est SERVIE par la page : les
+   trois portions sont livrées alignées, on ne peut pas les désaligner.
+   Les étapes 6 et 7 partagent un prédicat — extraire les images, c'est
+   les projeter et y voir apparaître M0 à M9 — et les étapes 8 et 9
+   aussi : la page convertit et calcule dès qu'un intervalle est mesuré. */
+var GUIDE = [
+  { fait: function () { return true; },
+    aide: "Les trois portions sont <b>déjà alignées</b> sur la paillasse : la "
+        + "rampe inclinée, la piste lisse, puis le tapis, dans le prolongement "
+        + "les unes des autres.",
+    montre: function () { surlignerNoeud("#gPiste", 12); } },
+
+  { fait: function () { return ETAT.ruban; },
+    aide: "Prendre le <b>mètre ruban</b>, à droite, et le poser le long du "
+        + "parcours : c'est lui qui donnera l'échelle des images.",
+    montre: function () {
+      var z = zoneParcours();
+      surlignerNoeud('[data-act="ruban"]');
+      montrerCibles("ruban", z.x, z.y);
+    } },
+
+  { fait: function () { return ETAT.tel; },
+    aide: "Prendre le <b>téléphone</b> et le caler sur son <b>support</b>, "
+        + "perpendiculairement au parcours, de façon à voir les trois portions.",
+    montre: function () {
+      var z = zoneSupport();
+      surlignerNoeud('[data-act="tel"]');
+      montrerCibles("tel", z.x, z.y);
+    } },
+
+  { fait: function () { return ETAT.lache; },
+    aide: "La vidéo tourne : porter la <b>bille</b> en haut de la rampe et l'y "
+        + "<b>lâcher sans la pousser</b>.",
+    montre: function () {
+      var z = zoneHautRampe();
+      surlignerNoeud('[data-act="bille"]');
+      montrerCibles("bille", z.x, z.y);
+    } },
+
+  { fait: function () { return ETAT.roule; },
+    aide: "Laisser la bille descendre la rampe, traverser la piste lisse, "
+        + "s'engager sur le tapis et s'y arrêter — <b>puis</b> arrêter la vidéo.",
+    montre: function () { surlignerNoeud("#gPiste", 12); surlignerBouton("lacher"); } },
+
+  { fait: function () { return ETAT.extrait; },
+    aide: function () {
+      return "Extraire <b>une image sur " + REG.n + "</b> : à "
+        + nb(PHYS.FPS.v, 0) + " images par seconde, la durée entre deux "
+        + "positions vaudra " + nb(dt(), 2) + " s, toujours la même.";
+    },
+    montre: function () { surlignerBouton("extraire"); } },
+
+  { fait: function () { return ETAT.extrait; },
+    aide: "Projeter les images et y repérer les positions successives de la "
+        + "bille, notées M₀, M₁, M₂ … : elles s'inscrivent sur le parcours.",
+    montre: function () { surlignerNoeud(gMarques, 12); } },
+
+  { fait: function () { return toutMesure(); },
+    aide: function () {
+      return "Prendre la <b>règle</b> et la poser sur un intervalle, entre deux "
+        + "positions successives, pour le mesurer en centimètres ("
+        + nbMesures() + " sur " + nbIntervalles() + " faits).";
+    },
+    montre: function () {
+      var i = prochainIntervalle(), z;
+      surlignerNoeud('[data-act="regle"]');
+      if (i < 0) return;
+      z = zoneIntervalle(i);
+      montrerCibles("regle", z.x, z.y);
+    } },
+
+  { fait: function () { return toutMesure(); },
+    aide: "Convertir chaque distance en mètres, puis calculer la vitesse "
+        + "moyenne de l'intervalle : le tableau le fait colonne par colonne, "
+        + "et « Mesurer tous les intervalles » achève le relevé.",
+    montre: function () { surlignerBouton("mesurer"); } },
+
+  { fait: function () { return ETAT.conclu; },
+    aide: "Comparer les distances, puis les vitesses, <b>à l'intérieur de "
+        + "chaque portion</b> — le panneau « Les trois portions » les met côte "
+        + "à côte — puis presser « Comparer et conclure ».",
+    montre: function () { surlignerBouton("conclure"); } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : les
+     curseurs appellent redessiner() avant le démarrage du panneau. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape soit lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  MSG = null; MSG_JUSQUA = 0;
+  majConsigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 2, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* Arreter le deroule, c'est aussi arreter le geste EN COURS : sur ces
+     paillasses, un trajet anime continuerait seul jusqu'a son terme et
+     renseignerait une ligne que l'enseignant venait d'interrompre. On coupe
+     l'animation la ou elle en est — ce que fait un eleve qui lache le
+     chariot en route. Aucun resultat n'est ecrit : la fin de trajet, elle,
+     passe par `finTirage()` / `finRotation()`, qui ne sont pas appeles. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* Le panneau se rafraichit une derniere fois par le RENDU de la page.
+       Les lots precedents avaient un `avancer()` qui le faisait ; ces
+       pages-ci n'en ont pas, et sur E3AC-13 `avancer(x, v, a, t)` est la
+       cinematique de la bille — un homonyme, pas un rafraichisseur. */
+    redessiner();
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. Rien à faire : les trois portions sont livrées alignées et le
+     prédicat de l'étape vaut `true`. `etapeCourante()` ne rend donc jamais
+     cet indice, et ce geste n'est jamais appelé — on le laisse vide plutôt
+     que de simuler un alignement que la page n'offre pas. */
+  function () { return 0; },
+
+  /* 2. le mètre ruban le long du parcours — l'échelle des images */
+  function () { presserBouton("bt-ruban"); return 380; },
+
+  /* 3. le téléphone calé sur son support */
+  function () { presserBouton("bt-tel"); return 380; },
+
+  /* 4. lâcher la bille. Le bouton passe par `deposerDirect("bille")`, donc
+     par le même `deposer()` que le glisser, qui appelle `lacherBille()` :
+     l'état « lâchée » est posé par le geste, le trajet commence. */
+  function () { presserBouton("bt-lacher"); return 320; },
+
+  /* 5. LAISSER LE TRAJET SE FAIRE. Il n'y a pas de sélecteur de vitesse sur
+     cette page ; le trajet EST l'intégration du modèle, jouée en temps
+     réel. On lit donc sur le modèle ce qu'il reste à attendre — `ANIM_DUREE`
+     est la somme des Δt de l'enregistrement — et on le rend. On ne presse
+     rien : presser reviendrait à redemander un lâcher que la page refuse.
+
+     Si le trajet a été interrompu (un déroulé arrêté en cours de route
+     coupe l'animation), la bille est en plan et `ETAT.roule` restera faux :
+     on la ramène, ce qui rouvre l'étape 4 et la fait relâcher. */
+  function () {
+    var reste;
+    if (ANIM_ON) {
+      reste = ANIM_DUREE - (Date.now() - ANIM_T0) / 1000;
+      return Math.max(600, reste * 1000 + 900);
+    }
+    presserBouton("bt-recommencer");
+    return 420;
+  },
+
+  /* 6 et 7. Extraire une image sur N, c'est du même coup les projeter et y
+     voir apparaître M₀…M₉ : les deux étapes partagent leur prédicat. */
+  function () { presserBouton("bt-extraire"); return 420; },
+  function () { presserBouton("bt-extraire"); return 420; },
+
+  /* 8. LA RÈGLE, UN INTERVALLE PAR PRESSION — c'est ce que la fiche fait
+     faire, et l'aide de l'étape le compte (« n sur N faits »). On demande à
+     la page quel intervalle reste (`prochainIntervalle()`), on prend SA
+     zone (`zoneIntervalle()`), et on dépose la règle dessus par le même
+     `deposer()` que le glisser : c'est `mesurerIntervalle()` qui lit la
+     distance sur le modèle, jamais ce geste. */
+  function () {
+    var i = prochainIntervalle(), z;
+    if (i < 0) return 0;
+    z = zoneIntervalle(i);
+    deposer("regle", z.x, z.y);
+    return 300;
+  },
+
+  /* 9. Même prédicat que l'étape 8 : quand tous les intervalles sont
+     mesurés, les deux se cochent ensemble et cette entrée n'est pas
+     atteinte. Elle porte tout de même le bouton que son aide nomme, pour
+     que le geste existe si l'on arrive ici par un autre chemin. */
+  function () { presserBouton("bt-mesurer"); return 420; },
+
+  /* 10. « Comparer et conclure » — il refuse tant qu'un intervalle manque,
+     et c'est lui qui démasque la conclusion. */
+  function () { presserBouton("bt-conclure"); return 520; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  var p = $("paillasse");
+  svg = p.appendChild(el("svg", { viewBox: "0 0 " + W + " " + H,
+    width: "100%", role: "img",
+    "aria-label": "Paillasse virtuelle : une bille, une rampe, une piste lisse et un tapis" }));
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  ajouterDefs();
+  ajouterCouches();
+  construireFond();
+  ETAT = neufEtat();
+  construirePiste();
+  construireMarques();
+  construireSecurite();
+  construireTelephone();
+  construireBille();
+  construireRubanOutil();
+  construireRegle();
+  construireBoutons();
+  construireLegende();
+  brancherManipulation();
+  brancherBoutons();
+  brancherCurseurs();
+  remplirTextes();
+  $("rezero").addEventListener("click", rezero);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  construireProtocole();
+  redessiner();
+  majSeance();
+  setInterval(majSeance, 1000);
+  setInterval(function () {
+    if (MSG && Date.now() >= MSG_JUSQUA) { MSG = null; majConsigne(); }
+  }, 400);
+  var a = accordAvecLaFiche();
+  if (!a.ok) {
+    console.warn("E3AC-13 : écart de " + a.ecart.toFixed(2)
+      + " cm avec le relevé de la fiche.");
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else {
+  demarrer();
+}
+})();
+</script>
+</body>
+</html>

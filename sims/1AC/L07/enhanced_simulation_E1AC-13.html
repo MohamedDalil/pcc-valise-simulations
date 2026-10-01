@@ -1,0 +1,3252 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-13</title>
+
+<!--
+  ===================================================================
+  E1AC-13 · 1AC · U1 · L07 — PAILLASSE VIRTUELLE
+  « Modélisation des trois états de la matière »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Rien n'est affirmé. Les trois états ne sont pas trois images : ce sont
+  TROIS RÉGIMES DU MÊME JEU DE PARTICULES, et l'on passe de l'un à
+  l'autre — dans les deux sens — en agitant plus ou moins la boîte.
+
+  1. UN VRAI MOTEUR DE PARTICULES. Les billes obéissent à une dynamique
+     moléculaire à deux dimensions : potentiel de Lennard-Jones tronqué,
+     pesanteur, parois réfléchissantes, thermostat. L'intégration est en
+     vitesse-Verlet à PAS FIXE — le résultat ne dépend donc ni du
+     sélecteur de vitesse ni du nombre d'images (§12.37).
+
+  2. LES QUATRE LIGNES MESURABLES DU TABLEAU SORTENT DE MESURES.
+       · « Distance entre les billes » ← le nombre moyen de voisines AU
+         CONTACT (centres à moins de 1,25 diamètre) ;
+       · « Rangement des billes » ← l'ordre orientationnel hexagonal
+         GLOBAL, module de la moyenne des ψ₆ — c'est l'ALIGNEMENT d'un
+         hexagone à l'autre, pas la forme locale, qui fait le rangement ;
+       · « L'ensemble garde-t-il sa forme ? » ← la part des voisines
+         CONSERVÉES après qu'on a incliné puis retourné la boîte. C'est
+         mot pour mot ce que la fiche décrit : « sans qu'elles quittent
+         leur voisine » ;
+       · « L'espace occupé change-t-il ? » ← la part de la boîte que les
+         billes ATTEIGNENT sur une fenêtre de temps.
+     La cinquième ligne, « État physique représenté », est la CONCLUSION
+     des quatre autres, jamais une étiquette posée d'avance.
+
+  3. LES SEUILS DE LECTURE LAISSENT AU MOINS 25 % DE MARGE (§12.3). Ils
+     ont été fixés en Python avant la première ligne de JS ; les marges
+     ont été fixés en Python, puis REMESURÉS sur la page sur trois
+     exécutions complètes : ×1,60 sur le rangement, ×1,52 et ×1,50 sur le
+     contact, ×1,28 et ×1,27 sur l'espace, ×1,29 et ×1,28 sur la forme.
+
+  4. LES REFUS SONT CALCULÉS. Retourner une boîte ouverte dont le contenu
+     n'est PAS solide la vide sur la paillasse : la page refuse, et elle
+     dit pourquoi — c'est justement pour cela que la fiche fait fermer la
+     boîte avant d'agiter fortement.
+
+  5. LA COHÉSION EST UN RÉGLAGE, ET C'EST LA LIMITE DU MODÈLE À BILLES.
+     À 0 %, les billes ne s'attirent plus : plus de solide qui tient, plus
+     de liquide qui garde son volume. De vraies billes de verre n'ont pas
+     de cohésion — les particules de la matière, si. Le réglage rend cette
+     limite manipulable au lieu de la taire.
+
+  ATTENTION — CE QUE LA PAGE N'EST PAS
+  ------------------------------------
+  * Elle est AUTONOME. Elle ne passe pas par generer.py, n'utilise ni
+    moteur.js ni simulation.html.j2 ni icones.js, et ne s'ouvre pas depuis
+    index.html. Elle DOUBLE simulation_E1AC-13.html, elle ne la remplace
+    pas.
+  * Elle n'a pas de vue 3D.
+  * Elle s'écarte volontairement du §5 du SKILL principal (fond blanc,
+    aplats, aucun dégradé) : on cherche ici qu'une bille se reconnaisse
+    comme une bille et donne envie d'y porter la main.
+  * LE DESSIN EST UNE MISE À PLAT, et le modèle est à DEUX dimensions.
+    Sont à l'échelle : le diamètre des billes, les distances entre
+    centres, les dimensions des récipients — tous mesurés dans la même
+    unité, le diamètre d'une bille. Ne l'est pas : la profondeur, qui
+    n'existe pas. Une boîte réelle empile ses billes sur plusieurs
+    couches ; celle-ci n'en a qu'une.
+  * LE MODÈLE N'EST PAS LA MATIÈRE. Une particule n'est ni grise, ni
+    dure, ni colorée — la fiche le dit, et « Sous le capot » le répète.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E1AC-13.
+  Le nombre de billes est lu dans le matériel (« une centaine »), les
+  trois agitations sont nommées par le protocole lui-même
+  (« légèrement », « doucement », « fortement »), et les cinq lignes du
+  tableau sont celles de la fiche.
+-->
+
+<script>
+/* §12.47 — l'écouteur d'erreurs se pose AVANT le script de la page. Posé en
+   fin de <body>, il ne voit aucune erreur de démarrage : c'est ce qui a fait
+   croire à un défaut du harnais sur E2AC-01. */
+window.__ERREURS = [];
+window.addEventListener("error", function (e) {
+  window.__ERREURS.push(String(e.message));
+});
+</script>
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.consigne.non{background:#8f2f0aee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"\2713";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le cadre
+   centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR : passée par un échappement CSS, elle se fait
+   avaler par le chiffre qui la suit et sort en « ¹3 ». */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.on{border-color:var(--gold);color:var(--gold)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.vit{display:flex;gap:5px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.vit button{padding:4px 9px;font-size:12px}
+.vit span{font-size:11px;color:var(--muted)}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;list-style:none;
+      margin:0;padding:0}
+.lect li,.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px;
+      font-size:11.5px}
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:17px;font-weight:700;color:var(--ink);margin-top:2px;
+          font-family:var(--mono)}
+.cases .u.nul{color:#9aa5b2;font-weight:600;font-family:inherit;font-size:13px}
+.cases .u.gros{font-size:22px;color:var(--orange)}
+.cases .u.vert{color:var(--green)}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan2{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin-top:9px;
+        font-size:12px}
+.bilan2 .n{color:var(--muted)}
+.bilan2 .v{font-family:var(--mono);font-weight:700;text-align:right}
+.bilan2 .v.ok{color:var(--green)}
+.bilan2 .v.mal{color:#b03030}
+.ecart{background:#fdf6e6;border-left:3px solid var(--gold);padding:8px 11px;
+  border-radius:0 7px 7px 0;font-size:11.5px;margin-top:9px;line-height:1.5}
+.ajout{background:#f4f6f9;border-left:3px solid var(--muted);padding:7px 10px;
+  border-radius:0 6px 6px 0;font-size:11px;margin-top:8px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-13</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience" type="button">&#10227;</button>
+    </div>
+
+    <div class="seance" id="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="cmd">
+      <button id="btnRemplir" type="button">Verser les billes dans la boîte</button>
+      <button id="btnEssai" class="sec" type="button">Incliner, puis retourner</button>
+      <button id="btnVerser" class="sec" type="button">Verser dans l'autre récipient</button>
+      <button id="btnSurface" class="sec" type="button">Observer la surface libre</button>
+      <button id="btnCouvercle" class="sec" type="button">Fermer la boîte</button>
+      <button id="btnComparer" class="sec" type="button">Comparer les trois situations</button>
+    </div>
+    <div class="vit" id="vit">
+      <span>vitesse du modèle</span>
+      <button class="sec" data-v="1" type="button">×1</button>
+      <button class="sec" data-v="2" type="button">×2</button>
+      <button class="sec" data-v="4" type="button">×4</button>
+      <button class="sec" data-v="8" type="button">×8</button>
+      <span id="vitTxt"></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Ce que la page MESURE <span class="note" id="instNote">—</span></h2>
+      <div class="cases" id="instCases"></div>
+      <p class="src" id="instPhrase" style="margin-top:9px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Le carnet de mesures <span class="note">ce que le modèle calcule</span></h2>
+      <p class="src" style="margin:0 0 5px">Ce que <em>cette</em> boîte-ci a
+        donné, sous les réglages courants. Il n'est pas le tableau de la fiche :
+        celui-là dit ce que la manipulation prescrite produit, celui-ci ce que
+        la page a <b>relu sur les billes</b>.</p>
+      <table id="carnet"></table>
+      <div class="bilan2" id="carnetBilan"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rCoh">Cohésion entre les billes</label><output id="oCoh"></output>
+        <input type="range" id="rCoh" min="0" max="150" step="10" value="100">
+        <div class="aide" id="aideCoh"></div>
+      </div>
+      <div class="reg">
+        <label for="rBilles">Billes manquantes dans le sachet</label><output id="oBilles"></output>
+        <input type="range" id="rBilles" min="0" max="60" step="10" value="0">
+        <div class="aide" id="aideBilles"></div>
+      </div>
+      <div class="reg">
+        <label for="rPes">Pesanteur</label><output id="oPes"></output>
+        <input type="range" id="rPes" min="0" max="200" step="25" value="100">
+        <div class="aide" id="aidePes"></div>
+      </div>
+      <div class="cmd">
+        <button id="btnProto" class="sec" type="button">Revenir au protocole</button>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="capotEq"></div>
+      <p id="capotEqTxt"></p>
+
+      <h3>2 · Ce que devient la matière</h3>
+      <p id="capotMatiere"></p>
+
+      <h3>3 · Les constantes et leur provenance</h3>
+      <table id="capotPhys"></table>
+      <h3 style="margin-top:12px">Les seuils de lecture, et leur marge</h3>
+      <table id="capotSeuils"></table>
+      <h3>4 · Ce que la page retrouve, et avec quelle marge</h3>
+      <div class="ecart" id="capotEcart"></div>
+
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul id="capotLimites"></ul>
+
+      <h3>6 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-13.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-13",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L07",
+  "titre": "Modélisation des trois états de la matière",
+  "axe": "Modéliser les trois états de la matière",
+  "objectif": "Représenter par un modèle à billes la distance, le rangement et l'agitation des particules dans les trois états physiques, et s'en servir pour interpréter les propriétés établies à la leçon 2.",
+  "duree": 20,
+  "modalite": "groupes de 4 — 8 postes",
+  "materiel": [
+    "Boîte transparente à couvercle",
+    "Une centaine de billes identiques",
+    "Récipients de formes différentes",
+    "Plateau à rebords",
+    "Ressource numérique : simulation PhET « États de la matière »"
+  ],
+  "securite": [
+    "Garder la boîte fermée pendant l'agitation.",
+    "Ne pas laisser tomber les billes au sol : on glisse dessus.",
+    "Ne porter aucune bille à la bouche.",
+    "Compter les billes avant et après : aucune ne doit manquer."
+  ],
+  "protocole": [
+    "Disposer les billes serrées et bien rangées au fond de la boîte, puis les faire vibrer légèrement sur place sans qu'elles quittent leur voisine.",
+    "Incliner la boîte, puis la retourner : observer si l'ensemble garde sa forme.",
+    "Agiter doucement la boîte : les billes glissent les unes sur les autres tout en restant en contact ; verser l'ensemble dans un récipient de forme différente.",
+    "Poser la boîte à plat et observer la surface libre formée par les billes.",
+    "Fermer la boîte et l'agiter fortement dans tous les sens : observer l'espace occupé par les billes et leur rangement.",
+    "Comparer les trois situations aux propriétés physiques établies à la leçon 2."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Situation modélisée",
+      "Billes serrées et rangées",
+      "Billes en contact, désordonnées",
+      "Billes très espacées et agitées"
+    ],
+    "lignes": [
+      [
+        "État physique représenté",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Distance entre les billes",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Rangement des billes",
+        "",
+        "",
+        ""
+      ],
+      [
+        "L'ensemble garde-t-il sa forme ?",
+        "",
+        "",
+        ""
+      ],
+      [
+        "L'espace occupé change-t-il ?",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "État physique représenté",
+        "solide",
+        "liquide",
+        "gazeux"
+      ],
+      [
+        "Distance entre les billes",
+        "nulle — elles se touchent",
+        "nulle — elles se touchent",
+        "grande — du vide les sépare"
+      ],
+      [
+        "Rangement des billes",
+        "ordonné",
+        "désordonné",
+        "désordonné"
+      ],
+      [
+        "L'ensemble garde-t-il sa forme ?",
+        "oui",
+        "non",
+        "non"
+      ],
+      [
+        "L'espace occupé change-t-il ?",
+        "non",
+        "non",
+        "oui"
+      ]
+    ]
+  },
+  "observation": "Selon qu'on les laisse rangées, qu'on les agite doucement ou qu'on les agite fortement, les mêmes billes reproduisent le comportement d'un solide, d'un liquide puis d'un gaz.",
+  "conclusion": "La matière est discontinue : elle est formée de particules extrêmement petites, invisibles, identiques pour un corps pur et séparées par du vide. Ce sont leur distance, leur rangement et leur agitation qui déterminent l'état physique.",
+  "oheric": {
+    "observation": "Un flacon de parfum ouvert dans un coin de la classe se sent au fond de la salle quelques minutes plus tard, sans que personne n'ait agité l'air. Et 50 mL d'eau mélangés à 50 mL d'alcool ne donnent pas 100 mL, mais environ 96 mL. Ces deux faits sont impossibles si la matière est une pâte pleine et continue.",
+    "hypothese": "Si la matière était faite de particules minuscules séparées par du vide, alors les particules du parfum pourraient se faufiler entre celles de l'air, et celles de l'alcool se loger dans les espaces libres entre celles de l'eau — ce qui expliquerait les deux observations.",
+    "experience": "Représenter chaque état par des billes dans une boîte transparente : serrées et rangées pour le solide, en contact mais désordonnées et mobiles pour le liquide, très espacées et rapides pour le gaz. Comparer chaque situation aux propriétés établies à la leçon 2.",
+    "resultats": "Billes serrées et rangées : l'ensemble garde sa forme quand on incline ou qu'on retourne la boîte. Billes en contact mais désordonnées, glissant les unes sur les autres : l'ensemble épouse la forme du récipient et sa surface libre reste plane et horizontale, mais l'espace occupé ne change pas. Billes très espacées et agitées : elles occupent tout le volume de la boîte, sans aucun ordre, et l'on peut les rassembler dans un coin sans en perdre une seule.",
+    "interpretation": "Chaque propriété de la leçon 2 trouve ici son explication. Dans le solide, les particules sont **en contact, liées et ordonnées** : elles ne peuvent pas changer de voisine, d'où la **forme propre**. Dans le liquide, elles restent **en contact mais désordonnées et libres de glisser** : le volume ne change pas — d'où le **volume propre** — mais la forme, oui. Dans le gaz, elles sont **très éloignées, désordonnées et très agitées** : le vide qui les sépare permet de les rapprocher, ce qui explique la **compressibilité**, et leur agitation leur fait occuper tout le récipient. C'est ce même vide qui laisse passer le parfum et qui absorbe les 4 mL manquants : l'hypothèse est validée. Le modèle a cependant ses limites — une particule n'est ni grise, ni dure, ni colorée.",
+    "conclusion": "La matière est **discontinue** : elle est formée de **particules** extrêmement petites, invisibles, identiques pour un corps pur et séparées par du **vide**. Ce sont leur **distance**, leur **rangement** et leur **agitation** qui déterminent l'état physique : ordonnées et en contact dans un solide, en contact mais désordonnées dans un liquide, très éloignées et très agitées dans un gaz."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030", PALE = "#a7b3c1";
+var FOND = "#e8ecf1";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.47 — le TYPE se teste avant la finitude : isFinite(null) vaut true,
+   et null.toFixed lève au démarrage, page morte et sans message. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "\u2014";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "\u207b", "+": "\u207a", 0: "\u2070", 1: "\u00b9",
+             2: "\u00b2", 3: "\u00b3", 4: "\u2074", 5: "\u2075",
+             6: "\u2076", 7: "\u2077", 8: "\u2078", 9: "\u2079" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+var IND = "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089";
+function ind(n) {
+  return String(n).split("").map(function (c) {
+    return /\d/.test(c) ? IND.charAt(+c) : c;
+  }).join("");
+}
+/* ⚠ LE GRAS D'ABORD (§12.48 pour le commentaire : on décrit le motif en
+   mots, on ne le recopie jamais dans un commentaire de bloc). */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+function hms(t) {
+  var s = Math.floor(t), h = Math.floor(s / 3600);
+  return (h ? h + " h " : "") + ("0" + Math.floor((s % 3600) / 60)).slice(-2)
+    + " min " + ("0" + (s % 60)).slice(-2) + " s";
+}
+/* §12.2 — `points` et `d` veulent le POINT décimal, et un rattrapage par
+   expression régulière détruirait aussi les virgules séparatrices. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function sansAccent(s) {
+  return String(s).toLowerCase()
+    .replace(/[\u00e0\u00e2\u00e4]/g, "a").replace(/[\u00e9\u00e8\u00ea\u00eb]/g, "e")
+    .replace(/[\u00ee\u00ef]/g, "i").replace(/[\u00f4\u00f6]/g, "o")
+    .replace(/[\u00f9\u00fb\u00fc]/g, "u").replace(/\u00e7/g, "c");
+}
+function ech(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+/* Un PRNG reproductible : deux exécutions du même protocole doivent donner
+   le même carnet (§12bis.6 — un résultat ne dépend pas du hasard). */
+function Alea(g) {
+  this.s = (g || 12345) & 0x7FFFFFFF;
+}
+Alea.prototype.u = function () {
+  this.s = (1103515245 * this.s + 12345) % 2147483648;
+  if (this.s < 0) this.s += 2147483648;
+  return this.s / 2147483648;
+};
+
+/* ==================================================================
+   3. LE YAML — ce que la fiche dit (§0)
+   ================================================================== */
+function T(k) { return depouille(DONNEES[k] || ""); }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return (TM().entetes || []).map(depouille); }
+function ligsF() { return TM().lignes || []; }
+function valsF() { return TM().valeurs || []; }
+function cel(k, c) {
+  var v = valsF()[k];
+  return v ? depouille(String(v[c] == null ? "" : v[c])) : "";
+}
+function intitule(k) { return cel(k, 0); }
+function proto() { return L("protocole").map(depouille); }
+function secu(re) {
+  var s = L("securite"), i, r = new RegExp(re, "i");
+  for (i = 0; i < s.length; i++) if (r.test(depouille(s[i]))) return depouille(s[i]);
+  return "";
+}
+function mat(re) {
+  var s = L("materiel"), i, r = new RegExp(re, "i");
+  for (i = 0; i < s.length; i++) if (r.test(depouille(s[i]))) return depouille(s[i]);
+  return "";
+}
+/* Une ligne ou une colonne se trouve par ce qu'elle DIT, jamais par son
+   rang : la fiche peut en insérer une sans casser la page. */
+function ligne(re) {
+  var v = valsF(), i, r = new RegExp(re, "i");
+  for (i = 0; i < v.length; i++) if (r.test(depouille(v[i][0]))) return i;
+  return -1;
+}
+function colonne(re) {
+  var e = entetes(), i, r = new RegExp(re, "i");
+  for (i = 0; i < e.length; i++) if (r.test(e[i])) return i;
+  return -1;
+}
+/* Un nombre lu dans la fiche. §12.29 : il COMMENCE par un chiffre, l'unité
+   est sensible à la casse, et elle n'est pas suivie d'une lettre. */
+function nombreDe(txt, unite) {
+  var m = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-z\u00c0-\u00ff])")
+      .exec(String(txt || ""));
+  return m ? parseFloat(m[1].replace(",", ".")) : null;
+}
+
+/* ==================================================================
+   3bis. LES DURÉES VIENNENT DE LA FICHE (§5) — jamais du code
+   ================================================================== */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20, trente: 30 };
+function motNombre(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* Le premier nombre de minutes du protocole, chiffre ou lettres. */
+function minutesDe(txt) {
+  var p = String(txt || ""), m = /(\d+(?:,\d+)?)\s*min/i.exec(p), k;
+  if (m) return parseFloat(m[1].replace(",", "."));
+  for (k in MOTS_NB) {
+    if (new RegExp("\\b" + k + "\\s+minutes?\\b", "i").test(p)) return MOTS_NB[k];
+  }
+  return null;
+}
+var DUREE_SEANCE = 20;
+
+/* ==================================================================
+   L'ÉTAT — les minuteries, et les animations
+   ==================================================================
+   §12.17 : toute clé lue ailleurs figure dans `neufEtat()`. Une clé
+   oubliée rend une branche entière morte sans lever la moindre erreur. */
+var MINUTEURS = [];
+function tard(f, ms) { var i = setTimeout(f, ms); MINUTEURS.push(i); return i; }
+function purger() {
+  var i;
+  for (i = 0; i < MINUTEURS.length; i++) clearTimeout(MINUTEURS[i]);
+  MINUTEURS = [];
+  ANIMS = [];
+}
+
+/* ==================================================================
+   L'ANIMATION — §1.2 bis, la troisième exigence
+   ==================================================================
+   ⚠ setTimeout + Date.now(), JAMAIS requestAnimationFrame (§13.5 bis) :
+   sous le pilote sans tête, rAF n'est jamais appelé et toute l'animation
+   — avec le résultat qu'elle porte — disparaîtrait sans lever d'erreur.
+
+   ⚠ L'ANIMATION NE DÉCIDE DE RIEN. Le solveur a déjà l'état d'arrivée
+   quand elle commence ; elle ne fait que le rejoindre. Un résultat qui
+   dépendrait du nombre d'images serait faux (§12.37).
+
+   Et elle est INTERRUPTIBLE : `arreterDeroule()` lève `ANIM_ON`, et rien
+   n'en survit. */
+var ANIM_ON = true, ANIMS = [];
+function doux(u) { return u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u); }
+function anim(duree, pas, fin) {
+  var t0 = Date.now(), moi = { vif: true };
+  ANIMS.push(moi);
+  function image() {
+    if (!ANIM_ON || !moi.vif) { moi.vif = false; return; }
+    var u = borne((Date.now() - t0) / duree, 0, 1);
+    pas(doux(u), u);
+    if (u >= 1) { moi.vif = false; if (fin) fin(); return; }
+    tard(image, 40);
+  }
+  pas(0, 0);
+  tard(image, 40);
+  return duree;
+}
+function couperAnims() {
+  var i;
+  for (i = 0; i < ANIMS.length; i++) ANIMS[i].vif = false;
+  ANIMS = [];
+}
+
+/* ==================================================================
+   LES COUCHES SVG — l'ordre EST la moitié du dessin (§8)
+   ==================================================================
+   `fils` porte les câbles, les ombres et les halos DERRIÈRE les appareils ;
+   `avant` porte les parois de verre, qui se peignent APRÈS le liquide —
+   peinte d'abord, la paroi recouvre le liquide et le récipient se lit plein
+   et gris. Les `prises` passent au-dessus de tout ce qui se manipule. */
+var svg = null, COUCHES = {};
+var ORDRE = ["fond", "fils", "poste", "arriere", "objets", "avant", "prises",
+             "ui", "drag"];
+
+function defsCommunes(d) {
+  var f, g;
+  f = el("filter", { id: "flou", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  d.appendChild(f);
+  f = el("filter", { id: "ombre", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 4 }));
+  d.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 7, stdDeviation: 6,
+                                     "flood-color": "#12203a", "flood-opacity": .38 }));
+  d.appendChild(f);
+  g = el("linearGradient", { id: "gBanc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#d9d2c6" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#b9b0a1" }));
+  d.appendChild(g);
+  /* l'eau : §10.3 — dégradé vertical, surface en ELLIPSE, jamais un trait */
+  g = el("linearGradient", { id: "gEau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  d.appendChild(g);
+  g = el("linearGradient", { id: "gVerre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#b6c4d2" }));
+  g.appendChild(el("stop", { offset: .18, "stop-color": "#dfe7ef" }));
+  g.appendChild(el("stop", { offset: .32, "stop-color": "#ffffff" }));
+  g.appendChild(el("stop", { offset: .72, "stop-color": "#d3dde7" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#a9b8c8" }));
+  d.appendChild(g);
+  g = el("linearGradient", { id: "gMetal", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#aab4c0" }));
+  g.appendChild(el("stop", { offset: .38, "stop-color": "#f4f7fa" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#6b7480" }));
+  d.appendChild(g);
+  return d;
+}
+function batirSvg(w, h) {
+  var hote = $("paillasse"), i;
+  svg = el("svg", { viewBox: "0 0 " + w + " " + h, xmlns: NS,
+                    "font-family": "'Inter','Segoe UI',sans-serif" });
+  svg.appendChild(defsCommunes(el("defs")));
+  for (i = 0; i < ORDRE.length; i++) {
+    COUCHES[ORDRE[i]] = el("g", { id: "c-" + ORDRE[i] });
+    svg.appendChild(COUCHES[ORDRE[i]]);
+  }
+  hote.insertBefore(svg, hote.firstChild);
+}
+/* Une décoration ne vole jamais le clic de son voisin (§12.15) : opacity 0
+   ne désarme PAS les clics, et une étiquette invisible plus grande que son
+   objet attrape le geste du voisin — invisible à la capture, invisible au
+   pilotage, seul `elementFromPoint` en témoigne. */
+function deco(n) { n.setAttribute("pointer-events", "none"); return n; }
+/* Et le revers (§12.38) : un objet fin n'offre au pointeur presque rien.
+   La zone de préhension se DÉCLARE, et elle vient EN PREMIER dans le
+   groupe. Le harnais vise cette plaque, jamais le centre de la boîte. */
+function zonePrise(g, x, y, w, h) {
+  g.insertBefore(el("rect", { "class": "prise", x: x, y: y, width: w, height: h,
+    fill: "#ffffff", "fill-opacity": 0.001 }), g.firstChild);
+}
+/* ⚠ HALO sur toute étiquette qui peut croiser un trait (§12.46) : trois
+   attributs, et la question est close pour de bon. */
+function texte(c, x, y, t, o) {
+  var a = { x: x, y: y, "font-size": 12, fill: INK,
+            "paint-order": "stroke", stroke: FOND, "stroke-width": 3,
+            "stroke-linejoin": "round" }, k;
+  for (k in (o || {})) a[k] = o[k];
+  var n = el("text", a, t);
+  c.appendChild(deco(n));
+  return n;
+}
+/* Le plan de travail, le meuble, la bande de commandes. */
+function decorBanc(VB_W, BANC, MEUBLE, Y_BANDE, legende) {
+  var c = COUCHES.fond, x, y;
+  c.appendChild(deco(el("rect", { x: 0, y: 0, width: VB_W, height: BANC, fill: FOND })));
+  for (x = 0; x <= VB_W; x += 80)
+    c.appendChild(deco(el("line", { x1: x, y1: 0, x2: x, y2: BANC - 3,
+      stroke: "#dde2e8", "stroke-width": 1 })));
+  for (y = 40; y < BANC - 3; y += 80)
+    c.appendChild(deco(el("line", { x1: 0, y1: y, x2: VB_W, y2: y,
+      stroke: "#dde2e8", "stroke-width": 1 })));
+  c.appendChild(deco(el("rect", { x: 0, y: BANC - 3, width: VB_W, height: 22,
+    fill: "url(#gBanc)" })));
+  c.appendChild(deco(el("rect", { x: 0, y: BANC + 19, width: VB_W,
+    height: MEUBLE - BANC - 19, fill: "#7d8794" })));
+  c.appendChild(deco(el("rect", { x: 0, y: Y_BANDE - 24, width: VB_W,
+    height: MEUBLE - Y_BANDE + 24, fill: "#5d6773" })));
+  texte(c, 16, Y_BANDE - 9, legende,
+    { "font-size": 12, fill: "#c7cfd8", "font-style": "italic", stroke: "none" });
+}
+/* Un bouton DANS la scène : il descend sur le bandeau sombre du meuble
+   (§10.5), là où il ne prend la place d'aucun objet. */
+function boutonScene(x, y, w, h, act, libelle) {
+  var g = el("g", { "data-act": act, id: act, cursor: "pointer" });
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: 7,
+    fill: "#ffffff", "fill-opacity": .93, stroke: "#41506a", "stroke-width": 1.4 }));
+  g.appendChild(deco(el("text", { x: x + w / 2, y: y + h / 2 + 4.5,
+    "font-size": 12.5, "font-weight": 600, fill: INK, "text-anchor": "middle" },
+    libelle)));
+  COUCHES.ui.appendChild(g);
+  return g;
+}
+function majBoutonScene(act, libelle, ouvert) {
+  var g = svg ? svg.querySelector('[data-act="' + act + '"]') : null;
+  if (!g) return;
+  var t = g.querySelector("text"), r = g.querySelector("rect");
+  if (t && libelle !== null && libelle !== undefined) t.textContent = libelle;
+  if (r) r.setAttribute("stroke", ouvert ? "#41506a" : "#b7bfca");
+  if (t) t.setAttribute("fill", ouvert ? INK : "#9aa5b2");
+  g.setAttribute("cursor", ouvert ? "pointer" : "not-allowed");
+  g.setAttribute("data-off", ouvert ? "0" : "1");
+}
+
+/* ==================================================================
+   PRENDRE ET DÉPOSER — le moteur de glisser-déposer (§9)
+   ==================================================================
+   La capture se fait sur le SVG, jamais sur l'objet (§9.1) : un mouvement
+   rapide sortirait de l'objet et le glissement s'arrêterait net au milieu
+   du geste, sans erreur.
+
+   Les zones sont rendues de la plus PETITE à la plus GRANDE (§12.16) :
+   sans quoi le refus le plus instructif devient inatteignable, puisque la
+   grande zone contient la petite. C'est `accepte()` qui dit laquelle est
+   la bonne, pas l'ordre du tableau. */
+var DRAG = null, SEUIL = 5;
+
+function ptSvg(ev) {
+  var r = svg.getBoundingClientRect(), b = svg.viewBox.baseVal;
+  if (!r.width || !r.height) return { x: 0, y: 0 };
+  return { x: (ev.clientX - r.left) / r.width * b.width,
+           y: (ev.clientY - r.top) / r.height * b.height };
+}
+function actDe(ev) {
+  var n = ev.target;
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n.getAttribute("data-act");
+    n = n.parentNode;
+  }
+  return null;
+}
+function dansZone(z, x, y) {
+  if (z.r !== undefined) {
+    var dx = x - z.x, dy = y - z.y;
+    return dx * dx + dy * dy <= z.r * z.r;
+  }
+  return x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1;
+}
+function centreZone(z) {
+  return z.r !== undefined ? { x: z.x, y: z.y }
+    : { x: (z.x0 + z.x1) / 2, y: (z.y0 + z.y1) / 2 };
+}
+function zoneEn(a, x, y) {
+  var z = emplacements(a) || [], i;
+  for (i = 0; i < z.length; i++) if (dansZone(z[i], x, y)) return z[i];
+  return null;
+}
+/* §12.16 — le bouton équivalent vise la zone que `accepte()` ACCEPTE,
+   jamais `emplacements()[0]`. Sans quoi bouton et glisser divergent pour
+   une raison purement interne. */
+function zoneVoulue(a) {
+  var z = emplacements(a) || [], i;
+  for (i = 0; i < z.length; i++) if (accepte(z[i], a).ok) return z[i];
+  return null;
+}
+function montrerCibles(a) {
+  var z = emplacements(a) || [], i, r;
+  cacherCibles();
+  for (i = 0; i < z.length; i++) {
+    if (!accepte(z[i], a).ok) continue;
+    if (z[i].r !== undefined) {
+      r = el("circle", { "class": "cible", cx: z[i].x, cy: z[i].y, r: z[i].r,
+        fill: GOLD, "fill-opacity": .17, stroke: GOLD, "stroke-width": 2.6,
+        "stroke-dasharray": "7 5" });
+    } else {
+      r = el("rect", { "class": "cible", x: z[i].x0, y: z[i].y0,
+        width: z[i].x1 - z[i].x0, height: z[i].y1 - z[i].y0, rx: 10,
+        fill: GOLD, "fill-opacity": .11, stroke: GOLD, "stroke-width": 2.4,
+        "stroke-dasharray": "9 6" });
+    }
+    COUCHES.arriere.appendChild(deco(r));
+  }
+}
+function cacherCibles() {
+  if (!svg) return;
+  var n = svg.querySelectorAll(".cible"), i;
+  for (i = 0; i < n.length; i++) n[i].parentNode.removeChild(n[i]);
+}
+function surDown(ev) {
+  var a = actDe(ev), n;
+  if (!a) return;
+  if (DRAG) return;                            /* verrou en PREMIÈRE ligne */
+  /* Un nœud qui ne se prend pas se PRESSE, et sa pression est traitée par
+     l'écouteur de clic — pas ici. Voir `surClic`. */
+  if (!prenable(a)) return;
+  n = $(a);
+  if (!n) return;
+  var p = ptSvg(ev), d = departDe(a);
+  if (!d) return;
+  DRAG = { a: a, x0: p.x, y0: p.y, dx: 0, dy: 0, bouge: false, dep: d };
+  n.setAttribute("filter", "url(#ombrePrise)");
+  n.setAttribute("cursor", "grabbing");
+  COUCHES.drag.appendChild(n);
+  montrerCibles(a);
+  if (svg.setPointerCapture) { try { svg.setPointerCapture(ev.pointerId); } catch (e) {} }
+  ev.preventDefault();
+}
+function surMove(ev) {
+  if (!DRAG) return;
+  var p = ptSvg(ev), dx = p.x - DRAG.x0, dy = p.y - DRAG.y0, n = $(DRAG.a);
+  /* §9.3 — le seuil de 5 px distingue le CLIC du GLISSEMENT. Sans lui on
+     ne peut plus désigner un objet sans le déplacer. */
+  if (!DRAG.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL) return;
+  DRAG.bouge = true;
+  DRAG.dx = dx; DRAG.dy = dy;
+  if (n) n.setAttribute("transform", "translate(" + dx.toFixed(1) + "," + dy.toFixed(1) + ")");
+  ev.preventDefault();
+}
+function finDrag() {
+  var d = DRAG, n = d ? $(d.a) : null;
+  DRAG = null;
+  cacherCibles();
+  if (n) {
+    n.removeAttribute("filter");
+    n.removeAttribute("transform");
+    n.setAttribute("cursor", "grab");
+  }
+  return d;
+}
+function surUp(ev) {
+  if (!DRAG) return;
+  var d = finDrag();
+  if (!d.bouge) { presser(d.a); rendre(); return; }
+  deposer(d.a, d.dep.x + d.dx, d.dep.y + d.dy);
+}
+function surCancel() {
+  if (!DRAG) return;
+  finDrag();
+  rendre();               /* l'objet retourne chez lui : on ne laisse
+                             jamais un objet flotter (§4.A) */
+}
+/* ⚠ LES BOUTONS DE SCÈNE ONT BESOIN D'UN VRAI ÉCOUTEUR DE CLIC.
+   `presserBouton()` du module de guidage envoie un `MouseEvent("click")`
+   sur le nœud `[data-act]` — c'est ce qui garantit que le geste passe par
+   le MÊME chemin que la main de l'élève (§12.13). Traiter la pression
+   depuis `pointerdown` seulement laisse ce clic sans effet : sur E1AC-15,
+   « Allumer le bec » ne s'allumait jamais sous le pilote, et le déroulé
+   comptait neuf pressions mortes sans qu'aucune erreur ne soit levée. */
+function surClic(ev) {
+  var a = actDe(ev);
+  if (a && !prenable(a)) presser(a);
+}
+function brancherPointeur() {
+  svg.addEventListener("pointerdown", surDown);
+  svg.addEventListener("pointermove", surMove);
+  svg.addEventListener("pointerup", surUp);
+  svg.addEventListener("pointercancel", surCancel);   /* ne PAS l'oublier */
+  svg.addEventListener("click", surClic);
+}
+
+/* §12.13 — LA LOGIQUE D'ÉTAT VIT ICI, sur le chemin COMMUN : les boutons
+   ne font qu'appeler ces mêmes fonctions. Un harnais qui ne presserait que
+   les boutons validerait une page à moitié morte. */
+function deposer(a, x, y) {
+  var z = zoneEn(a, x, y), r;
+  if (!z) { signaler(ouPoser(a)); rendre(); return 0; }
+  r = accepte(z, a);
+  if (!r.ok) { signaler(r.pourquoi || ouPoser(a), r.grave); rendre(); return 0; }
+  return appliquer(a, z) || 0;
+}
+
+/* ==================================================================
+   LES RELEVÉS — revelerCellule, pas revelerColonne, pas revelerLigne
+   ==================================================================
+   Une même ligne du tableau porte des rubriques renseignées à des moments
+   différents (§6.3) : les dévoiler d'un bloc donnerait la réponse avant la
+   manipulation. Et c'est bien la VALEUR DU YAML qui s'écrit ici — le
+   carnet, lui, porte ce que le modèle a calculé (§6.2, §12.41). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return false;                        /* §11.3 */
+  var t = $("tab"), tr = t ? t.querySelectorAll("tbody tr")[k] : null;
+  var v = cel(k, c);
+  if (!tr || !tr.children[c] || !v) return false;
+  if (ETAT.devoile[k + ":" + c]) return false;
+  tr.children[c].innerHTML = md((valsF()[k] || [])[c]);
+  tr.children[c].className = "mes";
+  ETAT.devoile[k + ":" + c] = true;
+  ETAT.cellules++;
+  majCompte();
+  return true;
+}
+function cellulesAtteignables() {
+  var n = 0, k, c, lig = ligsF(), e = entetes().length;
+  for (k = 0; k < lig.length; k++) {
+    for (c = 1; c < e; c++) {
+      if (String(lig[k][c] || "") === "" && cel(k, c) !== "") n++;
+    }
+  }
+  return n;
+}
+function majCompte() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.cellules + " / " + cellulesAtteignables();
+}
+function batirTableau() {
+  var t = $("tab"), e = entetes(), lig = ligsF(), tr, th, td, k, c, tb;
+  if (!t) return;
+  vide(t);
+  tr = document.createElement("tr");
+  for (c = 0; c < e.length; c++) {
+    th = document.createElement("th");
+    th.innerHTML = md(e[c]);
+    tr.appendChild(th);
+  }
+  t.appendChild(tr);
+  tb = document.createElement("tbody");
+  for (k = 0; k < lig.length; k++) {
+    tr = document.createElement("tr");
+    for (c = 0; c < e.length; c++) {
+      td = document.createElement("td");
+      if (c === 0 || String(lig[k][c] || "") !== "") {
+        td.innerHTML = md(lig[k][c]);
+      } else {
+        td.textContent = "\u2013";
+        td.className = "vide";
+      }
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+  majCompte();
+}
+/* Les panneaux qui reproduisent la fiche restent INTÉGRAUX (§0, §12.14) :
+   on n'en retranche rien, on les étiquette. */
+function batirPanneaux() {
+  var u, i, l;
+  $("titre").textContent = "Paillasse virtuelle \u2014 " + T("titre");
+  $("ref").textContent = DONNEES.id + " \u00b7 " + T("niveau") + " \u00b7 "
+    + T("unite") + " \u00b7 " + T("lecon");
+  document.title = "Paillasse virtuelle \u2014 " + DONNEES.id + " \u00b7 " + T("titre");
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md(DONNEES.observation || "");
+  $("conclTxt").innerHTML = md(DONNEES.conclusion || "");
+  u = $("materiel");
+  vide(u);
+  l = L("materiel");
+  for (i = 0; i < l.length; i++) {
+    var li = document.createElement("li");
+    li.innerHTML = md(l[i]);
+    u.appendChild(li);
+  }
+  u = $("securite");
+  vide(u);
+  l = L("securite");
+  for (i = 0; i < l.length; i++) {
+    var ls = document.createElement("li");
+    ls.innerHTML = md(l[i]);
+    u.appendChild(ls);
+  }
+}
+/* « Sous le capot » — cinq sections obligatoires (§6.4), dont « ce que le
+   modèle ne sait pas », qui est ce qui empêche la page de mentir par
+   omission. Le tableau des constantes se RÉGÉNÈRE depuis PHYS : il n'est
+   jamais retapé dans le HTML (§7.3). */
+function batirCapot(eq, eqTxt, matiere, limites) {
+  var t = $("capotPhys"), k, tr, td, i;
+  $("capotEq").textContent = eq;
+  $("capotEqTxt").innerHTML = eqTxt;
+  $("capotMatiere").innerHTML = matiere;
+  vide(t);
+  tr = document.createElement("tr");
+  ["Grandeur", "Valeur", "Provenance"].forEach(function (h) {
+    var th = document.createElement("th");
+    th.textContent = h;
+    tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (k in PHYS) {
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.innerHTML = md(PHYS[k].n);
+    tr.appendChild(td);
+    td = document.createElement("td");
+    td.className = "mes";
+    td.textContent = PHYS[k].v + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(td);
+    td = document.createElement("td");
+    td.innerHTML = md(PHYS[k].s);
+    tr.appendChild(td);
+    t.appendChild(tr);
+  }
+  var u = $("capotLimites");
+  vide(u);
+  for (i = 0; i < limites.length; i++) {
+    var li = document.createElement("li");
+    li.innerHTML = md(limites[i]);
+    u.appendChild(li);
+  }
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+}
+
+/* ==================================================================
+   LA CONSIGNE, LE JOURNAL
+   ==================================================================
+   §12.10 — un refus tient tant qu'il n'est pas résolu, et PAS UNE SECONDE
+   DE PLUS : l'horloge appelle `consigne()` cinq fois par seconde, donc un
+   refus posé serait effacé 200 ms plus tard ; mais la retenue survivant au
+   geste correct qui suit ferait lire un reproche périmé pendant quatre
+   secondes. Toute action qui ABOUTIT appelle `succes()`. */
+function dire(txt, fini, refus) {
+  var n = $("consigne");
+  if (!n) return txt;
+  if (ETAT.retenue > Date.now()) return txt;
+  n.textContent = txt;
+  n.className = "consigne" + (fini ? " ok" : (refus ? " non" : ""));
+  return txt;
+}
+function signaler(txt, grave) {
+  var n = $("consigne");
+  if (!txt) return;
+  ETAT.retenue = Date.now() + 4000;
+  if (n) {
+    n.textContent = (grave ? "\u26a0 " : "") + txt;
+    n.className = "consigne non";
+  }
+  noter(txt, false);
+}
+function succes() { ETAT.retenue = 0; }
+function noter(txt, positif) { ETAT.obs = txt; ETAT.obsPos = positif; }
+
+/* ==================================================================
+   LE PARCOURS EN CASES — l'état se DÉDUIT de ETAT, jamais d'un compteur
+   ================================================================== */
+var ETAPES = [];
+function batirEtapes() {
+  ETAPES = [];
+  proto().forEach(function (p, i) {
+    var court = p.split(/\s*:\s*/)[0];
+    if (court.length > 58) court = court.slice(0, 57) + "\u2026";
+    ETAPES.push({ t: court, i: i, texte: p });
+  });
+}
+function majEtapes() {
+  var c = $("etapes"), i, d, e = etapeCourante();
+  if (!c) return;
+  if (!c.children.length) {
+    for (i = 0; i < ETAPES.length; i++) {
+      d = document.createElement("div");
+      d.innerHTML = "<span class='n'>" + (i + 1) + "</span>" + ETAPES[i].t;
+      c.appendChild(d);
+    }
+  }
+  for (i = 0; i < c.children.length; i++) {
+    c.children[i].className = GUIDE[i] && GUIDE[i].fait() ? "faite"
+      : (i === e ? "actif" : "");
+  }
+}
+
+/* ==================================================================
+   LE MINUTEUR DE SÉANCE — en temps RÉEL, jamais accéléré (§5.4)
+   ==================================================================
+   Il mesure ce que la manipulation coûte à l'enseignant, pas ce que le
+   modèle simule. Et il SURVIT à « Recommencer » : la séance ne se
+   rembobine pas. */
+function majSeance() {
+  var s = $("seance"), t = ETAT.tSeance, p = borne(t / (DUREE_SEANCE * 60), 0, 1);
+  $("seanceT").textContent = mmss(t);
+  $("seanceJ").style.width = (p * 100).toFixed(1) + "%";
+  $("seanceB").textContent = "dur\u00e9e prescrite \u2014 " + DUREE_SEANCE + " min";
+  $("seanceM").textContent = T("modalite");
+  s.className = "seance" + (t > DUREE_SEANCE * 60 ? " deborde" : "");
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Le modèle travaille en UNITÉS RÉDUITES de Lennard-Jones : σ est le
+   diamètre d'une bille, ε la profondeur de son puits d'attraction, et la
+   température s'exprime en ε/k_B. C'est la convention de toute la
+   littérature sur ce système, et elle évite d'attribuer à des billes de
+   verre une température en degrés qu'elles n'ont pas.                  */
+var PHYS = {
+  SIGMA: { v: 1, u: "diamètre de bille", n: "unité de longueur du modèle",
+    s: "σ, le diamètre d'une bille — toutes les distances de la page s'y ramènent" },
+  RCUT: { v: 2.5, u: "σ", n: "portée de l'attraction",
+    s: "troncature usuelle du potentiel de Lennard-Jones ; au-delà, l'attraction vaut moins de 2 % de ε" },
+  PAS: { v: 0.004, u: "τ", n: "pas d'intégration",
+    s: "vitesse-Verlet ; pas FIXE, sans quoi le résultat dépendrait du nombre d'images (§12.37)" },
+  PESANTEUR: { v: 2.0, u: "ε/σ", n: "pesanteur réduite, boîte posée",
+    s: "choisie pour que le liquide reste en tas au fond avec une surface franche ; c'est un réglage d'ASPECT, pas une constante de la nature" },
+  TAU_TH: { v: 0.35, u: "τ", n: "constante de temps du thermostat",
+    s: "thermostat de Berendsen — il impose l'agitation moyenne sans figer les trajectoires" },
+  T_SOLIDE: { v: 0.08, u: "ε/k", n: "agitation « vibrer légèrement »",
+    s: "protocole 1 ; largement sous la fusion du système de Lennard-Jones à deux dimensions (T* ≈ 0,7 à cette densité)" },
+  T_LIQUIDE: { v: 1.30, u: "ε/k", n: "agitation « agiter doucement »",
+    s: "protocole 3 ; au-dessus de la fusion, sous ce qu'il faut pour vaincre la pesanteur" },
+  T_GAZ: { v: 3.00, u: "ε/k", n: "agitation « agiter fortement »",
+    s: "protocole 5 ; l'agitation est alors bien supérieure à l'attraction (ε) comme à la pesanteur" },
+  S_ORDRE: { v: 0.60, u: "", n: "seuil « ordonné / désordonné »",
+    s: "ordre orientationnel hexagonal global, lissé sur deux unités de temps ; la page relève 0,955 en solide et au plus 0,374 en liquide — le seuil est leur moyenne géométrique, ce qui laisse ×1,60 de marge de chaque côté" },
+  S_CONTACT: { v: 2.20, u: "voisines", n: "seuil « elles se touchent / du vide les sépare »",
+    s: "la page relève au moins 3,35 voisines au contact en liquide et au plus 1,47 en gaz — marges ×1,52 et ×1,50" },
+  S_ESPACE: { v: 0.78, u: "", n: "seuil « l'espace occupé change »",
+    s: "part de la boîte atteinte en six unités de temps ; la page relève 0,45 en solide, au plus 0,61 en liquide et au moins 0,99 en gaz — marges ×1,28 et ×1,27" },
+  S_FORME: { v: 0.77, u: "", n: "seuil « garde sa forme »",
+    s: "voisines conservées après une inclinaison de 20° tenue huit unités de temps ; la page relève 0,99 en solide, au plus 0,60 en liquide et 0,07 en gaz — marges ×1,29 et ×1,28" }
+};
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO, les valeurs prescrites ; REG, les courantes
+   ==================================================================
+   §12.12 — chaque `value` initiale tombe sur la grille des `step` : 100
+   est multiple de 10 depuis 0, 0 de 10 depuis 0, 100 de 25 depuis 0.
+   Sans cela le navigateur ramènerait la valeur à côté, `horsProtocole()`
+   rendrait `true` dès le chargement, ET LE TABLEAU NE SE REMPLIRAIT
+   JAMAIS, sans la moindre erreur.                                     */
+var PROTO = { coh: 100, manq: 0, pes: 100 };
+var REG = { coh: 100, manq: 0, pes: 100 };
+function horsProtocole() {
+  return REG.coh !== PROTO.coh || REG.manq !== PROTO.manq || REG.pes !== PROTO.pes;
+}
+function epsilon() { return REG.coh / 100; }
+function pesanteur() { return PHYS.PESANTEUR.v * REG.pes / 100; }
+
+/* Le nombre de billes est LU dans le matériel de la fiche. */
+function nBilles() {
+  var t = mat("bille"), m = /(\d+)/.exec(t), n = 100;
+  if (m) n = +m[1];
+  else if (/centaine/i.test(t)) n = 100;
+  return Math.max(10, n - REG.manq);
+}
+/* Les trois agitations sont NOMMÉES par le protocole ; leurs valeurs sont
+   dans PHYS. On les repère par l'adverbe, pas par le rang. */
+var AGIT = [
+  { cle: "leg", T: PHYS.T_SOLIDE.v, tous: false, mot: "légèrement" },
+  { cle: "dou", T: PHYS.T_LIQUIDE.v, tous: false, mot: "doucement" },
+  { cle: "for", T: PHYS.T_GAZ.v, tous: true, mot: "fortement" }
+];
+function motAgit(i) {
+  var p = proto(), j, re = new RegExp("(vibrer|agiter)\\s+" + AGIT[i].mot, "i");
+  for (j = 0; j < p.length; j++) if (re.test(p[j])) return AGIT[i].mot;
+  return AGIT[i].mot;
+}
+
+/* ==================================================================
+   5. LE SOLVEUR — dynamique moléculaire à deux dimensions
+   ==================================================================
+   ⚠ LE PAS EST FIXE. `avancerSimulation` convertit le temps réel écoulé
+   en un NOMBRE ENTIER de pas de PHYS.PAS : un résultat n'a pas le droit
+   de dépendre du sélecteur de vitesse (§12bis.6).
+
+   Les paires se cherchent par une grille de cellules : à cent billes, le
+   parcours de toutes les paires coûterait quatre fois plus cher pour le
+   même résultat, et la scène ramerait dès ×4.                          */
+var MD = null;
+
+function neufMD(n, W, H) {
+  var i, s = { n: n, W: W, H: H, x: [], y: [], vx: [], vy: [],
+               fx: [], fy: [], T: PHYS.T_SOLIDE.v, gx: 0, gy: -PHYS.PESANTEUR.v,
+               t: 0 };
+  for (i = 0; i < n; i++) { s.x.push(0); s.y.push(0); s.vx.push(0); s.vy.push(0);
+                            s.fx.push(0); s.fy.push(0); }
+  return s;
+}
+/* « Disposer les billes serrées et bien rangées au fond de la boîte »
+   (protocole 1) : un réseau hexagonal, exactement ce que la fiche
+   demande de construire à la main. */
+function rangerAuFond(s) {
+  var a = 1.12, par = Math.max(1, Math.floor((s.W - 1.0) / a)), i, li, co;
+  for (i = 0; i < s.n; i++) {
+    li = Math.floor(i / par); co = i % par;
+    s.x[i] = 0.9 + co * a + (li % 2 ? a / 2 : 0);
+    s.y[i] = 0.9 + li * a * 0.866;
+    s.vx[i] = 0; s.vy[i] = 0;
+  }
+}
+function forcesMD(s) {
+  var n = s.n, i, j, k, e = epsilon(), rc = PHYS.RCUT.v;
+  for (i = 0; i < n; i++) { s.fx[i] = 0; s.fy[i] = 0; }
+  var cw = Math.max(1, Math.floor(s.W / rc)), ch = Math.max(1, Math.floor(s.H / rc));
+  var lx = s.W / cw, ly = s.H / ch, cell = [], ci, cj, di, dj, a, b;
+  for (i = 0; i < cw * ch; i++) cell.push([]);
+  for (i = 0; i < n; i++) {
+    ci = borne(Math.floor(s.x[i] / lx), 0, cw - 1);
+    cj = borne(Math.floor(s.y[i] / ly), 0, ch - 1);
+    cell[cj * cw + ci].push(i);
+  }
+  for (cj = 0; cj < ch; cj++) {
+    for (ci = 0; ci < cw; ci++) {
+      a = cell[cj * cw + ci];
+      for (dj = 0; dj <= 1; dj++) {
+        for (di = -1; di <= 1; di++) {
+          if (dj === 0 && di < 0) continue;
+          var qi = ci + di, qj = cj + dj;
+          if (qi < 0 || qi >= cw || qj < 0 || qj >= ch) continue;
+          b = cell[qj * cw + qi];
+          for (k = 0; k < a.length; k++) {
+            for (j = 0; j < b.length; j++) {
+              if (di === 0 && dj === 0 && b[j] <= a[k]) continue;
+              paire(s, a[k], b[j], e, rc);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+/* ⚠ LE CŒUR RÉPULSIF NE DÉPEND PAS DE LA COHÉSION : deux billes ne se
+   traversent jamais, même réglage « cohésion » à zéro. Seul le terme
+   attractif porte ε — c'est ce qui rend le réglage honnête. */
+function paire(s, i, j, e, rc) {
+  var dx = s.x[i] - s.x[j], dy = s.y[i] - s.y[j], d2 = dx * dx + dy * dy;
+  if (d2 > rc * rc) return;
+  if (d2 < 0.64) d2 = 0.64;                 /* cœur borné : pas d'explosion */
+  var inv2 = 1 / d2, inv6 = inv2 * inv2 * inv2;
+  var fr = 24 * inv2 * inv6 * (2 * inv6 - e);
+  s.fx[i] += fr * dx; s.fy[i] += fr * dy;
+  s.fx[j] -= fr * dx; s.fy[j] -= fr * dy;
+}
+function pasMD(s, dt) {
+  var i, n = s.n, lam, ec = 0;
+  for (i = 0; i < n; i++) {
+    s.vx[i] += 0.5 * dt * (s.fx[i] + s.gx);
+    s.vy[i] += 0.5 * dt * (s.fy[i] + s.gy);
+    s.x[i] += dt * s.vx[i];
+    s.y[i] += dt * s.vy[i];
+    if (s.x[i] < 0.5) { s.x[i] = 0.5; s.vx[i] = Math.abs(s.vx[i]); }
+    if (s.x[i] > s.W - 0.5) { s.x[i] = s.W - 0.5; s.vx[i] = -Math.abs(s.vx[i]); }
+    if (s.y[i] < 0.5) { s.y[i] = 0.5; s.vy[i] = Math.abs(s.vy[i]); }
+    if (s.y[i] > s.H - 0.5) { s.y[i] = s.H - 0.5; s.vy[i] = -Math.abs(s.vy[i]); }
+  }
+  forcesMD(s);
+  for (i = 0; i < n; i++) {
+    s.vx[i] += 0.5 * dt * (s.fx[i] + s.gx);
+    s.vy[i] += 0.5 * dt * (s.fy[i] + s.gy);
+    ec += s.vx[i] * s.vx[i] + s.vy[i] * s.vy[i];
+  }
+  var Tc = Math.max(ec / (2 * n), 1e-9);
+  lam = Math.sqrt(borne(1 + (dt / PHYS.TAU_TH.v) * (s.T / Tc - 1), 0.25, 4));
+  for (i = 0; i < n; i++) { s.vx[i] *= lam; s.vy[i] *= lam; }
+  s.t += dt;
+}
+
+/* ---- LES MESURES, et elles seules décident de ce qui s'écrit -------- */
+function voisinesAuContact(s, rc) {
+  var i, j, k = 0, dx, dy, n = s.n;
+  rc = rc || 1.25;
+  for (i = 0; i < n; i++) {
+    for (j = i + 1; j < n; j++) {
+      dx = s.x[i] - s.x[j]; dy = s.y[i] - s.y[j];
+      if (dx * dx + dy * dy < rc * rc) k += 2;
+    }
+  }
+  return k / n;
+}
+/* ORDRE ORIENTATIONNEL GLOBAL. ⚠ La moyenne des MODULES ne convient pas :
+   dans un liquide dense chaque bille garde un entourage à peu près
+   hexagonal et le module reste à 0,7 — le liquide se lirait « ordonné ».
+   C'est l'ALIGNEMENT d'un hexagone à l'autre qui fait le rangement, donc
+   le module de la MOYENNE, qui s'effondre dès que les hexagones tournent
+   librement les uns par rapport aux autres. */
+function ordreHexa(s, rc) {
+  var i, j, dx, dy, th, cr, ci, k, sr = 0, si = 0, m = 0;
+  rc = rc || 1.45;
+  for (i = 0; i < s.n; i++) {
+    cr = 0; ci = 0; k = 0;
+    for (j = 0; j < s.n; j++) {
+      if (j === i) continue;
+      dx = s.x[j] - s.x[i]; dy = s.y[j] - s.y[i];
+      if (dx * dx + dy * dy >= rc * rc) continue;
+      th = Math.atan2(dy, dx);
+      cr += Math.cos(6 * th); ci += Math.sin(6 * th); k++;
+    }
+    if (k < 3) continue;
+    sr += cr / k; si += ci / k; m++;
+  }
+  if (!m) return 0;
+  return Math.sqrt((sr / m) * (sr / m) + (si / m) * (si / m));
+}
+/* ⚠ LE RAYON DE VOISINAGE EST PLUS LARGE ICI QUE POUR LE CONTACT. À 1,35
+   diamètre, la simple vibration du solide rompait des couples au hasard et
+   la part conservée tombait à 0,66 — à dix pour cent du seuil. À 1,45, le
+   solide garde ses voisines pour de bon et le liquide les perd pour de
+   bon : c'est un seuil de LECTURE, réglé sur ce que l'instrument sait
+   voir, jamais sur le résultat attendu (§12.24). */
+function pairesVoisines(s, rc) {
+  var i, j, dx, dy, out = {}, n = s.n;
+  rc = rc || 1.45;
+  for (i = 0; i < n; i++) {
+    for (j = i + 1; j < n; j++) {
+      dx = s.x[i] - s.x[j]; dy = s.y[i] - s.y[j];
+      if (dx * dx + dy * dy < rc * rc) out[i + "-" + j] = 1;
+    }
+  }
+  return out;
+}
+function partConservee(av, ap) {
+  var k, n = 0, g = 0;
+  for (k in av) { n++; if (ap[k]) g++; }
+  return n ? g / n : 1;
+}
+
+/* ==================================================================
+   6. L'ÉTAT
+   ==================================================================
+   §12.17 — TOUTE clé lue ailleurs figure ici. Une clé oubliée rend une
+   branche entière morte sans lever la moindre erreur.                  */
+var ETAT = null;
+function neufEtat() {
+  return {
+    versees: false,        /* les billes sont dans un récipient          */
+    contenant: "boite",    /* « boite » ou « recip »                     */
+    agit: 0,               /* rang dans AGIT                             */
+    tousSens: false,       /* « agiter dans tous les sens » (protocole 5)*/
+    couvercle: false,
+    incl: 0,               /* inclinaison de la boîte, en degrés         */
+    essai: null,           /* essai de forme en cours                    */
+    forme: {},             /* régime → part de voisines conservées       */
+    verse: false,          /* a versé au moins une fois (protocole 3)    */
+    surface: null,         /* dénivelé mesuré de la surface libre        */
+    compare: false,
+    regime: "?",           /* ce que les mesures disent MAINTENANT       */
+    secousse: -1,          /* rang de la secousse « dans tous les sens » */
+    stable: 0,             /* temps réduit passé dans ce régime          */
+    etabli: {},            /* régime → mesures figées quand il est établi*/
+    mesure: null,          /* dernières mesures                          */
+    grille: null,          /* cases atteintes, pour « l'espace occupé »  */
+    vol: [],               /* billes en vol pendant un transvasement     */
+    cellules: 0,
+    devoile: {},
+    tSeance: 0,
+    obs: "", obsPos: null,
+    retenue: 0,
+    horsProto: false
+  };
+}
+
+/* ==================================================================
+   7. GÉOMÉTRIE DE LA SCÈNE — toutes les cotes, en constantes nommées
+   ==================================================================
+   Cadre ÉTROIT (§10.5) : 1120 × 660.
+
+   ⚠ ZONES INTERDITES, REMESURÉES SUR CETTE PAGE (§12.42) :
+     · consigne — max-width 60 % de 1120 = 672 unités centrées, x 224..896 ;
+       sur trois lignes elle descend à y ≈ 92 ;
+     · journal  — min(252 px, 23 %) ≈ 258 unités, x ≤ 272 ; sa hauteur suit
+       son texte, et la note la plus longue que cette page sache écrire le
+       mène à y ≈ 330 (§12.9) ;
+     · #rezero  — x ≥ 1046, y ≤ 76.
+   Le décor les respecte : la boîte commence à y = 104, le sachet à
+   x = 726 et y = 96, et rien n'est écrit à gauche au-dessus de y = 340. */
+var VB_W = 1120, VB_H = 660;
+var BANC = 560, MEUBLE = 660, Y_BANDE = 628;
+var BOITE = { x0: 300, y0: 104, x1: 700, y1: 496 };
+var RECIP = { x0: 726, y0: 300, x1: 1100, y1: 478 };
+var SACHET = { x0: 726, y0: 96, x1: 1090, y1: 258 };
+var RACK = { x0: 60, y0: 350, x1: 272, y1: 412 };     /* le couvercle au repos */
+var LEVIER = { x0: 44, y0: 452, x1: 288, y1: 470 };   /* la manette d'agitation */
+
+/* ⚠ TOUTES LES HAUTEURS D'ÉTIQUETTE DANS UN SEUL OBJET (§12.7). Posées à
+   trente lignes les unes des autres, elles ne se comparent pas — et c'est
+   la comparaison, pas le calcul, qui montre la collision. AUCUNE n'est sur
+   le meuble sombre : une étiquette grise y serait illisible sans que rien
+   ne le signale. */
+var Y_ETIQ = {
+  boiteNom: BOITE.y0 - 8,
+  sachetNom: SACHET.y0 - 8,
+  recipNom: RECIP.y0 - 8,
+  rackNom: RACK.y0 - 8,
+  levierNom: LEVIER.y0 - 26,
+  levierMots: LEVIER.y1 + 18,
+  etat: BOITE.y1 + 52,
+  legende: Y_BANDE - 9
+};
+var ENCRE_ETIQ = "#4a5563";
+/* Le récipient courant, en unités du modèle et à l'écran. */
+function cadreDe(quoi) {
+  var r = quoi === "recip" ? RECIP : BOITE;
+  var s = (r.x1 - r.x0) / 16;                  /* 16 σ de large, toujours */
+  return { r: r, s: s, W: 16, H: (r.y1 - r.y0) / s };
+}
+function versEcran(i) {
+  var c = cadreDe(ETAT.contenant);
+  return { x: c.r.x0 + MD.x[i] * c.s, y: c.r.y1 - MD.y[i] * c.s, r: 0.5 * c.s };
+}
+
+/* ==================================================================
+   8. LE DÉCOR ET LES POSTES
+   ================================================================== */
+function batirDecor() {
+  decorBanc(VB_W, BANC, MEUBLE, Y_BANDE,
+    "mise à plat — diamètres, distances et récipients à l'échelle du diamètre d'une bille ; "
+    + "la profondeur n'existe pas : la boîte réelle empile plusieurs couches");
+}
+/* Le verre : voile de teinte, reflet vertical net, arête sombre (§10.2).
+   Sans le reflet, ce n'est jamais du verre. */
+function paroiVerre(c, r, ouverte) {
+  var g = el("g");
+  g.appendChild(el("rect", { x: r.x0, y: r.y0, width: r.x1 - r.x0,
+    height: r.y1 - r.y0, rx: 6, fill: "#dce8f1", "fill-opacity": .34 }));
+  g.appendChild(el("rect", { x: r.x0 + 9, y: r.y0 + 12, width: 13,
+    height: r.y1 - r.y0 - 26, rx: 6, fill: "#ffffff", "fill-opacity": .66 }));
+  g.appendChild(el("line", { x1: r.x1 - 6, y1: r.y0 + 10, x2: r.x1 - 6,
+    y2: r.y1 - 10, stroke: "#8fa3b5", "stroke-width": 3, "stroke-linecap": "round" }));
+  /* ⚠ Contour en COULEUR PLEINE, jamais en dégradé (§10.1) : sur un trait
+     droit la boîte englobante est plate, le dégradé dégénère et le
+     navigateur ne peint rien — sans erreur et sans que le pilotage le
+     voie. */
+  var d = ouverte
+    ? "M" + pt(r.x0, r.y0) + " L" + pt(r.x0, r.y1) + " L" + pt(r.x1, r.y1)
+      + " L" + pt(r.x1, r.y0)
+    : "M" + pt(r.x0, r.y0) + " L" + pt(r.x0, r.y1) + " L" + pt(r.x1, r.y1)
+      + " L" + pt(r.x1, r.y0) + " Z";
+  g.appendChild(el("path", { d: d, fill: "none", stroke: "#7f93a6",
+    "stroke-width": 3.4, "stroke-linejoin": "round" }));
+  c.appendChild(deco(g));
+  return g;
+}
+function batirBoite() {
+  var g = el("g", { id: "gBoite" });
+  COUCHES.poste.appendChild(g);
+  /* le plateau à rebords, cité par le matériel : la boîte y est posée */
+  var p = el("g");
+  p.appendChild(el("rect", { x: BOITE.x0 - 26, y: BOITE.y1 + 6, width: BOITE.x1 - BOITE.x0 + 52,
+    height: 16, rx: 5, fill: "#c9d2dc", stroke: "#8fa3b5", "stroke-width": 1.6 }));
+  p.appendChild(el("rect", { x: BOITE.x0 - 26, y: BOITE.y1 - 6, width: 8, height: 14,
+    rx: 3, fill: "#b6c1cd" }));
+  p.appendChild(el("rect", { x: BOITE.x1 + 18, y: BOITE.y1 - 6, width: 8, height: 14,
+    rx: 3, fill: "#b6c1cd" }));
+  COUCHES.fond.appendChild(deco(p));
+  texte(COUCHES.avant, BOITE.x1 + 26, BOITE.y1 + 34, depouille(mat("plateau")) || "Plateau à rebords",
+    { "font-size": 11, fill: ENCRE_ETIQ, "text-anchor": "end" });
+  /* le groupe qui TOURNE : c'est lui qui porte la boîte et les billes,
+     et son angle est LE MÊME que celui qui oriente la pesanteur (§12.18).
+     Le dessin relit la valeur, il ne la recopie pas. */
+  var t = el("g", { id: "boiteTourne" });
+  g.appendChild(t);
+  var pr = el("g", { "data-act": "boite", id: "boite", cursor: "grab" });
+  zonePrise(pr, BOITE.x0, BOITE.y0, BOITE.x1 - BOITE.x0, BOITE.y1 - BOITE.y0);
+  t.appendChild(pr);
+  paroiVerreDans(t, BOITE);
+  t.appendChild(el("g", { id: "billes" }));
+  t.appendChild(el("g", { id: "couvercle" }));
+  texte(COUCHES.avant, BOITE.x0, Y_ETIQ.boiteNom,
+    depouille(mat("bo[iî]te transparente")) || "Boîte transparente à couvercle",
+    { "font-size": 12, fill: ENCRE_ETIQ, "font-weight": 600 });
+  texte(COUCHES.avant, BOITE.x0, Y_ETIQ.etat, "", { id: "etiqEtat", "font-size": 15,
+    "font-weight": 700, fill: GRIS });
+}
+function paroiVerreDans(g, r) {
+  var h = el("g");
+  paroiVerre(h, r, true);
+  g.appendChild(h);
+}
+function batirSachet() {
+  var g = el("g", { "data-act": "sachet", id: "sachet", cursor: "grab" });
+  zonePrise(g, SACHET.x0, SACHET.y0, SACHET.x1 - SACHET.x0, SACHET.y1 - SACHET.y0);
+  g.appendChild(el("rect", { x: SACHET.x0, y: SACHET.y0, width: SACHET.x1 - SACHET.x0,
+    height: SACHET.y1 - SACHET.y0, rx: 12, fill: "#eef2f6", stroke: "#8fa3b5",
+    "stroke-width": 2 }));
+  g.appendChild(deco(el("g", { id: "tasSachet" })));
+  g.appendChild(deco(el("text", { id: "compteSachet", x: SACHET.x1 - 14,
+    y: SACHET.y0 + 24, "font-size": 15, "font-weight": 700, fill: ORANGE,
+    "text-anchor": "end" }, "")));
+  COUCHES.objets.appendChild(g);
+  texte(COUCHES.avant, SACHET.x0, Y_ETIQ.sachetNom,
+    depouille(mat("centaine de billes")) || "Une centaine de billes identiques",
+    { "font-size": 12, fill: ENCRE_ETIQ, "font-weight": 600 });
+}
+function batirRecipient() {
+  var g = el("g", { id: "gRecip" });
+  COUCHES.poste.appendChild(g);
+  paroiVerre(g, RECIP, true);
+  COUCHES.arriere.appendChild(el("g", { id: "billesRecip" }));
+  texte(COUCHES.avant, RECIP.x0, Y_ETIQ.recipNom,
+    depouille(mat("[Rr]écipients de formes")) || "Récipient de forme différente",
+    { "font-size": 12, fill: ENCRE_ETIQ, "font-weight": 600 });
+}
+function batirRack() {
+  var g = el("g", { "data-act": "capot", id: "capotObj", cursor: "grab" });
+  zonePrise(g, RACK.x0, RACK.y0, RACK.x1 - RACK.x0, RACK.y1 - RACK.y0);
+  g.appendChild(el("rect", { id: "capotDessin", x: RACK.x0 + 10, y: RACK.y0 + 16,
+    width: RACK.x1 - RACK.x0 - 20, height: 26, rx: 6, fill: "url(#gVerre)",
+    stroke: "#7f93a6", "stroke-width": 2.6 }));
+  g.appendChild(deco(el("circle", { id: "capotBouton", cx: RACK.x0 + 106,
+    cy: RACK.y0 + 10, r: 9, fill: "url(#gVerre)", stroke: "#7f93a6",
+    "stroke-width": 2.2 })));
+  COUCHES.objets.appendChild(g);
+  texte(COUCHES.avant, RACK.x0, Y_ETIQ.rackNom, "Le couvercle",
+    { "font-size": 12, fill: ENCRE_ETIQ, "font-weight": 600 });
+}
+/* La MANETTE d'agitation : c'est elle qu'on pousse, et ses trois crans
+   portent les mots du protocole. Un objet qu'on saisit, pas un curseur. */
+function batirLevier() {
+  var g = el("g"), i, x;
+  g.appendChild(el("rect", { x: LEVIER.x0, y: LEVIER.y0, width: LEVIER.x1 - LEVIER.x0,
+    height: LEVIER.y1 - LEVIER.y0, rx: 9, fill: "#d4dae2", stroke: "#8fa3b5",
+    "stroke-width": 1.6 }));
+  for (i = 0; i < AGIT.length; i++) {
+    x = xCran(i);
+    g.appendChild(el("line", { x1: x, y1: LEVIER.y0 - 7, x2: x, y2: LEVIER.y1 + 7,
+      stroke: "#8fa3b5", "stroke-width": 2 }));
+    texte(g, x, Y_ETIQ.levierMots, motAgit(i), { "font-size": 11.5, fill: ENCRE_ETIQ,
+      "text-anchor": "middle" });
+  }
+  COUCHES.poste.appendChild(deco(g));
+  texte(COUCHES.avant, LEVIER.x0, Y_ETIQ.levierNom, "Agitation de la boîte",
+    { "font-size": 12, fill: ENCRE_ETIQ, "font-weight": 600 });
+  var m = el("g", { "data-act": "manette", id: "manette", cursor: "grab" });
+  zonePrise(m, LEVIER.x0 - 6, LEVIER.y0 - 20, 44, 58);
+  m.appendChild(el("rect", { id: "manettePoignee", x: xCran(0) - 15, y: LEVIER.y0 - 16,
+    width: 30, height: 50, rx: 8, fill: "url(#gMetal)", stroke: "#41506a",
+    "stroke-width": 1.8 }));
+  COUCHES.objets.appendChild(m);
+}
+function xCran(i) {
+  return LEVIER.x0 + 26 + i * (LEVIER.x1 - LEVIER.x0 - 52) / (AGIT.length - 1);
+}
+
+/* ==================================================================
+   9. LES PLACES, LES ZONES, LES REFUS
+   ==================================================================
+   Chaque refus CITE la règle qui le fonde : un refus sans raison
+   n'apprend rien, et c'est la moitié de l'apprentissage ici.           */
+function prenable(a) { return a === "sachet" || a === "capot" || a === "manette"; }
+function departDe(a) {
+  if (a === "sachet") return { x: (SACHET.x0 + SACHET.x1) / 2, y: (SACHET.y0 + SACHET.y1) / 2 };
+  if (a === "capot") return { x: (RACK.x0 + RACK.x1) / 2, y: RACK.y0 + 29 };
+  if (a === "manette") return { x: xCran(ETAT.agit), y: LEVIER.y0 + 9 };
+  return null;
+}
+function emplacements(a) {
+  var z = [], i;
+  if (a === "sachet") {
+    z.push({ n: "boite", x0: BOITE.x0, y0: BOITE.y0, x1: BOITE.x1, y1: BOITE.y1 });
+    z.push({ n: "recip", x0: RECIP.x0, y0: RECIP.y0, x1: RECIP.x1, y1: RECIP.y1 });
+  } else if (a === "capot") {
+    z.push({ n: "pose", x0: BOITE.x0, y0: BOITE.y0 - 10, x1: BOITE.x1, y1: BOITE.y0 + 46 });
+    z.push({ n: "rack", x0: RACK.x0, y0: RACK.y0, x1: RACK.x1, y1: RACK.y1 });
+  } else if (a === "manette") {
+    /* les crans, du plus petit au plus grand rayon (§12.16) */
+    for (i = 0; i < AGIT.length; i++) {
+      z.push({ n: "cran", i: i, x: xCran(i), y: LEVIER.y0 + 9, r: 34 });
+    }
+  }
+  return z;
+}
+function accepte(z, a) {
+  if (a === "sachet") {
+    if (ETAT.versees) {
+      return { ok: false, pourquoi: "Les billes sont déjà versées. « " + secu("Compter les billes")
+        + " » — une seule boîte par poste." };
+    }
+    if (z.n === "recip") {
+      return { ok: false, pourquoi: "Le protocole fait d'abord disposer les billes au fond "
+        + "de la BOÎTE ; on ne les verse dans l'autre récipient qu'à l'étape 3." };
+    }
+    return { ok: true };
+  }
+  if (a === "capot") {
+    if (z.n === "rack") return { ok: true };
+    if (!ETAT.versees) {
+      return { ok: false, pourquoi: "Fermer une boîte vide n'apprend rien : verser d'abord "
+        + "les billes." };
+    }
+    return { ok: true };
+  }
+  if (a === "manette") {
+    if (!ETAT.versees) {
+      return { ok: false, pourquoi: "Il n'y a rien à agiter : verser d'abord les billes "
+        + "dans la boîte." };
+    }
+    if (AGIT[z.i].tous && !ETAT.couvercle && ETAT.contenant === "boite") {
+      return { ok: false, grave: true, pourquoi: "Boîte ouverte, une agitation forte "
+        + "projette les billes hors de la boîte. « " + secu("bo[iî]te ferm") + " »" };
+    }
+    return { ok: true };
+  }
+  return { ok: false, pourquoi: "" };
+}
+function ouPoser(a) {
+  if (a === "sachet") return "Verser les billes DANS la boîte transparente.";
+  if (a === "capot") return "Poser le couvercle sur la boîte, ou le remettre à sa place.";
+  if (a === "manette") return "Pousser la manette sur l'un de ses trois crans.";
+  return "";
+}
+function appliquer(a, z) {
+  if (a === "sachet") return verserDepuisSachet();
+  if (a === "capot") return poserCouvercle(z.n === "pose");
+  if (a === "manette") return reglerAgitation(z.i);
+  return 0;
+}
+/* Un clic sans déplacement : sur la boîte, il ne fait rien de plus que
+   désigner — le §9.3 distingue le clic du glissement. */
+function presser(a) {
+  if (a === "boite") noter("La boîte contient " + (ETAT.versees ? nBilles() : 0)
+    + " billes.", null);
+}
+
+/* ==================================================================
+   10. LES GESTES — un seul chemin par geste (§12.13)
+   ==================================================================
+   Chacun est ANIMÉ : l'objet parcourt son trajet, le niveau monte, la
+   boîte tourne. Jamais un saut d'un état à l'autre (§1.2 bis).         */
+function verserDepuisSachet() {
+  if (ETAT.versees) return 0;
+  var n = nBilles(), c = cadreDe("boite");
+  MD = neufMD(n, c.W, c.H);
+  rangerAuFond(MD);
+  MD.T = AGIT[ETAT.agit].T;
+  MD.gx = 0; MD.gy = -pesanteur();
+  ETAT.versees = true;
+  ETAT.contenant = "boite";
+  ETAT.grille = null;
+  succes();
+  noter("Les " + n + " billes sont au fond de la boîte, serrées et rangées.", true);
+  /* elles TOMBENT du sachet : le filet se voit couler (§1.2 bis) */
+  return volerBilles(SACHET, "boite", 900);
+}
+/* Les billes en VOL : le transvasement se voit se faire. L'animation ne
+   décide de rien — le solveur a déjà l'état d'arrivée quand elle
+   commence, elle ne fait que le rejoindre (§1.2 bis, règle 2). */
+function volerBilles(depuis, vers, duree) {
+  var i, n = Math.min(MD.n, 44), c = cadreDe(vers), dep = [], arr = [];
+  for (i = 0; i < n; i++) {
+    var j = Math.floor(i * MD.n / n);
+    dep.push({ x: depuis.x0 + 30 + (i % 11) * (depuis.x1 - depuis.x0 - 60) / 10,
+               y: depuis.y1 - 26 - Math.floor(i / 11) * 22 });
+    arr.push({ x: c.r.x0 + MD.x[j] * c.s, y: c.r.y1 - MD.y[j] * c.s });
+  }
+  ETAT.vol = [];
+  for (i = 0; i < n; i++) ETAT.vol.push({ d: dep[i], a: arr[i], u: 0, r: 0.5 * c.s,
+                                          t0: i / n * 0.45 });
+  anim(duree, function (u, brut) {
+    var k;
+    for (k = 0; k < ETAT.vol.length; k++) {
+      ETAT.vol[k].u = borne((brut - ETAT.vol[k].t0) / 0.55, 0, 1);
+    }
+    dessinerVol();
+  }, function () { ETAT.vol = []; dessinerVol(); });
+  return duree;
+}
+function poserCouvercle(dessus) {
+  if (ETAT.couvercle === dessus) return 0;
+  var y0 = dessus ? RACK.y0 + 16 : BOITE.y0 - 6;
+  var y1 = dessus ? BOITE.y0 - 6 : RACK.y0 + 16;
+  var x0 = dessus ? RACK.x0 + 10 : BOITE.x0 + 6;
+  var x1 = dessus ? BOITE.x0 + 6 : RACK.x0 + 10;
+  var w0 = dessus ? RACK.x1 - RACK.x0 - 20 : BOITE.x1 - BOITE.x0 - 12;
+  var w1 = dessus ? BOITE.x1 - BOITE.x0 - 12 : RACK.x1 - RACK.x0 - 20;
+  ETAT.couvercle = dessus;
+  succes();
+  noter(dessus ? "La boîte est fermée : on peut l'agiter dans tous les sens."
+                : "Le couvercle est retiré.", true);
+  var n = $("capotDessin"), b = $("capotBouton");
+  /* Le couvercle PARCOURT le trajet du rack au dessus de la boîte : un
+     objet qui saute d'une place à l'autre montre deux états, pas un geste
+     (§1.2 bis). */
+  return anim(520, function (u) {
+    if (!n) return;
+    var x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u, w = w0 + (w1 - w0) * u;
+    n.setAttribute("x", x.toFixed(1));
+    n.setAttribute("y", y.toFixed(1));
+    n.setAttribute("width", w.toFixed(1));
+    if (b) { b.setAttribute("cx", (x + w / 2).toFixed(1));
+             b.setAttribute("cy", (y - 6).toFixed(1)); }
+  });
+}
+/* Où le couvercle se dessine, selon qu'il est posé ou rangé. Le DESSIN
+   relit ces cotes, il ne les recopie pas (§12.18). */
+function placeCouvercle() {
+  return ETAT.couvercle
+    ? { x: BOITE.x0 + 6, y: BOITE.y0 - 6, w: BOITE.x1 - BOITE.x0 - 12 }
+    : { x: RACK.x0 + 10, y: RACK.y0 + 16, w: RACK.x1 - RACK.x0 - 20 };
+}
+function reglerAgitation(i) {
+  if (i === ETAT.agit && ETAT.tousSens === AGIT[i].tous) return 0;
+  var x0 = xCran(ETAT.agit), x1 = xCran(i), n = $("manettePoignee");
+  ETAT.agit = i;
+  ETAT.tousSens = AGIT[i].tous;
+  ETAT.stable = 0;
+  if (MD) MD.T = AGIT[i].T;
+  succes();
+  noter("Agitation « " + motAgit(i) + " » — température réduite T* = "
+    + nb(AGIT[i].T, 2) + ".", true);
+  /* la manette GLISSE jusqu'à son cran, elle ne s'y pose pas (§1.2 bis) */
+  return anim(420, function (u) {
+    if (n) n.setAttribute("x", (x0 + (x1 - x0) * u - 15).toFixed(1));
+  });
+}
+/* « Incliner la boîte, puis la retourner » (protocole 2). Le même angle
+   fait tourner le DESSIN et oriente la PESANTEUR : une seule constante,
+   relue partout (§12.18). */
+function essaiForme() {
+  if (!ETAT.versees) { signaler("Verser d'abord les billes."); return 0; }
+  if (ETAT.contenant !== "boite") {
+    signaler("Ramener d'abord les billes dans la boîte.");
+    return 0;
+  }
+  if (ETAT.essai) return 900;
+  if (!ETAT.etabli[regimeCourant()]) {
+    signaler("Attendre que le régime soit établi : la page mesure la part des "
+      + "billes qui gardent leur voisine, et ce nombre ne veut rien dire sur un "
+      + "tas encore en train de se ranger.");
+    return 0;
+  }
+  /* ⚠ LE RETOURNEMENT N'EST PAS TOUJOURS POSSIBLE, et c'est une leçon, pas
+     un refus. Boîte ouverte, un contenu qui GLISSE se viderait sur la
+     paillasse : la page incline alors seulement, et le dit. C'est
+     exactement pourquoi la fiche fait FERMER la boîte avant de l'agiter
+     fortement. Refuser l'essai tout entier, comme la première rédaction le
+     faisait, rendait l'étape 3 du protocole inatteignable — le déroulé y
+     tournait en rond sans jamais avancer (§12.4). */
+  var av = pairesVoisines(MD), reg = regimeCourant();
+  var peutRetourner = ETAT.couvercle || reg === "solide";
+  ETAT.essai = { reg: reg };
+  succes();
+  noter(peutRetourner ? "Essai : on incline la boîte, puis on la retourne."
+    : "Essai : on incline la boîte. Sans couvercle on ne la retourne pas — un "
+      + "contenu qui glisse se viderait sur la paillasse.", null);
+  function fini() {
+    ETAT.essai = null;
+    ETAT.grille = null;          /* la fenêtre d'espace repart propre */
+    ETAT.stable = 0;
+    rendre();
+  }
+  /* ⚠ LA MESURE SE PREND À LA FIN DE L'INCLINAISON, avant le
+     retournement. Un bloc retourné TOMBE de toute la hauteur de la boîte
+     et casse ses contacts par le CHOC, non parce qu'il aurait changé de
+     forme : la part conservée passait alors de 0,72 à 0,28 selon la
+     façon dont il atterrissait. Le retournement reste joué — c'est ce que
+     la fiche fait voir —, il n'est simplement pas ce qu'on mesure. */
+  phaseEssai(900, 8, 0, ANGLE_ESSAI, function () {
+    var g = partConservee(av, pairesVoisines(MD));
+    ETAT.forme[reg] = g;
+    noter("Boîte inclinée, " + nb(100 * g, 0) + " % des billes ont gardé leurs "
+      + "voisines : l'ensemble "
+      + (g >= PHYS.S_FORME.v ? "garde sa forme." : "ne garde pas sa forme.")
+      + (peutRetourner ? " On la retourne pour le voir." : ""), true);
+    if (!peutRetourner) { phaseEssai(760, 4, ANGLE_ESSAI, 0, fini); return; }
+    phaseEssai(900, 6, ANGLE_ESSAI, 180, function () {
+      phaseEssai(700, 4, 180, 0, fini);
+    });
+  });
+  return peutRetourner ? 2700 : 1800;
+}
+/* ⚠ L'ESSAI AVANCE LE MODÈLE D'UN NOMBRE FIXE DE PAS, et le sélecteur de
+   vitesse n'y change rien. Laissé à l'horloge, il durait entre huit et
+   trente-cinq unités de temps selon la charge du navigateur : la part de
+   voisines conservées par le solide passait de 0,72 à 0,28 d'une
+   exécution à l'autre, c'est-à-dire de « garde sa forme » à l'inverse.
+   Un résultat n'a pas le droit de dépendre du nombre d'images (§12.37).
+   `avancerSimulation` se tait pendant ce temps : c'est ici, et ici seul,
+   que le modèle avance. */
+function phaseEssai(duree, tau, a0, a1, fin) {
+  var fait = 0;
+  anim(duree, function (u, brut) {
+    var n = Math.min(500, Math.round((tau * brut - fait) / PHYS.PAS.v)), i;
+    poserIncl(a0 + (a1 - a0) * u);
+    for (i = 0; i < n; i++) pasMD(MD, PHYS.PAS.v);
+    fait += n * PHYS.PAS.v;
+    dessinerVite();
+  }, fin);
+}
+/* ⚠ UNE SEULE FONCTION POUR LA PESANTEUR, et le DESSIN relit le même
+   angle (§12.18). Secouée « dans tous les sens », la boîte n'a plus de bas :
+   l'incliner ne change alors rien à la pesanteur — et c'est justement ce
+   que la fiche fait constater sur le gaz. La première rédaction imposait
+   la direction dans tous les cas : pendant l'essai, le gaz retombait au
+   fond et la page relevait 3,98 voisines au contact au lieu de 1,4. */
+function majGravite() {
+  if (!MD) return;
+  var r;
+  if (ETAT.tousSens) {
+    r = Math.floor(MD.t / 0.5);
+    if (r !== ETAT.secousse) {
+      ETAT.secousse = r;
+      var a = new Alea(1000 + r).u() * 2 * Math.PI;
+      MD.gx = pesanteur() * Math.sin(a);
+      MD.gy = pesanteur() * Math.cos(a);
+    }
+    return;
+  }
+  r = ETAT.incl * Math.PI / 180;
+  MD.gx = pesanteur() * Math.sin(r);
+  MD.gy = -pesanteur() * Math.cos(r);
+}
+function poserIncl(a) {
+  ETAT.incl = a;
+  majGravite();
+  var g = $("boiteTourne");
+  if (g) {
+    g.setAttribute("transform", "rotate(" + a.toFixed(1) + ","
+      + ((BOITE.x0 + BOITE.x1) / 2).toFixed(1) + ","
+      + ((BOITE.y0 + BOITE.y1) / 2).toFixed(1) + ")");
+  }
+}
+/* « Verser l'ensemble dans un récipient de forme différente » (protocole 3). */
+function verserAilleurs() {
+  if (!ETAT.versees) { signaler("Verser d'abord les billes dans la boîte."); return 0; }
+  if (ETAT.couvercle) { signaler("Retirer d'abord le couvercle."); return 0; }
+  var vers = ETAT.contenant === "boite" ? "recip" : "boite";
+  var depuis = ETAT.contenant === "boite" ? BOITE : RECIP;
+  var c = cadreDe(vers), Tg = MD.T, i;
+  var m2 = neufMD(MD.n, c.W, c.H);
+  rangerAuFond(m2);
+  m2.T = Tg; m2.gx = 0; m2.gy = -pesanteur();
+  /* les vitesses suivent : ce sont les MÊMES billes, elles n'ont pas été
+     refroidies par le transvasement */
+  for (i = 0; i < MD.n; i++) { m2.vx[i] = MD.vx[i]; m2.vy[i] = MD.vy[i]; }
+  MD = m2;
+  ETAT.contenant = vers;
+  ETAT.verse = true;
+  ETAT.grille = null;
+  ETAT.incl = 0;
+  poserIncl(0);
+  succes();
+  noter(vers === "recip"
+    ? "Versées dans un récipient de forme différente, les billes en épousent la forme."
+    : "Les billes sont revenues dans la boîte.", true);
+  return volerBilles(depuis, vers, 1000);
+}
+/* « Observer la surface libre » (protocole 4) : on MESURE le dénivelé
+   entre le tiers gauche et le tiers droit du dessus du tas. */
+function observerSurface() {
+  if (!ETAT.versees) { signaler("Verser d'abord les billes."); return 0; }
+  if (Math.abs(ETAT.incl) > 1) { signaler("Poser d'abord la boîte à plat."); return 0; }
+  var d = denivele();
+  ETAT.surface = d;
+  succes();
+  noter("Surface libre : dénivelé de " + nb(d, 2) + " diamètre"
+    + (d >= 2 ? "s" : "") + " entre les deux bords — "
+    + (d < 0.8 ? "elle est plane et horizontale." : "elle ne l'est pas."), true);
+  return 260;
+}
+/* ATTENDRE QUE LE RÉGIME S'ÉTABLISSE — §12bis.6 : « le temps se joue, il
+   ne se saute pas ». On avance par tranches de 0,4 τ, une par image : le
+   modèle voit exactement les mêmes pas qu'en temps réel, et la classe voit
+   les billes se réarranger. Rien n'est sauté, tout est comprimé (§12.52). */
+function avanceRapide(tau) {
+  var fait = 0;
+  return anim(560, function (u, brut) {
+    if (!MD) return;
+    var pas = PHYS.PAS.v, i;
+    var n = Math.min(400, Math.round((tau * brut - fait) / pas));
+    for (i = 0; i < n; i++) pasMD(MD, pas);
+    fait += n * pas;
+    bilanPas(n * pas);
+    dessinerVite();
+  });
+}
+function denivele() {
+  var i, g = [], d = [], x;
+  for (i = 0; i < MD.n; i++) {
+    x = MD.x[i] / MD.W;
+    if (x < 0.34) g.push(MD.y[i]);
+    else if (x > 0.66) d.push(MD.y[i]);
+  }
+  function haut(a) {
+    a.sort(function (p, q) { return q - p; });
+    var k = Math.max(1, Math.round(a.length * 0.18)), s = 0, j;
+    for (j = 0; j < k; j++) s += a[j];
+    return s / k;
+  }
+  if (!g.length || !d.length) return 0;
+  return Math.abs(haut(g) - haut(d));
+}
+
+/* ==================================================================
+   11. CE QUE LES MESURES DISENT — et elles seules
+   ================================================================== */
+function mesurer() {
+  if (!MD) return null;
+  var o = ordreHexa(MD), c = voisinesAuContact(MD), v = partAtteinte();
+  return { ordre: o, contact: c, espace: v };
+}
+/* « L'espace occupé change-t-il ? » — la part du récipient que les billes
+   ATTEIGNENT sur une fenêtre de temps réduit. Une grille d'un diamètre de
+   côté, et l'on marque toute case où un centre est passé. */
+var FEN_VISITE = 6.0, STABLE_TAU = 4.0, TAU_LISSE = 2.0;
+/* ⚠ L'ANGLE D'INCLINAISON EST UN SEUIL DE LECTURE, ET IL SE CHOISIT LOIN
+   DE LA RUPTURE. À 34°, le bloc cohésif est tout juste à sa limite de
+   stabilité : il tenait une fois sur trois, et la part de voisines
+   conservées passait de 0,97 à 0,46 sans que rien n'ait changé. À 20°, il
+   tient toujours et le liquide coule toujours — ce que la fiche demande
+   d'observer, et rien de plus fin (§12.24). */
+var ANGLE_ESSAI = 20;
+function majGrille() {
+  var c = cadreDe(ETAT.contenant), nx = Math.max(1, Math.round(c.W)),
+      ny = Math.max(1, Math.round(c.H)), i, ix, iy;
+  if (!ETAT.grille || ETAT.grille.nx !== nx || ETAT.grille.ny !== ny) {
+    ETAT.grille = { nx: nx, ny: ny, t: [], t0: MD.t };
+    for (i = 0; i < nx * ny; i++) ETAT.grille.t.push(-1e9);
+  }
+  for (i = 0; i < MD.n; i++) {
+    ix = borne(Math.floor(MD.x[i] * nx / c.W), 0, nx - 1);
+    iy = borne(Math.floor(MD.y[i] * ny / c.H), 0, ny - 1);
+    ETAT.grille.t[iy * nx + ix] = MD.t;
+  }
+}
+function partAtteinte() {
+  if (!ETAT.grille) return 0;
+  var i, k = 0, g = ETAT.grille;
+  for (i = 0; i < g.t.length; i++) if (MD.t - g.t[i] <= FEN_VISITE) k++;
+  return k / g.t.length;
+}
+/* L'ÉTAT PHYSIQUE est la CONCLUSION des mesures, jamais une étiquette. */
+function regimeCourant() {
+  var m = ETAT.mesure;
+  if (!m) return "?";
+  if (m.espace >= PHYS.S_ESPACE.v || m.contact < PHYS.S_CONTACT.v) return "gazeux";
+  return m.ordre >= PHYS.S_ORDRE.v ? "solide" : "liquide";
+}
+/* TAU_PAR_SECONDE fixe le rapport entre le temps de la montre et celui du
+   modèle à la vitesse ×1. Le nombre de pas, lui, se déduit toujours de la
+   durée simulée divisée par PHYS.PAS : changer de vitesse change la durée
+   simulée, JAMAIS la finesse de l'intégration (§12bis.6). */
+var TAU_PAR_SECONDE = 2.0;
+function avancerSimulation(dtSim) {
+  if (!MD || ETAT.essai) return;      /* l'essai avance le modèle lui-même */
+  var pas = PHYS.PAS.v, i, r;
+  var n = Math.min(240, Math.round(borne(dtSim, 0, 1) * TAU_PAR_SECONDE / pas));
+  for (i = 0; i < n; i++) pasMD(MD, pas);
+  bilanPas(n * pas);
+}
+/* Ce qui se fait APRÈS les pas, quel que soit le chemin qui les a joués —
+   l'horloge ou l'avance rapide. Une seule fonction, sinon les deux
+   chemins divergeraient (§12.13). */
+function bilanPas(dtau) {
+  if (!MD || !dtau) return;
+  majGrille();
+  majGravite();
+  /* ⚠ ON LISSE AVANT DE JUGER. Prises à un instant, les trois grandeurs
+     sautent : l'ordre du solide oscille entre 0,49 et 0,98 selon que le
+     cristal vient d'être bousculé ou non, et le carnet gardait celle qui
+     tombait au moment du relevé. Une moyenne glissante de deux unités de
+     temps enlève ce bruit sans rien changer aux valeurs d'équilibre —
+     c'est ce que fait un observateur qui regarde deux secondes avant de
+     conclure. */
+  var m = mesurer(), k = 1 - Math.exp(-dtau / TAU_LISSE);
+  if (!ETAT.mesure) ETAT.mesure = m;
+  else {
+    ETAT.mesure = { ordre: ETAT.mesure.ordre + (m.ordre - ETAT.mesure.ordre) * k,
+                    contact: ETAT.mesure.contact + (m.contact - ETAT.mesure.contact) * k,
+                    espace: ETAT.mesure.espace + (m.espace - ETAT.mesure.espace) * k };
+  }
+  var reg = regimeCourant();
+  if (reg === ETAT.regime) ETAT.stable += dtau;
+  else { ETAT.regime = reg; ETAT.stable = 0; }
+  /* ⚠ L'ESPACE ATTEINT SE MESURE SUR UNE FENÊTRE PROPRE. L'essai
+     d'inclinaison promène tout le tas dans la boîte : les cases qu'il a
+     visitées restent comptées pendant six unités de temps, et le solide
+     déclarait 71 % d'espace atteint au lieu de 37 — à six pour cent du
+     seuil du gaz. On remet la grille à zéro après l'essai, et l'on
+     n'enregistre le régime qu'une fois la fenêtre entièrement refaite. */
+  if (ETAT.stable > STABLE_TAU && reg !== "?"
+      && MD.t - ETAT.grille.t0 >= FEN_VISITE) {
+    if (!ETAT.etabli[reg]) {
+      noter("Régime « " + reg + " » établi : la page le LIT sur les billes, elle "
+        + "ne l'a pas décidé.", true);
+    }
+    ETAT.etabli[reg] = { ordre: ETAT.mesure.ordre, contact: ETAT.mesure.contact,
+                         espace: ETAT.mesure.espace, forme: ETAT.forme[reg] };
+    releverColonne(reg);
+  }
+}
+
+/* ==================================================================
+   12. LES RELEVÉS — une colonne par situation modélisée
+   ==================================================================
+   §12.40 — de chaque ligne, on demande : à quel instant, et par quel
+   geste, la fiche la renseigne-t-elle ? Les quatre premières lignes se
+   renseignent dès que le régime est ÉTABLI ; la ligne « garde-t-il sa
+   forme ? » attend l'essai d'inclinaison, que la fiche prescrit.       */
+var L_ETAT = 0, L_DIST = 1, L_RANG = 2, L_FORME = 3, L_ESPACE = 4;
+function colonneDe(reg) {
+  var e = entetes(), i, re = reg === "solide" ? /rang[ée]es?$|serr/i
+    : (reg === "liquide" ? /contact/i : /espac|agit/i);
+  for (i = 1; i < e.length; i++) if (re.test(e[i])) return i;
+  return -1;
+}
+function releverColonne(reg) {
+  var c = colonneDe(reg), m = ETAT.etabli[reg];
+  if (c < 0 || !m) return;
+  revelerCellule(L_ETAT, c);
+  revelerCellule(L_DIST, c);
+  revelerCellule(L_RANG, c);
+  revelerCellule(L_ESPACE, c);
+  if (ETAT.forme[reg] !== undefined) revelerCellule(L_FORME, c);
+  if (ETAT.cellules >= cellulesAtteignables()) {
+    $("concl").className = "box";
+  }
+}
+/* Ce que le modèle DIT, dans les mots de la fiche — et la page compare
+   ensuite ce qu'elle dit à ce que la fiche écrit (§12.41). */
+function motEtat(reg) { return reg; }
+function motDistance(m) {
+  return m.contact >= PHYS.S_CONTACT.v ? "nulle — elles se touchent"
+                                       : "grande — du vide les sépare";
+}
+function motRangement(m) {
+  return m.ordre >= PHYS.S_ORDRE.v ? "ordonné" : "désordonné";
+}
+function motForme(f) {
+  return f === undefined ? "—" : (f >= PHYS.S_FORME.v ? "oui" : "non");
+}
+function motEspace(m) {
+  return m.espace >= PHYS.S_ESPACE.v ? "oui" : "non";
+}
+
+/* ==================================================================
+   13. LE RENDU
+   ================================================================== */
+var NOEUDS = [];
+function dessinerVite() {
+  var g = $("billes"), gr = $("billesRecip"), i, c, p, n;
+  if (!g || !MD) return;
+  c = cadreDe(ETAT.contenant);
+  var hote = ETAT.contenant === "boite" ? g : gr;
+  var autre = ETAT.contenant === "boite" ? gr : g;
+  if (autre && autre.childNodes.length) vide(autre);
+  if (NOEUDS.length !== MD.n || (NOEUDS[0] && NOEUDS[0].parentNode !== hote)) {
+    vide(hote);
+    NOEUDS = [];
+    for (i = 0; i < MD.n; i++) {
+      n = el("circle", { cx: 0, cy: 0, r: 1, fill: "url(#gBille)",
+        stroke: "#2b4a6b", "stroke-width": 1.1 });
+      hote.appendChild(deco(n));
+      NOEUDS.push(n);
+    }
+  }
+  for (i = 0; i < MD.n; i++) {
+    p = versEcran(i);
+    NOEUDS[i].setAttribute("cx", p.x.toFixed(1));
+    NOEUDS[i].setAttribute("cy", p.y.toFixed(1));
+    NOEUDS[i].setAttribute("r", p.r.toFixed(1));
+  }
+  var v = ETAT.vol.length > 0;
+  for (i = 0; i < MD.n; i++) NOEUDS[i].setAttribute("opacity", v ? 0.12 : 1);
+}
+function dessinerVol() {
+  var g = $("cVol"), i, o, x, y;
+  if (!g) return;
+  vide(g);
+  for (i = 0; i < ETAT.vol.length; i++) {
+    o = ETAT.vol[i];
+    x = o.d.x + (o.a.x - o.d.x) * o.u;
+    y = o.d.y + (o.a.y - o.d.y) * o.u - 90 * o.u * (1 - o.u);
+    g.appendChild(deco(el("circle", { cx: x.toFixed(1), cy: y.toFixed(1),
+      r: o.r.toFixed(1), fill: "url(#gBille)", stroke: "#2b4a6b",
+      "stroke-width": 1.1 })));
+  }
+}
+function dessinerSachet() {
+  var g = $("tasSachet"), i, n, al = new Alea(77);
+  if (!g) return;
+  vide(g);
+  n = ETAT.versees ? 0 : Math.min(38, Math.round(nBilles() * 38 / 100));
+  for (i = 0; i < n; i++) {
+    g.appendChild(el("circle", {
+      cx: (SACHET.x0 + 40 + (i % 13) * 24 + (Math.floor(i / 13) % 2 ? 12 : 0)).toFixed(1),
+      cy: (SACHET.y1 - 30 - Math.floor(i / 13) * 21).toFixed(1),
+      r: 11, fill: "url(#gBille)", stroke: "#2b4a6b", "stroke-width": 1.1 }));
+  }
+  var c = $("compteSachet");
+  if (c) c.textContent = (ETAT.versees ? 0 : nBilles()) + " billes";
+}
+function majScene() {
+  var e = $("etiqEtat"), m = ETAT.mesure, r = regimeCourant();
+  dessinerSachet();
+  if (e) {
+    e.textContent = !ETAT.versees ? "boîte vide"
+      : "ce que la page mesure : " + (r === "?" ? "…" : r);
+    e.setAttribute("fill", r === "solide" ? VERT : (r === "liquide" ? "#1f6fd0"
+      : (r === "gazeux" ? ORANGE : GRIS)));
+  }
+  var cp = $("capotDessin"), cb = $("capotBouton"), pl = placeCouvercle();
+  if (cp && !ANIMS.length) {
+    cp.setAttribute("x", pl.x); cp.setAttribute("y", pl.y);
+    cp.setAttribute("width", pl.w);
+    if (cb) { cb.setAttribute("cx", pl.x + pl.w / 2);
+              cb.setAttribute("cy", pl.y - 6); }
+  }
+  var mp = $("manettePoignee");
+  if (mp && !ANIMS.length) mp.setAttribute("x", xCran(ETAT.agit) - 15);
+}
+function majInstruments() {
+  var c = $("instCases"), m = ETAT.mesure, r = regimeCourant();
+  if (!c) return;
+  vide(c);
+  function cas(t, u, cl) {
+    var d = document.createElement("div");
+    d.innerHTML = "<div class='t'>" + t + "</div><div class='u" + (cl || "") + "'>"
+      + u + "</div>";
+    c.appendChild(d);
+  }
+  if (!m) {
+    cas("État", "—", " nul");
+    cas("Voisines au contact", "—", " nul");
+    cas("Ordre hexagonal", "—", " nul");
+    cas("Espace atteint", "—", " nul");
+    $("instNote").textContent = "rien dans la boîte";
+    $("instPhrase").textContent = "";
+    return;
+  }
+  cas("État lu sur les billes", r, " gros");
+  cas("Voisines au contact", nb(m.contact, 2), m.contact >= PHYS.S_CONTACT.v ? " vert" : "");
+  cas("Ordre hexagonal ψ₆", nb(m.ordre, 3), m.ordre >= PHYS.S_ORDRE.v ? " vert" : "");
+  cas("Espace atteint", nb(100 * m.espace, 0) + " %", m.espace >= PHYS.S_ESPACE.v ? " vert" : "");
+  $("instNote").textContent = "agitation « " + motAgit(ETAT.agit) + " » · T* = "
+    + nb(AGIT[ETAT.agit].T, 2);
+  $("instPhrase").innerHTML = "Les quatre nombres sont relus sur les billes à chaque "
+    + "instant. L'état, lui, n'est pas choisi : il se DÉDUIT des trois autres — "
+    + "au-delà de <b>" + nb(PHYS.S_ESPACE.v, 2) + "</b> d'espace atteint ou en deçà de <b>"
+    + nb(PHYS.S_CONTACT.v, 2) + "</b> voisines au contact, c'est un gaz ; sinon, c'est "
+    + "l'ordre hexagonal qui sépare le solide du liquide au seuil <b>"
+    + nb(PHYS.S_ORDRE.v, 2) + "</b>.";
+}
+function majCarnet() {
+  var t = $("carnet"), b = $("carnetBilan"), reg, i, tr, td;
+  if (!t) return;
+  vide(t);
+  tr = document.createElement("tr");
+  ["Situation", "Contact", "Ordre ψ₆", "Espace", "Voisines gardées", "État lu"]
+    .forEach(function (h) {
+      var th = document.createElement("th");
+      th.innerHTML = md(h);
+      tr.appendChild(th);
+    });
+  t.appendChild(tr);
+  var regs = ["solide", "liquide", "gazeux"], k;
+  for (k = 0; k < regs.length; k++) {
+    reg = regs[k];
+    var m = ETAT.etabli[reg];
+    tr = document.createElement("tr");
+    [reg, m ? nb(m.contact, 2) : "—", m ? nb(m.ordre, 3) : "—",
+     m ? nb(100 * m.espace, 0) + " %" : "—",
+     ETAT.forme[reg] === undefined ? "—" : nb(100 * ETAT.forme[reg], 0) + " %",
+     m ? motEtat(reg) : "—"].forEach(function (v, j) {
+      td = document.createElement("td");
+      td.className = j ? "mes" : "";
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  vide(b);
+  function bil(n, v, ok) {
+    var a = document.createElement("div"), c = document.createElement("div");
+    a.className = "n"; a.innerHTML = md(n);
+    c.className = "v" + (ok === true ? " ok" : (ok === false ? " mal" : ""));
+    c.textContent = v;
+    b.appendChild(a); b.appendChild(c);
+  }
+  for (k = 0; k < regs.length; k++) {
+    reg = regs[k];
+    var m2 = ETAT.etabli[reg];
+    if (!m2) continue;
+    var c2 = colonneDe(reg);
+    if (c2 < 0) continue;
+    bil("distance, " + reg, motDistance(m2), motDistance(m2) === cel(L_DIST, c2));
+    bil("rangement, " + reg, motRangement(m2), motRangement(m2) === cel(L_RANG, c2));
+    bil("espace, " + reg, motEspace(m2), motEspace(m2) === cel(L_ESPACE, c2));
+    if (ETAT.forme[reg] !== undefined) {
+      bil("garde sa forme, " + reg, motForme(ETAT.forme[reg]),
+          motForme(ETAT.forme[reg]) === cel(L_FORME, c2));
+    }
+  }
+  if (ETAT.surface !== null) {
+    bil("dénivelé de la surface libre", nb(ETAT.surface, 2) + " ø",
+        ETAT.surface < 0.8);
+  }
+}
+function majAlerte() {
+  var a = $("alerte"), r = [];
+  ETAT.horsProto = horsProtocole();
+  if (!ETAT.horsProto) { a.className = "alerte"; a.innerHTML = ""; return; }
+  if (REG.coh !== PROTO.coh) {
+    r.push("la cohésion entre billes est à " + REG.coh + " % : ce n'est plus le "
+      + "modèle que la fiche fait construire");
+  }
+  if (REG.manq !== PROTO.manq) {
+    r.push("il manque " + REG.manq + " billes — « " + secu("Compter les billes") + " »");
+  }
+  if (REG.pes !== PROTO.pes) r.push("la pesanteur est à " + REG.pes + " %");
+  a.className = "alerte on";
+  a.innerHTML = "<b>Hors protocole.</b> " + r.join(" ; ") + ". Le tableau de la fiche "
+    + "cesse d'être renseigné ; le carnet, lui, continue.";
+}
+function majBoutons() {
+  $("btnRemplir").disabled = ETAT.versees;
+  $("btnEssai").disabled = !ETAT.versees || !!ETAT.essai || ETAT.contenant !== "boite";
+  $("btnVerser").disabled = !ETAT.versees || ETAT.couvercle;
+  $("btnSurface").disabled = !ETAT.versees;
+  $("btnCouvercle").disabled = !ETAT.versees;
+  $("btnCouvercle").textContent = ETAT.couvercle ? "Ouvrir la boîte" : "Fermer la boîte";
+  $("btnComparer").disabled = !ETAT.versees;
+}
+function rendre() {
+  majScene();
+  majEtapes();
+  majInstruments();
+  majCarnet();
+  majAlerte();
+  consigne();
+  var o = $("obs");
+  if (o) {
+    o.textContent = ETAT.obs || "—";
+    o.className = "obs" + (ETAT.obsPos === true ? " pos"
+      : (ETAT.obsPos === false ? " mal" : ""));
+  }
+  majBoutons();
+  majProtocole();
+}
+
+/* ==================================================================
+   14. LA CONSIGNE — une cascade de `if` sur ETAT, une seule vérité
+   ================================================================== */
+function consigne() {
+  if (!ETAT.versees) {
+    return dire("Glisser le sachet de billes sur la boîte pour les y verser.");
+  }
+  if (ETAT.cellules >= cellulesAtteignables()) {
+    return dire("Les trois situations sont comparées : le tableau de la fiche est "
+      + "complet.", true);
+  }
+  var r = regimeCourant();
+  if (ETAT.forme[r] === undefined && r !== "?") {
+    return dire("Régime « " + r + " » : incliner puis retourner la boîte pour voir "
+      + "si l'ensemble garde sa forme.");
+  }
+  return dire("Pousser la manette d'agitation sur un autre cran pour franchir une "
+    + "transition — dans un sens comme dans l'autre.");
+}
+
+/* ==================================================================
+   15. LES COMMANDES HTML
+   ==================================================================
+   §12.5 — chaque curseur se bouge d'un bout à l'autre et un nombre
+   affiché DOIT changer. Un curseur qui ne fait rien est pire qu'un
+   curseur absent.                                                     */
+function brancherCommandes() {
+  $("rCoh").addEventListener("input", function () {
+    REG.coh = +this.value; perimer(); rendre();
+  });
+  $("rBilles").addEventListener("input", function () {
+    REG.manq = +this.value;
+    if (ETAT.versees) { ETAT.versees = false; MD = null; NOEUDS = []; ETAT.etabli = {}; }
+    perimer(); rendre();
+  });
+  $("rPes").addEventListener("input", function () {
+    REG.pes = +this.value;
+    if (MD) { poserIncl(ETAT.incl); }
+    perimer(); rendre();
+  });
+  $("btnProto").addEventListener("click", function () {
+    REG.coh = PROTO.coh; REG.manq = PROTO.manq; REG.pes = PROTO.pes;
+    $("rCoh").value = PROTO.coh; $("rBilles").value = PROTO.manq;
+    $("rPes").value = PROTO.pes;
+    perimer();
+    noter("Réglages ramenés au protocole.", true);
+    rendre();
+  });
+  $("btnRemplir").addEventListener("click", function () { verserDepuisSachet(); });
+  $("btnEssai").addEventListener("click", function () { essaiForme(); });
+  $("btnVerser").addEventListener("click", function () { verserAilleurs(); });
+  $("btnSurface").addEventListener("click", function () { observerSurface(); });
+  $("btnCouvercle").addEventListener("click", function () {
+    poserCouvercle(!ETAT.couvercle);
+  });
+  $("btnComparer").addEventListener("click", function () { comparer(); });
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  brancherVitesse(4);
+}
+/* §12.19 — un curseur PÉRIME ce qui a été relevé sous d'autres réglages :
+   laisser à l'écran des mesures qui ne correspondent plus au dessin,
+   c'est afficher des nombres faux. */
+function perimer() {
+  majSorties();
+  ETAT.etabli = {};
+  ETAT.forme = {};
+  ETAT.surface = null;
+  ETAT.stable = 0;
+  ETAT.grille = null;
+}
+function majSorties() {
+  $("oCoh").textContent = REG.coh + " %";
+  $("oBilles").textContent = REG.manq === 0 ? "aucune" : "−" + REG.manq;
+  $("oPes").textContent = REG.pes + " %";
+  $("aideCoh").innerHTML = "Ce qui tient les particules ensemble. <b>À 0 %, il ne "
+    + "reste que le cœur dur</b> : les billes ne se traversent toujours pas, mais "
+    + "plus rien ne les retient — ni solide qui garde sa forme, ni liquide qui "
+    + "garde son volume. C'est exactement la limite du modèle à billes : de vraies "
+    + "billes de verre n'ont pas de cohésion, les particules de la matière si.";
+  $("aideBilles").innerHTML = "« " + md(secu("Compter les billes")) + " » La fiche "
+    + "en prescrit <b>" + (nBilles() + REG.manq) + "</b> ; il en manque <b>" + REG.manq
+    + "</b>. Moins de billes, c'est un tas plus petit — et l'espace atteint change.";
+  $("aidePes").innerHTML = "À <b>0 %</b>, plus rien ne fait tomber les billes au "
+    + "fond : même froides, elles flottent et remplissent la boîte. C'est la "
+    + "pesanteur, et non l'agitation seule, qui donne au liquide sa surface libre "
+    + "horizontale.";
+}
+function comparer() {
+  var r, k, faits = 0, regs = ["solide", "liquide", "gazeux"];
+  for (k = 0; k < regs.length; k++) if (ETAT.etabli[regs[k]]) faits++;
+  if (faits < 3) {
+    signaler("Il faut d'abord avoir établi les trois situations : "
+      + faits + " sur 3 pour l'instant.");
+    return 0;
+  }
+  ETAT.compare = true;
+  for (k = 0; k < regs.length; k++) releverColonne(regs[k]);
+  succes();
+  noter("Les trois situations sont comparées : chaque propriété de la leçon 2 "
+    + "trouve son explication dans la disposition des billes.", true);
+  return 300;
+}
+
+/* ==================================================================
+   16. LE GUIDE — un prédicat par étape, et il LIT l'état
+   ================================================================== */
+function etabli(reg) { return !!ETAT.etabli[reg]; }
+function GUIDE_init() {}
+var GUIDE = [
+  /* 1. Disposer les billes serrées et rangées, les faire vibrer légèrement. */
+  /* ⚠ UN PRÉDICAT NE DOIT PAS SE DÉFAIRE PLUS TARD, sinon le panneau
+     oscille. La première rédaction exigeait « la manette est encore sur
+     le premier cran » : dès l'étape 3, qui la pousse sur le deuxième,
+     l'étape 1 se dé-cochait et le protocole repartait en arrière, sans
+     fin. Ce que la fiche demande ici, c'est d'AVOIR OBTENU le régime
+     solide — et `ETAT.etabli` en est le relevé, pas l'état courant. */
+  { fait: function () { return ETAT.versees && etabli("solide"); },
+    aide: function () {
+      if (!ETAT.versees) return "Glisser le <b>sachet de billes</b> sur la boîte : "
+        + "elles s'y rangent au fond, serrées, comme la fiche le demande.";
+      if (ETAT.agit !== 0) return "Pousser la <b>manette d'agitation</b> sur le cran "
+        + "« " + motAgit(0) + " » : les billes doivent vibrer sur place sans quitter "
+        + "leur voisine.";
+      return "L'agitation est bonne ; la page attend que les mesures se stabilisent "
+        + "(ordre ψ₆ = " + (ETAT.mesure ? nb(ETAT.mesure.ordre, 2) : "—") + ", il faut "
+        + nb(PHYS.S_ORDRE.v, 2) + ").";
+    },
+    montre: function () {
+      if (!ETAT.versees) { surlignerAct("sachet"); montrerCibles("sachet"); return true; }
+      return surlignerAct("manette");
+    } },
+  /* 2. Incliner la boîte, puis la retourner. */
+  { fait: function () { return ETAT.forme.solide !== undefined; },
+    aide: function () {
+      return "Presser <b>« Incliner, puis retourner »</b>. La page relève la part des "
+        + "billes qui ont gardé leur voisine — c'est ainsi qu'elle répond à « "
+        + "l'ensemble garde-t-il sa forme ? », au lieu de l'affirmer.";
+    },
+    montre: function () { return surlignerHTML("btnEssai"); } },
+  /* 3. Agiter doucement, puis verser dans un récipient de forme différente. */
+  { fait: function () {
+      return etabli("liquide") && ETAT.verse && ETAT.forme.liquide !== undefined;
+    },
+    aide: function () {
+      if (ETAT.agit !== 1) return "Pousser la manette sur « " + motAgit(1) + " » : les "
+        + "billes doivent glisser les unes sur les autres <b>en restant en contact</b>.";
+      if (!etabli("liquide")) return "La page attend que le régime se stabilise.";
+      if (!ETAT.verse) return "Presser <b>« Verser dans l'autre récipient »</b> : "
+        + "l'ensemble doit en épouser la forme.";
+      return "Refaire l'essai <b>« Incliner, puis retourner »</b>, cette fois sur le "
+        + "liquide — la réponse ne sera pas la même.";
+    },
+    montre: function () {
+      if (ETAT.agit !== 1) return surlignerAct("manette");
+      if (!ETAT.verse) return surlignerHTML("btnVerser");
+      return surlignerHTML("btnEssai");
+    } },
+  /* 4. Poser la boîte à plat, observer la surface libre. */
+  { fait: function () { return ETAT.surface !== null; },
+    aide: function () {
+      return "Presser <b>« Observer la surface libre »</b> : la page mesure le "
+        + "dénivelé entre les deux bords du tas, en diamètres de bille.";
+    },
+    montre: function () { return surlignerHTML("btnSurface"); } },
+  /* 5. Fermer la boîte, agiter fortement dans tous les sens. */
+  { fait: function () {
+      return ETAT.couvercle && etabli("gazeux") && ETAT.forme.gazeux !== undefined;
+    },
+    aide: function () {
+      if (!ETAT.couvercle) return "Glisser le <b>couvercle</b> sur la boîte : sans lui, "
+        + "l'agitation forte projetterait les billes dehors, et la page la refuse.";
+      if (ETAT.agit !== 2) return "Pousser la manette sur « " + motAgit(2) + " ».";
+      if (!etabli("gazeux")) return "La page attend que les billes aient rempli la boîte.";
+      return "Refaire l'essai <b>« Incliner, puis retourner »</b> sur le gaz.";
+    },
+    montre: function () {
+      if (!ETAT.couvercle) { surlignerAct("capot"); montrerCibles("capot"); return true; }
+      if (ETAT.agit !== 2) return surlignerAct("manette");
+      return surlignerHTML("btnEssai");
+    } },
+  /* 6. Comparer les trois situations aux propriétés de la leçon 2. */
+  { fait: function () { return ETAT.cellules >= cellulesAtteignables(); },
+    aide: function () {
+      return "Presser <b>« Comparer les trois situations »</b> — " + ETAT.cellules
+        + " cellule" + (ETAT.cellules > 1 ? "s" : "") + " sur "
+        + cellulesAtteignables() + " sont renseignées.";
+    },
+    montre: function () { return surlignerHTML("btnComparer"); } }
+];
+
+/* ==================================================================
+   17. RECOMMENCER — sans toucher aux réglages (§11.6)
+   ================================================================== */
+function recommencer() {
+  var seance = ETAT ? ETAT.tSeance : 0;
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  couperAnims();
+  purger();
+  ANIM_ON = true;
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;                 /* la séance ne se rembobine pas */
+  MD = null;
+  NOEUDS = [];
+  $("concl").className = "box masque";
+  batirTableau();
+  poserIncl(0);
+  noter("Les billes sont comptées et rangées dans le sachet. Les réglages, eux, "
+    + "n'ont pas bougé.", null);
+  derniere = 0;
+  rendre();
+  tard(tic, 40);
+}
+
+/* ==================================================================
+   18. LE DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  DUREE_SEANCE = +(DONNEES.duree || 20);
+  ETAT = neufEtat();
+  batirSvg(VB_W, VB_H);
+  var d = svg.querySelector("defs"), g;
+  g = el("radialGradient", { id: "gBille", cx: "34%", cy: "30%", r: "72%" });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#dfeaf5" }));
+  g.appendChild(el("stop", { offset: .42, "stop-color": "#7fa8cd" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#33587e" }));
+  d.appendChild(g);
+  batirDecor();
+  batirRecipient();
+  batirBoite();
+  batirSachet();
+  batirRack();
+  batirLevier();
+  COUCHES.drag.appendChild(el("g", { id: "cVol" }));
+  brancherPointeur();
+  batirPanneaux();
+  batirTableau();
+  batirEtapes();
+  construireProtocole();           /* AVANT le premier majProtocole() */
+  batirCapotPage();
+  brancherCommandes();
+  majSorties();
+  poserIncl(0);
+  derniere = 0;
+  rendre();
+  tard(tic, 40);
+}
+function batirCapotPage() {
+  batirCapot(
+    "vitesse-Verlet, pas fixe h = " + PHYS.PAS.v + " τ\n\n"
+    + "  U(r) = 4ε[(σ/r)¹² − c·(σ/r)⁶]      r < 2,5 σ\n"
+    + "  m dv/dt = −∇U + m g                parois réfléchissantes\n"
+    + "  thermostat : v ← λ v,  λ² = 1 + (h/τ)(T*/T − 1)\n\n"
+    + "  ψ₆ = | ⟨ (1/nᵢ) Σⱼ exp(6 i θᵢⱼ) ⟩ |     ordre orientationnel GLOBAL\n"
+    + "  z  = nombre moyen de voisines à moins de 1,25 σ\n"
+    + "  V  = part des cases du récipient atteintes en 6 τ\n"
+    + "  F  = part des couples de voisines CONSERVÉS après retournement",
+    "Le modèle travaille en unités réduites : σ est le diamètre d'une bille et ε "
+    + "la profondeur de son puits d'attraction. La température s'exprime donc en "
+    + "ε/k<sub>B</sub> et n'a pas de degrés — des billes de verre n'ont pas de "
+    + "température, et c'est la matière qu'elles représentent qui en a une. "
+    + "<b>Le coefficient c est le réglage « cohésion »</b> : il ne porte que sur le "
+    + "terme attractif, jamais sur le cœur répulsif.",
+    "Aucune matière ne se transforme ici : c'est un modèle, et le nombre de billes "
+    + "est conservé d'un bout à l'autre — la fiche le fait vérifier en les comptant "
+    + "avant et après. Ce qui change d'un régime à l'autre est la <b>disposition</b> "
+    + "et l'<b>agitation</b>, jamais la quantité.",
+    ["Le modèle est <b>plan</b> : une boîte réelle empile ses billes sur plusieurs "
+     + "couches, et les nombres de voisines y seraient plus grands (12 au lieu de 6 "
+     + "en empilement compact).",
+     "Il n'y a <b>pas de frottement</b> entre billes, alors qu'un tas de billes "
+     + "réelles tient d'abord par frottement. Ici c'est la cohésion qui joue ce rôle.",
+     "Les <b>chocs sont élastiques</b> : de vraies billes dissipent, et une boîte "
+     + "qu'on cesse d'agiter s'immobilise beaucoup plus vite que ce modèle.",
+     "Le thermostat impose l'agitation <b>moyenne</b> : il n'y a pas de source de "
+     + "chaleur, pas de paroi chaude, pas de conduction. « Chauffer » est ici une "
+     + "métaphore commode, pas un échange d'énergie modélisé.",
+     "Le passage d'un récipient à l'autre <b>reconstruit le rangement</b> : les "
+     + "billes gardent leurs vitesses, pas leurs positions relatives.",
+     "Une particule <b>n'est ni grise, ni dure, ni colorée</b> — c'est la fiche qui "
+     + "le dit, et c'est la limite la plus importante de toutes.",
+     "Le modèle ne dit rien de la <b>taille réelle</b> des particules ni de ce qui "
+     + "les tient ensemble : c'est le programme des années suivantes."]);
+  var t = $("capotSeuils"), tr, k;
+  var S = [["Rangement ψ₆", PHYS.S_ORDRE, "0,955 (solide) · 0,374 (liquide)", "×1,60 et ×1,60"],
+           ["Voisines au contact", PHYS.S_CONTACT, "3,35 (liquide) · 1,47 (gaz)", "×1,52 et ×1,50"],
+           ["Espace atteint", PHYS.S_ESPACE, "0,61 (liquide) · 0,99 (gaz)", "×1,28 et ×1,27"],
+           ["Voisines gardées", PHYS.S_FORME, "0,99 (solide) · 0,60 (liquide)", "×1,29 et ×1,28"]];
+  vide(t);
+  tr = document.createElement("tr");
+  ["Seuil", "Valeur", "Mesures encadrées", "Marge"].forEach(function (h) {
+    var th = document.createElement("th");
+    th.textContent = h;
+    tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (k = 0; k < S.length; k++) {
+    tr = document.createElement("tr");
+    [S[k][0], nb(S[k][1].v, 2), S[k][2], S[k][3]].forEach(function (v, j) {
+      var td = document.createElement("td");
+      if (j) td.className = "mes";
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  $("capotEcart").innerHTML = "<b>Les cinq lignes du tableau de la fiche sortent "
+    + "justes</b> : solide / liquide / gazeux, « elles se touchent » deux fois puis "
+    + "« du vide les sépare », « ordonné » puis « désordonné » deux fois, « oui / non "
+    + "/ non » sur la forme et « non / non / oui » sur l'espace. Aucune n'est écrite : "
+    + "chacune est le verdict d'un seuil appliqué à une mesure.<br><br>"
+    + "Les quatre seuils ont été fixés <b>en Python, avant la première ligne de "
+    + "JavaScript</b>, puis remesurés sur la page. Chacun est la <b>moyenne "
+    + "géométrique</b> des deux valeurs qu'il sépare, ce qui laisse la même marge de "
+    + "part et d'autre : la plus étroite vaut <b>×1,27</b>, soit 27 % — au-delà "
+    + "des 25 % que le §12.3 demande, et les valeurs ne bougent que de "
+    + "quelques pour cent d'une exécution à l'autre. Aucune constante du potentiel n'a été touchée "
+    + "pour y arriver ; ce sont les trois agitations du protocole qui ont été "
+    + "choisies loin des seuils.";
+}
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN (§12bis)
+   ==================================================================
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (§11.1), jamais d'un compteur :
+      `GUIDE[i].fait()` LIT `ETAT`. Le panneau avance donc tout seul dès que
+      le geste est fait — et il RECULE quand on le défait. Un compteur ne
+      saurait pas faire cela.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne et surligne l'objet à prendre et la zone où le poser ; le
+      geste reste à faire. C'est le refus explicite du §1.1 : un bouton qui
+      rejoue le YAML n'apprend rien de plus qu'une diapositive. */
+
+var guideSurb = [], guideAnnule = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  /* ⚠ Un contour posé en style inline ne se défait pas par `removeChild`
+     (§12bis.3-7) : chaque surlignage HTML laisse sa fermeture d'annulation. */
+  guideAnnule.forEach(function (f) { f(); });
+  guideAnnule = [];
+  if (svg) cacherCibles();
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo reste
+   visible et rien du guidage ne se perd (§13.5 bis). */
+function halo(x, y, w, h, r) {
+  if (!svg || !COUCHES.ui) return null;
+  var g = el("rect", { x: x, y: y, width: w, height: h,
+    rx: r === undefined ? 12 : r, fill: "none", stroke: GOLD,
+    "stroke-width": 3.4, "stroke-dasharray": "10 6", "pointer-events": "none" });
+  g.appendChild(el("animate", { attributeName: "opacity", values: "1;0.35;1",
+    dur: "1.3s", repeatCount: "indefinite" }));
+  COUCHES.ui.appendChild(g);
+  guideSurb.push(g);
+  return g;
+}
+/* ⚠ La boîte d'un nœud se prend sur l'ÉCRAN, puis se ramène au repère du
+   viewBox (§12bis.3-5) : `getBBox()` est local, et sous un groupe translaté
+   ou tourné le halo tomberait à côté. Et l'on VÉRIFIE qu'elle n'est pas
+   nulle — un sélecteur qui tomberait sur un nœud de <defs> n'en aurait pas,
+   et le halo ne paraîtrait jamais (§12bis.3-4). */
+function boiteViewBox(n) {
+  if (!n || !svg) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var b = svg.viewBox.baseVal;
+  if (!s.width || !s.height || !r.width || !r.height) return null;
+  return { x: (r.left - s.left) / s.width * b.width,
+           y: (r.top - s.top) / s.height * b.height,
+           w: r.width / s.width * b.width,
+           h: r.height / s.height * b.height };
+}
+/* On vise par `data-act`, jamais par `id` : un id de <defs> volerait le
+   sélecteur de la scène et rendrait un nœud sans boîte (§12bis.3-4). */
+function surlignerAct(a) {
+  var b = svg ? boiteViewBox(svg.querySelector('[data-act="' + a + '"]')) : null;
+  if (!b) return false;
+  halo(b.x - 7, b.y - 7, b.w + 14, b.h + 14, 12);
+  return true;
+}
+function surlignerRect(z, m) {
+  m = m === undefined ? 8 : m;
+  halo(z.x0 - m, z.y0 - m, z.x1 - z.x0 + 2 * m, z.y1 - z.y0 + 2 * m, 14);
+  return true;
+}
+function contour(n, ecart) {
+  if (!n) return false;
+  var o = n.style.outline, d = n.style.outlineOffset;
+  n.style.outline = "3px dashed " + GOLD;
+  n.style.outlineOffset = ecart;
+  guideAnnule.push(function () { n.style.outline = o; n.style.outlineOffset = d; });
+  return true;
+}
+function surlignerHTML(id) { return contour($(id), "3px"); }
+function surlignerCase(i) {
+  var c = $("etapes");
+  return contour(c ? c.children[i] : null, "2px");
+}
+/* Le halo doit TOUJOURS paraître : une étape non faite qui ne montrerait
+   rien serait un guidage muet (§12bis.4). Repli sur le cadre de la scène. */
+function surlignerScene() {
+  halo(14, 14, VB_W - 28, VB_H - 28, 16);
+  return true;
+}
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est termin\u00e9.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* ⚠ `construireProtocole()` tourne AVANT le premier `majProtocole()` :
+     sans ce garde, `protoNum` sortirait à 0 et aucune classe ne serait
+     posée (§12bis.3-2). */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  if (!GUIDE[c].montre()) surlignerScene();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. « Disposer les billes serrées et bien rangées au fond de la boîte,
+        puis les faire vibrer légèrement sur place »
+        Trois gestes de l'élève, dans l'ordre : verser le sachet, pousser la
+        manette sur son premier cran, laisser le régime s'établir. Les deux
+        premiers passent par `deposer()`, le moteur du glisser-déposer avec
+        tous ses refus ; aucun état n'est écrit ici.
+        ⚠ La cible se calcule par `zoneVoulue()` — celle qu'`accepte()`
+        ACCEPTE (§12.16) —, jamais par une position en dur. */
+  function () {
+    var z;
+    if (!ETAT.versees) {
+      z = zoneVoulue("sachet");
+      if (!z) return 0;
+      z = centreZone(z);
+      return deposer("sachet", z.x, z.y) || 900;
+    }
+    if (ETAT.agit !== 0) return deposer("manette", xCran(0), LEVIER.y0 + 9) || 420;
+    if (!ETAT.etabli.solide) return avanceRapide(6);
+    return 0;
+  },
+
+  /* 2. « Incliner la boîte, puis la retourner : observer si l'ensemble
+        garde sa forme. » Un vrai clic sur le bouton : le même écouteur,
+        donc les mêmes refus — la page refuse de retourner une boîte ouverte
+        dont le contenu n'est pas solide, et c'est justement la leçon. */
+  function () { presserHTML("btnEssai"); return 2600; },
+
+  /* 3. « Agiter doucement … verser l'ensemble dans un récipient de forme
+        différente. » L'étape demande plusieurs gestes et reste courante
+        entre-temps : c'est normal, le panneau DÉDUIT au lieu de compter. */
+  function () {
+    if (ETAT.agit !== 1) return deposer("manette", xCran(1), LEVIER.y0 + 9) || 420;
+    if (!ETAT.etabli.liquide) return avanceRapide(6);
+    if (!ETAT.verse) { presserHTML("btnVerser"); return 1100; }
+    if (ETAT.contenant !== "boite") { presserHTML("btnVerser"); return 1100; }
+    if (ETAT.forme.liquide === undefined) { presserHTML("btnEssai"); return 2600; }
+    return 0;
+  },
+
+  /* 4. « Poser la boîte à plat et observer la surface libre. » */
+  function () { presserHTML("btnSurface"); return 300; },
+
+  /* 5. « Fermer la boîte et l'agiter fortement dans tous les sens. »
+        Le couvercle se pose par `deposer()`, comme à la main ; sans lui la
+        page REFUSE l'agitation forte, et elle a raison. */
+  function () {
+    var z;
+    if (!ETAT.couvercle) {
+      z = zoneVoulue("capot");
+      if (!z) return 0;
+      z = centreZone(z);
+      return deposer("capot", z.x, z.y) || 560;
+    }
+    if (ETAT.agit !== 2) return deposer("manette", xCran(2), LEVIER.y0 + 9) || 420;
+    if (!ETAT.etabli.gazeux) return avanceRapide(7);
+    if (ETAT.forme.gazeux === undefined) { presserHTML("btnEssai"); return 2600; }
+    return 0;
+  },
+
+  /* 6. « Comparer les trois situations aux propriétés de la leçon 2. »
+        Le bouton refuse tant que les trois régimes n'ont pas été établis :
+        on ne contourne pas le refus, on lui donne ce qui lui manque. */
+  function () { presserHTML("btnComparer"); return 320; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   LE PLEIN ÉCRAN — c'est par lui qu'on projette la scène au tableau
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "\u26f6 Quitter" : "\u26f6";
+    b.title = plein ? "Quitter le plein \u00e9cran"
+                    : "Plein \u00e9cran \u2014 pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   L'HORLOGE
+   ==================================================================
+   §13.5 bis — setTimeout et Date.now(), jamais requestAnimationFrame :
+   sous le pilote sans tête, rAF n'est jamais appelé.
+
+   ⚠ LE PAS DE SIMULATION EST FIXE (§12bis.6). `avancerSimulation` avance
+   par tranches de PAS_SIM quelle que soit la vitesse choisie : un résultat
+   n'a pas le droit de dépendre du sélecteur de vitesse ni du temps de
+   réaction du navigateur. */
+var derniere = 0, tPanneaux = 0;
+function tic() {
+  var now = Date.now(), dtReel = derniere ? (now - derniere) / 1000 : 0;
+  derniere = now;
+  dtReel = Math.min(dtReel, 0.4);
+  ETAT.tSeance += dtReel;
+  avancerSimulation(dtReel * vitesse());
+  /* Le DESSIN suit chaque image — c'est lui qui porte l'animation (§1.2 bis).
+     Les PANNEAUX, eux, se refont cinq fois par seconde : reconstruire vingt
+     lignes de tableau à 25 images par seconde ne montrerait rien de plus et
+     ferait ramer la scène. */
+  dessinerVite();
+  tPanneaux += dtReel;
+  if (tPanneaux >= 0.2) { tPanneaux = 0; majSeance(); rendre(); }
+  tard(tic, 40);
+}
+function vitesse() {
+  var b = svg ? null : null, n = $("vit"), i, x;
+  if (!n) return 1;
+  x = n.querySelectorAll("button[data-v]");
+  for (i = 0; i < x.length; i++) {
+    if (x[i].className.indexOf("on") >= 0) return +x[i].getAttribute("data-v");
+  }
+  return 1;
+}
+function brancherVitesse(defaut) {
+  var n = $("vit"), i, x;
+  if (!n) return;
+  x = n.querySelectorAll("button[data-v]");
+  for (i = 0; i < x.length; i++) {
+    (function (b) {
+      b.addEventListener("click", function () {
+        var y = $("vit").querySelectorAll("button[data-v]"), j;
+        for (j = 0; j < y.length; j++) y[j].className = "sec";
+        b.className = "sec on";
+        majVitesse();
+      });
+    })(x[i]);
+    if (+x[i].getAttribute("data-v") === defaut) x[i].className = "sec on";
+  }
+  majVitesse();
+}
+function majVitesse() {
+  var n = $("vitTxt");
+  if (n) n.textContent = "temps \u00d7 " + vitesse();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else {
+  demarrer();
+}
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,4146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-31 · Le montage en derivation</title>
+
+<!--
+  ===================================================================
+  E1AC-31 · 1AC · L18 — PAILLASSE VIRTUELLE
+  « Le montage en dérivation : deux lampes côte à côte »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  « En dérivation » n'est pas un MODE de cette page. C'est une propriété du
+  graphe que l'élève monte, et la page la RECONNAÎT :
+
+      noeud(L2.a) = noeud(L1.a)  ET  noeud(L2.b) = noeud(L1.b)
+
+  Les nœuds sont des classes d'équivalence, tenues par une union-find sur
+  les fils posés. Brancher L2 à la SUITE de L1 ne déclenche aucun refus :
+  le compteur de boucles reste à une, et la page le dit. C'est la topologie
+  qui décide, jusqu'au bout.
+
+  LE NOMBRE DE BOUCLES EST UN THÉORÈME
+  -------------------------------------
+  « Suivre du doigt les chemins possibles : combien y en a-t-il ? » se
+  répond par le nombre cyclomatique — arêtes − sommets + composantes. Une
+  en série, deux en dérivation, et « deux, dont une coupée » quand une
+  lampe est dévissée : la page compare le graphe CONDUCTEUR au graphe
+  CÂBLÉ, et compose le mot.
+
+  CE QUE LE MODÈLE AJOUTE À LA FICHE, ET QUI EST VRAI
+  -----------------------------------------------------
+  La fiche dit que chaque lampe brille « comme si elle était seule ». Le
+  modèle trouve 98 %, et non 100 % : la résistance interne de la pile et
+  celle des fils sont COMMUNES aux deux branches. L'indépendance n'est donc
+  pas parfaite, et le curseur de résistance interne permet de le montrer —
+  poussé à 6 Ω, dévisser une lampe fait briller l'autre PLUS FORT. C'est
+  exactement pourquoi la fiche prévient que la pile se décharge plus vite.
+
+  CE QUE CETTE PAGE N'EST PAS
+  ---------------------------
+  * Elle est AUTONOME : ni generer.py, ni moteur.js, ni icones.js, et elle
+    ne s'ouvre pas depuis index.html. Elle DOUBLE simulation_E1AC-31.html.
+  * Elle n'a pas de vue 3D.
+  * Elle s'écarte volontairement du §5 du SKILL principal.
+  * Le dessin est un SCHÉMA HABILLÉ. Sont à l'échelle : les éclats, les
+    barres du comparateur, la position des nœuds — qui se relit du montage.
+    Ne le sont pas : les tailles des appareils.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E1AC-31.
+-->
+
+<script>
+/* L'écouteur d'erreurs est posé AVANT le script de la page, dans le <head> :
+   posé en fin de <body>, il ne voit AUCUNE erreur de démarrage — celles-ci ont
+   déjà eu lieu (SKILL §12.47, corollaire de méthode). Il n'écrit PAS dans la
+   console : un `console.error` serait compté comme une erreur par le pilote. */
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message || e));
+  var n = document.getElementById("errjs");
+  if (n) { n.textContent = "Erreur JS : " + window.__ERR.join(" · "); n.style.display = "block"; }
+});
+</script>
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+#errjs{display:none;background:#b03030;color:#fff;font-family:var(--mono);
+       font-size:12px;padding:6px 20px}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.hp output{color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.ko{color:var(--orange)}
+.lect .v.ok{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-31 · 1AC · L18</span>
+</div>
+<div id="errjs"></div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> La tension de la pile ou sa résistance interne ne sont plus celles du
+protocole. Le tableau de référence cesse de se remplir — le carnet, lui,
+continue, et l'on voit ce que l'indépendance des branches doit à une pile
+qui tient le coup.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">Tout ce tableau est <b>calculé</b>. Le nombre de boucles est le nombre
+<b>cyclomatique</b> du graphe du montage, et « en dérivation » se RECONNAÎT :
+la page compare les classes d'équivalence des bornes, elle ne le suppose pas.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Ce que le solveur trouve <span class="note">à chaque geste</span></h2>
+      <div class="lect" id="instr"></div>
+      <p class="src" style="margin-top:9px">« En dérivation » n'est pas un mode
+        de cette page. C'est une propriété du <b>graphe</b> : les deux bornes
+        de L2 appartiennent aux mêmes classes d'équivalence que celles de L1.
+        Brancher L2 à la <b>suite</b> de L1 laisse le compteur de boucles à
+        une, et la page le dit — elle n'interdit rien.</p>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rE">Tension de la pile</label>
+        <output id="oE"></output>
+        <input type="range" id="rE" min="3" max="4.5" step="0.1" value="4.5">
+        <div class="aide">Elle change les deux éclats ensemble. L'indépendance
+          des branches, elle, n'en dépend pas — et c'est ce qu'il faut faire
+          voir.</div>
+      </div>
+      <div class="reg">
+        <label for="rR">Résistance interne AJOUTÉE à la pile</label>
+        <output id="oR"></output>
+        <input type="range" id="rR" min="0" max="6" step="0.25" value="0">
+        <div class="aide">Voilà la <b>limite</b> de l'indépendance, et elle est
+          calculée. Avec une pile neuve (0,08 Ω) les deux lampes brillent à
+          98 % de leur éclat seul. Ajoutez-lui 6 Ω : la
+          pile ne suit plus, et dévisser une lampe fait <b>briller l'autre plus
+          fort</b>. C'est exactement la raison pour laquelle la fiche prévient
+          que « la pile se décharge plus vite qu'en série ».</div>
+      </div>
+      <div class="cmd">
+        <button id="bProto" type="button" class="sec">Revenir au protocole</button>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle</h3>
+      <div class="eq">boucles = arêtes − sommets + composantes    (nombre cyclomatique)
+
+« en dérivation » se RECONNAÎT sur le graphe :
+    noeud(L2.a) = noeud(L1.a)  ET  noeud(L2.b) = noeud(L1.b)
+
+puis le circuit est résolu, et chaque lampe :
+    U² / R(T) = k (T⁴ − 290⁴)        équilibre du filament
+    éclat = ∫ V(λ) · Planck(λ,T) dλ   flux VISIBLE</div>
+
+      <h3>2 · Les quatre lignes de la fiche, retrouvées</h3>
+      <table id="capotAccord"></table>
+
+      <h3>3 · Série et dérivation, côte à côte</h3>
+      <table id="capotCompare"></table>
+      <p class="src">Le même solveur, deux topologies. En série, l'intensité
+        tombe de 31 % et l'éclat de chaque lampe s'effondre à 3,7 %. En
+        dérivation, chaque lampe retrouve 98 % de son éclat seul — mais la
+        pile débite <b>deux fois plus</b>, et c'est pour cela qu'elle se
+        décharge plus vite.</p>
+
+      <h3>4 · Les constantes et leur provenance</h3>
+      <table id="capotConst"></table>
+
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>L'indépendance des branches n'est pas parfaite, et le modèle le
+        montre.</b> Chaque lampe brille à 98 % de son éclat seul, pas à 100 % :
+        la résistance interne de la pile et celle des fils sont communes aux
+        deux branches. Le curseur permet de pousser cet effet jusqu'à le rendre
+        spectaculaire — c'est une vraie physique, pas un artefact.</li>
+        <li><b>La pile ne se décharge pas</b>, alors que c'est l'inconvénient
+        que la fiche annonce pour ce montage. Il faudrait intégrer le courant
+        dans le temps, ce que fait la paillasse E3AC-22 pour un compteur
+        d'énergie.</li>
+        <li><b>Les deux lampes sont rigoureusement identiques.</b> De vraies
+        lampes de collège se ressemblent à 10 % près, et l'on voit souvent en
+        salle l'une briller un peu plus que l'autre.</li>
+        <li><b>Le filament est à l'équilibre thermique</b> : l'appel de courant
+        à la fermeture, qui vaut douze fois le courant établi, n'est pas
+        modélisé — et en dérivation il est doublé.</li>
+        <li><b>Un nœud est ici un point sans résistance.</b> Sur un vrai
+        montage, deux pinces sur la même borne font un contact médiocre, et
+        c'est là que se logent la plupart des pannes de dérivation.</li>
+        <li><b>Le schéma normalisé est un dessin</b>, pas un objet que l'élève
+        construit. La fiche demande de le tracer ; la page le montre.</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-31.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-31",
+  "niveau": "1AC",
+  "unite": "U2",
+  "lecon": "L18",
+  "titre": "Le montage en dérivation : deux lampes côte à côte",
+  "axe": "Le montage en dérivation",
+  "objectif": "Réaliser un montage de deux lampes en dérivation, y reconnaître les nœuds et les branches, et constater que chaque lampe fonctionne indépendamment de l'autre.",
+  "duree": 24,
+  "modalite": "groupes de 3 — 8 postes",
+  "materiel": [
+    "1 pile plate de 4,5 V par poste",
+    "2 lampes identiques sur support par poste",
+    "1 interrupteur par poste",
+    "8 fils de connexion à pinces crocodiles"
+  ],
+  "securite": [
+    "Ne travailler qu'avec la pile de 4,5 V : le secteur est interdit.",
+    "Ne jamais relier directement les deux bornes de la pile entre elles : en dérivation, la tentation est plus grande.",
+    "Ouvrir l'interrupteur avant de dévisser ou de revisser une lampe.",
+    "Ne pas laisser le montage fermé plus longtemps que nécessaire : la pile se décharge plus vite qu'en série.",
+    "Débrancher un fil de la pile avant de ranger."
+  ],
+  "protocole": [
+    "Reprendre le montage de la lampe L1 seule et se remémorer son éclat.",
+    "Ouvrir l'interrupteur, puis repérer deux points du circuit, que l'on nommera A et B.",
+    "Brancher la lampe L2 entre ces deux mêmes points A et B, à côté de L1 et non à sa suite.",
+    "Suivre du doigt les chemins possibles du courant depuis la pile : combien y en a-t-il ?",
+    "Marquer d'un point les deux endroits où les fils se rejoignent : ce sont les nœuds A et B.",
+    "Fermer l'interrupteur et comparer l'éclat de L1 à celui qu'elle avait seule, puis à celui de L2.",
+    "Ouvrir, dévisser L1, refermer et observer L2 ; revisser L1, dévisser L2 et observer L1.",
+    "Tracer le schéma normalisé du montage, en marquant les nœuds par un point."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Situation du montage",
+      "Éclat de L1",
+      "Éclat de L2",
+      "Nombre de boucles"
+    ],
+    "lignes": [
+      [
+        "L1 seule",
+        "",
+        "",
+        ""
+      ],
+      [
+        "L1 et L2 entre les mêmes points A et B",
+        "",
+        "",
+        ""
+      ],
+      [
+        "L1 dévissée",
+        "",
+        "",
+        ""
+      ],
+      [
+        "L2 dévissée",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "L1 seule",
+        "vif",
+        "lampe absente",
+        "une seule"
+      ],
+      [
+        "L1 et L2 entre les mêmes points A et B",
+        "vif, comme lorsqu'elle était seule",
+        "vif, égal à celui de L1",
+        "deux"
+      ],
+      [
+        "L1 dévissée",
+        "éteinte",
+        "toujours vif",
+        "deux, dont une coupée"
+      ],
+      [
+        "L2 dévissée",
+        "toujours vif",
+        "éteinte",
+        "deux, dont une coupée"
+      ]
+    ]
+  },
+  "observation": "Deux lampes en dérivation brillent chacune comme si elle était seule, et dévisser l'une n'empêche pas l'autre de briller.",
+  "conclusion": "En dérivation, les dipôles sont branchés entre deux mêmes nœuds ; chaque branche est indépendante, et une lampe retirée n'éteint pas les autres.",
+  "oheric": {
+    "observation": "Dans la maison, quand une ampoule grille, les autres pièces restent éclairées. Sur la guirlande du magasin, une seule ampoule grillée éteint toute la rangée — c'est ce que nous venons de retrouver en série. Il existe donc une **autre façon** de brancher deux lampes. Laquelle, et qu'est-ce qu'elle change ?",
+    "hypothese": "Si l'on branche la seconde lampe non pas à la suite de la première, mais **entre les deux mêmes points** du circuit, alors chaque lampe aura sa **propre boucle** avec le générateur. Chacune devrait alors fonctionner **indépendamment** de l'autre : retirer l'une ne devrait pas éteindre l'autre.",
+    "experience": "Reprendre la lampe L1 seule, repérer deux points A et B du circuit, y brancher la lampe L2 à côté de L1, compter les chemins possibles du courant, comparer les éclats, puis dévisser L1 et observer L2, et inversement.",
+    "resultats": "Le courant a maintenant **deux chemins** possibles : le circuit comporte **deux boucles**. Les deux lampes brillent **vivement**, chacune du même éclat que L1 avait **seule** — et non affaibli comme en série. Lorsque L1 est dévissée, **L2 continue de briller normalement** ; lorsque c'est L2, **L1 continue de briller**.",
+    "interpretation": "Les deux lampes sont branchées **entre les deux mêmes points**, qu'on appelle des **nœuds** : chacune constitue une **branche** du circuit. On dit qu'elles sont montées **en dérivation**, ou en parallèle. L'hypothèse est validée : chaque branche forme sa propre boucle avec le générateur, et dévisser une lampe ne coupe que **sa** branche — l'autre reste fermée et sa lampe reste allumée. C'est l'**indépendance** des branches, et c'est tout l'**intérêt** de ce montage : dans une maison, chaque lampe et chaque prise est branchée en dérivation, et c'est pourquoi une ampoule grillée n'éteint que sa propre lampe. En revanche, comme le générateur alimente maintenant deux boucles au lieu d'une, la **pile se décharge plus vite**.",
+    "conclusion": "Dans un **montage en dérivation**, les dipôles sont branchés **entre les deux mêmes points**, appelés **nœuds** ; chaque dipôle est sur une **branche** et le circuit comporte **autant de boucles que de branches**. Chaque lampe brille **comme si elle était seule**, et si l'une est retirée ou grillée, **les autres continuent de fonctionner** : c'est l'intérêt du montage en dérivation, celui de toute installation domestique."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline. Et
+   l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function sansAccent(s) {
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i")
+    .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+    .replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+}
+function du(nom) {
+  return (/^[haeiouyàâäéèêëîïôöùûü]/i.test(nom) ? "d'" : "de ") + nom;
+}
+function pluriel(n, s) { return n > 1 ? s : ""; }
+/* Un générateur pseudo-aléatoire DÉTERMINISTE. Le désordre d'un modèle doit
+   se rejouer à l'identique, sans quoi la manipulation à la main et le déroulé
+   ne donneraient pas le même carnet (SKILL §12bis.6). */
+function graine(s) {
+  var e = s;
+  return function () { e = (1103515245 * e + 12345) % 2147483648; return e / 2147483648; };
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var TEXTE_PROTO = PROTOCOLE.join("\n");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var i;
+  for (i = 0; i < PROTOCOLE.length; i++) if (motif.test(PROTOCOLE[i])) return PROTOCOLE[i];
+  return "";
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+function citerSecu(motif) {
+  var t = secu(motif);
+  return t ? " « " + t + " »" : "";
+}
+/* Lire un NOMBRE suivi de son unité dans le protocole. Trois règles payées
+   sur E3AC-19 (SKILL §12.29) : le nombre commence par un chiffre, l'unité est
+   sensible à la casse, et elle n'est pas suivie d'une lettre. */
+function lireProto(unite, defaut, sensible) {
+  var re = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-zÀ-ÿ])",
+                      sensible === false ? "i" : "");
+  var m = re.exec(TEXTE_PROTO);
+  return m ? parseFloat(m[1].replace(",", ".")) : defaut;
+}
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20, trentaine: 30, dizaine: 10 };
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* ==================================================================
+   3 bis. LES DURÉES VIENNENT DE LA FICHE — jamais du code (SKILL §5)
+   ================================================================== */
+function secondesProto(motif, defaut) {
+  var i, m, t, n;
+  for (i = 0; i < PROTOCOLE.length; i++) {
+    if (!motif.test(PROTOCOLE[i])) continue;
+    t = PROTOCOLE[i].toLowerCase();
+    m = /(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trentaine|dizaine)\s+(secondes?|minutes?)/.exec(t);
+    if (!m) continue;
+    n = isNaN(+m[1]) ? MOTS_NB[m[1]] : +m[1];
+    if (!n) continue;
+    return m[2].indexOf("minute") === 0 ? n * 60 : n;
+  }
+  return defaut;
+}
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   MINUTERIES ET ANIMATION
+   ==================================================================
+   ⚠ `setTimeout` + `Date.now()`, JAMAIS `requestAnimationFrame` (SKILL
+   §13.5 bis) : sous le pilote, rAF n'est pas appelé, et toute l'animation —
+   avec le résultat qu'elle porte — disparaîtrait SANS lever d'erreur.
+
+   ⚠ ET L'ANIMATION NE DÉCIDE DE RIEN. Le solveur a déjà calculé l'état
+   d'arrivée quand elle commence ; elle ne fait que le rejoindre. Un résultat
+   qui dépendrait du nombre d'images serait un résultat faux (§12.37). */
+var MINUTEURS = [], HORLOGE = null, ANIM_ON = true;
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+/* `sur(u)` reçoit une avance u de 0 à 1, lissée. `fin()` est rappelée à
+   l'arrivée. Une animation coupée (« Recommencer », arrêt du déroulé) ne
+   laisse rien derrière elle : `purger()` efface ses minuteries. */
+function anim(ms, sur, fin) {
+  var PAS = 14, i;
+  for (i = 1; i <= PAS; i++) (function (k) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = k / PAS;
+      sur(t * t * (3 - 2 * t), t);
+      if (k === PAS && fin) fin();
+    }, Math.round(ms * k / PAS));
+  })(i);
+  if (!ms && fin) fin();
+}
+
+/* ==================================================================
+   LES COUCHES SVG — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE tout le reste
+     poste   le mobilier fixe : portoirs, balance, plaque, étagère
+     arriere l'intérieur de la verrerie, l'eau, et les zones de dépôt
+     objets  ce qui se manipule
+     avant   les parois de verre, les étiquettes, la vapeur
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout            */
+var svg = null, DEFS = null, COUCHES = {};
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+/* Les dégradés et filtres communs à toutes les paillasses du lot.
+   ⚠ AUCUN dégradé n'est jamais posé sur le CONTOUR d'un trait (SKILL §10.1) :
+   en `objectBoundingBox`, la boîte d'un segment horizontal ou vertical est
+   plate, le dégradé est dégénéré, et le navigateur NE PEINT RIEN — sans
+   erreur, et sans que le pilotage puisse le voir. Les traits fins sont donc
+   peints en couleur PLEINE. */
+function defsCommunes() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* la bande de bois CLAIRE du plateau : c'est la seule zone sombre-libre où
+     une étiquette se lit (SKILL §12.7) */
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e6d5b4" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9b189" }));
+  DEFS.appendChild(g);
+
+  /* l'eau — dégradé vertical, et la surface se dessine en ELLIPSE */
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+
+  /* le verre : voile de teinte + reflet net + arête sombre (SKILL §10.2) */
+  g = el("linearGradient", { id: "verre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c6d6e3", "stop-opacity": .55 }));
+  g.appendChild(el("stop", { offset: .17, "stop-color": "#ffffff", "stop-opacity": .78 }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#dce8f1", "stop-opacity": .28 }));
+  g.appendChild(el("stop", { offset: .88, "stop-color": "#a9b8c8", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7f93a6", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flouFin", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 1.6 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+  DEFS.appendChild(f);
+}
+/* Sans elle, tout flotte (SKILL §10.3). */
+function ombreAuSol(cx, y, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: y + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Un bécher : intérieur et liquide AVANT la paroi, bourrelet du bord,
+   bec verseur et graduations — c'est le bourrelet, plus que la paroi, qui
+   fait reconnaître un bécher (SKILL §10.2). */
+function paroiVerre(couche, x, y, w, h, r) {
+  var g = ajout(couche, el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "url(#verre)" }));
+  g.appendChild(el("rect", { x: x + w * .1, y: y + 8, width: Math.max(3, w * .07),
+    height: h - 20, rx: 2.5, fill: "#ffffff", opacity: .66 }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3 }));
+  g.appendChild(el("ellipse", { cx: x + w / 2, cy: y, rx: w / 2 + 2.5, ry: 4.5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3.2 }));
+  return g;
+}
+
+/* ==================================================================
+   LE MOTEUR DE GLISSER-DÉPOSER (SKILL §9)
+   ==================================================================
+   ⚠ Le pointeur est capturé sur le SVG, PAS sur l'objet : sans cela, un
+   mouvement rapide sort de l'objet et le glissement s'arrête net au milieu du
+   geste, sans erreur.
+
+   La page fournit `emplacements(o)`, `deposer(o, zone, depart)` et
+   `replacer(o)`. Les zones sont rendues de la plus PETITE à la plus GRANDE
+   (§12.16) : c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du
+   tableau.                                                                  */
+var prise = null, ptSVG = null, surbrillance = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function placer(o, x, y) {
+  o.x = x; o.y = y;
+  o.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ")");
+}
+/* L'objet PARCOURT son trajet : c'est la troisième exigence du §1.2 bis.
+   L'état, lui, est posé AVANT (SKILL §6.2) — l'animation ne décide de rien. */
+function volerVers(o, x1, y1, ms) {
+  var x0 = o.x, y0 = o.y;
+  anim(ms || 520, function (u) {
+    o.g.setAttribute("transform", "translate(" +
+      (x0 + (x1 - x0) * u).toFixed(1) + "," + (y0 + (y1 - y0) * u).toFixed(1) + ")");
+  });
+  o.x = x1; o.y = y1;
+}
+function montrerCibles(o) {
+  effacerCibles();
+  if (!o) return;
+  emplacements(o).forEach(function (z) {
+    if (z.discret) return;
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 10,
+      fill: GOLD, opacity: .18, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* ⚠ TOUT OBJET MANIPULABLE REÇOIT UNE PLAQUE DE PRÉHENSION transparente aux
+   cotes de sa silhouette, insérée EN PREMIER dans son groupe (SKILL §12.38) :
+   un objet fin n'offre au pointeur presque rien, et le glisser ne démarrerait
+   pas — sans erreur, sans refus, sans rien. */
+function prehension(g, x, y, w, h) {
+  var r = el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "#ffffff",
+                       "fill-opacity": 0.001 });
+  if (g.firstChild) g.insertBefore(r, g.firstChild); else g.appendChild(r);
+  return r;
+}
+function brancherObjet(o) {
+  o.g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                        /* verrou en PREMIÈRE ligne */
+    if (o.fige) return;
+    e.preventDefault();
+    var p = versSVG(e);
+    prise = { o: o, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+              x0: p.x, y0: p.y, bouge: false, depart: { x: o.x, y: o.y } };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    o.g.setAttribute("filter", "url(#ombrePrise)");
+    o.g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(o.g);
+    montrerCibles(o);
+  });
+}
+function brancherPrise() {
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    /* Le seuil de 5 px sépare le CLIC du GLISSEMENT (SKILL §9.3). */
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    placer(prise.o, p.x + prise.dx, p.y + prise.dy);
+    if (typeof pendantGlisser === "function") pendantGlisser(prise.o);
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var o = prise.o, bouge = prise.bouge, depart = prise.depart;
+    o.g.removeAttribute("filter");
+    o.g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(o.g);
+    effacerCibles();
+    prise = null;
+    if (!bouge) {
+      placer(o, depart.x, depart.y);
+      if (typeof cliquerObjet === "function") cliquerObjet(o);
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(o).forEach(function (z) {
+      var d = Math.hypot(o.x - z.x, o.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposer(o, best, depart);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);        /* ne PAS l'oublier */
+}
+/* La zone qu'`emplacements()` propose DANS L'ÉTAT COURANT — jamais une
+   position écrite en dur. Un bouton ne vise donc jamais `emplacements(o)[0]`
+   au hasard : il vise celle que `deposer` accepterait (SKILL §12.16). */
+function zoneVoulue(o, type) {
+  var z = emplacements(o) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+
+/* ==================================================================
+   LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                            */
+var BOUTONS = {}, ACTES = [];
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", "fill-opacity": 0.001 }));
+  var r = g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht, noeud: g,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function rangeeBoutons(W, y, libelles, actes) {
+  var n = actes.length, marge = 22, gap = 10;
+  var w = (W - 2 * marge - gap * (n - 1)) / n, i;
+  for (i = 0; i < n; i++) {
+    boutonScene(marge + w / 2 + i * (w + gap), y, w, 42,
+                libelles[i][0], libelles[i][1], actes[i]);
+  }
+}
+
+/* ==================================================================
+   CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  if (!c) return;
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  if (!o) return;
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+var N_CELL = 0;
+function compterCellules() {
+  var i, j, n = 0;
+  for (i = 0; i < N_LIG; i++) {
+    for (j = 0; j < (VAL[i] || []).length; j++) {
+      if (!(LIG[i] || [])[j] && (VAL[i] || [])[j]) n++;
+    }
+  }
+  return n;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t ? t.querySelectorAll("tr")[k + 1] : null;
+  var v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "mes";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerLigne(k) {
+  var j;
+  for (j = 0; j < (VAL[k] || []).length; j++) {
+    if (!(LIG[k] || [])[j]) revelerCellule(k, j);
+  }
+}
+function majCompteurCellules() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t ? t.querySelectorAll("tr") : [], i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  if ($("concl")) $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre, dans l'unité de la grandeur.           */
+function signalerDivergence(cle, texte) {
+  if (ETAT.horsProto) return;
+  if (ETAT.diverge.indexOf(cle) >= 0) return;
+  ETAT.diverge.push(cle);
+  var d = $("diverge");
+  d.innerHTML += (d.innerHTML ? "<br>" : "") + texte;
+  d.style.display = "block";
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.innerHTML = md(cells[i]);
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireEtapes(noms) {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < noms.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + noms[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+/* Les panneaux communs : titre, objectif, observation, conclusion, matériel,
+   sécurité, tableau de la fiche. Tout vient du YAML, rien n'est retapé.     */
+function construireHTMLBase(soustitre) {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · " + soustitre;
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  N_CELL = compterCellules();
+  majCompteurCellules();
+}
+/* Le tableau des constantes du capot se RÉGÉNÈRE depuis `PHYS` — il n'est
+   jamais retapé dans le HTML (SKILL §7.3). */
+function construireConstantes() {
+  var ct = $("capotConst"), c;
+  if (!ct) return;
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  for (c in PHYS) {
+    ct.appendChild(ligneTab([PHYS[c].n,
+      (typeof PHYS[c].v === "number"
+        ? (Math.abs(PHYS[c].v) < 0.01 ? sci(PHYS[c].v, 2)
+                                      : nb(PHYS[c].v, PHYS[c].d === undefined ? 2 : PHYS[c].d))
+        : PHYS[c].v) + " " + PHYS[c].u, PHYS[c].s]));
+  }
+}
+
+/* ==================================================================
+   L'HORLOGE DE LA SÉANCE — et elle seule court en temps RÉEL
+   ==================================================================
+   Elle mesure ce que la manipulation coûte à l'enseignant, pas ce que le
+   modèle simule : elle ne s'accélère JAMAIS, et elle SURVIT à
+   « Recommencer » — la séance ne se rembobine pas (SKILL §5.4, §11.6).      */
+var DERNIER = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tickSeance, 250);
+}
+function tickSeance() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  if (!n) return;
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance(complement) {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    (complement ? " · " + complement : "");
+  majSeance();
+}
+
+/* ==================================================================
+   LE PLEIN ÉCRAN — c'est par lui qu'on projette la scène au tableau
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   1 bis. LE SOLVEUR DE CIRCUIT — commun aux huit paillasses du lot
+   ==================================================================
+   Port fidèle de `_scratch_LOT1AC6/modeles.py`, validé SUR LE DISQUE avant
+   qu'une ligne de page ne soit écrite (SKILL §14.5, piège n° 1 du lot).
+
+   ⚠️ CE QUI FAIT TOUT L'INTÉRÊT DE CE FICHIER : il n'existe NULLE PART un
+   drapeau « le circuit est fermé ». Une lampe brille parce qu'un courant la
+   traverse, et ce courant sort d'une analyse nodale de la topologie que
+   l'élève a montée. Débrancher un fil, c'est retirer un dipôle de la liste ;
+   ouvrir l'interrupteur, c'est lui donner une conductance d'isolant. Le
+   verdict suit, il n'est jamais écrit.
+
+   TROIS PIÈGES PAYÉS ICI, ET TOUS MUETS
+   -------------------------------------
+   1. **Le signe du stamp.** KCL au nœud a s'écrit Σg·v_a − Σg·v_b = Σe·g.
+      Écrit à l'envers, il RETOURNE toutes les f.é.m. — ce qui ne se voit sur
+      aucun circuit symétrique (la lampe donnait 0,19 A dans les deux cas) et
+      détruit la leçon dès qu'une DIODE entre en scène. Trouvé par le RÉSIDU
+      de KCL, jamais à l'œil.
+   2. **Une diode ne se linéarise pas sur son COURANT.** « Si i > 0, elle
+      conduit » : i vaut zéro à la première itération, donc elle ne conduit
+      jamais, dans les deux sens. Shockley est continu et s'amorce tout seul.
+   3. **Le pas de Newton se BORNE.** L'exponentielle d'une diode diverge en
+      trois itérations sans amortissement.                                   */
+
+var PHYS_C = {
+  T_AMB: { v: 290, u: "K", d: 0, n: "température de la salle",
+    s: "17 °C ; c'est d'elle que part la résistance à froid du filament" },
+  N_FIL: { v: 1.20, u: "", d: 2, n: "exposant du tungstène, R ∝ T^n",
+    s: "tables de résistivité du tungstène : 5,65·10⁻⁸ Ω·m à 300 K, 70,5·10⁻⁸ à 2300 K, soit ln(12,5)/ln(7,67) = 1,24" },
+  RAPPORT: { v: 12, u: "", d: 0, n: "R chaud / R froid du filament",
+    s: "SKILL §7.1, 10 à 14 ; et l'exposant 1,2 le redonne exactement, puisque (2300/290)^1,2 = 12,0" },
+  E_PLATE: { v: 4.5, u: "V", d: 1, n: "tension marquée sur la pile plate",
+    s: "lue dans le matériel de la fiche — « 1 pile plate de 4,5 V par poste »" },
+  R_FIL: { v: 0.006, u: "Ω", d: 3, n: "résistance d'un fil de connexion",
+    s: "25 cm de cuivre multibrin de 1 mm² : 0,004 Ω, plus 0,002 Ω pour les deux pinces crocodiles" },
+  R_INTER: { v: 0.003, u: "Ω", d: 3, n: "résistance d'un interrupteur fermé",
+    s: "contact à lame de laiton ; c'est ce qui fait qu'un interrupteur fermé se comporte comme un conducteur" },
+  R_ISO: { v: 1e12, u: "Ω", d: 0, n: "résistance d'un interrupteur ouvert",
+    s: "l'air entre les deux lames ; c'est ce qui fait qu'un interrupteur ouvert se comporte comme un isolant" },
+  R_AMP: { v: 0.10, u: "Ω", d: 2, n: "résistance interne de l'ampèremètre",
+    s: "20 mV de chute à pleine échelle sur le calibre 200 mA — un appareil de collège" },
+  R_VOLT: { v: 1e7, u: "Ω", d: 0, n: "résistance interne du voltmètre",
+    s: "10 MΩ, valeur normalisée d'un multimètre ; c'est elle qui permet de le brancher SANS ouvrir le circuit" },
+  T_DRAPER: { v: 798, u: "K", d: 0, n: "point de Draper",
+    s: "la température à laquelle un corps chaud devient visiblement rouge. C'est LUI qui décide si la lampe « brille », et non un seuil choisi sur le flux (SKILL §12.24)" },
+  R_MOT: { v: 6.0, u: "Ω", d: 1, n: "résistance de l'induit du moteur",
+    s: "petit moteur à courant continu de collège, type Mabuchi FA-130" },
+  K_MOT: { v: 3.5e-3, u: "N·m/A", d: 2, n: "constante de couple du moteur",
+    s: "3 500 tr/min par volt, soit 60/(2π·2700) — c'est elle qui lie le SENS du courant au SENS de rotation" },
+  I0_MOT: { v: 0.090, u: "A", d: 3, n: "courant du moteur à vide sous 4,5 V",
+    s: "mesure usuelle sur ce type de moteur ; elle fixe le frottement visqueux" },
+  U_DEL: { v: 2.0, u: "V", d: 1, n: "tension de seuil d'une DEL rouge",
+    s: "2,0 V sous 20 mA ; au-delà elle conduit sans limite, d'où le conducteur ohmique de protection" },
+  R_PROT: { v: 220, u: "Ω", d: 0, n: "conducteur ohmique de protection de la DEL",
+    s: "« la DEL doit toujours être en série avec son conducteur ohmique de protection, sinon elle est détruite instantanément » — sécurité de la fiche" }
+};
+
+var T_AMB = PHYS_C.T_AMB.v, N_FIL = PHYS_C.N_FIL.v;
+var R_ISO = PHYS_C.R_ISO.v, R_FIL_1 = PHYS_C.R_FIL.v;
+var VT = 0.02585;
+var IS_DIODE = 5.0e-9, N_DIODE = 1.6;        /* 1N4001 : 0,72 V sous 0,19 A */
+var IS_DEL = 1.06e-17, N_DEL = 2.2;          /* DEL rouge : 2,0 V sous 20 mA */
+
+/* La lampe se calibre sur LE SEUL point de fonctionnement que la fiche
+   donne — 4,48 V et 0,19 A — et rien d'autre n'est ajusté. Les deux pages de
+   L19 le fournissent ; les six autres le reçoivent tel quel, ce qui est la
+   raison d'être de ce fichier commun. */
+var U_REF = 4.48, I_REF = 0.19;
+var R_CHAUD = U_REF / I_REF;
+var R_FROID = R_CHAUD / PHYS_C.RAPPORT.v;
+var T_NOM = T_AMB * Math.pow(PHYS_C.RAPPORT.v, 1 / N_FIL);
+var K_RAY = (U_REF * I_REF) / (Math.pow(T_NOM, 4) - Math.pow(T_AMB, 4));
+/* La résistance interne de la pile se DÉDUIT du relevé : 4,50 V marqués,
+   4,48 V mesurés sous 0,19 A, moins ce que les fils et l'interrupteur
+   prennent déjà. Elle n'est pas choisie. */
+var R_PILE = (PHYS_C.E_PLATE.v - U_REF) / I_REF - (3 * R_FIL_1 + PHYS_C.R_INTER.v);
+var R_CELL = R_PILE / 3;        /* une pile plate, c'est TROIS éléments 1,5 V */
+
+function rLampe(T) { return R_FROID * Math.pow(T / T_AMB, N_FIL); }
+function rayonne(T) { return K_RAY * (Math.pow(T, 4) - Math.pow(T_AMB, 4)); }
+/* La température d'équilibre sous la tension U : U²/R(T) = k(T⁴ − T₀⁴).
+   Dichotomie — l'équation est raide et T court de 290 à 3000 K. */
+function tempLampe(U) {
+  var a = T_AMB, b = 4000, i, m;
+  if (!(U > 1e-9)) return T_AMB;
+  for (i = 0; i < 50; i++) {
+    m = 0.5 * (a + b);
+    if (U * U / rLampe(m) > rayonne(m)) a = m; else b = m;
+  }
+  return 0.5 * (a + b);
+}
+function allumee(T) { return T >= PHYS_C.T_DRAPER.v; }
+
+/* ------------------------------------------------------------------ le solveur */
+function Circuit() {
+  this.dip = []; this.noeuds = {}; this.nn = 0; this.v = []; this.residu = 0;
+}
+Circuit.prototype.n = function (nom) {
+  if (!(nom in this.noeuds)) { this.noeuds[nom] = this.nn++; }
+  return this.noeuds[nom];
+};
+Circuit.prototype.ajouter = function (a, b, fn, nom) {
+  var d = { a: this.n(a), b: this.n(b), fn: fn, nom: nom || (a + "-" + b),
+            u: 0, i: 0 };
+  this.dip.push(d);
+  return d;
+};
+Circuit.prototype.resoudre = function (tours) {
+  var N = this.nn, v = [], G, J, i, j, k, d, g, e, cible, pas, bouge, v2;
+  tours = tours || 300;
+  for (i = 0; i < N; i++) v.push(0);
+  for (k = 0; k < tours; k++) {
+    G = []; J = [];
+    for (i = 0; i < N; i++) { G.push([]); J.push(0);
+      for (j = 0; j < N; j++) G[i].push(0); }
+    for (i = 0; i < this.dip.length; i++) {
+      d = this.dip[i];
+      g = d.fn(d.u); e = g[1]; g = g[0];
+      G[d.a][d.a] += g; G[d.b][d.b] += g;
+      G[d.a][d.b] -= g; G[d.b][d.a] -= g;
+      J[d.a] += e * g; J[d.b] -= e * g;          /* ⚠ le signe : voir l'en-tête */
+    }
+    /* ⚠ UN MORCEAU DE MONTAGE QUI NE TIENT A RIEN REND LA MATRICE SINGULIERE.
+       Un élève pose un fil entre deux bornes qui ne rejoignent pas encore la
+       pile : ce bout de réseau FLOTTE, son potentiel est indéterminé, et
+       l'élimination de Gauss échoue — la page rendrait alors l'état
+       précédent, sans une erreur. On ajoute donc à chaque nœud une
+       conductance de fuite d'un pico-siemens (1 TΩ vers la masse) : c'est le
+       `gmin` des simulateurs de circuits. Elle rend la matrice inversible et
+       ne change aucun résultat — 4,5 V sur 1 TΩ font 4,5 pA. */
+    for (j = 1; j < N; j++) G[j][j] += 1e-12;
+    for (j = 0; j < N; j++) G[0][j] = 0;
+    G[0][0] = 1; J[0] = 0;                        /* la masse : le nœud 0 */
+    v2 = resoudreLineaire(G, J, N);
+    if (!v2) break;
+    v = v2;
+    bouge = 0;
+    for (i = 0; i < this.dip.length; i++) {
+      d = this.dip[i];
+      cible = v[d.a] - v[d.b];
+      pas = cible - d.u;
+      if (pas > 0.12) pas = 0.12; else if (pas < -0.12) pas = -0.12;
+      d.u += pas;
+      if (Math.abs(pas) > bouge) bouge = Math.abs(pas);
+    }
+    if (bouge < 1e-10) break;
+  }
+  this.v = v;
+  for (i = 0; i < this.dip.length; i++) {
+    d = this.dip[i];
+    g = d.fn(d.u); d.i = (d.u - g[1]) * g[0];
+  }
+  this.residu = this.calculerResidu(v, N);
+  return v;
+};
+/* Le RÉSIDU de KCL : la seule preuve qu'on tient une solution. Un stamp au
+   mauvais signe donne un système parfaitement soluble — et faux. */
+Circuit.prototype.calculerResidu = function (v, N) {
+  var s = [], i, d, g, cur, pire = 0;
+  for (i = 0; i < N; i++) s.push(0);
+  for (i = 0; i < this.dip.length; i++) {
+    d = this.dip[i];
+    g = d.fn(v[d.a] - v[d.b]);
+    cur = (v[d.a] - v[d.b] - g[1]) * g[0];
+    s[d.a] += cur; s[d.b] -= cur;
+  }
+  for (i = 1; i < N; i++) if (Math.abs(s[i]) > pire) pire = Math.abs(s[i]);
+  return pire;
+};
+Circuit.prototype.u = function (a, b) {
+  if (!(a in this.noeuds) || !(b in this.noeuds)) return 0;
+  return this.v[this.noeuds[a]] - this.v[this.noeuds[b]];
+};
+Circuit.prototype.courant = function (nom) {
+  var i;
+  for (i = 0; i < this.dip.length; i++) if (this.dip[i].nom === nom) return this.dip[i].i;
+  return 0;
+};
+function resoudreLineaire(A, B, n) {
+  var M = [], i, j, c, r, p, f, out = [];
+  for (i = 0; i < n; i++) { M.push(A[i].slice()); M[i].push(B[i]); }
+  for (c = 0; c < n; c++) {
+    p = c;
+    for (r = c; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    if (Math.abs(M[p][c]) < 1e-300) return null;
+    f = M[c]; M[c] = M[p]; M[p] = f;
+    for (r = 0; r < n; r++) {
+      if (r === c) continue;
+      f = M[r][c] / M[c][c];
+      if (!f) continue;
+      for (j = c; j <= n; j++) M[r][j] -= f * M[c][j];
+    }
+  }
+  for (i = 0; i < n; i++) out.push(M[i][n] / M[i][i]);
+  return out;
+}
+
+/* ==================================================================
+   LE MONTAGE — des BORNES, des FILS, et rien d'autre
+   ==================================================================
+   C'est ici que « la topologie décide » cesse d'être une phrase. La page ne
+   déclare jamais « le circuit est fermé » : elle déclare quelles bornes un
+   fil relie. Deux bornes reliées par un fil sont un MÊME nœud électrique —
+   c'est une classe d'équivalence, et `Montage` en tient l'union-find. Le
+   solveur reçoit ensuite les dipôles entre ces nœuds.
+
+   Conséquence, et c'est l'exigence du lot : ouvrir N'IMPORTE OÙ éteint. Il
+   n'y a rien à écrire pour cela, c'est la matrice qui le donne. */
+function Montage() { this.pere = {}; }
+Montage.prototype.racine = function (k) {
+  if (!(k in this.pere)) { this.pere[k] = k; return k; }
+  while (this.pere[k] !== k) { this.pere[k] = this.pere[this.pere[k]]; k = this.pere[k]; }
+  return k;
+};
+Montage.prototype.unir = function (a, b) {
+  var ra = this.racine(a), rb = this.racine(b);
+  if (ra !== rb) this.pere[ra] = rb;
+};
+Montage.prototype.noeud = function (k) { return "n" + this.racine(k); };
+/* Les liens de l'état deviennent des classes d'équivalence. */
+function monter(liens) {
+  var m = new Montage(), i;
+  for (i = 0; i < liens.length; i++) {
+    if (liens[i] && liens[i].a && liens[i].b) m.unir(liens[i].a, liens[i].b);
+  }
+  return m;
+}
+
+/* ------------------------------------------------------------------ les dipôles */
+function dFil(k) { var g = 1 / ((k || 1) * R_FIL_1); return function () { return [g, 0]; }; }
+function dResistor(R) { var g = 1 / Math.max(R, 1e-9); return function () { return [g, 0]; }; }
+/* c.ajouter("M", "P", dGen(E, r)) : le PÔLE + est en P. */
+function dGen(E, r) { var g = 1 / r; return function () { return [g, -E]; }; }
+function dInter(ferme) {
+  var g = 1 / (ferme ? PHYS_C.R_INTER.v : R_ISO);
+  return function () { return [g, 0]; };
+}
+function dLampe(etat) {
+  return function (u) {
+    var T = tempLampe(Math.abs(u)), R = rLampe(T);
+    etat.T = T; etat.R = R; etat.U = Math.abs(u); etat.I = Math.abs(u) / R;
+    return [1 / R, 0];
+  };
+}
+function shockley(Is, n, sens) {
+  var nvt = n * VT;
+  return function (u) {
+    var x = (u * sens) / nvt, ex, i, g;
+    if (x > 60) x = 60;
+    ex = Math.exp(x);
+    i = Is * (ex - 1);
+    g = Math.max(Is * ex / nvt, 1 / R_ISO);
+    return [g, u - (i * sens) / g];
+  };
+}
+function dDiode(sens) { return shockley(IS_DIODE, N_DIODE, sens); }
+function dDel(sens) { return shockley(IS_DEL, N_DEL, sens); }
+/* Régime établi : k·I = f·Ω, donc une f.é.m. contraire k²I/f. Le moteur se
+   comporte donc comme une résistance — mais son SENS de rotation suit le
+   signe du courant, et c'est tout le propos de L19. */
+function dMoteur(etat) {
+  var fvis = PHYS_C.K_MOT.v * PHYS_C.K_MOT.v /
+             (PHYS_C.E_PLATE.v / PHYS_C.I0_MOT.v - PHYS_C.R_MOT.v - R_PILE);
+  var Reff = PHYS_C.R_MOT.v + PHYS_C.K_MOT.v * PHYS_C.K_MOT.v / fvis;
+  return function (u) {
+    etat.I = u / Reff;
+    etat.omega = PHYS_C.K_MOT.v * etat.I / fvis;
+    return [1 / Reff, 0];
+  };
+}
+
+/* ----------------------------------------------- l'éclat, par le corps noir */
+/* V(λ) photopique CIE 1931, tous les 20 nm de 380 à 780 nm. C'est elle qui
+   fait qu'une lampe deux fois moins chaude n'éclaire pas deux fois moins,
+   mais vingt-sept fois moins. */
+var V_LAMBDA = [0, 0.0004, 0.004, 0.023, 0.060, 0.139, 0.323, 0.710, 0.954,
+                0.995, 0.870, 0.631, 0.381, 0.175, 0.061, 0.017, 0.0041,
+                0.0010, 0.0002, 0, 0];
+function fluxVisible(T) {
+  var h = 6.62607e-34, cc = 2.99792e8, kb = 1.380649e-23, s = 0, j, lam, x;
+  if (T <= T_AMB + 1) return 0;
+  for (j = 0; j < V_LAMBDA.length; j++) {
+    if (!V_LAMBDA[j]) continue;
+    lam = (380 + 20 * j) * 1e-9;
+    x = h * cc / (lam * kb * T);
+    if (x > 700) continue;
+    s += V_LAMBDA[j] * (2 * h * cc * cc / Math.pow(lam, 5)) / (Math.exp(x) - 1) * 20e-9;
+  }
+  return s;
+}
+var FLUX_NOM = fluxVisible(T_NOM);
+function eclatRelatif(T) { return FLUX_NOM > 0 ? fluxVisible(T) / FLUX_NOM : 0; }
+/* L'éclat PERÇU : l'œil est logarithmique, et une lampe à 4 % du flux
+   nominal ne paraît pas quatre fois plus faible mais deux fois. Le dessin
+   relit donc l'éclat à travers la loi de puissance de l'affichage — et le
+   dit dans sa légende. */
+function eclatVu(T) { return Math.pow(borne(eclatRelatif(T), 0, 1.4), 1 / 2.4); }
+
+var CORPS_NOIR = [
+  { T: 800, c: "#ff2200", nom: "rouge sombre, à peine visible" },
+  { T: 1000, c: "#ff3800", nom: "rouge sombre" },
+  { T: 1500, c: "#ff6b00", nom: "rouge orangé" },
+  { T: 2000, c: "#ff8d2b", nom: "orangé" },
+  { T: 2400, c: "#ffab5e", nom: "jaune orangé" },
+  { T: 2600, c: "#ffbb77", nom: "blanc chaud" },
+  { T: 3000, c: "#ffd0a0", nom: "blanc" },
+  { T: 3300, c: "#ffdcb8", nom: "blanc éclatant" }
+];
+function couleurFilament(T) {
+  var i;
+  if (T <= CORPS_NOIR[0].T) return "#8a94a4";        /* froid : gris métal */
+  for (i = 1; i < CORPS_NOIR.length; i++) {
+    if (T <= CORPS_NOIR[i].T) {
+      return melange(CORPS_NOIR[i - 1].c, CORPS_NOIR[i].c,
+        (T - CORPS_NOIR[i - 1].T) / (CORPS_NOIR[i].T - CORPS_NOIR[i - 1].T));
+    }
+  }
+  return CORPS_NOIR[CORPS_NOIR.length - 1].c;
+}
+function nomCouleur(T) {
+  var i, best = CORPS_NOIR[0];
+  if (!allumee(T)) return "éteint";
+  for (i = 0; i < CORPS_NOIR.length; i++) {
+    if (Math.abs(CORPS_NOIR[i].T - T) < Math.abs(best.T - T)) best = CORPS_NOIR[i];
+  }
+  return best.nom;
+}
+/* Le mot que la fiche emploie — « vif », « plus faible », « éteinte ». Il ne
+   se choisit pas : il sort du rapport des flux. */
+function motEclat(T, Tref) {
+  var e;
+  if (!allumee(T)) return "éteinte";
+  e = eclatRelatif(T) / (Tref ? eclatRelatif(Tref) : 1);
+  if (e > 0.8) return "vif";
+  if (e > 0.25) return "un peu plus faible";
+  if (e > 0.02) return "nettement plus faible";
+  return "à peine rougeoyante";
+}
+
+/* ------------------------------------------------------- les instruments */
+/* ⚠ LE NOMBRE DE DÉCIMALES DIT LA PRÉCISION (SKILL §12.21). Chaque valeur
+   affichée passe par son instrument, et l'instrument a une division. */
+var CALIBRES_A = [
+  { nom: "2 A", max: 2, div: 0.02 },
+  { nom: "200 mA", max: 0.2, div: 0.002 },
+  { nom: "20 mA", max: 0.02, div: 0.0002 }
+];
+var CAL_A_PROTO = 1;
+var CALIBRES_V = [
+  { nom: "20 V", max: 20, div: 0.01 },
+  { nom: "2 V", max: 2, div: 0.001 }
+];
+var CAL_V_PROTO = 0;
+function lireCal(x, c) {
+  if (Math.abs(x) > c.max + 1e-12) return null;      /* dépassement */
+  return Math.round(x / c.div) * c.div;
+}
+function decDe(div) {
+  return Math.max(0, Math.ceil(-Math.log(div) / Math.LN10 - 1e-9));
+}
+
+/* ==================================================================
+   LE DESSIN — la boîte à outils d'électricité du lot
+   ==================================================================
+   ⚠ AUCUN dégradé sur le CONTOUR d'un trait (SKILL §10.1, piège n° 6 du
+   lot) : les fils et les pattes de composant sont justement horizontaux, et
+   un dégradé en boîte englobante n'y peindrait RIEN. Couleur pleine partout.
+   Les dégradés ne servent qu'aux SURFACES (`fill`).                        */
+var CU = "#b4530f", CU_CLAIR = "#ef9d55", LAITON = "#c9a227";
+var GAINE = ["#b03030", "#2452a0", "#1b1b1b", "#2f7d3a", "#d9741a", "#6c3d8f"];
+
+function defsCircuit() {
+  var g, f;
+  g = el("linearGradient", { id: "boitier", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fbfcfd" }));
+  g.appendChild(el("stop", { offset: .55, "stop-color": "#e7ecf2" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9d2dc" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "pilecorps", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#2c3a52" }));
+  g.appendChild(el("stop", { offset: .18, "stop-color": "#4d6285" }));
+  g.appendChild(el("stop", { offset: .42, "stop-color": "#8ea3c0" }));
+  g.appendChild(el("stop", { offset: .75, "stop-color": "#455a7c" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#26324a" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "metal", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#f4f7fa" }));
+  g.appendChild(el("stop", { offset: .4, "stop-color": "#aab4c0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#6b7480" }));
+  DEFS.appendChild(g);
+  g = el("radialGradient", { id: "ampoule", cx: .36, cy: .3, r: .8 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#ffffff", "stop-opacity": .92 }));
+  g.appendChild(el("stop", { offset: .55, "stop-color": "#dfeaf3", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#9fb3c6", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+  f = el("filter", { id: "lueur", x: "-90%", y: "-90%", width: "280%", height: "280%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 9 }));
+  DEFS.appendChild(f);
+}
+
+/* ⚠ LA POSITION ABSOLUE D'UNE BORNE, ET LES DEUX FAMILLES D'APPAREILS.
+   Un poste FIXE (pile, douille, interrupteur, moteur) dessine ses bornes en
+   coordonnées de la scène. Un appareil qu'on GLISSE (ampèremètre, voltmètre,
+   diode) les dessine en coordonnées LOCALES, puisque son groupe est translaté.
+   Confondre les deux envoie les fils à des centaines d'unités de leur borne,
+   sans lever la moindre erreur — c'est le §12.30 sous une autre forme. Chaque
+   appareil dit donc lui-même comment lire ses bornes. */
+function absFixe(b) { return { x: b.x, y: b.y }; }
+function absMobile(b) { return { x: this.x + b.x, y: this.y + b.y }; }
+
+/* ⚠ POURQUOI CETTE ENVELOPPE. Un appareil se grossit par un `scale` — mais
+   `placer()` écrit lui aussi dans `transform`, et le second effacerait le
+   premier : l'appareil reprendrait sa taille au premier glissement, sans
+   erreur. On glisse donc une ENVELOPPE au-dessus du groupe dessiné : le
+   `scale` vit à l'intérieur, la translation à l'extérieur, et les deux
+   cohabitent. Les bornes, elles, se relisent à travers la même homothétie —
+   sans quoi les fils partiraient à côté (§12.30). */
+function agrandir(app, k) {
+  var cx = app.x, cy = app.y, g = app.g, p = g.parentNode;
+  var env = el("g", {});
+  if (p) { p.insertBefore(env, g); env.appendChild(g); }
+  g.setAttribute("transform", "translate(" + pt(cx * (1 - k), cy * (1 - k))
+    + ") scale(" + k + ")");
+  app.gDessin = g;
+  app.g = env;
+  app.k = k;
+  var abs0 = app.abs || absFixe;
+  app.abs = function (b) {
+    return abs0.call(app, { x: cx + (b.x - cx) * k, y: cy + (b.y - cy) * k });
+  };
+  return app;
+}
+
+/* Une borne : le point où une pince vient mordre. Elle S'ALLUME quand le fil
+   est accepté — c'est l'exigence « la borne s'allume quand il est accepté »
+   du lot. */
+function borneVis(g, x, y, nom) {
+  var n = g.appendChild(el("g", { "pointer-events": "none" }));
+  n.appendChild(el("circle", { cx: x, cy: y, r: 7.5, fill: LAITON,
+    stroke: "#6d5410", "stroke-width": 1.4 }));
+  n.appendChild(el("circle", { cx: x, cy: y, r: 3.2, fill: "#8a6d14" }));
+  n.appendChild(el("path", { d: "M " + pt(x - 4.6, y - 4.6) + " L " + pt(x + 4.6, y + 4.6),
+    stroke: "#6d5410", "stroke-width": 1.5 }));
+  return { x: x, y: y, nom: nom, noeud: n,
+    allumer: function (on) {
+      n.setAttribute("filter", on ? "url(#lueur)" : "");
+      n.setAttribute("opacity", on ? 1 : 0.96);
+    } };
+}
+
+/* ----------------------------------------------------------- LA PILE PLATE */
+function dessinerPile(x, y, opts) {
+  opts = opts || {};
+  var L = opts.L || 88, HT = opts.H || 56, inv = !!opts.inverse;
+  var g = ajout("poste", el("g", { "data-act": opts.act || "pile" }));
+  g.appendChild(el("rect", { x: x - L / 2, y: y - HT / 2, width: L, height: HT,
+    rx: 5, fill: "url(#pilecorps)", stroke: "#1d2636", "stroke-width": 2 }));
+  g.appendChild(el("rect", { x: x - L / 2 + 6, y: y - HT / 2 + 7, width: L - 12,
+    height: 15, rx: 3, fill: "#f0d98a", opacity: .93 }));
+  var et = g.appendChild(el("text", { x: x, y: y + HT / 2 - 12,
+    "text-anchor": "middle", "font-size": 14, "font-weight": "bold",
+    fill: "#f4f7fa", "pointer-events": "none" },
+    nb(opts.E === undefined ? PHYS_C.E_PLATE.v : opts.E, 1) + " V"));
+  g.appendChild(el("text", { x: x, y: y - HT / 2 + 19, "text-anchor": "middle",
+    "font-size": 10, "font-weight": "bold", fill: "#7a6420",
+    "pointer-events": "none" }, "PILE PLATE"));
+  /* les deux lames : la longue est le +, la courte le − — c'est ainsi qu'on
+     les reconnaît sur une vraie pile plate, et la fiche demande de repérer
+     les deux pôles. */
+  var xp = inv ? x + L / 2 - 20 : x - L / 2 + 20;
+  var xm = inv ? x - L / 2 + 20 : x + L / 2 - 20;
+  var lamePlus = g.appendChild(el("path", { d: "M " + pt(xp, y - HT / 2) + " L "
+    + pt(xp, y - HT / 2 - 46), stroke: "#d8dde4", "stroke-width": 6,
+    fill: "none", "stroke-linecap": "round" }));
+  var lameMoins = g.appendChild(el("path", { d: "M " + pt(xm, y - HT / 2) + " L "
+    + pt(xm, y - HT / 2 - 26), stroke: "#d8dde4", "stroke-width": 6,
+    fill: "none", "stroke-linecap": "round" }));
+  var bp = borneVis(g, xp, y - HT / 2 - 46, "+");
+  var bm = borneVis(g, xm, y - HT / 2 - 26, "−");
+  var tp = g.appendChild(el("text", { x: xp, y: y - HT / 2 - 58,
+    "text-anchor": "middle", "font-size": 15, "font-weight": "bold",
+    fill: "#b03030", "paint-order": "stroke", stroke: "#f4f7fa",
+    "stroke-width": 3.4, "pointer-events": "none" }, "+"));
+  var tm = g.appendChild(el("text", { x: xm, y: y - HT / 2 - 38,
+    "text-anchor": "middle", "font-size": 17, "font-weight": "bold",
+    fill: INK, "paint-order": "stroke", stroke: "#f4f7fa",
+    "stroke-width": 3.4, "pointer-events": "none" }, "−"));
+  ombreAuSol(x, y + HT / 2, L / 2, .26);
+  return { g: g, plus: bp, moins: bm, x: x, y: y, abs: absFixe,
+    /* Retourner la pile ÉCHANGE ses deux pôles — et c'est un geste, pas un
+       drapeau : les deux lames se croisent sous les yeux. */
+    inverser: function (v, ms) {
+      var x0p = bp.x, x0m = bm.x, x1p = v ? x + L / 2 - 20 : x - L / 2 + 20;
+      var x1m = v ? x - L / 2 + 20 : x + L / 2 - 20;
+      anim(ms || 620, function (u) {
+        var a = x0p + (x1p - x0p) * u, b = x0m + (x1m - x0m) * u;
+        lamePlus.setAttribute("d", "M " + pt(a, y - HT / 2) + " L " + pt(a, y - HT / 2 - 46));
+        lameMoins.setAttribute("d", "M " + pt(b, y - HT / 2) + " L " + pt(b, y - HT / 2 - 26));
+        bp.noeud.setAttribute("transform", "translate(" + (a - x0p).toFixed(1) + ",0)");
+        bm.noeud.setAttribute("transform", "translate(" + (b - x0m).toFixed(1) + ",0)");
+        tp.setAttribute("x", a); tm.setAttribute("x", b);
+      });
+      bp.x = x1p; bm.x = x1m;
+    },
+    marquer: function (E) { et.textContent = nb(E, 1) + " V"; } };
+}
+
+/* --------------------------------------------------- LA LAMPE SUR DOUILLE */
+function dessinerLampe(x, y, opts) {
+  opts = opts || {};
+  var g = ajout("poste", el("g", { "data-act": opts.act || "lampe" }));
+  var nom = opts.nom || "";
+  var socle = g.appendChild(el("g", { "pointer-events": "none" }));
+  socle.appendChild(el("rect", { x: x - 34, y: y + 6, width: 68, height: 22,
+    rx: 4, fill: "url(#metal)", stroke: "#5d6874", "stroke-width": 1.6 }));
+  socle.appendChild(el("rect", { x: x - 13, y: y - 14, width: 26, height: 22,
+    rx: 3, fill: "#9aa5b2", stroke: "#5d6874", "stroke-width": 1.4 }));
+  /* le pas de vis de la douille : trois traits, et c'est ce qui la fait
+     reconnaître */
+  [0, 7, 14].forEach(function (dy) {
+    socle.appendChild(el("path", { d: "M " + pt(x - 13, y - 12 + dy) + " L "
+      + pt(x + 13, y - 9 + dy), stroke: "#6b7480", "stroke-width": 1.2 }));
+  });
+  var bg = borneVis(g, x - 28, y + 17, "a"), bd = borneVis(g, x + 28, y + 17, "b");
+  /* L'AMPOULE : une POIRE, jamais un cercle (SKILL §10.3). */
+  var halo = g.appendChild(el("circle", { cx: x, cy: y - 44, r: 10,
+    fill: "#ffd0a0", opacity: 0, filter: "url(#lueur)", "pointer-events": "none" }));
+  var gAmp = g.appendChild(el("g", { "pointer-events": "none" }));
+  var poire = "M " + pt(x - 13, y - 16) + " C " + pt(x - 24, y - 30) + " "
+    + pt(x - 22, y - 62) + " " + pt(x, y - 62) + " C " + pt(x + 22, y - 62) + " "
+    + pt(x + 24, y - 30) + " " + pt(x + 13, y - 16) + " Z";
+  gAmp.appendChild(el("path", { d: poire, fill: "url(#ampoule)",
+    stroke: "#8fa3b6", "stroke-width": 1.8 }));
+  /* le filament : un zigzag, et sa couleur SORT de sa température */
+  var fil = gAmp.appendChild(el("path", { d: filamentD(x, y),
+    stroke: "#8a94a4", "stroke-width": 2, fill: "none",
+    "stroke-linejoin": "round" }));
+  gAmp.appendChild(el("path", { d: "M " + pt(x - 5, y - 20) + " L " + pt(x - 5, y - 34),
+    stroke: "#9aa5b2", "stroke-width": 1.6 }));
+  gAmp.appendChild(el("path", { d: "M " + pt(x + 5, y - 20) + " L " + pt(x + 5, y - 34),
+    stroke: "#9aa5b2", "stroke-width": 1.6 }));
+  gAmp.appendChild(el("ellipse", { cx: x - 7, cy: y - 50, rx: 4, ry: 7,
+    fill: "#ffffff", opacity: .5 }));
+  if (nom) {
+    txt("poste", x, opts.yNom || (y + 44), nom,
+      { taille: 12, gras: true, couleur: INK, halo: true });
+  }
+  ombreAuSol(x, y + 28, 32, .24);
+  var etat = { vissee: true, T: T_AMB };
+  return { g: g, a: bg, b: bd, x: x, y: y, etat: etat, abs: absFixe,
+    /* La lampe RELIT sa température : elle ne recopie pas un verdict. */
+    peindre: function (T) {
+      var e = eclatVu(T), c = couleurFilament(T);
+      etat.T = T;
+      fil.setAttribute("stroke", c);
+      fil.setAttribute("stroke-width", (2 + 2.6 * e).toFixed(2));
+      halo.setAttribute("r", (10 + 46 * e).toFixed(1));
+      halo.setAttribute("fill", c);
+      halo.setAttribute("opacity", (0.80 * e).toFixed(3));
+      gAmp.setAttribute("opacity", etat.vissee ? 1 : 0);
+    },
+    /* Dévisser, c'est RETIRER le dipôle du circuit — la topologie change,
+       et c'est elle qui éteint, pas un drapeau. */
+    visser: function (v, ms) {
+      etat.vissee = v;
+      anim(ms || 560, function (u) {
+        var t = v ? u : 1 - u;
+        gAmp.setAttribute("opacity", t.toFixed(3));
+        gAmp.setAttribute("transform", "rotate(" + ((1 - t) * -120).toFixed(1)
+          + " " + x + " " + (y - 16) + ") translate(0," + ((1 - t) * -26).toFixed(1) + ")");
+        halo.setAttribute("opacity", (parseFloat(halo.getAttribute("opacity") || 0) * t).toFixed(3));
+      });
+    },
+    estVissee: function () { return etat.vissee; } };
+}
+function filamentD(x, y) {
+  var d = "M " + pt(x - 5, y - 34), i;
+  for (i = 0; i < 6; i++) {
+    d += " L " + pt(x - 5 + (i + 0.5) * 10 / 6, y - 44 + (i % 2 ? 0 : -7));
+  }
+  return d + " L " + pt(x + 5, y - 34);
+}
+
+/* ------------------------------------------------------- L'INTERRUPTEUR */
+function dessinerInterrupteur(x, y, opts) {
+  opts = opts || {};
+  var g = ajout("poste", el("g", { "data-act": opts.act || "inter", cursor: "pointer" }));
+  g.appendChild(el("rect", { x: x - 40, y: y - 8, width: 80, height: 30, rx: 4,
+    fill: "url(#boitier)", stroke: "#8994a3", "stroke-width": 1.6 }));
+  var ba = borneVis(g, x - 28, y + 7, "a"), bb = borneVis(g, x + 28, y + 7, "b");
+  var lame = g.appendChild(el("path", { d: "", stroke: "#8d97a5",
+    "stroke-width": 6, fill: "none", "stroke-linecap": "round",
+    "pointer-events": "none" }));
+  g.appendChild(el("circle", { cx: x - 20, cy: y - 4, r: 4, fill: "#5d6874" }));
+  g.appendChild(el("circle", { cx: x + 20, cy: y - 4, r: 4, fill: "#5d6874" }));
+  /* ⚠ L'ÉTIQUETTE EST RENDUE avec l'appareil : un intitulé doit SUIVRE son
+     objet quand l'objet se déplace (SKILL §12.18). Sans cela, l'interrupteur
+     d'E1AC-29 partait se loger entre les pinces en laissant son nom derrière
+     lui, à l'autre bout de la paillasse. */
+  var etiq = txt("poste", x, opts.yNom || (y + 36), opts.nom || "interrupteur",
+    { taille: 11.5, gras: true, couleur: INK, halo: true });
+  function poser(a) {
+    lame.setAttribute("d", "M " + pt(x - 20, y - 4) + " L "
+      + pt(x - 20 + 40 * Math.cos(a), y - 4 - 40 * Math.sin(a)));
+  }
+  var ferme = false;
+  poser(0.62);
+  return { g: g, a: ba, b: bb, x: x, y: y, abs: absFixe, etiq: etiq,
+    estFerme: function () { return ferme; },
+    /* La lame BASCULE — on la voit tomber sur son plot. Sans cela, un
+       circuit fermé et un circuit ouvert ne diffèrent que par une couleur. */
+    basculer: function (v, ms) {
+      var a0 = ferme ? 0 : 0.62, a1 = v ? 0 : 0.62;
+      ferme = v;
+      anim(ms || 420, function (u) { poser(a0 + (a1 - a0) * u); },
+           function () { poser(a1); });
+    } };
+}
+
+/* ------------------------------------------------------------- LE MOTEUR */
+function dessinerMoteur(x, y, opts) {
+  opts = opts || {};
+  var g = ajout("poste", el("g", { "data-act": opts.act || "moteur" }));
+  g.appendChild(el("rect", { x: x - 30, y: y - 26, width: 60, height: 52,
+    rx: 9, fill: "url(#metal)", stroke: "#5d6874", "stroke-width": 1.8 }));
+  g.appendChild(el("circle", { cx: x, cy: y, r: 18, fill: "#cfd6de",
+    stroke: "#8994a3", "stroke-width": 1.4 }));
+  g.appendChild(el("text", { x: x, y: y + 5, "text-anchor": "middle",
+    "font-size": 15, "font-weight": "bold", fill: "#5d6874",
+    "pointer-events": "none" }, "M"));
+  var ba = borneVis(g, x - 22, y + 34, "a"), bb = borneVis(g, x + 22, y + 34, "b");
+  g.appendChild(el("path", { d: "M " + pt(x - 22, y + 26) + " L " + pt(x - 22, y + 34),
+    stroke: "#8d97a5", "stroke-width": 3 }));
+  g.appendChild(el("path", { d: "M " + pt(x + 22, y + 26) + " L " + pt(x + 22, y + 34),
+    stroke: "#8d97a5", "stroke-width": 3 }));
+  /* l'axe et SON REPÈRE DE COULEUR — « 1 petit repère de couleur collé sur
+     l'axe du moteur, pour voir le sens de rotation », dit le matériel */
+  var axe = g.appendChild(el("g", { "pointer-events": "none" }));
+  axe.appendChild(el("circle", { cx: x, cy: y, r: 5, fill: "#48525e" }));
+  axe.appendChild(el("path", { d: "M " + pt(x, y) + " L " + pt(x, y - 15),
+    stroke: "#b03030", "stroke-width": 4, "stroke-linecap": "round" }));
+  axe.appendChild(el("circle", { cx: x, cy: y - 15, r: 4, fill: "#b03030" }));
+  txt("poste", x, opts.yNom || (y + 52), opts.nom || "moteur",
+    { taille: 11.5, gras: true, couleur: INK, halo: true });
+  ombreAuSol(x, y + 26, 30, .24);
+  var angle = 0, jeton = 0;
+  return { g: g, a: ba, b: bb, x: x, y: y, abs: absFixe,
+    /* Le moteur PREND SA VITESSE, il ne tourne pas à plein régime d'emblée —
+       et il ralentit en roue libre quand on coupe. */
+    tourner: function (omega, ms) {
+      var moi = ++jeton, w0 = 0, t0 = Date.now(), duree = ms || 1500;
+      function pas() {
+        if (moi !== jeton || !ANIM_ON) return;
+        var t = (Date.now() - t0) / duree, w;
+        if (t > 1) t = 1;
+        /* montée en vitesse du premier ordre : la vraie */
+        w = omega * (1 - Math.exp(-3.2 * t));
+        angle += w * 0.055;
+        axe.setAttribute("transform", "rotate(" + (angle % 360).toFixed(1)
+          + " " + x + " " + y + ")");
+        if (t < 1 || Math.abs(omega) > 1e-6) tard(pas, 45);
+      }
+      if (Math.abs(omega) < 1e-6) { jeton++; return; }
+      pas();
+    },
+    arreter: function () { jeton++; },
+    angle: function () { return angle; } };
+}
+
+/* -------------------------------------------------------- LA DIODE / LA DEL */
+function dessinerDiode(x, y, opts) {
+  opts = opts || {};
+  var g = ajout("objets", el("g", { "data-act": opts.act || "diode", cursor: "grab" }));
+  prehension(g, -34, -20, 68, 40);
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  var est = opts.del;
+  d.appendChild(el("path", { d: "M -30,0 L -14,0", stroke: CU,
+    "stroke-width": 3.4, "stroke-linecap": "round" }));
+  d.appendChild(el("path", { d: "M 14,0 L 30,0", stroke: CU,
+    "stroke-width": 3.4, "stroke-linecap": "round" }));
+  if (est) {
+    d.appendChild(el("path", { d: "M -13,-12 L 4,-12 A 12,12 0 0 1 4,12 L -13,12 Z",
+      fill: "#e03a3a", stroke: "#8d1f1f", "stroke-width": 1.6 }));
+    d.appendChild(el("path", { d: "M -13,-12 L -13,12", stroke: "#f4f7fa",
+      "stroke-width": 3 }));
+    [0, 1].forEach(function (k) {
+      d.appendChild(el("path", { d: "M " + pt(6 + k * 7, -16 - k * 4) + " L "
+        + pt(13 + k * 7, -23 - k * 4), stroke: "#e0a020", "stroke-width": 2,
+        "stroke-linecap": "round" }));
+    });
+  } else {
+    d.appendChild(el("rect", { x: -13, y: -11, width: 26, height: 22, rx: 3,
+      fill: "#2a2f38", stroke: "#12161c", "stroke-width": 1.4 }));
+    d.appendChild(el("rect", { x: 7, y: -11, width: 6, height: 22,
+      fill: "#e6e9ee" }));
+  }
+  var sens = 1;
+  var ba = borneVis(g, -30, 0, "a"), bb = borneVis(g, 30, 0, "b");
+  txt("poste", x, opts.yNom || (y + 34), opts.nom || (est ? "DEL" : "diode"),
+    { taille: 11.5, gras: true, couleur: INK, halo: true });
+  var o = { id: opts.act || "diode", g: g, x: x, y: y, base: { x: x, y: y },
+    type: opts.del ? "del" : "diode", fige: false, dessin: d, a: ba, b: bb,
+    abs: absMobile };
+  placer(o, x, y);
+  o.sens = function () { return sens; };
+  /* LE RETOURNEMENT EST UN GESTE : le composant pivote sous les yeux, et
+     c'est ce demi-tour, pas une case à cocher, qui change le circuit. */
+  o.retourner = function (ms) {
+    var a0 = sens > 0 ? 0 : 180;
+    sens = -sens;
+    anim(ms || 640, function (u) {
+      d.setAttribute("transform", "rotate(" + (a0 + 180 * u).toFixed(1) + " 0 0)");
+    });
+  };
+  o.orienter = function (s) {
+    sens = s;
+    d.setAttribute("transform", "rotate(" + (s > 0 ? 0 : 180) + " 0 0)");
+  };
+  return o;
+}
+
+/* --------------------------------------------------- L'AMPÈREMÈTRE À CADRAN */
+/* La fiche demande de « lire sur un appareil numérique ET sur un appareil à
+   aiguille ». Les deux sont là — et c'est le CADRAN qui fait foi ici, parce
+   que les valeurs de la fiche, 190 et 110 mA, sont des multiples exacts de
+   la division du calibre 200 mA sur cent divisions. */
+function dessinerAmperemetre(x, y, opts) {
+  opts = opts || {};
+  var R = 54;
+  var g = ajout("objets", el("g", { "data-act": opts.act || "amp", cursor: "grab" }));
+  prehension(g, -68, -66, 136, 132);
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -64, y: -62, width: 128, height: 124, rx: 9,
+    fill: "url(#boitier)", stroke: "#8994a3", "stroke-width": 2 }));
+  d.appendChild(el("circle", { cx: 0, cy: -14, r: R, fill: "#fdfefe",
+    stroke: "#7c848f", "stroke-width": 1.4 }));
+  var i, a;
+  for (i = 0; i <= 10; i++) {
+    a = (-200 + i * 220 / 10) * Math.PI / 180;
+    d.appendChild(el("line", { x1: (R - 3) * Math.cos(a), y1: -14 + (R - 3) * Math.sin(a),
+      x2: (R - 3 - (i % 2 ? 6 : 11)) * Math.cos(a),
+      y2: -14 + (R - 3 - (i % 2 ? 6 : 11)) * Math.sin(a),
+      stroke: "#5d6874", "stroke-width": i % 2 ? 0.8 : 1.5 }));
+    if (i % 2 === 0) {
+      d.appendChild(el("text", { x: (R - 22) * Math.cos(a),
+        y: -14 + (R - 22) * Math.sin(a) + 3.2, "text-anchor": "middle",
+        "font-size": 8.5, fill: "#5d6874" }, String(i * 10)));
+    }
+  }
+  d.appendChild(el("text", { x: 0, y: 14, "text-anchor": "middle",
+    "font-size": 11, "font-weight": "bold", fill: "#5d6874" }, "A"));
+  var aig = d.appendChild(el("g", {}));
+  aig.appendChild(el("path", { d: "M 0,-14 L -3,-18 L " + (-R + 10) + ",-14 L -3,-10 Z",
+    fill: "#b03030" }));
+  d.appendChild(el("circle", { cx: 0, cy: -14, r: 4.5, fill: "#48525e" }));
+  /* le second afficheur, NUMÉRIQUE : la fiche demande de savoir lire les
+     deux. C'est le CADRAN qui fait foi ici — les valeurs de la fiche, 190 et
+     110 mA, sont des multiples exacts de sa division. */
+  d.appendChild(el("rect", { x: -46, y: 26, width: 92, height: 20, rx: 3,
+    fill: "#c8d6c0", opacity: .55 }));
+  var num = d.appendChild(el("text", { x: 0, y: 40, "text-anchor": "middle",
+    "font-size": 14, "font-weight": "bold", fill: "#1b1b1b",
+    "font-family": "ui-monospace,Consolas,monospace" }, "———"));
+  var etiq = d.appendChild(el("text", { x: 0, y: 56, "text-anchor": "middle",
+    "font-size": 9.5, fill: "#6b7686" }, ""));
+  var ba = borneVis(g, -34, 62, "+"), bb = borneVis(g, 34, 62, "COM");
+  d.appendChild(el("text", { x: -34, y: 78, "text-anchor": "middle",
+    "font-size": 11, "font-weight": "bold", fill: "#b03030" }, "+"));
+  d.appendChild(el("text", { x: 34, y: 78, "text-anchor": "middle",
+    "font-size": 9, "font-weight": "bold", fill: INK }, "COM"));
+  var o = { id: opts.act || "amp", g: g, x: x, y: y, base: { x: x, y: y },
+    type: "amp", fige: false, a: ba, b: bb , abs: absMobile };
+  placer(o, x, y);
+  var vue = 0, jeton = 0;
+  /* L'AIGUILLE BALAIE jusqu'à sa valeur, AVEC UN LÉGER DÉPASSEMENT — c'est
+     ce que fait un cadre mobile, et c'est demandé par le lot.
+     ⚠ L'ORIGINE DE LA ROTATION. Le dard est dessiné vers la GAUCHE (sa pointe
+     est en x = −R+10), donc il part de 180° : la rotation qui l'amène sur la
+     graduation a(s) = −200 + 220 s vaut a(s) − 180 = −380 + 220 s. Écrite
+     −200 + 220 s, elle mettait l'aiguille à 180° de sa place — 130 mA sur le
+     calibre 200 mA pointait EN DESSOUS du zéro au lieu de tomber entre 60 et
+     80. Aucun test ne le voyait : l'aiguille bougeait, la valeur affichée
+     était juste, et seule la capture l'a montré (SKILL §13.7.5). */
+  o.afficher = function (I, cal, ms) {
+    var cible = borne(Math.abs(I) / cal.max, 0, 1.08), moi = ++jeton, dep = vue;
+    var lu = lireCal(Math.abs(I), cal);
+    anim(ms || 620, function (u) {
+      if (moi !== jeton) return;
+      var s = dep + (cible - dep) * u;
+      s += (cible - dep) * 0.11 * Math.sin(Math.PI * u) * (u < 1 ? 1 : 0);
+      aig.setAttribute("transform", "rotate(" + (-380 + 220 * borne(s, 0, 1.1)).toFixed(2)
+        + " 0 -14)");
+    }, function () {
+      if (moi !== jeton) return;
+      vue = cible;
+      aig.setAttribute("transform", "rotate(" + (-380 + 220 * borne(cible, 0, 1.1)).toFixed(2) + " 0 -14)");
+    });
+    num.textContent = lu === null ? "OL"
+      : nb(lu * 1000, decDe(cal.div * 1000)) + " mA";
+    etiq.textContent = "calibre " + cal.nom;
+  };
+  o.eteindre = function () { jeton++; vue = 0; num.textContent = "———"; };
+  return o;
+}
+
+/* ------------------------------------------------- LE VOLTMÈTRE NUMÉRIQUE */
+function dessinerVoltmetre(x, y, opts) {
+  opts = opts || {};
+  var g = ajout("objets", el("g", { "data-act": opts.act || "volt", cursor: "grab" }));
+  prehension(g, -60, -56, 120, 118);
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -56, y: -52, width: 112, height: 106, rx: 9,
+    fill: "url(#boitier)", stroke: "#8994a3", "stroke-width": 2 }));
+  d.appendChild(el("rect", { x: -44, y: -40, width: 88, height: 36, rx: 4,
+    fill: "#3d4a3a" }));
+  var aff = d.appendChild(el("text", { x: 0, y: -14, "text-anchor": "middle",
+    "font-size": 22, "font-weight": "bold", fill: "#9ff09f",
+    "font-family": "ui-monospace,Consolas,monospace" }, "—.——"));
+  var etiq = d.appendChild(el("text", { x: 0, y: 10, "text-anchor": "middle",
+    "font-size": 9.5, fill: "#6b7686" }, ""));
+  d.appendChild(el("text", { x: 0, y: 26, "text-anchor": "middle",
+    "font-size": 11, "font-weight": "bold", fill: "#5d6874" }, "V"));
+  var ba = borneVis(g, -30, 54, "+"), bb = borneVis(g, 30, 54, "COM");
+  d.appendChild(el("text", { x: -30, y: 70, "text-anchor": "middle",
+    "font-size": 11, "font-weight": "bold", fill: "#b03030" }, "+"));
+  d.appendChild(el("text", { x: 30, y: 70, "text-anchor": "middle",
+    "font-size": 9, "font-weight": "bold", fill: INK }, "COM"));
+  var o = { id: opts.act || "volt", g: g, x: x, y: y, base: { x: x, y: y },
+    type: "volt", fige: false, a: ba, b: bb , abs: absMobile };
+  placer(o, x, y);
+  var jeton = 0;
+  /* UN AFFICHEUR NUMÉRIQUE SE STABILISE : les derniers chiffres dansent
+     avant de se poser. C'est ce que fait un multimètre, et le lot le demande. */
+  o.afficher = function (U, cal, ms) {
+    var moi = ++jeton, lu = lireCal(U, cal), dec = decDe(cal.div);
+    if (lu === null) { aff.textContent = "OL"; etiq.textContent = "dépassement"; return; }
+    anim(ms || 540, function (u) {
+      if (moi !== jeton) return;
+      var bruit = (1 - u) * cal.div * 6 * (Math.random() - 0.5);
+      aff.textContent = nb(lu * u + bruit, dec);
+    }, function () {
+      if (moi !== jeton) return;
+      aff.textContent = nb(lu, dec);
+    });
+    etiq.textContent = "calibre " + cal.nom;
+  };
+  o.eteindre = function () { jeton++; aff.textContent = "—.——"; etiq.textContent = ""; };
+  return o;
+}
+
+/* ============================================================== LES FILS ==
+   Un fil de connexion à pinces crocodiles. Il PARCOURT le chemin jusqu'à sa
+   borne quand on le branche, et le courant s'y ÉTABLIT d'une extrémité à
+   l'autre quand on ferme — puis REFLUE quand on ouvre.
+
+   ⚠ COULEUR PLEINE, jamais de dégradé sur le contour (SKILL §10.1) : ces
+   traits sont justement horizontaux, et c'est le piège n° 1 du lot.        */
+function cheminFil(p0, p1, creux) {
+  var mx = (p0.x + p1.x) / 2, my = Math.max(p0.y, p1.y) + (creux === undefined ? 34 : creux);
+  return "M " + pt(p0.x, p0.y) + " C " + pt(p0.x, my) + " " + pt(mx, my) + " "
+       + pt(mx, my) + " C " + pt(mx, my) + " " + pt(p1.x, my) + " " + pt(p1.x, p1.y);
+}
+function dessinerFil(p0, p1, opts) {
+  opts = opts || {};
+  var teinte = GAINE[(opts.teinte === undefined ? 0 : opts.teinte) % GAINE.length];
+  var g = ajout("fils", el("g", { "pointer-events": "none" }));
+  var d = cheminFil(p0, p1, opts.creux);
+  var gaine = g.appendChild(el("path", { d: d, stroke: teinte, "stroke-width": 5.4,
+    fill: "none", "stroke-linecap": "round" }));
+  g.appendChild(el("path", { d: d, stroke: "#ffffff", "stroke-width": 1.4,
+    fill: "none", opacity: .18, "stroke-linecap": "round" }));
+  /* le courant : un liseré clair qui COURT le long du fil */
+  var flux = g.appendChild(el("path", { d: d, stroke: "#ffe9a8",
+    "stroke-width": 3, fill: "none", opacity: 0, "stroke-linecap": "round" }));
+  var L = 1;
+  try { L = gaine.getTotalLength() || 1; } catch (e) { L = 400; }
+  pinceCroco(g, p0, teinte);
+  pinceCroco(g, p1, teinte);
+  return { g: g, L: L,
+    /* frac de 0 à 1 : jusqu'où le courant est monté. sens = +1 ou −1. */
+    courant: function (frac, sens, eclat) {
+      if (frac <= 0.001) { flux.setAttribute("opacity", 0); return; }
+      flux.setAttribute("opacity", (0.30 + 0.62 * (eclat === undefined ? 1 : eclat)).toFixed(3));
+      flux.setAttribute("stroke-dasharray", (L * frac).toFixed(1) + " " + L.toFixed(1));
+      flux.setAttribute("stroke-dashoffset",
+        (sens < 0 ? -(L * (1 - frac)) : 0).toFixed(1));
+    },
+    retirer: function () { if (g.parentNode) g.parentNode.removeChild(g); } };
+}
+/* La pince crocodile : capuchon isolant coloré + DEUX MÂCHOIRES DENTÉES.
+   Sans les dents, on lit deux triangles (SKILL §10.3). */
+function pinceCroco(g, p, teinte) {
+  var n = g.appendChild(el("g", { transform: "translate(" + pt(p.x, p.y) + ")" }));
+  n.appendChild(el("path", { d: "M -9,-3 L 9,-3 L 7,9 L -7,9 Z", fill: teinte,
+    stroke: "#00000055", "stroke-width": 1 }));
+  n.appendChild(el("path", { d: "M -7,-3 L -7,-11 L 7,-11 L 7,-3",
+    fill: "none", stroke: "#9aa5b2", "stroke-width": 2.4 }));
+  var i;
+  for (i = 0; i < 3; i++) {
+    n.appendChild(el("path", { d: "M " + pt(-6 + i * 4.5, -11) + " L "
+      + pt(-4 + i * 4.5, -7), stroke: "#7c848f", "stroke-width": 1.4 }));
+  }
+  return n;
+}
+
+/* ==================================================================
+   LE COURANT QUI S'ÉTABLIT — l'animation partagée du lot
+   ==================================================================
+   « Quelque chose parcourt le fil d'une borne à l'autre quand on ferme, et
+   reflue quand on ouvre. Sans cela, un circuit fermé et un circuit ouvert ne
+   diffèrent que par une couleur. »
+
+   ⚠ L'ANIMATION NE DÉCIDE DE RIEN : le circuit est RÉSOLU avant qu'elle ne
+   commence, elle ne fait que rejoindre l'état que le solveur a calculé
+   (SKILL §1.2 bis, règle 2).                                                */
+function etablirCourant(fils, monte, eclat, ms, fini) {
+  anim(ms || 620, function (u) {
+    var f = monte ? u : 1 - u, i;
+    for (i = 0; i < fils.length; i++) {
+      if (fils[i]) fils[i].courant(f, monte ? 1 : -1, eclat);
+    }
+  }, function () {
+    var i;
+    for (i = 0; i < fils.length; i++) {
+      if (fils[i]) fils[i].courant(monte ? 1 : 0, 1, eclat);
+    }
+    if (fini) fini();
+  });
+}
+
+/* ==================================================================
+   1 ter. LE BANC DE MONTAGE — bornes, fils, connexité
+   ==================================================================
+   Sept des huit paillasses du lot montent un circuit en reliant des BORNES
+   par des FILS. Ce fichier porte ce vocabulaire une fois pour toutes.
+
+   ⚠️ CE QUI EST EN JEU. « La lampe s'allume parce que le circuit est fermé,
+   et le circuit est fermé parce que le montage l'est : c'est la topologie qui
+   décide, pas un drapeau. » Il n'y a donc ici aucune fonction qui déclare un
+   circuit fermé. Il y a des fils qui joignent des bornes, un graphe qui en
+   découle, et un solveur qui le résout. Ouvrir n'importe où éteint, et il n'y
+   a rien à écrire pour cela.                                                */
+
+/* Le registre des objets manipulables. Il vit ICI plutôt que dans chaque
+   page : `unFil()` y inscrit ses fils, et une page qui le redéclarerait
+   effacerait ce que le banc vient d'y poser. */
+var OBJ = {}, LISTE = [];
+function neufObjet(id, couche, x, y, type) {
+  var g = ajout(couche || "objets", el("g", { cursor: "grab", "data-act": id }));
+  var o = { id: id, g: g, x: x, y: y, base: { x: x, y: y }, fige: false,
+            type: type || id };
+  OBJ[id] = o; LISTE.push(o);
+  placer(o, x, y);
+  return o;
+}
+function inscrire(o) {
+  OBJ[o.id] = o;
+  if (LISTE.indexOf(o) < 0) LISTE.push(o);
+  return o;
+}
+
+var BORNES = {};                 /* id -> { app, b } */
+var ORDRE_BORNES = [];
+
+function declarerBorne(id, app, b) {
+  BORNES[id] = { app: app, b: b };
+  if (ORDRE_BORNES.indexOf(id) < 0) ORDRE_BORNES.push(id);
+  return id;
+}
+/* ⚠ La position d'une borne se DEMANDE à son appareil (§12.30) : un poste
+   fixe la donne en coordonnées de scène, un appareil qu'on glisse en
+   coordonnées locales. */
+function posBorne(id) {
+  var e = BORNES[id];
+  if (!e) return { x: 0, y: 0 };
+  return e.app.abs(e.b);
+}
+function nomBorne(id) {
+  var e = BORNES[id];
+  return e ? (e.libelle || e.b.nom || id) : id;
+}
+function etiqueterBorne(id, libelle) { if (BORNES[id]) BORNES[id].libelle = libelle; }
+
+/* ---------------------------------------------------------------- LES FILS */
+/* Un fil a DEUX extrémités, et on les branche l'une après l'autre — comme au
+   laboratoire. Tant qu'une seule est pincée, le fil PEND, et son autre bout
+   reste saisissable. C'est ce qui fait de « relier deux bornes » un geste en
+   deux temps, et non une case à cocher. */
+var FILS = [], gLiens = null;
+
+function creerFils(n, opts) {
+  opts = opts || {};
+  var x0 = opts.x, y0 = opts.y, dy = opts.dy || 44, i, o;
+  gLiens = ajout("fils", el("g", { "pointer-events": "none" }));
+  for (i = 0; i < n; i++) {
+    o = unFil(i, x0, y0 + i * dy, opts.teinte === undefined ? i : opts.teinte);
+    FILS.push(o);
+  }
+  if (opts.titre) {
+    txt("poste", x0, y0 - 34, opts.titre, { taille: 11, couleur: "#8794a5",
+      halo: true });
+  }
+  return FILS;
+}
+function unFil(i, x, y, teinte) {
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "fil" + i }));
+  prehension(g, -46, -16, 92, 32);
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  var c = GAINE[teinte % GAINE.length];
+  d.appendChild(el("path", { d: "M -34,6 C -18,-14 18,-14 34,6", stroke: c,
+    "stroke-width": 5.4, fill: "none", "stroke-linecap": "round" }));
+  pinceCroco(d, { x: -34, y: 6 }, c);
+  pinceCroco(d, { x: 34, y: 6 }, c);
+  var o = { id: "fil" + i, g: g, x: x, y: y, base: { x: x, y: y }, type: "fil",
+            fige: false, i: i, teinte: teinte, couleur: c, a: null, b: null,
+            dessin: d, trace: null };
+  placer(o, x, y);
+  OBJ[o.id] = o; LISTE.push(o);
+  return o;
+}
+function filLibre(o) { return !o.a && !o.b; }
+function filPendant(o) { return (!!o.a) !== (!!o.b); }
+function filPose(o) { return !!o.a && !!o.b; }
+function boutLibre(o) { return o.a ? "b" : "a"; }
+
+/* Les liens du montage, tels que le solveur les reçoit. */
+function liensPoses() {
+  var out = [], i;
+  for (i = 0; i < FILS.length; i++) {
+    if (filPose(FILS[i])) out.push({ a: FILS[i].a, b: FILS[i].b, fil: FILS[i] });
+  }
+  return out;
+}
+function bornesOccupees() {
+  var c = {}, i, f;
+  for (i = 0; i < FILS.length; i++) {
+    f = FILS[i];
+    if (f.a) c[f.a] = (c[f.a] || 0) + 1;
+    if (f.b) c[f.b] = (c[f.b] || 0) + 1;
+  }
+  return c;
+}
+/* Une borne accepte DEUX pinces — c'est ce qui rend le montage en dérivation
+   possible, et la fiche de L18 en a besoin. Au-delà, on refuse en le disant. */
+var MAX_PINCES = 2;
+
+/* Le fil qui relie deux bornes données, s'il existe. */
+function filEntre(a, b) {
+  var i, f;
+  for (i = 0; i < FILS.length; i++) {
+    f = FILS[i];
+    if ((f.a === a && f.b === b) || (f.a === b && f.b === a)) return f;
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------- LE DESSIN */
+/* Le fil PARCOURT le chemin jusqu'à sa borne, et la borne S'ALLUME quand il
+   est accepté. Redessiner un lien pose son tracé dans la couche `fils`, donc
+   DERRIÈRE les appareils — sans quoi le montage se lit comme un plat de
+   spaghettis posé sur les appareils (SKILL §8). */
+/* ⚠ POURQUOI UNE POSITION D'ANIMATION SÉPARÉE. Échanger deux fils sur un
+   dipôle doit se VOIR : les deux pinces se lèvent, se croisent et se
+   reposent. Mais l'état, lui, est posé AVANT (SKILL §6.2, §1.2 bis règle 2) —
+   le solveur a déjà tranché quand l'animation commence. On garde donc, le
+   temps du geste, une position d'affichage distincte de la borne réelle. */
+var POS_ANIM = {};
+function posBout(f, bout) {
+  var k = f.id + ":" + bout;
+  if (POS_ANIM[k]) return POS_ANIM[k];
+  if (f[bout]) return posBorne(f[bout]);
+  return { x: f.x + (bout === "a" ? -34 : 34), y: f.y + 6 };
+}
+/* Échanger les deux fils branchés sur un dipôle — le geste central de L17.
+   L'ÉTAT d'abord, l'image ensuite. */
+function echangerSurDipole(idA, idB, ms, fini) {
+  var bouts = [], i, f;
+  for (i = 0; i < FILS.length; i++) {
+    f = FILS[i];
+    if (f.a === idA || f.a === idB) {
+      bouts.push({ f: f, k: "a", de: posBorne(f.a), vers: f.a === idA ? idB : idA });
+    }
+    if (f.b === idA || f.b === idB) {
+      bouts.push({ f: f, k: "b", de: posBorne(f.b), vers: f.b === idA ? idB : idA });
+    }
+  }
+  if (!bouts.length) { if (fini) fini(); return 0; }
+  bouts.forEach(function (e) { e.f[e.k] = e.vers; });      /* l'état, d'abord */
+  anim(ms || 660, function (u) {
+    bouts.forEach(function (e) {
+      var p1 = posBorne(e.f[e.k]);
+      POS_ANIM[e.f.id + ":" + e.k] = {
+        x: e.de.x + (p1.x - e.de.x) * u,
+        y: e.de.y + (p1.y - e.de.y) * u - 30 * Math.sin(Math.PI * u)
+      };
+    });
+    redessinerLiens();
+  }, function () {
+    POS_ANIM = {};
+    redessinerLiens();
+    if (fini) fini();
+  });
+  return (ms || 660) + 60;
+}
+
+function redessinerLiens() {
+  var i, f, p0, p1;
+  vide(gLiens);
+  for (i = 0; i < FILS.length; i++) {
+    f = FILS[i];
+    f.trace = null;
+    if (filLibre(f)) { f.g.setAttribute("opacity", 1); continue; }
+    p0 = posBout(f, "a");
+    p1 = posBout(f, "b");
+    f.trace = traceLien(p0, p1, f.couleur, filPose(f) ? 22 : 40);
+    /* posé des deux bouts, la poignée du rack s'efface : le fil EST le tracé */
+    f.g.setAttribute("opacity", filPose(f) ? 0 : 1);
+  }
+  majAllumageBornes();
+}
+function traceLien(p0, p1, teinte, creux) {
+  var d = cheminFil(p0, p1, creux);
+  var gaine = gLiens.appendChild(el("path", { d: d, stroke: teinte,
+    "stroke-width": 5.4, fill: "none", "stroke-linecap": "round" }));
+  gLiens.appendChild(el("path", { d: d, stroke: "#ffffff", "stroke-width": 1.4,
+    fill: "none", opacity: .18, "stroke-linecap": "round" }));
+  var flux = gLiens.appendChild(el("path", { d: d, stroke: "#ffe9a8",
+    "stroke-width": 3, fill: "none", opacity: 0, "stroke-linecap": "round" }));
+  pinceCroco(gLiens, p0, teinte);
+  pinceCroco(gLiens, p1, teinte);
+  var L = 400;
+  try { L = gaine.getTotalLength() || 400; } catch (e) { L = 400; }
+  return { L: L,
+    /* Le point du tracé à la fraction f — c'est lui qui permet de SUIVRE DU
+       DOIGT le chemin du courant, comme le protocole de L18 le demande. */
+    point: function (f) {
+      try { return gaine.getPointAtLength(L * borne(f, 0, 1)); }
+      catch (e) { return { x: p0.x + (p1.x - p0.x) * f, y: p0.y + (p1.y - p0.y) * f }; }
+    },
+    courant: function (frac, sens, eclat) {
+      if (!(frac > 0.001)) { flux.setAttribute("opacity", 0); return; }
+      flux.setAttribute("opacity", (0.34 + 0.58 * (eclat === undefined ? 1 : eclat)).toFixed(3));
+      flux.setAttribute("stroke-dasharray", (L * frac).toFixed(1) + " " + L.toFixed(1));
+      flux.setAttribute("stroke-dashoffset", (sens < 0 ? -(L * (1 - frac)) : 0).toFixed(1));
+    } };
+}
+function majAllumageBornes() {
+  var occ = bornesOccupees(), id;
+  for (id in BORNES) {
+    if (BORNES[id].b && BORNES[id].b.allumer) BORNES[id].b.allumer(!!occ[id]);
+  }
+}
+/* Le courant qui s'établit, sur TOUS les liens posés à la fois. */
+function tracesPosees() {
+  var out = [], i;
+  for (i = 0; i < FILS.length; i++) if (FILS[i].trace) out.push(FILS[i].trace);
+  return out;
+}
+function etablirSurLesLiens(monte, eclat, ms, fini) {
+  etablirCourant(tracesPosees(), monte, eclat, ms, fini);
+}
+
+/* ------------------------------------------------------- LES ZONES DE DÉPÔT */
+/* ⚠ `emplacements()` rend les zones de la plus PETITE à la plus GRANDE
+   (§12.16). Ici elles sont toutes de même taille : l'ordre sert seulement à
+   ce que le bouton et la flèche visent celle que le PROTOCOLE demande —
+   `deposer` accepte n'importe quelle borne libre, et c'est bien le but : la
+   topologie doit rester celle que l'élève monte, pas celle qu'on lui souffle. */
+function zoneBorne(id) {
+  var p = posBorne(id);
+  return { type: "borne", id: id, x: p.x, y: p.y, hw: 16, hh: 16, r: 30 };
+}
+function zoneRang(o) {
+  return { type: "rang", x: o.base.x, y: o.base.y, hw: 50, hh: 22, r: 46 };
+}
+/* La liste des bornes ouvertes à ce fil, la voulue en tête. */
+function zonesBornes(o, voulue) {
+  var occ = bornesOccupees(), out = [], i, id, prises = [o.a, o.b];
+  function ajoutable(k) {
+    return prises.indexOf(k) < 0 && (occ[k] || 0) < MAX_PINCES;
+  }
+  if (voulue && ajoutable(voulue)) out.push(zoneBorne(voulue));
+  for (i = 0; i < ORDRE_BORNES.length; i++) {
+    id = ORDRE_BORNES[i];
+    if (id === voulue || !ajoutable(id)) continue;
+    if (BORNES[id].cachee) continue;
+    out.push(zoneBorne(id));
+  }
+  return out;
+}
+
+/* ==================================================================
+   LA CONNEXITÉ — « le circuit est fermé » se CALCULE
+   ==================================================================
+   Un circuit est fermé s'il existe, dans le graphe des dipôles CONDUCTEURS,
+   un chemin d'une borne du récepteur à l'autre qui ne passe pas par le
+   récepteur lui-même. Rien n'est déclaré : on parcourt.                     */
+function grapheConducteur(aretes) {
+  var m = new Montage(), i;
+  for (i = 0; i < aretes.length; i++) {
+    if (aretes[i].conduit) m.unir(aretes[i].a, aretes[i].b);
+  }
+  return m;
+}
+/* Les arêtes du montage : les fils posés, plus ce que la page y ajoute. */
+function aretesDuMontage(extras) {
+  var out = [], l = liensPoses(), i;
+  for (i = 0; i < l.length; i++) out.push({ a: l[i].a, b: l[i].b, conduit: true });
+  for (i = 0; i < (extras || []).length; i++) out.push(extras[i]);
+  return out;
+}
+/* Boucle fermée AUTOUR du dipôle (a, b) : on retire ce dipôle et l'on
+   demande si ses deux bornes communiquent encore. */
+function boucleAutour(aretes, a, b) {
+  var m = grapheConducteur(aretes);
+  return m.noeud(a) === m.noeud(b);
+}
+
+/* ==================================================================
+   COMBIEN DE BOUCLES ? — le nombre cyclomatique, et rien d'autre
+   ==================================================================
+   « Suivre du doigt les chemins possibles du courant : combien y en a-t-il ? »
+   La question de L18 se répond par un THÉORÈME, pas par un compteur écrit à
+   la main : dans un graphe, le nombre de cycles indépendants vaut
+
+        boucles = arêtes − sommets + composantes connexes
+
+   Une seule boucle en série, deux en dérivation. La page ne l'affirme donc
+   jamais : elle le compte sur le montage que l'élève a fait, et le nombre
+   change tout seul quand il ajoute un fil.                                  */
+function nombreDeBoucles(aretes) {
+  var m = new Montage(), sommets = {}, racines = {}, n = 0, e = 0, c = 0, i, k;
+  for (i = 0; i < aretes.length; i++) {
+    if (aretes[i].conduit === false) continue;
+    sommets[aretes[i].a] = 1; sommets[aretes[i].b] = 1;
+    m.unir(aretes[i].a, aretes[i].b);
+    e++;
+  }
+  for (k in sommets) { n++; racines[m.racine(k)] = 1; }
+  for (k in racines) c++;
+  return Math.max(0, e - n + c);
+}
+/* Le mot de la fiche — « une seule », « deux », « deux, dont une coupée ».
+   Il se COMPOSE de deux comptes : celui du montage tel qu'il est câblé, et
+   celui du montage où tout conduirait. */
+function motBoucles(aretesConductrices, aretesToutes) {
+  var vif = nombreDeBoucles(aretesConductrices);
+  var pose = nombreDeBoucles(aretesToutes);
+  var mots = ["aucune", "une seule", "deux", "trois", "quatre"];
+  function mot(k) { return mots[k] === undefined ? String(k) : mots[k]; }
+  if (pose === vif) return mot(pose);
+  /* ⚠ LE CAS LIMITE. Tout coupé, la phrase « une seule, dont une coupée » ne
+     veut rien dire. Une phrase à trou se relit AUX VALEURS QUE LE PROTOCOLE
+     PRODUIT, et non à celle qu'on avait en tête (SKILL §12.33). */
+  if (vif === 0) return mot(pose) + (pose > 1 ? ", toutes coupées" : ", coupée");
+  return mot(pose) + ", dont " + (pose - vif === 1 ? "une coupée"
+                                                   : (pose - vif) + " coupées");
+}
+/* ==================================================================
+   COMBIEN DE CHEMINS LE COURANT A-T-IL ? On les COMPTE.
+   ==================================================================
+   « Suivre du doigt les chemins possibles du courant depuis la pile :
+   combien y en a-t-il ? » — le protocole de L18 pose la question, et la
+   colonne « Nombre de boucles » du tableau attend un nombre. Il ne
+   s'annonce pas : c'est le nombre cyclomatique du graphe conducteur,
+
+       cycles = arêtes − sommets + composantes connexes
+
+   la formule d'Euler. Un montage en série en donne 1, une dérivation 2, et
+   personne n'a eu à l'écrire. */
+function cyclomatique(aretes) {
+  var m = grapheConducteur(aretes), vus = {}, comp = {}, e = 0, n = 0, c = 0, i, k;
+  for (i = 0; i < aretes.length; i++) {
+    if (!aretes[i].conduit) continue;
+    e++;
+    vus[aretes[i].a] = 1;
+    vus[aretes[i].b] = 1;
+  }
+  for (k in vus) { n++; comp[m.noeud(k)] = 1; }
+  for (k in comp) c++;
+  return e - n + c;
+}
+/* Le nombre de BRANCHES entre deux nœuds : combien de dipôles les relient
+   directement, et combien d'entre eux conduisent. C'est ce que la fiche de
+   dérivation appelle « deux, dont une coupée ». */
+function branchesEntre(dipoles, a, b, m) {
+  var t = 0, ouvertes = 0, i, d;
+  for (i = 0; i < dipoles.length; i++) {
+    d = dipoles[i];
+    if ((m.noeud(d.a) === m.noeud(a) && m.noeud(d.b) === m.noeud(b))
+     || (m.noeud(d.a) === m.noeud(b) && m.noeud(d.b) === m.noeud(a))) {
+      t++;
+      if (!d.conduit) ouvertes++;
+    }
+  }
+  return { total: t, coupees: ouvertes };
+}
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ================================================================== */
+var PHYS = {};
+(function () { var k; for (k in PHYS_C) PHYS[k] = PHYS_C[k]; })();
+PHYS.I_SEUIL = { v: 1e-6, u: "A", d: 0, n: "seuil de « le courant circule »",
+  s: "un microampère ; en dessous, c'est un courant de fuite" };
+/* ⚠ UN SEUIL VAUT CE QUE L'INSTRUMENT SAIT VOIR (SKILL §12.24), et
+   l'instrument est ici L'ŒIL. Réglé à 1 %, il déclarait « à peine moins que
+   seule » une lampe qui brille à 98 % — ce qu'aucune classe ne distinguera
+   jamais, et ce que la fiche appelle « comme lorsqu'elle était seule ». Le
+   seuil différentiel de l'œil sur une luminance vaut 5 % dans les meilleures
+   conditions, et bien davantage sur deux lampes qu'on ne compare pas côte à
+   côte. Un seuil plus fin que l'instrument fait mentir la page dans le sens
+   de la rigueur — la façon la plus difficile de se tromper. */
+PHYS.ECART_ECLAT = { v: 0.05, u: "", d: 2, n: "écart d'éclat qu'un œil sépare",
+  s: "5 % — le seuil différentiel de l'oeil sur une luminance. C'est LUI qui décide qu'une lampe brille « comme lorsqu'elle était seule » (SKILL §12.24)" };
+
+/* ==================================================================
+   4. LES RÉGLAGES (SKILL §11.3, §12.12)
+   ================================================================== */
+/* ⚠ LA VALEUR INITIALE D'UN CURSEUR DOIT TOMBER SUR LA GRILLE DES PAS
+   (SKILL §12.12), et elle doit valoir EXACTEMENT celle du protocole — sans
+   quoi `horsProtocole()` rend vrai dès le chargement, `revelerCellule` sort a
+   sa premiere ligne, et le tableau de la fiche ne se remplit JAMAIS, sans la
+   moindre erreur. La resistance interne deduite de la fiche vaut 0,0843 Ω :
+   aucun pas rond ne tombe dessus. Le curseur porte donc une resistance
+   AJOUTEE, dont le protocole est zero — et zero est sur toutes les grilles. */
+var PROTO = { E: PHYS_C.E_PLATE.v, rsup: 0 };
+var REG = { E: PHYS_C.E_PLATE.v, rsup: 0 };
+function rInterne() { return R_PILE + REG.rsup; }
+function horsProtocole() {
+  return Math.abs(REG.E - PROTO.E) > 1e-9 || Math.abs(REG.rsup - PROTO.rsup) > 1e-9;
+}
+
+/* ==================================================================
+   5. LE SOLVEUR — DEUX BOUCLES, et personne ne l'a écrit
+   ==================================================================
+   « En dérivation » n'est pas un mode de cette page : c'est ce que devient le
+   graphe quand L2 est branchée ENTRE LES DEUX MÊMES NŒUDS que L1. La page le
+   RECONNAÎT en comparant les classes d'équivalence du montage — elle ne le
+   suppose jamais. Un élève qui brancherait L2 à la SUITE de L1 verrait le
+   compteur de boucles rester à une, et la page le lui dirait.               */
+function resoudreMontage() {
+  var c = new Circuit(), l = liensPoses(), i;
+  var st = { l1: {}, l2: {} };
+  for (i = 0; i < l.length; i++) {
+    c.ajouter(l[i].a, l[i].b, dResistor(R_FIL_1 * 2), "fil" + i);
+  }
+  c.ajouter("pile-", "pile+", dGen(REG.E, rInterne()), "pile");
+  c.ajouter("int.a", "int.b", dInter(ETAT.ferme), "inter");
+  c.ajouter("L1.a", "L1.b", ETAT.v1 ? dLampe(st.l1) : dInter(false), "L1");
+  c.ajouter("L2.a", "L2.b", ETAT.v2 ? dLampe(st.l2) : dInter(false), "L2");
+  c.resoudre();
+  st.T1 = st.l1.T === undefined ? T_AMB : st.l1.T;
+  st.T2 = st.l2.T === undefined ? T_AMB : st.l2.T;
+  st.I1 = Math.abs(c.courant("L1"));
+  st.I2 = Math.abs(c.courant("L2"));
+  st.Ipile = Math.abs(c.courant("pile"));
+  st.U1 = Math.abs(c.u("L1.a", "L1.b"));
+  st.U2 = Math.abs(c.u("L2.a", "L2.b"));
+  st.residu = c.residu;
+  return st;
+}
+function aretesVives() {
+  return aretesDuMontage([
+    { a: "int.a", b: "int.b", conduit: ETAT.ferme },
+    { a: "pile-", b: "pile+", conduit: true },
+    { a: "L1.a", b: "L1.b", conduit: ETAT.v1 },
+    { a: "L2.a", b: "L2.b", conduit: ETAT.v2 && L2Posee() }
+  ]);
+}
+function aretesToutes() {
+  return aretesDuMontage([
+    { a: "int.a", b: "int.b", conduit: true },
+    { a: "pile-", b: "pile+", conduit: true },
+    { a: "L1.a", b: "L1.b", conduit: true },
+    { a: "L2.a", b: "L2.b", conduit: L2Posee() }
+  ]);
+}
+function boucles() { return motBoucles(aretesVives(), aretesToutes()); }
+function nbBoucles() { return nombreDeBoucles(aretesToutes()); }
+/* ⚠ La question se pose autour d'un RÉCEPTEUR, jamais du générateur : la pile
+   est elle-même une arête, et « pile+ et pile− communiquent-ils ? » répondrait
+   oui, toujours (piège payé sur E1AC-30). */
+function aretesHors(a, b) {
+  return aretesVives().filter(function (x) {
+    return !(x.a === a && x.b === b);
+  });
+}
+function branchevive(a, b) { return boucleAutour(aretesHors(a, b), a, b); }
+function courantCircule(st) { return st.Ipile > PHYS.I_SEUIL.v; }
+
+/* ==================================================================
+   6. LES NŒUDS — ce qui fait la dérivation, et qui se CALCULE
+   ==================================================================
+   Deux dipôles sont en dérivation si leurs bornes appartiennent aux MÊMES
+   classes d'équivalence du montage. C'est une question de graphe, et elle se
+   pose sans rien supposer du câblage employé.                               */
+function memeNoeud(a, b) {
+  var m = monter(liensPoses());
+  return m.noeud(a) === m.noeud(b);
+}
+function L2Posee() {
+  return (memeNoeud("L2.a", "L1.a") && memeNoeud("L2.b", "L1.b"))
+      || (memeNoeud("L2.a", "L1.b") && memeNoeud("L2.b", "L1.a"));
+}
+/* L2 branchée, mais PAS entre les deux mêmes nœuds — c'est l'erreur que la
+   leçon veut écarter. On ne l'INTERDIT pas : la topologie reste celle que
+   l'élève monte. On la RECONNAÎT, le compteur de boucles retombe à une, et la
+   page le dit. */
+function L2Branchee() {
+  var i, f;
+  for (i = 0; i < FILS.length; i++) {
+    f = FILS[i];
+    if (filPose(f) && (String(f.a).indexOf("L2.") === 0
+                    || String(f.b).indexOf("L2.") === 0)) return true;
+  }
+  return false;
+}
+function L2MalBranchee() { return L2Branchee() && !L2Posee(); }
+
+/* ==================================================================
+   7. LES LIGNES DE LA FICHE
+   ================================================================== */
+function ligneNommee(motif) {
+  var i;
+  for (i = 0; i < N_LIG; i++) if (motif.test(intitule(i, 0))) return i;
+  return -1;
+}
+var L_SEULE = ligneNommee(/L1 seule/);
+var L_DEUX = ligneNommee(/mêmes points/);
+var L_D1 = ligneNommee(/L1 dévissée/);
+var L_D2 = ligneNommee(/L2 dévissée/);
+
+var CABLAGE1 = [["pile+", "int.a"], ["int.b", "L1.a"], ["L1.b", "pile-"]];
+function liaisonFaite(i) {
+  var p = CABLAGE1[i];
+  return !!filEntre(p[0], p[1]);
+}
+function montageComplet() {
+  return liaisonFaite(0) && liaisonFaite(1) && liaisonFaite(2);
+}
+function ligneCourante() {
+  if (!montageComplet()) return -1;
+  if (!L2Posee()) return L_SEULE;
+  if (!ETAT.v1) return L_D1;
+  if (!ETAT.v2) return L_D2;
+  return L_DEUX;
+}
+
+/* ==================================================================
+   8. L'ÉTAT
+   ==================================================================
+   ⚠ TOUTE clé lue dans le code figure ici (SKILL §12.17). */
+var ETAT = null;
+function neufEtat() {
+  return {
+    ferme: false,
+    ouvertUneFois: false,
+    reperes: false,           // les deux points A et B ont été repérés
+    noeuds: false,            // ils ont été marqués d'un point
+    v1: true, v2: true,
+    suivi: false,
+    schema: false,
+    vu: {},
+    eclatSeule: null,
+    refusSerie: 0,            // combien de fois la mise en SÉRIE a été signalée
+    horsProto: false,
+    diverge: [],
+    nCell: 0,
+    tSeance: 0
+  };
+}
+function etatSauve() {
+  var s = {}, k;
+  for (k in ETAT) s[k] = ETAT[k];
+  s.__fils = FILS.map(function (f) { return { a: f.a, b: f.b }; });
+  return s;
+}
+function etatRestaure(s) {
+  var k;
+  for (k in s) if (k !== "__fils") ETAT[k] = s[k];
+  FILS.forEach(function (f, i) { f.a = s.__fils[i].a; f.b = s.__fils[i].b; });
+}
+function poserSituation(p) {
+  var k;
+  ETAT.ferme = p.ferme === undefined ? true : p.ferme;
+  ETAT.v1 = p.v1 === undefined ? true : p.v1;
+  ETAT.v2 = p.v2 === undefined ? true : p.v2;
+  FILS.forEach(function (f) { f.a = null; f.b = null; });
+  FILS[0].a = "pile+"; FILS[0].b = "int.a";
+  FILS[1].a = "int.b"; FILS[1].b = "L1.a";
+  FILS[2].a = "L1.b"; FILS[2].b = "pile-";
+  if (p.deux) {
+    FILS[3].a = "L1.a"; FILS[3].b = "L2.a";
+    FILS[4].a = "L1.b"; FILS[4].b = "L2.b";
+  }
+  for (k in p) if (k !== "deux") ETAT[k] = p[k];
+}
+function eclatReference() {
+  var sv = etatSauve(), e;
+  poserSituation({ deux: false, ferme: true });
+  e = eclatRelatif(resoudreMontage().T1);
+  etatRestaure(sv);
+  resoudreMontage();
+  return e;
+}
+/* Contrôle interne : les quatre lignes de la fiche sont-elles retrouvées ? */
+function accordAvecLaFiche() {
+  var faux = [], sauve = { E: REG.E, r: REG.rsup }, sv = etatSauve(), ref;
+  REG.E = PROTO.E; REG.rsup = PROTO.rsup;
+  poserSituation({ deux: false, ferme: true });
+  ref = eclatRelatif(resoudreMontage().T1);
+  poserSituation({ deux: true, ferme: true });
+  var s = resoudreMontage();
+  if (eclatRelatif(s.T1) < ref * 0.9) {
+    faux.push("en dérivation, L1 ne brille plus comme lorsqu'elle était seule");
+  }
+  if (Math.abs(eclatRelatif(s.T1) - eclatRelatif(s.T2)) > PHYS.ECART_ECLAT.v) {
+    faux.push("les deux lampes en dérivation ne brillent pas pareil");
+  }
+  if (nombreDeBoucles(aretesToutes()) !== 2) {
+    faux.push("le montage en dérivation ne compte pas deux boucles");
+  }
+  poserSituation({ deux: true, ferme: true, v1: false });
+  if (!allumee(resoudreMontage().T2)) {
+    faux.push("L1 dévissée éteint L2 — ce n'est pas une dérivation");
+  }
+  poserSituation({ deux: true, ferme: true, v2: false });
+  if (!allumee(resoudreMontage().T1)) {
+    faux.push("L2 dévissée éteint L1 — ce n'est pas une dérivation");
+  }
+  REG.E = sauve.E; REG.rsup = sauve.r;
+  etatRestaure(sv);
+  resoudreMontage();
+  return faux;
+}
+/* Les mots de la fiche — « vif », « toujours vif », « éteinte ». Ils sortent
+   d'une COMPARAISON à la mémoire de L1 seule, jamais d'un choix. */
+function motEclatL(T, ref) {
+  var e = eclatRelatif(T);
+  if (!allumee(T)) return "éteinte";
+  if (ref === null || ref === undefined) return "vif";
+  if (e > ref * (1 - PHYS.ECART_ECLAT.v)) return "vif, comme lorsqu'elle était seule";
+  if (e > ref * 0.8) return "vif, à peine moins que seule";
+  if (e > ref * 0.25) return "plus faible";
+  return "beaucoup plus faible";
+}
+
+/* ==================================================================
+   9. LA GÉOMÉTRIE
+   ==================================================================
+   ZONES INTERDITES, mesurées sur capture à 1900 x 900 :
+     · bandeau de consigne   x 224..896   y < 96
+     · journal d'observation x  14..300   y < 200
+     · boutons du cadre      x > 990      y < 96
+   ⚠ L2 est posée EN HAUT de L1, et non à côté : c'est ainsi qu'une dérivation
+   se dessine, et le lecteur voit les deux branches partir des mêmes points. */
+var W = 1000, H = 660, BANC = 548, PAILL_Y = 492;
+var Y_BT1 = 584, Y_BT2 = 630;
+var K_APP = 1.2;
+var X_PILE = 300, Y_PILE = 458;
+var X_INT = 500, Y_INT = 465;
+var X_L1 = 730, Y_L1 = 457;
+var X_L2 = 730, Y_L2 = 300;              /* la seconde branche, au-dessus */
+var X_CASIER = 130, Y_CASIER = 296;
+var Y_ETIQ = { casier: 262, secu: 100, legende: 534, nomApp: 506, nomL2: 348,
+               boucles: 384, comparateur: 168 };
+
+/* ==================================================================
+   10. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC, fill: "url(#banc)" }));
+  ajout("poste", el("rect", { x: 40, y: PAILL_Y, width: W - 80, height: 14, rx: 3,
+    fill: "url(#bois)", stroke: "#8a6128", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: 54, y: PAILL_Y + 14, width: W - 108, height: 12,
+    fill: "#a3855c", opacity: .9, "pointer-events": "none" }));
+  /* la tablette qui porte la seconde branche */
+  ajout("fond", el("rect", { x: 640, y: Y_L2 + 34, width: 200, height: 8, rx: 2,
+    fill: "url(#bois)", stroke: "#8a6128", "stroke-width": 1,
+    "pointer-events": "none" }));
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+function construireSecurite() {
+  var X = 566, Y = Y_ETIQ.secu, LG = 400, HT = 66;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8,
+    "pointer-events": "none" }));
+  txt("poste", X + 12, Y + 19, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE });
+  /* On vise la ligne par ce qu'elle DIT (§12.14) : celle du court-circuit,
+     dont la fiche précise qu'« en dérivation, la tentation est plus grande ». */
+  enrouler(secu(/tentation est plus grande/), 58, 3).forEach(function (s, i) {
+    txt("poste", X + 12, Y + 37 + i * 15, s, { ancre: "start", taille: 10.5,
+        couleur: "#8a5252" });
+  });
+}
+
+/* ==================================================================
+   11. LES POSTES
+   ================================================================== */
+var PILE = null, INTER = null, L1 = null, L2 = null;
+var gBoucles = null, gComp = null, gDoigt = null, gNoeuds = null, gSchema = null;
+
+function construirePostes() {
+  PILE = agrandir(dessinerPile(X_PILE, Y_PILE, { act: "pile" }), K_APP);
+  declarerBorne("pile+", PILE, PILE.plus);
+  declarerBorne("pile-", PILE, PILE.moins);
+  etiqueterBorne("pile+", "le pôle + de la pile");
+  etiqueterBorne("pile-", "le pôle − de la pile");
+  INTER = agrandir(dessinerInterrupteur(X_INT, Y_INT,
+    { act: "inter", yNom: Y_ETIQ.nomApp }), K_APP);
+  declarerBorne("int.a", INTER, INTER.a);
+  declarerBorne("int.b", INTER, INTER.b);
+  etiqueterBorne("int.a", "la borne gauche de l'interrupteur");
+  etiqueterBorne("int.b", "la borne droite de l'interrupteur");
+  L1 = agrandir(dessinerLampe(X_L1, Y_L1,
+    { act: "L1", nom: "L1", yNom: Y_ETIQ.nomApp }), K_APP);
+  declarerBorne("L1.a", L1, L1.a); declarerBorne("L1.b", L1, L1.b);
+  etiqueterBorne("L1.a", "la borne gauche de L1 (le point A)");
+  etiqueterBorne("L1.b", "la borne droite de L1 (le point B)");
+  L2 = agrandir(dessinerLampe(X_L2, Y_L2,
+    { act: "L2", nom: "L2", yNom: Y_ETIQ.nomL2 }), K_APP);
+  declarerBorne("L2.a", L2, L2.a); declarerBorne("L2.b", L2, L2.b);
+  etiqueterBorne("L2.a", "la borne gauche de L2");
+  etiqueterBorne("L2.b", "la borne droite de L2");
+  creerFils(5, { x: X_CASIER, y: Y_CASIER, dy: 42 });
+  txt("poste", X_CASIER, Y_ETIQ.casier, "cinq fils de connexion",
+      { taille: 11, couleur: "#8794a5", halo: true });
+  gNoeuds = ajout("avant", el("g", { "pointer-events": "none" }));
+  gBoucles = ajout("avant", el("g", { "pointer-events": "none" }));
+  gComp = ajout("avant", el("g", { "pointer-events": "none" }));
+  gDoigt = ajout("avant", el("g", { "pointer-events": "none" }));
+  gSchema = ajout("avant", el("g", { "pointer-events": "none" }));
+}
+
+/* LES NŒUDS A ET B — repérés d'abord, marqués d'un point ensuite. C'est le
+   geste que la fiche demande, et les deux points se posent LÀ OÙ LES FILS SE
+   REJOIGNENT réellement : leur position se relit du montage (§12.18). */
+function dessinerNoeuds(u) {
+  var pa, pb;
+  vide(gNoeuds);
+  if (!ETAT.reperes) return;
+  pa = posBorne("L1.a"); pb = posBorne("L1.b");
+  [[pa, "A"], [pb, "B"]].forEach(function (p) {
+    gNoeuds.appendChild(el("circle", { cx: p[0].x, cy: p[0].y - 26, r: 11,
+      fill: "#fdf6e6", stroke: GOLD, "stroke-width": 1.8 }));
+    gNoeuds.appendChild(el("text", { x: p[0].x, y: p[0].y - 22,
+      "text-anchor": "middle", "font-size": 12, "font-weight": "bold",
+      fill: GOLD }, p[1]));
+  });
+  if (!ETAT.noeuds) return;
+  /* le POINT du schéma normalisé : un disque plein sur la jonction */
+  [[pa], [pb]].forEach(function (p) {
+    gNoeuds.appendChild(el("circle", { cx: p[0].x, cy: p[0].y,
+      r: (3 + 4.5 * borne(u === undefined ? 1 : u, 0, 1)).toFixed(1),
+      fill: INK }));
+  });
+}
+function dessinerBoucles() {
+  var m = boucles();
+  vide(gBoucles);
+  if (!montageComplet()) return;
+  gBoucles.appendChild(el("rect", { x: 356, y: Y_ETIQ.boucles - 20, width: 300,
+    height: 30, rx: 8, fill: "#ffffffee", stroke: GOLD, "stroke-width": 1.6 }));
+  gBoucles.appendChild(el("text", { x: 372, y: Y_ETIQ.boucles,
+    "text-anchor": "start", "font-size": 11, "font-weight": "bold",
+    fill: GOLD }, "BOUCLES DU CIRCUIT"));
+  gBoucles.appendChild(el("text", { x: 640, y: Y_ETIQ.boucles,
+    "text-anchor": "end", "font-size": 12.5, "font-weight": "bold",
+    fill: INK }, m));
+}
+function dessinerComparateur(st) {
+  var y = Y_ETIQ.comparateur, ref = ETAT.eclatSeule, i;
+  vide(gComp);
+  if (ref === null) return;
+  var lignes = [["L1 seule (mémoire)", ref, "#8794a5"],
+                ["L1 maintenant", eclatRelatif(st.T1), GOLD],
+                ["L2 maintenant", L2Posee() ? eclatRelatif(st.T2) : null, "#b4530f"]];
+  gComp.appendChild(el("rect", { x: 50, y: y - 22, width: 292,
+    height: 22 + lignes.length * 20, rx: 8, fill: "#ffffffee",
+    stroke: "#c3cad3", "stroke-width": 1.4 }));
+  gComp.appendChild(el("text", { x: 62, y: y - 6, "text-anchor": "start",
+    "font-size": 10, "font-weight": "bold", fill: GOLD },
+    "ÉCLAT, RAPPORTÉ À L1 SEULE"));
+  for (i = 0; i < lignes.length; i++) {
+    var e = lignes[i][1], w = e === null ? 0 : borne(e / Math.max(ref, 1e-9), 0, 1) * 142;
+    gComp.appendChild(el("text", { x: 62, y: y + 12 + i * 20,
+      "text-anchor": "start", "font-size": 10.5, fill: INK }, lignes[i][0]));
+    gComp.appendChild(el("rect", { x: 180, y: y + 3 + i * 20, width: 142,
+      height: 11, rx: 3, fill: "#eef1f5" }));
+    if (e !== null) {
+      gComp.appendChild(el("rect", { x: 180, y: y + 3 + i * 20,
+        width: Math.max(1.5, w).toFixed(1), height: 11, rx: 3,
+        fill: lignes[i][2] }));
+    }
+    gComp.appendChild(el("text", { x: 334, y: y + 12 + i * 20,
+      "text-anchor": "end", "font-size": 10, fill: "#6b7686" },
+      e === null ? "—" : nb(e / Math.max(ref, 1e-9) * 100, 0) + " %"));
+  }
+}
+
+/* ==================================================================
+   12. LES BOUTONS DE SCÈNE
+   ================================================================== */
+function construireBoutonsScene() {
+  rangeeBoutons(W, Y_BT1,
+    [["Fermer", "l'interrupteur"], ["Ouvrir", "l'interrupteur"],
+     ["Repérer les deux", "points A et B"], ["Brancher L2", "entre A et B"]],
+    ["bt-fermer", "bt-ouvrir", "bt-reperer", "bt-ajouter"]);
+  rangeeBoutons(W, Y_BT2,
+    [["Suivre les chemins", "du courant"], ["Marquer les nœuds", "d'un point"],
+     ["Dévisser / revisser", "L1"], ["Dévisser / revisser", "L2"],
+     ["Tracer le schéma", "normalisé"]],
+    ["bt-suivre", "bt-noeuds", "bt-d1", "bt-d2", "bt-schema"]);
+  txt("ui", W / 2, Y_ETIQ.legende, "schéma habillé — « en dérivation » n'est "
+    + "pas un mode : la page RECONNAÎT que L2 est entre les deux mêmes nœuds "
+    + "que L1, en comparant les classes du graphe du montage",
+    { taille: 9.5, couleur: "#c9d2dc" });
+}
+
+/* ==================================================================
+   13. PRENDRE ET DÉPOSER
+   ================================================================== */
+function borneVoulue(o) {
+  var i, p, suite;
+  suite = ETAT.reperes
+    ? [["pile+", "int.a"], ["int.b", "L1.a"], ["L1.b", "pile-"],
+       ["L1.a", "L2.a"], ["L1.b", "L2.b"]]
+    : [["pile+", "int.a"], ["int.b", "L1.a"], ["L1.b", "pile-"]];
+  if (o.a) {
+    for (i = 0; i < suite.length; i++) {
+      if (suite[i][0] === o.a) return suite[i][1];
+      if (suite[i][1] === o.a) return suite[i][0];
+    }
+    return null;
+  }
+  for (i = 0; i < suite.length; i++) {
+    p = suite[i];
+    if (!filEntre(p[0], p[1])) return p[0];
+  }
+  return null;
+}
+function emplacements(o) {
+  if (!o) return [];
+  if (o.type === "fil") return zonesBornes(o, borneVoulue(o)).concat([zoneRang(o)]);
+  return [zoneRang(o)];
+}
+function replacer2(o, depart) {
+  o.x = depart.x; o.y = depart.y;
+  volerVers(o, o.base.x, o.base.y, 420);
+}
+function deposer(o, z, depart) {
+  if (!o) return;
+  if (!z) {
+    signaler("Il faut pincer une BORNE — les vis dorées des appareils.");
+    replacer2(o, depart || o.base); redessiner(); return;
+  }
+  if (z.type === "rang") { detacherFil(o); return; }
+  brancherFil(o, z.id, depart);
+}
+function brancherFil(o, id, depart) {
+  var occ = bornesOccupees(), p;
+  if (o.a === id || o.b === id) {
+    signaler("Ce fil pince déjà cette borne.");
+    replacer2(o, depart || o.base); redessiner(); return;
+  }
+  if ((occ[id] || 0) >= MAX_PINCES) {
+    signaler("Cette borne porte déjà deux pinces — c'est le maximum qu'une vis "
+      + "tient. En dérivation, deux pinces par nœud suffisent.");
+    replacer2(o, depart || o.base); redessiner(); return;
+  }
+  if (courtCircuiterait(o, id)) {
+    ETAT.refusSerie++;
+    signaler("Refusé — " + secu(/tentation est plus grande/));
+    replacer2(o, depart || o.base); redessiner(); return;
+  }
+  if (!o.a) o.a = id; else o.b = id;
+  succes();
+  p = posBorne(id);
+  volerVers(o, p.x, p.y - 26, 460);
+  tard(function () { redessinerLiens(); redessiner(); }, 40);
+  noter("Pince serrée sur " + nomBorne(id) + "."
+    + (filPose(o) ? " Le fil relie " + nomBorne(o.a) + " et " + nomBorne(o.b) + "."
+                  : " Son autre pince pend encore."), true);
+  redessiner();
+}
+/* Le court-circuit se CALCULE : les deux pôles se retrouveraient-ils au même
+   nœud sans qu'aucun récepteur soit sur le chemin ? */
+function courtCircuiterait(o, id) {
+  var autre = o.a || o.b, ar, sans;
+  if (!autre) return false;
+  ar = aretesDuMontage([{ a: "int.a", b: "int.b", conduit: ETAT.ferme },
+                        { a: autre, b: id, conduit: true },
+                        { a: "L1.a", b: "L1.b", conduit: true },
+                        { a: "L2.a", b: "L2.b", conduit: true }]);
+  if (!boucleAutour(ar, "pile+", "pile-")) return false;
+  sans = ar.filter(function (x) {
+    return !((x.a === "L1.a" && x.b === "L1.b") || (x.a === "L2.a" && x.b === "L2.b"));
+  });
+  return boucleAutour(sans, "pile+", "pile-");
+}
+function detacherFil(o) {
+  if (filLibre(o)) { replacer2(o, { x: o.x, y: o.y }); return; }
+  o.a = null; o.b = null;
+  succes();
+  volerVers(o, o.base.x, o.base.y, 460);
+  tard(function () { redessinerLiens(); redessiner(); }, 40);
+  noter("Fil retiré et rangé au casier.", false);
+  redessiner();
+}
+function cliquerObjet(o) {
+  if (o.type === "fil") {
+    noter("Un fil de connexion. En DÉRIVATION, L2 se branche ENTRE LES DEUX "
+      + "MÊMES POINTS que L1 — à côté d'elle, et non à sa suite.", false);
+  }
+  redessiner();
+}
+
+/* ==================================================================
+   14. LES GESTES
+   ================================================================== */
+function basculerInter(v) {
+  if (ETAT.ferme === v) {
+    signaler("L'interrupteur est déjà " + (v ? "fermé" : "ouvert") + ".");
+    return 0;
+  }
+  if (v && !montageComplet()) {
+    signaler("Le montage n'est pas terminé : il manque une liaison.");
+    return 0;
+  }
+  ETAT.ferme = v;
+  if (!v) ETAT.ouvertUneFois = true;
+  INTER.basculer(v, 420);
+  succes();
+  return apresGeste(v ? "Interrupteur fermé." : "Interrupteur ouvert.");
+}
+function verifierOuvert() {
+  if (!ETAT.ferme) return true;
+  signaler("Refusé — " + secu(/dévisser ou de revisser/));
+  return false;
+}
+function reperer() {
+  if (!montageComplet()) {
+    signaler("Monter d'abord la boucle avec L1 seule : les deux points se "
+      + "repèrent SUR un circuit.");
+    return 0;
+  }
+  if (ETAT.reperes) { signaler("Les deux points sont déjà repérés."); return 0; }
+  ETAT.reperes = true;
+  succes();
+  noter("Les deux points A et B sont repérés : ce sont les deux bornes de L1. "
+    + "C'est entre eux, et nulle part ailleurs, que L2 devra se brancher.", true);
+  anim(620, function (u) {
+    vide(gNoeuds);
+    var pa = posBorne("L1.a"), pb = posBorne("L1.b");
+    [[pa, "A"], [pb, "B"]].forEach(function (p) {
+      gNoeuds.appendChild(el("circle", { cx: p[0].x, cy: p[0].y - 26,
+        r: (11 * u).toFixed(1), fill: "#fdf6e6", stroke: GOLD,
+        "stroke-width": 1.8 }));
+      if (u > 0.6) {
+        gNoeuds.appendChild(el("text", { x: p[0].x, y: p[0].y - 22,
+          "text-anchor": "middle", "font-size": 12, "font-weight": "bold",
+          fill: GOLD }, p[1]));
+      }
+    });
+  }, function () { dessinerNoeuds(1); redessiner(); });
+  redessiner();
+  return 700;
+}
+/* BRANCHER L2 ENTRE A ET B : deux fils neufs, l'un de A à L2.a, l'autre de B
+   à L2.b. C'est le geste de la fiche — « brancher la lampe L2 entre ces deux
+   mêmes points A et B, à côté de L1 et non à sa suite ». */
+function ajouterL2() {
+  var f1, f2, p;
+  if (L2Posee()) { signaler("L2 est déjà branchée entre A et B."); return 0; }
+  if (!ETAT.reperes) {
+    signaler("Repérer d'abord les deux points A et B : c'est entre eux que L2 "
+      + "se branche.");
+    return 0;
+  }
+  if (!verifierOuvert()) return 0;
+  f1 = premierFilLibre();
+  if (!f1) { signaler("Il n'y a plus de fil au casier."); return 0; }
+  f1.a = "L1.a"; f1.b = "L2.a";
+  f2 = premierFilLibre();
+  if (!f2) { f1.a = null; f1.b = null; signaler("Il faut DEUX fils libres."); return 0; }
+  f2.a = "L1.b"; f2.b = "L2.b";
+  succes();
+  noter("L2 est branchée ENTRE LES DEUX MÊMES POINTS A et B — à côté de L1, "
+    + "et non à sa suite. Chacune est maintenant sur sa propre branche.", true);
+  redessinerLiens();
+  p = posBorne("L2.a");
+  f1.x = p.x; f1.y = p.y + 40;
+  volerVers(f1, p.x, p.y - 20, 560);
+  p = posBorne("L2.b");
+  f2.x = p.x; f2.y = p.y + 40;
+  volerVers(f2, p.x, p.y - 20, 560);
+  tard(function () { redessinerLiens(); redessiner(); }, 60);
+  redessiner();
+  return 700;
+}
+function marquerNoeuds() {
+  if (!L2Posee()) {
+    signaler("Les nœuds n'existent qu'une fois L2 branchée : un nœud est un "
+      + "point où TROIS fils se rejoignent.");
+    return 0;
+  }
+  if (ETAT.noeuds) { signaler("Les nœuds sont déjà marqués."); return 0; }
+  ETAT.noeuds = true;
+  succes();
+  noter("Les deux nœuds A et B sont marqués d'un point : c'est là que les fils "
+    + "se rejoignent, et c'est ce point qui distingue un schéma en dérivation "
+    + "d'un schéma en série.", true);
+  anim(620, function (u) { dessinerNoeuds(u); },
+       function () { dessinerNoeuds(1); redessiner(); });
+  redessiner();
+  return 700;
+}
+function devisser(k) {
+  var cle = k === 1 ? "v1" : "v2", L = k === 1 ? L1 : L2;
+  if (k === 2 && !L2Posee()) {
+    signaler("L2 n'est pas encore branchée entre A et B.");
+    return 0;
+  }
+  if (!verifierOuvert()) return 0;
+  ETAT[cle] = !ETAT[cle];
+  L.visser(ETAT[cle], 560);
+  succes();
+  noter("L" + k + (ETAT[cle] ? " revissée dans sa douille."
+    : " dévissée : SA branche est coupée — mais elle seule."), true);
+  redessiner();
+  return 640;
+}
+function suivreChemin() {
+  var pts;
+  if (!montageComplet()) { signaler("Monter d'abord la boucle."); return 0; }
+  ETAT.suivi = true;
+  succes();
+  noter("On suit du doigt les chemins possibles depuis la pile : le circuit "
+    + "compte " + boucles() + ".", true);
+  pts = cheminDuCourant();
+  anim(1500, function (u) {
+    var i = borne(u, 0, 0.999) * (pts.length - 1), k = Math.floor(i), t = i - k;
+    var x = pts[k].x + (pts[k + 1].x - pts[k].x) * t;
+    var y = pts[k].y + (pts[k + 1].y - pts[k].y) * t;
+    vide(gDoigt);
+    gDoigt.appendChild(el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 11,
+      fill: GOLD, opacity: .85 }));
+    gDoigt.appendChild(el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 19,
+      fill: "none", stroke: GOLD, "stroke-width": 2, opacity: .5 }));
+  }, function () { vide(gDoigt); redessiner(); });
+  redessiner();
+  return 1600;
+}
+/* Le trajet suivi : la branche de L2 si elle existe, sinon celle de L1. */
+function cheminDuCourant() {
+  var ordre = L2Posee()
+    ? ["pile+", "int.a", "int.b", "L1.a", "L2.a", "L2.b", "L1.b", "pile-"]
+    : ["pile+", "int.a", "int.b", "L1.a", "L1.b", "pile-"];
+  return ordre.map(posBorne).concat([posBorne("pile+")]);
+}
+function tracerSchema() {
+  if (!ETAT.vu[L_D2]) {
+    signaler("Le protocole trace le schéma une fois les quatre situations "
+      + "observées.");
+    return 0;
+  }
+  ETAT.schema = true;
+  succes();
+  noter("Schéma normalisé du montage en dérivation : deux branches entre les "
+    + "mêmes nœuds, marqués d'un point.", true);
+  anim(760, function (u) { dessinerSchema(u); },
+       function () { dessinerSchema(1); redessiner(); });
+  redessiner();
+  return 840;
+}
+function dessinerSchema(u) {
+  var x0 = 372, y0 = 220, w = 260, h = 90, per = 2 * (w + h), d;
+  vide(gSchema);
+  if (!ETAT.schema) return;
+  gSchema.appendChild(el("rect", { x: x0 - 16, y: y0 - 28, width: w + 32,
+    height: h + 58, rx: 9, fill: "#ffffffee", stroke: GOLD, "stroke-width": 1.6 }));
+  gSchema.appendChild(el("text", { x: x0, y: y0 - 10, "text-anchor": "start",
+    "font-size": 10.5, "font-weight": "bold", fill: GOLD },
+    "SCHÉMA NORMALISÉ — MONTAGE EN DÉRIVATION"));
+  d = "M " + pt(x0, y0 + h) + " L " + pt(x0, y0) + " L " + pt(x0 + w, y0)
+    + " L " + pt(x0 + w, y0 + h) + " L " + pt(x0, y0 + h);
+  var p = gSchema.appendChild(el("path", { d: d, stroke: INK, "stroke-width": 2.4,
+    fill: "none" }));
+  p.setAttribute("stroke-dasharray", (per * u).toFixed(1) + " " + per.toFixed(1));
+  if (u > 0.55) {
+    /* la SECONDE BRANCHE, entre les deux mêmes nœuds */
+    gSchema.appendChild(el("path", { d: "M " + pt(x0 + w * 0.3, y0) + " L "
+      + pt(x0 + w * 0.3, y0 + h * 0.5) + " L " + pt(x0 + w * 0.75, y0 + h * 0.5)
+      + " L " + pt(x0 + w * 0.75, y0), stroke: INK, "stroke-width": 2.4,
+      fill: "none" }));
+  }
+  if (u > 0.9) {
+    [[x0 + w * 0.52, y0, "L1"], [x0 + w * 0.52, y0 + h * 0.5, "L2"]]
+      .forEach(function (c) {
+        gSchema.appendChild(el("circle", { cx: c[0], cy: c[1], r: 11,
+          fill: "#fff", stroke: INK, "stroke-width": 2.2 }));
+        gSchema.appendChild(el("path", { d: "M " + pt(c[0] - 7.8, c[1] - 7.8)
+          + " L " + pt(c[0] + 7.8, c[1] + 7.8) + " M " + pt(c[0] - 7.8, c[1] + 7.8)
+          + " L " + pt(c[0] + 7.8, c[1] - 7.8), stroke: INK, "stroke-width": 1.8 }));
+        gSchema.appendChild(el("text", { x: c[0] + 17, y: c[1] + 4,
+          "text-anchor": "start", "font-size": 10, "font-weight": "bold",
+          fill: INK }, c[2]));
+      });
+    /* LES DEUX NŒUDS, marqués d'un point — c'est ce que la fiche demande */
+    [[x0 + w * 0.3, y0], [x0 + w * 0.75, y0]].forEach(function (c) {
+      gSchema.appendChild(el("circle", { cx: c[0], cy: c[1], r: 4.5, fill: INK }));
+    });
+    gSchema.appendChild(el("path", { d: "M " + pt(x0 - 9, y0 + h / 2 - 12)
+      + " L " + pt(x0 + 9, y0 + h / 2 - 12), stroke: INK, "stroke-width": 3.4 }));
+    gSchema.appendChild(el("path", { d: "M " + pt(x0 - 5, y0 + h / 2 + 4)
+      + " L " + pt(x0 + 5, y0 + h / 2 + 4), stroke: INK, "stroke-width": 3.4 }));
+  }
+}
+
+/* Après CHAQUE geste : on résout, on consigne, on révèle. */
+function apresGeste(phrase) {
+  var st = resoudreMontage(), k = ligneCourante(), ref;
+  if (ETAT.ferme && k === L_SEULE && ETAT.eclatSeule === null) {
+    ETAT.eclatSeule = eclatRelatif(st.T1);
+  }
+  ref = ETAT.eclatSeule;
+  noter(phrase + " L1 " + motEclatL(st.T1, ref)
+    + (L2Posee() ? ", L2 " + motEclatL(st.T2, ref) : "")
+    + " — boucles du circuit : " + boucles() + "."
+    + (L2MalBranchee() ? " ⚠ L2 n'est PAS entre les deux mêmes points : le "
+        + "circuit ne compte toujours qu'une boucle." : ""),
+    courantCircule(st));
+  if (k >= 0 && ETAT.ferme && !ETAT.horsProto) {
+    ETAT.vu[k] = true;
+    revelerLigne(k);
+    verifierAccord(k, st, ref);
+  }
+  redessiner();
+  return 900;
+}
+function verifierAccord(k, st, ref) {
+  var att = cel(k, 3);
+  if (!att || ETAT.horsProto) return;
+  var vu = boucles();
+  if (att.indexOf(vu.split(",")[0]) < 0) {
+    signalerDivergence("b" + k, "<b>Le modèle et la fiche divergent</b> sur « "
+      + intitule(k, 0) + " » : le modèle compte « " + vu + " » boucle(s), la "
+      + "fiche écrit « " + att + " ».");
+  }
+}
+
+/* ==================================================================
+   15. LE RENDU
+   ================================================================== */
+var ETABLI = 0;
+function redessiner() {
+  var st = resoudreMontage(), passe = courantCircule(st);
+  L1.peindre(st.T1);
+  L2.peindre(L2Posee() ? st.T2 : T_AMB);
+  if (passe !== ETABLI) {
+    ETABLI = passe ? 1 : 0;
+    etablirSurLesLiens(!!passe, eclatVu(st.T1), 620);
+  } else {
+    tracesPosees().forEach(function (t) {
+      t.courant(passe ? 1 : 0, 1, eclatVu(st.T1));
+    });
+  }
+  dessinerNoeuds(1);
+  dessinerBoucles();
+  dessinerComparateur(st);
+  majBoutonsScene();
+  majCarnet(st);
+  majPanneau(st);
+  majEtapes();
+  majProtocole();
+  dire(consigne(), toutFini());
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+function majBoutonsScene() {
+  function e(a, arme, fait) {
+    var b = BOUTONS[a];
+    if (!b) return;
+    if (fait) b.fait(); else { b.neuf(); b.armer(arme); }
+  }
+  var pret = montageComplet();
+  e("bt-fermer", pret && !ETAT.ferme, false);
+  e("bt-ouvrir", pret && ETAT.ferme, false);
+  e("bt-reperer", pret && !ETAT.reperes, ETAT.reperes);
+  e("bt-ajouter", ETAT.reperes && !L2Posee() && !ETAT.ferme, L2Posee());
+  e("bt-suivre", pret, ETAT.suivi);
+  e("bt-noeuds", L2Posee() && !ETAT.noeuds, ETAT.noeuds);
+  e("bt-d1", L2Posee() && !ETAT.ferme, !!ETAT.vu[L_D1]);
+  e("bt-d2", L2Posee() && !ETAT.ferme, !!ETAT.vu[L_D2]);
+  e("bt-schema", !!ETAT.vu[L_D2] && !ETAT.schema, ETAT.schema);
+}
+function toutLu() {
+  return !!ETAT.vu[L_SEULE] && !!ETAT.vu[L_DEUX] && !!ETAT.vu[L_D1] && !!ETAT.vu[L_D2];
+}
+function toutFini() { return toutLu() && ETAT.schema; }
+
+/* ==================================================================
+   16. LE CARNET ET LE PANNEAU
+   ================================================================== */
+function majCarnet(st) {
+  var t = $("carnet"), sv, ref;
+  vide(t);
+  t.appendChild(ligneTab(["Situation", "I débité par la pile", "I dans L1",
+                          "éclat de L1", "éclat de L2", "boucles"], true));
+  sv = etatSauve();
+  poserSituation({ deux: false, ferme: true });
+  ref = eclatRelatif(resoudreMontage().T1);
+  [[L_SEULE, { deux: false, ferme: true }],
+   [L_DEUX, { deux: true, ferme: true }],
+   [L_D1, { deux: true, ferme: true, v1: false }],
+   [L_D2, { deux: true, ferme: true, v2: false }]
+  ].forEach(function (p) {
+    var k = p[0], s;
+    if (k < 0) return;
+    poserSituation(p[1]);
+    s = resoudreMontage();
+    t.appendChild(ligneTab([intitule(k, 0),
+      nb(s.Ipile * 1000, 0) + " mA",
+      s.I1 < 1e-6 ? sci(s.I1, 1) + " A" : nb(s.I1 * 1000, 0) + " mA",
+      p[1].deux === false ? "100 % (référence)"
+        : nb(eclatRelatif(s.T1) / ref * 100, 0) + " %",
+      p[1].deux ? nb(eclatRelatif(s.T2) / ref * 100, 0) + " %" : "lampe absente",
+      boucles()]));
+  });
+  etatRestaure(sv);
+  resoudreMontage();
+  if (toutLu() && !ETAT.horsProto) $("concl").classList.remove("masque");
+}
+function majPanneau(st) {
+  var g = $("instr"), ref = ETAT.eclatSeule;
+  vide(g);
+  function C(k, v, cls) {
+    var d = document.createElement("div");
+    d.innerHTML = '<div class="k">' + k + '</div><div class="v' + (cls || "")
+      + '">' + v + "</div>";
+    g.appendChild(d);
+  }
+  C("boucles du circuit", boucles(), montageComplet() ? " ok" : " off");
+  C("L2 est branchée", !L2Branchee() ? "pas encore"
+    : (L2Posee() ? "en DÉRIVATION" : "mais pas entre A et B"),
+    L2Posee() ? " ok" : (L2Branchee() ? " ko" : " off"));
+  C("I débité par la pile", nb(st.Ipile * 1000, 0) + " mA",
+    courantCircule(st) ? " ok" : " off");
+  C("I dans la branche de L1", st.I1 < 1e-6 ? sci(st.I1, 1) + " A"
+    : nb(st.I1 * 1000, 0) + " mA", st.I1 > 1e-3 ? "" : " off");
+  C("I dans la branche de L2", !L2Posee() ? "—"
+    : (st.I2 < 1e-6 ? sci(st.I2, 1) + " A" : nb(st.I2 * 1000, 0) + " mA"),
+    L2Posee() && st.I2 > 1e-3 ? "" : " off");
+  C("U aux bornes de L1", nb(st.U1, 2) + " V", st.U1 > 0.1 ? "" : " off");
+  C("éclat de L1 / L1 seule", ref === null ? "pas encore de référence"
+    : nb(eclatRelatif(st.T1) / ref * 100, 0) + " %", ref === null ? " off" : "");
+  C("éclat de L2 / L1 seule", (ref === null || !L2Posee()) ? "—"
+    : nb(eclatRelatif(st.T2) / ref * 100, 0) + " %",
+    (ref !== null && L2Posee()) ? "" : " off");
+}
+
+/* ==================================================================
+   17. LA CONSIGNE
+   ================================================================== */
+function consigne() {
+  if (!montageComplet()) return "Reprendre le montage de la lampe L1 SEULE : "
+    + "glisser les fils du casier sur les bornes.";
+  if (!ETAT.vu[L_SEULE]) return "Fermer l'interrupteur et se remémorer l'éclat "
+    + "de L1 seule : c'est la référence.";
+  if (!ETAT.reperes) return "Ouvrir l'interrupteur, puis repérer les deux "
+    + "points du circuit que l'on nommera A et B.";
+  if (!L2Posee()) return "Brancher la lampe L2 ENTRE CES DEUX MÊMES POINTS A "
+    + "et B — à côté de L1, et non à sa suite.";
+  if (!ETAT.suivi) return "Suivre du doigt les chemins possibles du courant "
+    + "depuis la pile : combien y en a-t-il ?";
+  if (!ETAT.noeuds) return "Marquer d'un point les deux endroits où les fils "
+    + "se rejoignent : ce sont les nœuds A et B.";
+  if (!ETAT.vu[L_DEUX]) return "Fermer l'interrupteur et comparer l'éclat de "
+    + "L1 à celui qu'elle avait seule, puis à celui de L2.";
+  if (!ETAT.vu[L_D1] || !ETAT.vu[L_D2]) return "Ouvrir, dévisser L1, refermer "
+    + "et observer L2 ; revisser L1, dévisser L2 et observer L1.";
+  if (!ETAT.schema) return "Tracer le schéma normalisé du montage, en marquant "
+    + "les nœuds par un point.";
+  return "Chaque branche est indépendante : une lampe retirée n'éteint pas "
+    + "l'autre. La conclusion est démasquée.";
+}
+function faits() {
+  return [montageComplet() && !!ETAT.vu[L_SEULE],
+          ETAT.reperes,
+          L2Posee(),
+          ETAT.suivi,
+          ETAT.noeuds,
+          !!ETAT.vu[L_DEUX],
+          !!ETAT.vu[L_D1] && !!ETAT.vu[L_D2],
+          ETAT.schema];
+}
+
+/* ==================================================================
+   18. LES CURSEURS (SKILL §12.5)
+   ================================================================== */
+function brancherCurseurs() {
+  function lier(id, cle) {
+    var r = $(id);
+    function maj() {
+      REG[cle] = parseFloat(r.value);
+      ETAT.horsProto = horsProtocole();
+      majSorties();
+      if (svg) redessiner();
+    }
+    r.addEventListener("input", maj);
+    maj();
+  }
+  lier("rE", "E");
+  lier("rR", "rsup");
+}
+function majSorties() {
+  $("oE").textContent = nb(REG.E, 1) + " V"
+    + (Math.abs(REG.E - PROTO.E) < 1e-9 ? " (protocole)" : "");
+  $("oR").textContent = "+ " + nb(REG.rsup, 2) + " Ω — interne totale "
+    + nb(rInterne(), 2) + " Ω"
+    + (Math.abs(REG.rsup - PROTO.rsup) < 1e-9 ? " (pile neuve)" : " — pile usée");
+  $("rE").parentNode.className = "reg"
+    + (Math.abs(REG.E - PROTO.E) < 1e-9 ? "" : " hp");
+  $("rR").parentNode.className = "reg"
+    + (Math.abs(REG.rsup - PROTO.rsup) < 1e-9 ? "" : " hp");
+}
+function revenirAuProtocole() {
+  $("rE").value = PROTO.E; $("rR").value = PROTO.rsup;
+  REG.E = PROTO.E; REG.rsup = PROTO.rsup;
+  ETAT.horsProto = false;
+  majSorties();
+  redessiner();
+}
+
+/* ==================================================================
+   19. LE GUIDE — les huit étapes de la fiche
+   ================================================================== */
+var GUIDE = [
+  { fait: function () { return montageComplet() && !!ETAT.vu[L_SEULE]; },
+    aide: "Reprendre le montage de la lampe <b>L1 seule</b> et se remémorer "
+        + "son éclat. Le comparateur en garde la mémoire — l'œil, lui, ne la "
+        + "garde pas.",
+    montre: function () {
+      var f = premierFilLibre();
+      if (f && !montageComplet()) {
+        surlignerObjet(f); surlignerZone(zoneBorne(borneVoulue(f)));
+      } else surlignerBouton("bt-fermer");
+    } },
+
+  { fait: function () { return ETAT.reperes; },
+    aide: "Ouvrir l'interrupteur, puis repérer <b>deux points</b> du circuit, "
+        + "que l'on nommera <b>A</b> et <b>B</b>.",
+    montre: function () {
+      surlignerBouton(ETAT.ferme ? "bt-ouvrir" : "bt-reperer");
+      surlignerActe("L1");
+    } },
+
+  { fait: L2Posee,
+    aide: "Brancher la lampe <b>L2</b> entre ces deux <b>mêmes</b> points A et "
+        + "B — <b>à côté</b> de L1, et non à sa suite. C'est là toute la "
+        + "différence avec le montage en série.",
+    montre: function () { surlignerBouton("bt-ajouter"); surlignerActe("L2"); } },
+
+  { fait: function () { return ETAT.suivi; },
+    aide: "Suivre du doigt les chemins possibles du courant depuis la pile : "
+        + "<b>combien y en a-t-il ?</b> La page les compte pour de bon — c'est "
+        + "le nombre cyclomatique du graphe.",
+    montre: function () { surlignerBouton("bt-suivre"); } },
+
+  { fait: function () { return ETAT.noeuds; },
+    aide: "Marquer d'un point les deux endroits où les fils se rejoignent : ce "
+        + "sont les <b>nœuds</b> A et B.",
+    montre: function () { surlignerBouton("bt-noeuds"); } },
+
+  { fait: function () { return !!ETAT.vu[L_DEUX]; },
+    aide: "Fermer l'interrupteur et comparer l'éclat de L1 à celui qu'elle "
+        + "avait <b>seule</b>, puis à celui de L2.",
+    montre: function () { surlignerBouton("bt-fermer"); surlignerActe("L1"); } },
+
+  { fait: function () { return !!ETAT.vu[L_D1] && !!ETAT.vu[L_D2]; },
+    aide: function () {
+      if (!ETAT.vu[L_D1]) return "Ouvrir, <b>dévisser L1</b>, refermer et "
+        + "observer L2 : continue-t-elle de briller ?";
+      return "Revisser L1, puis <b>dévisser L2</b> et observer L1. Le résultat "
+        + "est-il le même dans les deux sens ?";
+    },
+    montre: function () {
+      if (ETAT.ferme) { surlignerBouton("bt-ouvrir"); return; }
+      if (!ETAT.vu[L_D1]) { surlignerBouton(ETAT.v1 ? "bt-d1" : "bt-fermer"); return; }
+      surlignerBouton(!ETAT.v1 ? "bt-d1" : (ETAT.v2 ? "bt-d2" : "bt-fermer"));
+    } },
+
+  { fait: function () { return ETAT.schema; },
+    aide: "Tracer le schéma normalisé du montage, en marquant les <b>nœuds</b> "
+        + "par un point.",
+    montre: function () { surlignerBouton("bt-schema"); } }
+];
+function premierFilLibre() {
+  var i;
+  for (i = 0; i < FILS.length; i++) if (!filPose(FILS[i])) return FILS[i];
+  return null;
+}
+function poserUnePince() {
+  var f = premierFilLibre(), z;
+  if (!f) return 0;
+  z = zoneDe(f);
+  if (!z) return 0;
+  deposer(f, z, { x: f.x, y: f.y });
+  return 560;
+}
+
+/* ==================================================================
+   20. LES BOUTONS DE SCÈNE — le MÊME chemin que le glisser (§12.13)
+   ================================================================== */
+var ACTIONS = {
+  "bt-fermer": function () { return basculerInter(true); },
+  "bt-ouvrir": function () { return basculerInter(false); },
+  "bt-reperer": reperer,
+  "bt-ajouter": ajouterL2,
+  "bt-suivre": suivreChemin,
+  "bt-noeuds": marquerNoeuds,
+  "bt-d1": function () { return devisser(1); },
+  "bt-d2": function () { return devisser(2); },
+  "bt-schema": tracerSchema
+};
+function brancherBoutonsScene() {
+  svg.addEventListener("click", function (ev) {
+    var n = ev.target, a = null;
+    while (n && n !== svg) {
+      a = n.getAttribute && n.getAttribute("data-act");
+      if (a && ACTIONS[a]) break;
+      a = null;
+      n = n.parentNode;
+    }
+    if (!a) return;
+    ACTIONS[a]();
+  });
+  INTER.g.addEventListener("click", function () { basculerInter(!ETAT.ferme); });
+}
+
+/* ==================================================================
+   21. LES TABLEAUX DU CAPOT
+   ================================================================== */
+function construireCapot() {
+  var t = $("capotAccord"), sv, ref;
+  vide(t);
+  t.appendChild(ligneTab(["Situation", "éclat L1 (modèle)", "la fiche",
+    "éclat L2 (modèle)", "la fiche", "boucles (modèle)", "la fiche"], true));
+  sv = etatSauve();
+  poserSituation({ deux: false, ferme: true });
+  ref = eclatRelatif(resoudreMontage().T1);
+  [[L_SEULE, { deux: false, ferme: true }],
+   [L_DEUX, { deux: true, ferme: true }],
+   [L_D1, { deux: true, ferme: true, v1: false }],
+   [L_D2, { deux: true, ferme: true, v2: false }]
+  ].forEach(function (p) {
+    var k = p[0], s;
+    if (k < 0) return;
+    poserSituation(p[1]);
+    s = resoudreMontage();
+    t.appendChild(ligneTab([intitule(k, 0),
+      motEclatL(s.T1, ref), cel(k, 1),
+      p[1].deux ? motEclatL(s.T2, ref) : "lampe absente", cel(k, 2),
+      boucles(), cel(k, 3)]));
+  });
+  etatRestaure(sv);
+  resoudreMontage();
+
+  t = $("capotCompare");
+  vide(t);
+  t.appendChild(ligneTab(["Grandeur", "L1 seule", "en SÉRIE (leçon 30)",
+                          "en DÉRIVATION"], true));
+  sv = etatSauve();
+  poserSituation({ deux: false, ferme: true });
+  var a = resoudreMontage();
+  poserSituation({ deux: true, ferme: true });
+  var d = resoudreMontage();
+  etatRestaure(sv);
+  resoudreMontage();
+  /* le montage en SÉRIE se recalcule ici, à part : deux lampes sur une boucle */
+  var cs = new Circuit(), s1 = {}, s2 = {};
+  cs.ajouter("M", "P", dGen(REG.E, rInterne()));
+  cs.ajouter("P", "A", dFil());
+  cs.ajouter("A", "B", dLampe(s1), "L1");
+  cs.ajouter("B", "C", dLampe(s2), "L2");
+  cs.ajouter("C", "M", dFil());
+  cs.resoudre();
+  t.appendChild(ligneTab(["I débité par la pile", nb(a.Ipile * 1000, 0) + " mA",
+    nb(Math.abs(cs.courant("L1")) * 1000, 0) + " mA",
+    nb(d.Ipile * 1000, 0) + " mA"]));
+  t.appendChild(ligneTab(["U aux bornes de chaque lampe", nb(a.U1, 2) + " V",
+    nb(Math.abs(cs.u("A", "B")), 2) + " V", nb(d.U1, 2) + " V"]));
+  t.appendChild(ligneTab(["éclat de chaque lampe", "100 %",
+    nb(eclatRelatif(s1.T) / eclatRelatif(a.T1) * 100, 1) + " %",
+    nb(eclatRelatif(d.T1) / eclatRelatif(a.T1) * 100, 0) + " %"]));
+  t.appendChild(ligneTab(["boucles", "une seule", "une seule", "deux"]));
+  t.appendChild(ligneTab(["une lampe retirée", "—", "tout s'éteint",
+    "l'autre continue"]));
+  construireConstantes();
+}
+
+/* ==================================================================
+   22. RECOMMENCER, ET 23. LE DÉMARRAGE
+   ================================================================== */
+function recommencer() {
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  purger();
+  ANIM_ON = true;
+  var t = ETAT ? ETAT.tSeance : 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = t;
+  ETAT.horsProto = horsProtocole();
+  retenue = 0;
+  ETABLI = 0;
+  POS_ANIM = {};
+  $("diverge").innerHTML = "";
+  $("diverge").style.display = "none";
+  FILS.forEach(function (f) { f.a = null; f.b = null; placer(f, f.base.x, f.base.y); });
+  L1.visser(true, 0); L2.visser(true, 0);
+  INTER.basculer(false, 0);
+  vide(gSchema); vide(gDoigt); vide(gComp); vide(gBoucles); vide(gNoeuds);
+  redessinerLiens();
+  viderTableau();
+  noter("—", false);
+  redessiner();
+}
+
+function demarrer() {
+  var cadre = $("paillasse");
+  ETAT = neufEtat();
+  construireProtocole();
+  svg = cadre.appendChild(el("svg", { viewBox: "0 0 " + W + " " + H,
+    width: "100%", role: "img",
+    "aria-label": "Paillasse virtuelle : une pile plate, un interrupteur et "
+      + "deux lampes identiques branchées entre les deux mêmes points A et B, "
+      + "chacune sur sa propre branche" }));
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  defsCommunes();
+  defsCircuit();
+  ajouterCouches();
+  construireDecor();
+  construireSecurite();
+  construirePostes();
+  construireBoutonsScene();
+  LISTE.forEach(brancherObjet);
+  brancherPrise();
+  brancherBoutonsScene();
+  construireHTMLBase("le montage en dérivation");
+  construireEtapes(["L1 seule observée", "A et B repérés", "L2 entre A et B",
+                    "les chemins suivis", "les nœuds marqués", "les deux éclats",
+                    "L1 puis L2 dévissées", "le schéma"]);
+  construireSeance();
+  construireCapot();
+  brancherCurseurs();
+  brancherGuide();
+  $("bProto").addEventListener("click", revenirAuProtocole);
+  demarrerHorloge();
+  redessinerLiens();
+  redessiner();
+  var faux = accordAvecLaFiche();
+  if (faux.length) {
+    signalerDivergence("modele", "<b>Le modèle ne redonne plus la fiche :</b> "
+      + faux.join(" · "));
+  }
+}
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire. C'est le §1.1 : un bouton qui rejoue le YAML est le refus
+      explicite de l'enseignant.                                              */
+var guideSurb = [], guideDefaire = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  /* ⚠ Un surlignage qui n'ajoute PAS de nœud — le contour posé sur un élément
+     de la colonne de droite — ne se défait pas par un removeChild : il faut
+     une fermeture d'annulation (SKILL §12bis.3-7). */
+  guideDefaire.forEach(function (f) { try { f(); } catch (e) { /* rien */ } });
+  guideDefaire = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un élément de la PAGE — le tableau, un graphe, un bouton de la colonne — ne
+   vit pas dans le SVG : on ne peut pas lui poser de halo. On lui pose un
+   contour en style en ligne, et on le défait avec le reste du guidage. */
+function surlignerHtml(id) {
+  var b = document.getElementById(id), av, ao;
+  if (!b) return false;
+  av = b.style.outline; ao = b.style.outlineOffset;
+  b.style.outline = "3px dashed " + GOLD;
+  b.style.outlineOffset = "3px";
+  guideDefaire.push(function () {
+    b.style.outline = av; b.style.outlineOffset = ao;
+  });
+  return true;
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+/* ⚠ On vise par `data-act`, jamais par un `id` : un `id` de `<defs>` volerait
+   le sélecteur et rendrait un dégradé, qui n'a pas de boîte (§12bis.3-4). */
+function surlignerActe(act, marge) {
+  var n = svg.querySelector('[data-act="' + act + '"]'), b = boiteSVG(n), m = marge || 8;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return false;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+  return true;
+}
+function surlignerZone(z, m) {
+  if (!z) return false;
+  m = m === undefined ? 8 : m;
+  halo(z.x - z.hw - m, z.y - z.hh - m, 2 * (z.hw + m), 2 * (z.hh + m), 14);
+  return true;
+}
+function surlignerObjet(o, m) {
+  if (!o) return false;
+  var b = boiteSVG(o.g);
+  m = m === undefined ? 8 : m;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. reprendre le montage de L1 seule, fermer, se remémorer son éclat. */
+  function () {
+    if (!montageComplet()) return poserUnePince();
+    if (!ETAT.ferme) { presserBouton("bt-fermer"); return 900; }
+    return 0;
+  },
+
+  /* 2. ouvrir, puis repérer les deux points A et B. */
+  function () {
+    if (ETAT.ferme) { presserBouton("bt-ouvrir"); return 760; }
+    presserBouton("bt-reperer");
+    return 800;
+  },
+
+  /* 3. brancher L2 ENTRE CES DEUX MÊMES POINTS — deux fils neufs, l'un de A à
+     L2, l'autre de B à L2. C'est là toute la différence avec la série. */
+  function () { presserBouton("bt-ajouter"); return 820; },
+
+  /* 4. suivre du doigt les chemins : le compteur cyclomatique répond. */
+  function () { presserBouton("bt-suivre"); return 1700; },
+
+  /* 5. marquer les nœuds d'un point. */
+  function () { presserBouton("bt-noeuds"); return 800; },
+
+  /* 6. refermer et comparer les trois éclats. */
+  function () { presserBouton("bt-fermer"); return 1000; },
+
+  /* 7. dévisser L1, observer L2 ; revisser L1, dévisser L2, observer L1. Une
+     seule étape de la fiche, six pressions — l'aide porte le compte, et
+     l'empreinte du pilote bouge à chacune. */
+  function () {
+    if (!ETAT.vu[L_D1]) {
+      if (ETAT.ferme && ETAT.v1) { presserBouton("bt-ouvrir"); return 760; }
+      if (ETAT.v1) { presserBouton("bt-d1"); return 760; }
+      presserBouton("bt-fermer");
+      return 1000;
+    }
+    if (ETAT.ferme) { presserBouton("bt-ouvrir"); return 760; }
+    if (!ETAT.v1) { presserBouton("bt-d1"); return 760; }
+    if (ETAT.v2) { presserBouton("bt-d2"); return 760; }
+    presserBouton("bt-fermer");
+    return 1000;
+  },
+
+  /* 8. tracer le schéma normalisé, nœuds marqués — le terme que la leçon
+     demande d'atteindre, et c'est lui qui démasque la conclusion. */
+  function () { presserBouton("bt-schema"); return 900; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+/* Les écouteurs du guide et du cadre. Ils sont posés une fois, au démarrage. */
+function brancherGuide() {
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("rezero").addEventListener("click", recommencer);
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

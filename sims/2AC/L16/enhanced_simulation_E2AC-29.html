@@ -1,0 +1,3145 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-29 · Que lit-on sur un oscillogramme ?</title>
+<!-- L'ECOUTEUR D'ERREURS EST ICI, ET PAS EN FIN DE BODY (SKILL §12.47) :
+     pose apres le script de la page, il ne verrait aucune erreur de
+     demarrage — celles-ci ont deja eu lieu. -->
+<script>
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message) + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<!--
+  ===================================================================
+  E2AC-29 · 2AC · U3 · L16 — PAILLASSE VIRTUELLE
+  « Que peut-on lire sur un oscillogramme ? »
+  ===================================================================
+
+  LA FAMILLE, AVANT LA PAGE
+  -------------------------
+  Les trois expériences de la leçon partagent `commun_oscillo.js` — le
+  solveur — et `commun_face.js` — la face avant. Ici, l'objet n'est plus la
+  FORME de la trace mais les TROIS NOMBRES qu'on en tire.
+
+  CE QUE CETTE PAGE CALCULE PLUTÔT QUE DE LE REJOUER
+  --------------------------------------------------
+  Les NEUF cellules du tableau sont neuf produits, et pas un n'est écrit.
+
+   · X ET Y NE SONT PAS DONNÉS : ILS SE COMPTENT. L'élève pose sur l'écran
+     les trois curseurs de la règle transparente ; la page mesure l'écart en
+     divisions et le QUANTIFIE au pas de l'instrument — 0,1 division, la
+     demi-sous-graduation. La largeur vraie d'un motif vaut 4,0000 division
+     à 5 ms/div ; la lecture rend 4,0. La déviation vraie du sommet vaut
+     2,9981 division ; la lecture rend 3,0. L'écart lecture/vérité est
+     affiché : 0,0000 et 0,0019 division.
+   · T = X × S_h, f = 1/T ET U_max = Y × S_v SONT DES PRODUITS D'UNE LECTURE
+     PAR UNE SENSIBILITÉ. Leurs décimales ne se choisissent pas : un produit
+     lecture × sensibilité est un décimal EXACT — 4 × 5 = 20 ms, 3 × 5 =
+     15 V —, tandis que la fréquence prend les décimales que son incertitude
+     propagée justifie, ΔT/T², soit ±2,5 Hz : on écrit donc « 50 Hz » et
+     non « 50,0 Hz » (§12.21, §12.26).
+   · LE PIÈGE DE LA FICHE EST IMPLÉMENTÉ, PAS RECOPIÉ. Son interprétation
+     avertit : « une erreur de lecture est très fréquente : compter UNE
+     SEULE alternance au lieu du motif entier ». La page compare donc
+     l'écart des deux curseurs à la période ET à la demi-période, et refuse
+     la seconde en le disant. C'est le refus le plus instructif de la page,
+     et il est atteignable.
+   · L'ÉTAPE 9 EST UNE VRAIE CONTRE-ÉPREUVE. On change la sensibilité
+     horizontale, on recompte, et T retombe sur la même valeur : à
+     2 ms/div le motif occupe 10 divisions, à 10 ms/div il en occupe 2, à
+     20 ms/div il en occupe 1 — et 10 × 2 = 2 × 10 = 1 × 20 = 20 ms. Rien
+     n'est branché sur « ne pas changer » : c'est le produit qui est
+     invariant, et la page le recalcule à chaque position du bouton.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau, durée, modalité et conclusion
+    viennent de `experiences.yaml`, entrée E2AC-29.
+  · Sv = 5 V/div et Sh = 5 ms/div sont LUS dans le protocole ; le graticule
+    (10 × 8 divisions, sous-graduations au cinquième) est celui de la norme.
+  · La position du générateur n'est PAS prescrite par le protocole : la page
+    adopte celle qui reproduit l'oscillogramme de la fiche, arrondie au cran
+    de 0,1 V du bouton — 10,6 V~ pour U_max = 15 V. C'est écrit à l'écran.
+  · La fréquence de 50 Hz vient du réseau, sourcée dans `PHYS`.
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome ; elle DOUBLE `simulation_E2AC-29.html`, elle ne la remplace pas.
+  · Pas de vue 3D. Elle s'écarte volontairement du §5 du SKILL.
+  · Le dessin est un SCHÉMA HABILLÉ. Sont à l'échelle : le graticule, la
+    trace, la position des trois curseurs, l'écart qu'ils mesurent, la
+    position des aiguilles des deux boutons. Ne le sont pas : le boîtier,
+    les douilles, l'épaisseur des cordons.
+
+  ⚠ SÉCURITÉ — LA PAGE REFUSE CE QUE LA FICHE REFUSE
+  --------------------------------------------------
+  « Aucun branchement sur le secteur 220 V. » La prise murale est dessinée,
+  elle est une zone de dépôt, et y porter un cordon est refusé avec la ligne
+  de la fiche en clair.
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §6.12  décorations en `pointer-events:none` ; plaques de préhension.
+  §12.12 chaque `value` de curseur est un multiple du `step` depuis `min`.
+  §12.19 changer une sensibilité PÉRIME la lecture : les trois nombres
+         s'effacent et le tableau retombe, parce qu'ils ne valent plus pour
+         ce réglage.
+  §12.21 les décimales suivent la division, jamais le calcul.
+  §12.29 les lecteurs de fiche exigent un chiffre en tête, sans drapeau `i`.
+  §12.47 l'écouteur d'erreurs est dans le `<head>`, AVANT le script.
+-->
+
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --rouge:#b03030; --suie:#2a2a2a;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #00000077;
+          pointer-events:none;max-width:52%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(244px,22%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #00000055}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0006}
+.rezero:hover{filter:brightness(1.09)}
+
+/* ---- LE BANDEAU DE SÉCURITÉ ----
+   Les trois fiches de cette leçon manipulent du feu devant des élèves de
+   deuxième année. La sécurité n'est donc pas un encadré à côté du montage :
+   c'est une condition d'exécution, et le bandeau porte en permanence la
+   ligne de `securite` qui motive le geste en cours. */
+.secubande{margin-top:10px;border-radius:9px;padding:10px 14px;
+           border-left:6px solid var(--rouge);background:var(--redbg);
+           display:flex;gap:12px;align-items:flex-start}
+.secubande .pic{font-size:22px;line-height:1.1}
+.secubande .co{flex:1;min-width:0}
+.secubande .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+              font-weight:700;color:var(--rouge);display:block;margin-bottom:2px}
+.secubande .t{font-size:13.5px;color:#4a1f1f;line-height:1.45}
+.secubande.refus{background:#f7d9d9;border-left-color:#8c1c1c}
+.secubande.refus .k{color:#8c1c1c}
+.secubande.ok{background:var(--greenbg);border-left-color:var(--green)}
+.secubande.ok .k{color:var(--green)}
+.secubande.ok .t{color:#22380f}
+
+.checks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.checks div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted);
+            position:relative;min-width:120px}
+.checks div .n{font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+               font-weight:700;color:#c0a0a0;display:block}
+.checks div.non{border-color:#e6b9b9;background:#fdf4f4}
+.checks div.non .n{color:var(--rouge)}
+.checks div.oui{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.checks div.oui .n{color:var(--green)}
+.checks div.oui::after{content:"✓";position:absolute;right:7px;top:5px;
+                       font-weight:700;color:var(--green)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:92px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect div.ajout{background:#f4f0fa}
+.lect div.ajout .k{color:#6b4b9a}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:var(--rouge);background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.box.secu li{margin-bottom:4px}
+.box.secu li.actif{background:#f7d9d9;border-radius:4px;padding:2px 4px;
+                   margin-left:-4px;font-weight:600}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le cadre
+   centre ce qui reste. */
+/* ⚠ `!important` À DESSEIN : le SVG porte un style EN LIGNE (`height:auto`)
+   qui bat tout sélecteur ; sans cela la scène projetée est rognée en haut et
+   en bas, et la bande de commandes du bas disparaît (SKILL §12bis). Les 56 px
+   retranchés sont la bande réservée à la flèche d'avance. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:flex-start;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de huit
+   étapes fait 400 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit en clair. Passée par un échappement CSS, la séquence du
+   caractère se fait avaler par le chiffre qui la suit et sort en « ¹3 ». Le
+   fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--serif);font-size:16px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-29 · 2AC · L16</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="secubande" id="secuBande">
+      <span class="pic" id="secuPic">⚠</span>
+      <span class="co">
+        <span class="k" id="secuTitre">Consigne de sécurité du geste en cours</span>
+        <span class="t" id="secuTexte">…</span>
+      </span>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que les curseurs ont compté</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeSeuils"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:var(--rouge)">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La lecture <span class="note" id="nomMotif">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Écart des curseurs X</div><div class="v" id="lXbrut">—</div></div>
+        <div><div class="k">X lu, au pas de l'instrument</div><div class="v" id="lX">—</div></div>
+        <div><div class="k">Période T = X × S<sub>h</sub></div><div class="v" id="lT">—</div></div>
+        <div><div class="k">Fréquence f = 1 / T</div><div class="v" id="lF">—</div></div>
+        <div><div class="k">Déviation Y du sommet</div><div class="v" id="lY">—</div></div>
+        <div><div class="k">U<sub>max</sub> = Y × S<sub>v</sub></div><div class="v" id="lUmax">—</div></div>
+        <div class="ajout"><div class="k">Écart lecture / vérité (ajout)</div>
+          <div class="v" id="lEcart">—</div></div>
+        <div class="ajout"><div class="k">Incertitude d'une lecture (ajout)</div>
+          <div class="v" id="lIncert">—</div></div>
+      </div>
+      <div class="src" style="margin-top:6px" id="srcLecture"></div>
+    </div>
+
+    <div class="carte">
+      <h2>La période ne dépend pas du bouton <span class="note">étape 9</span></h2>
+      <table id="tabSh"></table>
+      <div class="src" style="margin-top:6px">
+        À chaque position du balayage, la page <b>recompte</b> les divisions
+        d'un motif et <b>recalcule</b> le produit. Ce n'est pas « T ne change
+        pas » qui est écrit : c'est X qui change, S<sub>h</sub> qui change en
+        sens inverse, et le produit qui reste. La ligne en or est la position
+        courante.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>U<sub>max</sub> ne dépend pas de la sensibilité verticale</h2>
+      <table id="tabSv"></table>
+      <div class="src" style="margin-top:6px">
+        Même contre-épreuve sur l'axe vertical. Les positions où le sommet
+        sortirait de l'écran, ou tomberait sous une demi-division, sont
+        écartées : ce ne sont pas des lectures possibles.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg"><label for="rGen">Position du générateur alternatif</label><output id="oGen"></output>
+        <input type="range" id="rGen" min="6" max="12" step="0.1" value="10.6">
+        <div class="aide" id="aideGen"></div></div>
+      <div class="reg"><label for="rF">Fréquence de la source</label><output id="oF"></output>
+        <input type="range" id="rF" min="10" max="200" step="5" value="50">
+        <div class="aide" id="aideF"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="eqModele"></div>
+      <p>Les trois nombres sont des <b>produits d'une lecture par une
+      sensibilité</b>. Ce qui fait leur valeur pédagogique n'est pas le
+      calcul — il est trivial — mais le fait que la <b>lecture</b> soit
+      quantifiée par la graduation de l'écran, et que le nombre de décimales
+      en découle.</p>
+      <h3>2 · Ce que devient l'énergie</h3>
+      <div class="eq" id="eqBilan"></div>
+      <p>Rien ne se transforme ici : l'oscilloscope est un voltmètre qui
+      dessine, branché en dérivation, et son million d'ohms d'entrée ne
+      prélève que quelques microampères.</p>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>La synchronisation est parfaite.</b> Le motif est toujours
+        calé sur un passage par zéro en montant. En salle, obtenir « deux ou
+        trois motifs nets et stables » est le geste le plus long de la
+        séance, et il demande un bouton de déclenchement que cette page n'a
+        pas.</li>
+        <li><b>Les curseurs sont infiniment fins.</b> Une vraie règle
+        transparente a un trait d'un demi-millimètre, et l'œil place ce
+        trait à mieux qu'une demi-sous-graduation seulement si l'écran est
+        bien éclairé. L'incertitude retenue — une sous-graduation, 0,2
+        division — est donc plutôt optimiste.</li>
+        <li><b>Aucune erreur de gain ni de base de temps.</b> Un
+        oscilloscope d'établissement dérive de quelques pour cent, et c'est
+        souvent lui, et non l'élève, qui fait trouver 48 Hz au lieu de 50.</li>
+        <li><b>La fréquence de 50 Hz est une hypothèse</b>, pas une donnée
+        de la fiche : elle vient du réseau. Le curseur permet d'en changer,
+        et alors toute la ligne « période » change avec elle — c'est bien la
+        preuve qu'elle est mesurée et non recopiée.</li>
+        <li><b>Le sommet est supposé visible.</b> Si la trace est écrêtée,
+        la page le dit et refuse la lecture ; en salle, un élève pressé lit
+        quand même, et trouve U_max = 20 V sur une trace saturée.</li>
+        <li><b>Aucune distorsion.</b> La sinusoïde du transformateur est
+        parfaite ici ; en vrai, son sommet est légèrement aplati dès qu'on
+        la charge, et le rapport de l'expérience suivante s'en ressent.</li>
+        <li><b>La sécurité simulée n'est pas la sécurité.</b> La page refuse
+        le secteur et l'écrit ; elle ne remplace pas la vérification du
+        montage par l'enseignant.</li>
+      </ul>
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-29.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-29",
+  "niveau": "2AC",
+  "unite": "U3",
+  "lecon": "L16",
+  "titre": "Que peut-on lire sur un oscillogramme ?",
+  "axe": "Les caractéristiques d'une tension alternative sinusoïdale",
+  "objectif": "Déterminer, à partir du seul oscillogramme et des deux sensibilités de l'appareil, la **valeur maximale U_max**, la **période T** et la **fréquence f** d'une tension alternative sinusoïdale — c'est-à-dire transformer un dessin à l'écran en trois nombres accompagnés de leurs unités.",
+  "duree": 18,
+  "modalite": "travail par postes de 4 apprenants, exploitation collective des lectures",
+  "materiel": [
+    "Un **oscilloscope** à une voie, réglé sur **Sv = 5 V/div** et **Sh = 5 ms/div**",
+    "Un **générateur alternatif basse tension réglable 6 – 12 V~**, ou un **GBF**",
+    "Des **fils de connexion** rouge et noir",
+    "Une règle transparente pour compter les divisions à l'écran",
+    "La fiche expérimentale et son quadrillage"
+  ],
+  "securite": [
+    "⚠️ **Aucun branchement sur le secteur 220 V** : on n'emploie que la sortie **basse tension** du générateur.",
+    "Vérifier les branchements avant de mettre sous tension et les faire contrôler par l'enseignant.",
+    "Ne pas modifier les réglages de l'oscilloscope sans y être invité : un appareil déréglé donne des lectures fausses.",
+    "Manipuler les fils avec les **mains sèches** ; ne jamais toucher une partie métallique dénudée.",
+    "Signaler immédiatement toute anomalie — échauffement, odeur, fumée — à l'enseignant.",
+    "Ne jamais refaire cette expérience à la maison."
+  ],
+  "protocole": [
+    "Relier le **générateur alternatif** à la borne **Y** de l'oscilloscope et à la **masse**, sélecteur sur **AC**.",
+    "Régler la sensibilité verticale sur **Sv = 5 V/div** et le balayage sur **Sh = 5 ms/div**, de façon à obtenir deux ou trois motifs **nets et stables**.",
+    "Repérer sur l'écran un **motif élémentaire** : la portion de courbe qui se reproduit identique à elle-même, et qui comporte une alternance **positive** et une alternance **négative**.",
+    "Compter le nombre **X** de divisions occupées par **un seul** motif sur l'axe horizontal.",
+    "Calculer la **période** : **T = X × S_h**, et exprimer le résultat en **ms** puis en **s**.",
+    "Calculer la **fréquence** : **f = 1 / T**, et exprimer le résultat en **hertz (Hz)**.",
+    "Compter le nombre **Y** de divisions entre l'**axe du temps** et le **sommet** de la courbe.",
+    "Calculer la **valeur maximale** : **U_max = Y × S_v**, et exprimer le résultat en **volts**.",
+    "Changer la sensibilité horizontale, recompter **X**, recalculer **T** et vérifier que la période **n'a pas changé**."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Grandeur lue sur l'oscillogramme",
+      "Lecture",
+      "Sensibilité",
+      "Résultat"
+    ],
+    "lignes": [
+      [
+        "Largeur X d'un motif (une période)",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Fréquence f = 1 / T",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Déviation verticale maximale Y",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Largeur X d'un motif (une période)",
+        "4 div",
+        "Sh = 5 ms/div",
+        "**T = 20 ms**"
+      ],
+      [
+        "Fréquence f = 1 / T",
+        "—",
+        "T = 0,02 s",
+        "**f = 50 Hz**"
+      ],
+      [
+        "Déviation verticale maximale Y",
+        "3 div",
+        "Sv = 5 V/div",
+        "**U_max = 15 V**"
+      ]
+    ]
+  },
+  "observation": "Sur l'oscillogramme, un motif occupe 4 divisions et le sommet se trouve à 3 divisions de l'axe du temps.",
+  "conclusion": "T = X × Sh = 20 ms, f = 1/T = 50 Hz et Umax = Y × Sv = 15 V : trois nombres tirés d'un dessin et de deux sensibilités.",
+  "oheric": {
+    "observation": "La sinusoïde est là, à l'écran, régulière et stable. Mais une courbe n'est pas une mesure : on ne peut ni la recopier dans un cahier, ni la comparer à celle du voisin, ni dire si elle est « plus grande » ou « plus rapide » qu'une autre. L'écran est pourtant **quadrillé**, et deux boutons portent des nombres : **5 V/div** et **5 ms/div**. Comment tirer de ce dessin des **nombres** qui caractérisent la tension ?",
+    "hypothese": "Si le bouton **V/div** indique combien de **volts** vaut un carreau en hauteur, et le bouton **ms/div** combien de **millisecondes** vaut un carreau en largeur, alors il doit suffire de **compter les carreaux** et de multiplier : la hauteur du sommet donnera la valeur maximale de la tension, et la largeur d'un motif donnera la durée au bout de laquelle la tension se répète.",
+    "experience": "Sur l'oscillogramme obtenu avec le générateur alternatif, l'oscilloscope étant réglé sur **Sv = 5 V/div** et **Sh = 5 ms/div** : repérer un **motif élémentaire**, compter le nombre **X** de divisions qu'il occupe et le nombre **Y** de divisions entre l'axe du temps et le sommet, puis calculer **T = X × S_h**, **f = 1 / T** et **U_max = Y × S_v**.",
+    "resultats": "Un motif élémentaire occupe **X = 4 divisions** sur l'axe horizontal ; avec **S_h = 5 ms/div**, la période vaut **T = 4 × 5 = 20 ms**, soit **T = 0,02 s**. La fréquence en découle : **f = 1 / 0,02 = 50 Hz**. Le sommet de la courbe se trouve à **Y = 3 divisions** de l'axe du temps ; avec **S_v = 5 V/div**, la valeur maximale vaut **U_max = 3 × 5 = 15 V**. En changeant la sensibilité horizontale, le motif occupe un autre nombre de divisions, mais le produit **X × S_h** redonne **20 ms**.",
+    "interpretation": "Les trois nombres obtenus ne sont pas des propriétés de l'écran, mais bien de la **tension** : c'est ce que prouve le dernier essai, où l'on change la sensibilité et où la période **ne change pas**. La **période T** est le plus petit intervalle de temps au bout duquel la tension reprend la même valeur en variant dans le même sens ; son unité légale est la **seconde (s)**. La **fréquence f** est le nombre de périodes en une seconde : c'est l'**inverse** de la période, et son unité est le **hertz (Hz)**. Trouver **50 Hz** signifie que la tension accomplit **50 motifs complets par seconde** — et donc qu'elle change de sens **100 fois par seconde**, ce qu'aucun œil ne peut suivre : voilà pourquoi il fallait un oscilloscope. La **valeur maximale U_max** est la plus grande valeur prise par la tension au cours du temps ; on la lit **du milieu au sommet**, et non d'un sommet à l'autre. L'hypothèse est validée. ⚠️ Une erreur de lecture est très fréquente : compter **une seule alternance** au lieu du motif entier. Un motif comporte **deux** alternances, une positive et une négative.",
+    "conclusion": "Une tension alternative sinusoïdale est caractérisée par sa **période T**, sa **fréquence f** et sa **valeur maximale U_max**. On les lit sur l'oscillogramme : **T = X × S_h** (X en divisions, S_h la sensibilité horizontale) ; **f = 1 / T**, en **hertz** ; **U_max = Y × S_v** (Y en divisions, S_v la sensibilité verticale). Ici : **T = 20 ms = 0,02 s**, **f = 50 Hz** et **U_max = 15 V**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+var CLAIR = "#e8eef5", SOMBRE = "#171c23";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.47 : `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0 — le
+   garde-fou d'origine laissait donc passer `null`, et `null.toFixed` levait
+   PENDANT le démarrage, sur une page qui avait l'air de charger. Le TYPE se
+   teste avant la finitude. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+function nbAuto(x) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  var a = Math.abs(x);
+  return nb(x, a >= 100 ? 0 : (a >= 10 ? 1 : (a >= 1 ? 2 : (a >= 0.01 ? 3 : 4))));
+}
+/* Un nombre qui court sur plusieurs décades — un éclat lumineux, une
+   absorbance — s'écrit en notation scientifique française. */
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x) || x === 0) return nb(x, d);
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10);
+  if (e >= -2 && e <= 3) return nbAuto(x);
+  return nb(x / Math.pow(10, e), d === undefined ? 1 : d) + "·10" + expo(e);
+}
+function expo(e) {
+  var s = "" + e, o = "", i, T = { "0": "⁰", "1": "¹", "2": "²", "3": "³",
+    "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  for (i = 0; i < s.length; i++) o += T[s.charAt(i)] || s.charAt(i);
+  return o;
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+/* Le mini-markdown du YAML. Le gras se dépouille AVANT l'italique : le motif
+   de l'italique ne doit jamais voir une paire d'astérisques doubles. */
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* §12.2 : `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de nb(). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function rgb(r, v, b) {
+  function h(x) { return ("0" + Math.round(borne(x, 0, 255)).toString(16)).slice(-2); }
+  return "#" + h(r) + h(v) + h(b);
+}
+/* Couper un texte long en lignes d'au plus n caractères, sans casser un mot. */
+function lignes(txt, n) {
+  var mots = String(txt || "").split(/\s+/), out = [], cur = "";
+  mots.forEach(function (m) {
+    if (!cur.length) { cur = m; return; }
+    if ((cur + " " + m).length <= n) { cur += " " + m; }
+    else { out.push(cur); cur = m; }
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Port fidèle de `_outils_faire/_modeles_2AC/modele_L16.py`, validé sur le
+   disque AVANT que cette page n'existe : 24 cellules et verdicts sur 24
+   retrouvés par le modèle, sur les trois fiches de la leçon.
+
+   LES TROIS PAGES DE L16 PARTAGENT CE FICHIER, et c'est ce qui les rend
+   interrogeables ensemble : la forme de la trace (E2AC-28), les trois
+   nombres (E2AC-29) et la valeur efficace (E2AC-30) sont trois LECTURES du
+   même objet — un signal u(t) échantillonné, présenté à un instrument qui a
+   ses réglages.                                                            */
+var RAC2 = Math.sqrt(2);
+
+var PHYS = {
+  F_RESEAU: { v: 50, u: "Hz", n: "fréquence du réseau électrique marocain",
+    s: "ONEE — réseau 220 V / 50 Hz, comme toute la rive sud de la " +
+       "Méditerranée. C'est elle, et non la fiche, qui donne T = 20 ms : le " +
+       "« générateur alternatif basse tension » d'un laboratoire de collège " +
+       "est un transformateur branché sur ce réseau." },
+  N_DIV_X: { v: 10, u: "div", n: "largeur de l'écran",
+    s: "graticule normalisé d'oscilloscope : 10 divisions horizontales." },
+  N_DIV_Y: { v: 8, u: "div", n: "hauteur de l'écran",
+    s: "graticule normalisé d'oscilloscope : 8 divisions verticales." },
+  SOUS_DIV: { v: 0.2, u: "div", n: "pas des sous-graduations des axes centraux",
+    s: "chaque division est coupée en CINQ par les petits traits portés sur " +
+       "les deux axes centraux — c'est la graduation réelle de l'instrument, " +
+       "et donc l'incertitude d'une lecture." },
+  PAS_LECTURE: { v: 0.1, u: "div", n: "pas de lecture, à la règle transparente",
+    s: "on interpole à la demi-sous-graduation, jamais plus fin. La règle " +
+       "transparente est citée par le matériel de E2AC-29." },
+  R_ENTREE: { v: 1e6, u: "Ω", n: "résistance d'entrée de l'oscilloscope",
+    s: "entrée haute impédance normalisée 1 MΩ. C'est elle qui permet de " +
+       "brancher l'appareil EN DÉRIVATION sans charger la source : sous " +
+       "4,5 V il n'y circule que 4,5 µA." },
+  C_COUPLAGE: { v: 1e-7, u: "F", n: "condensateur de coupure du mode AC",
+    s: "100 nF en série avec les 1 MΩ d'entrée → passe-haut de fréquence de " +
+       "coupure 1/(2πRC) = 1,6 Hz. À 50 Hz le signal passe intact ; une " +
+       "tension continue, elle, est totalement bloquée." },
+  FF_SINUS: { v: Math.PI / (2 * Math.sqrt(2)), u: "—",
+    n: "facteur de forme d'une sinusoïde",
+    s: "π/(2√2) = 1,1107 — le rapport valeur efficace / valeur moyenne " +
+       "redressée. C'est le coefficient CÂBLÉ dans un multimètre " +
+       "d'établissement, qui mesure ⟨|u|⟩ et non √(⟨u²⟩) : d'où +11,1 % " +
+       "d'erreur sur un signal carré, et −3,8 % sur un triangle." },
+  N_COMPTES: { v: 2000, u: "points", n: "résolution de l'afficheur du multimètre",
+    s: "multimètre 3½ digits : 2000 points par calibre, soit 0,01 V sur le " +
+       "calibre 20 V." }
+};
+
+var F_RESEAU = PHYS.F_RESEAU.v, N_DIV_X = PHYS.N_DIV_X.v, N_DIV_Y = PHYS.N_DIV_Y.v;
+var SOUS_DIV = PHYS.SOUS_DIV.v, PAS_LECTURE = PHYS.PAS_LECTURE.v;
+var FF_SINUS = PHYS.FF_SINUS.v, N_COMPTES = PHYS.N_COMPTES.v;
+
+/* Positions des boutons : la séquence 1-2-5, relevée sur les faces avant des
+   figures de la leçon. */
+var SV_POSITIONS = [0.1, 0.2, 0.5, 1, 2, 5, 10];        /* V/div  */
+var SH_POSITIONS = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20];    /* ms/div */
+var CALIBRES = [0.2, 2, 20, 200, 600];                  /* V, multimètre */
+
+/* Seuils d'ASPECT — jamais des constantes physiques (§12.3). Chacun laisse
+   plus de 25 % de marge de part et d'autre de CHAQUE observation des fiches :
+   « point / trait » est franchi ×11,3 par le générateur et jamais par la
+   pile ; « sinusoïdale » sépare 0,7071 de 1,0000 (carré) et 0,5774
+   (triangle), soit dix fois la tolérance. */
+var SEUIL_SPOT = 0.3;      /* div — en deçà l'œil voit un point, au-delà un trait */
+var TOL_SINUS = 0.03;      /* sur le facteur de crête U_eff/U_max              */
+
+/* ==================================================================
+   2. LE SIGNAL — u(t), échantillonné
+   ================================================================== */
+var FORMES = ["continu", "sinus", "carre", "triangle"];
+
+/* `umax` est l'AMPLITUDE. Le bouton d'un générateur alternatif, lui, est
+   gradué en valeurs EFFICACES — c'est la conclusion même d'E2AC-30 : « toute
+   valeur inscrite sur un appareil est une valeur efficace ». */
+function source(forme, umax, f) {
+  return { forme: forme, umax: +umax,
+           f: forme === "continu" ? 0 : (f === undefined ? F_RESEAU : +f) };
+}
+function reglageVersUmax(r) { return r * RAC2; }
+function umaxVersReglage(u) { return u / RAC2; }
+
+function tension(src, t) {
+  var um = src.umax, f = src.f, ph;
+  if (src.forme === "continu" || !f) return um;
+  ph = (f * t) % 1;
+  if (ph < 0) ph += 1;
+  if (src.forme === "sinus") return um * Math.sin(2 * Math.PI * ph);
+  if (src.forme === "carre") return ph < 0.5 ? um : -um;
+  if (ph < 0.25) return um * (4 * ph);
+  if (ph < 0.75) return um * (2 - 4 * ph);
+  return um * (4 * ph - 4);
+}
+/* Sur un nombre ENTIER de périodes — sans quoi les intégrales dépendraient de
+   l'instant où l'on ouvre la fenêtre. */
+function echantillons(src, n, periodes) {
+  n = n || 2000; periodes = periodes || 1;
+  var out = [], i, duree;
+  if (!src.f) { for (i = 0; i < n; i++) out.push(src.umax); return out; }
+  duree = periodes / src.f;
+  for (i = 0; i < n; i++) out.push(tension(src, duree * i / n));
+  return out;
+}
+function moyenne(v) {
+  var s = 0, i;
+  for (i = 0; i < v.length; i++) s += v[i];
+  return s / v.length;
+}
+/* ⟨|u|⟩ — ce que MESURE réellement un multimètre d'établissement. */
+function moyenneRedressee(v) {
+  var s = 0, i;
+  for (i = 0; i < v.length; i++) s += Math.abs(v[i]);
+  return s / v.length;
+}
+/* U_eff = √(⟨u²⟩) — PAR L'INTÉGRALE. C'est le cœur d'E2AC-30 : le rapport
+   U_max/U_eff n'est pas posé à √2, il TOMBE de ce calcul. Sur une sinusoïde
+   il vaut 1,4142 ; sur un carré 1,0000 ; sur un triangle 1,7321. C'est cela,
+   et rien d'autre, qui rend la leçon interrogeable. */
+function efficace(v) {
+  var s = 0, i;
+  for (i = 0; i < v.length; i++) s += v[i] * v[i];
+  return Math.sqrt(s / v.length);
+}
+function composanteContinue(src, n) { return moyenne(echantillons(src, n || 4000)); }
+
+/* ==================================================================
+   3. L'OSCILLOSCOPE — un instrument, avec ses réglages
+   ==================================================================
+   La trace n'est pas un dessin : c'est u(t) échantillonné, converti en
+   divisions par la sensibilité verticale et la base de temps.              */
+function Oscillo(sv, sh, couplage, balayage, y0) {
+  this.sv = sv === undefined ? 5 : +sv;
+  this.sh = sh === undefined ? 5 : +sh;
+  this.couplage = couplage || "DC";
+  this.balayage = balayage === undefined ? true : !!balayage;
+  this.y0 = y0 || 0;
+}
+Oscillo.prototype.uVue = function (src, t) {
+  var u = tension(src, t);
+  /* Le condensateur de 100 nF bloque le continu (fc = 1,6 Hz) et laisse
+     passer intact tout ce qui varie à 50 Hz. */
+  if (this.couplage === "AC") u -= composanteContinue(src);
+  return u;
+};
+Oscillo.prototype.yDiv = function (src, t) { return this.uVue(src, t) / this.sv + this.y0; };
+Oscillo.prototype.ecreter = function (y) {
+  var b = N_DIV_Y / 2;
+  return y < -b ? -b : (y > b ? b : y);
+};
+Oscillo.prototype.trace = function (src, n) {
+  if (!this.balayage) return [];
+  n = n || 600;
+  var duree = this.sh * 1e-3 * N_DIV_X, out = [], i;
+  for (i = 0; i <= n; i++) {
+    out.push([N_DIV_X * i / n, this.ecreter(this.yDiv(src, duree * i / n))]);
+  }
+  return out;
+};
+/* Un oscilloscope écrête pour de bon : c'est ce qui oblige à changer de
+   sensibilité, et la page doit le montrer plutôt que de l'écrire. */
+Oscillo.prototype.sature = function (src, n) {
+  n = n || 600;
+  var i, y, duree, s;
+  if (!this.balayage) {
+    s = this.spot(src);
+    return s[1] > N_DIV_Y / 2 || s[0] < -N_DIV_Y / 2;
+  }
+  duree = this.sh * 1e-3 * N_DIV_X;
+  for (i = 0; i <= n; i++) {
+    y = this.yDiv(src, duree * i / n);
+    if (Math.abs(y) > N_DIV_Y / 2) return true;
+  }
+  return false;
+};
+/* Balayage arrêté, le spot ne se déplace plus horizontalement : il monte et
+   descend sur place. Une tension constante donne un POINT ; une tension
+   alternative donne un TRAIT VERTICAL, parce que le spot va trop vite pour
+   qu'on le suive. Les deux mots de la fiche sortent de là. */
+Oscillo.prototype.spot = function (src, n) {
+  n = n || 1200;
+  var y, i, lo, hi, v;
+  if (!src.f) { y = this.yDiv(src, 0); return [y, y]; }
+  lo = 1e9; hi = -1e9;
+  for (i = 0; i < n; i++) {
+    v = this.yDiv(src, i / (n * src.f));
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  return [lo, hi];
+};
+
+/* ==================================================================
+   4. LA LECTURE — la précision suit la DIVISION, pas le calcul (§12.21)
+   ==================================================================
+   « Le nombre de décimales DIT la précision — il ne se choisit pas. »
+     · une LECTURE se quantifie au dixième de division ;
+     · l'INCERTITUDE d'une lecture interpolée est d'UNE sous-graduation ;
+     · un PRODUIT lecture × sensibilité est un décimal EXACT ;
+     · une grandeur DÉRIVÉE prend les décimales que son incertitude
+       propagée justifie, et TOUTE la série s'écrit à la précision du cas le
+       plus défavorable (§12.26).                                           */
+function lireDiv(x) {
+  return Math.floor(Math.abs(x) / PAS_LECTURE + 0.5) * PAS_LECTURE * (x >= 0 ? 1 : -1);
+}
+function decDe(pas) {
+  if (pas <= 0) return 0;
+  return Math.max(0, Math.ceil(-Math.log(pas) / Math.LN10 - 1e-9));
+}
+/* Un PRODUIT lecture × sensibilité est un décimal exact : on l'écrit avec ses
+   propres décimales, sans zéro final inutile (17 V, jamais « 17,0 V »). */
+function exact(x, decMax) {
+  var s = x.toFixed(decMax === undefined ? 3 : decMax);
+  if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+  return s.replace(".", ",");
+}
+function mesurerPeriode(osc, src) {
+  if (!src.f) return null;
+  var xVrai = (1 / src.f) / (osc.sh * 1e-3), xLu = lireDiv(xVrai), tms = xLu * osc.sh;
+  return { xVrai: xVrai, x: xLu, Tms: tms, Ts: tms * 1e-3,
+           dTms: SOUS_DIV * osc.sh, dec: decDe(PAS_LECTURE * osc.sh) };
+}
+function mesurerFrequence(m) {
+  var f = 1 / m.Ts, df = (m.dTms * 1e-3) / (m.Ts * m.Ts);
+  return { f: f, df: df, dec: decDe(df) };
+}
+function mesurerUmax(osc, src) {
+  var yVrai = src.umax / osc.sv, yLu = lireDiv(yVrai);
+  return { yVrai: yVrai, y: yLu, umax: yLu * osc.sv,
+           dU: SOUS_DIV * osc.sv, dec: decDe(PAS_LECTURE * osc.sv) };
+}
+
+/* ==================================================================
+   5. LE VOLTMÈTRE — ce qu'un multimètre d'établissement affiche vraiment
+   ==================================================================
+   ⚠ Ce n'est PAS un « true RMS » : il mesure la valeur moyenne redressée
+   ⟨|u|⟩ et la multiplie par le facteur de forme d'une SINUSOÏDE. Sur la
+   sinusoïde du protocole les deux coïncident au millième ; ailleurs elles
+   divergent, et c'est cela qui rend la leçon interrogeable.                */
+function Voltmetre(mode, calibre) {
+  this.mode = mode || "V~";
+  this.calibre = calibre === undefined ? 20 : +calibre;
+}
+Voltmetre.prototype.valeur = function (src, n) {
+  var ech = echantillons(src, n || 4000);
+  if (this.mode === "V=") return moyenne(ech);
+  return FF_SINUS * moyenneRedressee(ech);
+};
+/* La valeur telle qu'elle apparaît sur l'afficheur, ou `null` si le calibre
+   est dépassé — l'appareil n'écrit alors qu'un « 1 ». */
+Voltmetre.prototype.afficher = function (src, n) {
+  var v = this.valeur(src, n), pas, q;
+  if (Math.abs(v) > this.calibre) return null;
+  pas = this.calibre / N_COMPTES;
+  q = Math.floor(Math.abs(v) / pas + 0.5) * pas * (v >= 0 ? 1 : -1);
+  return { v: q, pas: pas, dec: decDe(pas) };
+};
+function rapportUU(umaxLu, ueffLu, dU, decSerie) {
+  var r = umaxLu / ueffLu, dr = dU / ueffLu;
+  return { r: r, dr: dr, dec: decSerie === undefined ? decDe(dr) : decSerie };
+}
+
+/* ==================================================================
+   6. LA CLASSIFICATION — les cinq lignes d'E2AC-28, OBTENUES
+   ==================================================================
+   Aucun verdict n'est écrit : le spot vient de l'excursion verticale, la
+   forme du facteur de crête, le signe des extremums, la variation de
+   l'étendue, et la nature des trois précédents.                            */
+function classer(osc, src, n) {
+  n = n || 1200;
+  var s = osc.spot(src), span = s[1] - s[0], ech = [], i;
+  if (src.f) { for (i = 0; i < n; i++) ech.push(osc.uVue(src, i / (n * src.f))); }
+  else ech.push(osc.uVue(src, 0));
+  var umin = Math.min.apply(null, ech), umaxv = Math.max.apply(null, ech);
+  var etendue = umaxv - umin;
+  /* Le seuil vaut ce que l'INSTRUMENT sait voir (§12.24) : une variation plus
+     petite qu'un pas de lecture n'est pas observée. */
+  var seuilV = PAS_LECTURE * osc.sv;
+  var varie = etendue > seuilV, alterne = (umin < -seuilV && umaxv > seuilV);
+  var moy = moyenne(ech), ac = [], crete = 0, k;
+  for (i = 0; i < ech.length; i++) {
+    ac.push(ech[i] - moy);
+    if (Math.abs(ech[i] - moy) > crete) crete = Math.abs(ech[i] - moy);
+  }
+  k = crete > 0 ? efficace(ac) / crete : 0;
+  var sinusoidal = Math.abs(k - 1 / RAC2) <= TOL_SINUS;
+  var courbe = !varie ? "droite" : (sinusoidal ? "sinusoide" : "autre");
+  var nature = (!varie && !alterne) ? "continue"
+             : (alterne && sinusoidal ? "alternative_sinus"
+             : (alterne ? "alternative_non_sinus" : "autre"));
+  return { spot: span > SEUIL_SPOT ? "trait" : "point", span: span,
+           ySpot: (s[0] + s[1]) / 2, courbe: courbe,
+           signe: alterne ? "alterne" : "constant", varie: varie ? "oui" : "non",
+           nature: nature, k: k, etendue: etendue };
+}
+/* Les mots que la FICHE emploie pour chaque verdict — on les reconnaît sur ce
+   que la ligne DIT, jamais par son rang (§12.14). */
+var MOTS_VERDICT = {
+  point: /point/i, trait: /trait\s+vertical/i,
+  droite: /droite\s+horizontale/i, sinusoide: /sinuso/i,
+  constant: /m[êe]me/i, alterne: /positif/i,
+  non: /^non\b/i, oui: /^oui\b/i,
+  continue: /continue/i, alternative_sinus: /alternative/i
+};
+
+/* ==================================================================
+   LA FACE AVANT DE L'OSCILLOSCOPE — dessin partagé par les trois pages
+   ==================================================================
+   Les trois fiches de la leçon se conduisent sur LE MÊME appareil. Son
+   dessin vit donc ici, une fois, et les trois pages l'appellent : sans quoi
+   les symboles divergeraient au premier ajustement — c'est le défaut que le
+   §15 du contrat signale déjà sur les huit vues 2D d'électricité.
+
+   L'écran porte le graticule NORMALISÉ : 10 divisions en largeur, 8 en
+   hauteur, et les deux axes centraux coupés en cinq par des
+   sous-graduations. C'est cette graduation-là, et pas une autre, qui fixe
+   la précision de toute lecture (§12.21).                                  */
+
+/* Géométrie d'un poste d'oscilloscope posé en (X, Y) — coin haut gauche du
+   chassis. Toutes les cotes de l'écran se CALCULENT sur le graticule, jamais
+   l'inverse (§12.22) : c'est le nombre de divisions qui commande. */
+function geoOscillo(X, Y, div) {
+  div = div || 30;
+  var ex = X + 26, ey = Y + 30;
+  return { x: X, y: Y, w: div * N_DIV_X + 232, h: div * N_DIV_Y + 60,
+           ex: ex, ey: ey, ew: div * N_DIV_X, eh: div * N_DIV_Y, div: div,
+           cx: ex + div * N_DIV_X / 2, cy: ey + div * N_DIV_Y / 2,
+           px: X + div * N_DIV_X + 44 };          /* le panneau de commandes */
+}
+/* div → pixels, et retour. Le dessin RELIT ce que le solveur calcule. */
+function dx(geo, xdiv) { return geo.ex + xdiv * geo.div; }
+function dy(geo, ydiv) { return geo.cy - ydiv * geo.div; }
+function versDivX(geo, x) { return (x - geo.ex) / geo.div; }
+function versDivY(geo, y) { return (geo.cy - y) / geo.div; }
+
+function dessinerChassis(couche, geo, marque) {
+  var g = ajout(couche, el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: geo.x, y: geo.y, width: geo.w, height: geo.h,
+    rx: 12, fill: "url(#gBoitier)", stroke: "#5a636e", "stroke-width": 2.4 }));
+  g.appendChild(el("rect", { x: geo.x + 5, y: geo.y + 5, width: geo.w - 10,
+    height: geo.h - 10, rx: 9, fill: "none", stroke: "#ffffff", opacity: .18 }));
+  /* le cadre de l'écran : une gorge sombre, puis le verre */
+  g.appendChild(el("rect", { x: geo.ex - 10, y: geo.ey - 10, width: geo.ew + 20,
+    height: geo.eh + 20, rx: 8, fill: "#20262e" }));
+  g.appendChild(el("text", { x: geo.x + 14, y: geo.y + geo.h - 12,
+    "font-size": 11, "font-weight": "bold", fill: "#e8eef5",
+    "letter-spacing": ".14em", "font-family": "Arial, Helvetica, sans-serif" },
+    marque || "OSCILLOSCOPE"));
+  return g;
+}
+function dessinerEcran(couche, geo) {
+  var g = ajout(couche, el("g", {}));
+  g.appendChild(el("rect", { x: geo.ex, y: geo.ey, width: geo.ew, height: geo.eh,
+    fill: "url(#gPhosphore)", "pointer-events": "none" }));
+  return g;
+}
+/* Le graticule : 10 × 8 divisions, plus les sous-graduations des deux axes
+   centraux. Ce sont elles que la règle transparente interpole. */
+function dessinerGraticule(g, geo) {
+  var i, x, y, k;
+  for (i = 0; i <= N_DIV_X; i++) {
+    x = dx(geo, i);
+    g.appendChild(el("line", { x1: x, y1: geo.ey, x2: x, y2: geo.ey + geo.eh,
+      stroke: "#4f7d63", "stroke-width": i === N_DIV_X / 2 ? 1.6 : .8,
+      opacity: i === N_DIV_X / 2 ? .95 : .55, "pointer-events": "none" }));
+  }
+  for (i = 0; i <= N_DIV_Y; i++) {
+    y = geo.ey + i * geo.div;
+    g.appendChild(el("line", { x1: geo.ex, y1: y, x2: geo.ex + geo.ew, y2: y,
+      stroke: "#4f7d63", "stroke-width": i === N_DIV_Y / 2 ? 1.6 : .8,
+      opacity: i === N_DIV_Y / 2 ? .95 : .55, "pointer-events": "none" }));
+  }
+  /* les sous-graduations : cinq par division, sur les deux axes centraux */
+  for (i = 0; i < N_DIV_X; i++) {
+    for (k = 1; k < 5; k++) {
+      x = dx(geo, i + k / 5);
+      g.appendChild(el("line", { x1: x, y1: geo.cy - 4, x2: x, y2: geo.cy + 4,
+        stroke: "#4f7d63", "stroke-width": .8, opacity: .8,
+        "pointer-events": "none" }));
+    }
+  }
+  for (i = 0; i < N_DIV_Y; i++) {
+    for (k = 1; k < 5; k++) {
+      y = geo.ey + (i + k / 5) * geo.div;
+      g.appendChild(el("line", { x1: geo.cx - 4, y1: y, x2: geo.cx + 4, y2: y,
+        stroke: "#4f7d63", "stroke-width": .8, opacity: .8,
+        "pointer-events": "none" }));
+    }
+  }
+}
+/* LA TRACE. Ce n'est pas un dessin : c'est `osc.trace(src)` — u(t)
+   échantillonné, converti en divisions par les deux sensibilités. Le spot,
+   balayage arrêté, est l'excursion verticale calculée par `osc.spot`.      */
+function dessinerTrace(g, geo, osc, src, sousTension) {
+  vide(g);
+  if (!sousTension) return;
+  if (!src) {
+    /* aucune source branchée : la ligne de base, à l'ordonnée du décalage */
+    g.appendChild(el("line", { x1: geo.ex, y1: dy(geo, osc.y0),
+      x2: geo.ex + geo.ew, y2: dy(geo, osc.y0), stroke: "#7cf0a8",
+      "stroke-width": 2.6, opacity: .92, filter: "url(#lueurTrace)",
+      "pointer-events": "none" }));
+    return;
+  }
+  if (!osc.balayage) {
+    var s = osc.spot(src), lo = osc.ecreter(s[0]), hi = osc.ecreter(s[1]);
+    if (hi - lo <= SEUIL_SPOT) {
+      /* un POINT immobile : la tension ne varie pas */
+      g.appendChild(el("circle", { cx: geo.cx, cy: dy(geo, (lo + hi) / 2), r: 4.4,
+        fill: "#a6ffc8", filter: "url(#lueurTrace)", "pointer-events": "none" }));
+    } else {
+      /* un TRAIT VERTICAL : le spot monte et descend trop vite pour l'œil */
+      g.appendChild(el("line", { x1: geo.cx, y1: dy(geo, lo), x2: geo.cx,
+        y2: dy(geo, hi), stroke: "#7cf0a8", "stroke-width": 4.2,
+        "stroke-linecap": "round", filter: "url(#lueurTrace)",
+        "pointer-events": "none" }));
+    }
+    return;
+  }
+  var pts = osc.trace(src), p = [], i;
+  for (i = 0; i < pts.length; i++) p.push(pt(dx(geo, pts[i][0]), dy(geo, pts[i][1])));
+  g.appendChild(el("polyline", { points: p.join(" "), fill: "none",
+    stroke: "#7cf0a8", "stroke-width": 2.6, "stroke-linejoin": "round",
+    filter: "url(#lueurTrace)", "pointer-events": "none" }));
+  if (osc.sature(src)) {
+    g.appendChild(el("text", { x: geo.ex + geo.ew - 8, y: geo.ey + 16,
+      "text-anchor": "end", "font-size": 11, "font-weight": "bold",
+      fill: "#ffd24d", "font-family": "Arial, Helvetica, sans-serif",
+      "pointer-events": "none" }, "trace écrêtée — changer de sensibilité"));
+  }
+}
+/* Une borne de raccordement : douille de sécurité, avec son intitulé. */
+function dessinerBorne(couche, x, y, coul, nom, act) {
+  var g = ajout(couche, el("g", act ? { "data-act": act, cursor: "pointer" } : {}));
+  g.appendChild(el("circle", { cx: x, cy: y, r: 13, fill: "#2b3138",
+    stroke: "#8d97a4", "stroke-width": 1.6 }));
+  g.appendChild(el("circle", { cx: x, cy: y, r: 8, fill: coul,
+    stroke: "#20262e", "stroke-width": 1.2 }));
+  g.appendChild(el("circle", { cx: x, cy: y, r: 3.2, fill: "#12161b" }));
+  g.appendChild(el("text", { x: x, y: y + 27, "text-anchor": "middle",
+    "font-size": 10.5, "font-weight": "bold", fill: "#e8eef5",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+    nom));
+  return g;
+}
+/* UN BOUTON ROTATIF, et il se tourne pour de vrai : on le saisit et on
+   tourne autour de son axe. Les positions sont celles de la face avant —
+   séquence 1-2-5 —, et l'aiguille les montre.                              */
+function creerKnob(couche, cx, cy, r, positions, nom, unite, act) {
+  var g = ajout(couche, el("g", { cursor: "grab", "data-act": act }));
+  /* §12.38 : la plaque de préhension d'abord, aux cotes de la silhouette */
+  g.appendChild(el("circle", { cx: cx, cy: cy, r: r + 8, fill: "#ffffff",
+    "fill-opacity": 0.001 }));
+  g.appendChild(el("circle", { cx: cx, cy: cy, r: r + 6, fill: "#2b3138",
+    "pointer-events": "none" }));
+  var i, a, x1, y1;
+  for (i = 0; i < positions.length; i++) {
+    a = angleKnob(i, positions.length);
+    x1 = cx + (r + 3) * Math.cos(a); y1 = cy + (r + 3) * Math.sin(a);
+    g.appendChild(el("line", { x1: cx + (r - 1) * Math.cos(a),
+      y1: cy + (r - 1) * Math.sin(a), x2: x1, y2: y1, stroke: "#c3cbd5",
+      "stroke-width": 1.4, "pointer-events": "none" }));
+    g.appendChild(el("text", { x: cx + (r + 15) * Math.cos(a),
+      y: cy + (r + 15) * Math.sin(a) + 3.5, "text-anchor": "middle",
+      "font-size": 8.5, fill: "#aab4c0",
+      "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+      String(positions[i]).replace(".", ",")));
+  }
+  g.appendChild(el("circle", { cx: cx, cy: cy, r: r, fill: "url(#gMolette)",
+    stroke: "#20262e", "stroke-width": 1.6, "pointer-events": "none" }));
+  var aig = g.appendChild(el("line", { x1: cx, y1: cy, x2: cx + r - 4, y2: cy,
+    stroke: "#12161b", "stroke-width": 3.4, "stroke-linecap": "round",
+    "pointer-events": "none" }));
+  g.appendChild(el("text", { x: cx, y: cy - r - 26, "text-anchor": "middle",
+    "font-size": 10, "font-weight": "bold", fill: "#e8eef5",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+    nom));
+  var val = g.appendChild(el("text", { x: cx, y: cy + r + 30, "text-anchor": "middle",
+    "font-size": 11, "font-weight": "bold", fill: "#ffd24d",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, ""));
+  var K = {
+    g: g, cx: cx, cy: cy, r: r, positions: positions, i: 0, unite: unite || "",
+    poser: function (idx) {
+      K.i = borne(idx, 0, positions.length - 1);
+      var b = angleKnob(K.i, positions.length);
+      aig.setAttribute("x2", (cx + (r - 4) * Math.cos(b)).toFixed(1));
+      aig.setAttribute("y2", (cy + (r - 4) * Math.sin(b)).toFixed(1));
+      val.textContent = String(positions[K.i]).replace(".", ",") + " " + K.unite;
+      return positions[K.i];
+    },
+    valeur: function () { return positions[K.i]; },
+    /* L'index le plus proche de la direction où l'on a tiré. */
+    versPoint: function (p) {
+      var a = Math.atan2(p.y - cy, p.x - cx), best = 0, bd = 1e9, j, d, b;
+      for (j = 0; j < positions.length; j++) {
+        b = angleKnob(j, positions.length);
+        d = Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+        if (d < bd) { bd = d; best = j; }
+      }
+      return best;
+    }
+  };
+  K.poser(0);
+  return K;
+}
+/* Les positions couvrent 270°, de 7 h 30 à 4 h 30 — la course d'un vrai
+   commutateur de face avant. */
+function angleKnob(i, n) {
+  return (135 + (n <= 1 ? 0 : i * 270 / (n - 1))) * Math.PI / 180;
+}
+/* UN INTERRUPTEUR À DEUX POSITIONS — sélecteur DC/AC, marche/arrêt du
+   balayage, interrupteur du circuit. Un basculeur se POUSSE : il se clique,
+   il ne se traîne pas. C'est le seul geste de cette page qui soit
+   légitimement un bouton (§4.A).                                           */
+function creerBascule(couche, cx, cy, w, h, gauche, droite, nom, act) {
+  var g = ajout(couche, el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - w / 2 - 6, y: cy - h / 2 - 6, width: w + 12,
+    height: h + 12, rx: 8, fill: "#ffffff", "fill-opacity": 0.001 }));
+  g.appendChild(el("rect", { x: cx - w / 2, y: cy - h / 2, width: w, height: h,
+    rx: h / 2, fill: "#20262e", stroke: "#5a636e", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  var bille = g.appendChild(el("circle", { cx: cx - w / 4, cy: cy, r: h / 2 - 3,
+    fill: "url(#gMolette)", stroke: "#12161b", "stroke-width": 1.2,
+    "pointer-events": "none" }));
+  g.appendChild(el("text", { x: cx - w / 2 - 9, y: cy + 4, "text-anchor": "end",
+    "font-size": 10, "font-weight": "bold", fill: "#aab4c0",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+    gauche));
+  g.appendChild(el("text", { x: cx + w / 2 + 9, y: cy + 4, "font-size": 10,
+    "font-weight": "bold", fill: "#aab4c0",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+    droite));
+  if (nom) {
+    g.appendChild(el("text", { x: cx, y: cy - h / 2 - 11, "text-anchor": "middle",
+      "font-size": 10, "font-weight": "bold", fill: "#e8eef5",
+      "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+      nom));
+  }
+  return {
+    g: g, cx: cx, cy: cy, w: w, h: h, droite: false,
+    poser: function (v) {
+      this.droite = !!v;
+      bille.setAttribute("cx", (cx + (v ? w / 4 : -w / 4)).toFixed(1));
+      bille.setAttribute("fill", v ? "#ffd24d" : "url(#gMolette)");
+    }
+  };
+}
+/* Les définitions SVG communes aux trois faces : le boîtier, le phosphore,
+   la molette, la lueur de la trace. Elles vivent ici pour la même raison que
+   le reste — un symbole recopié diverge au premier ajustement.             */
+function defsOscillo(d) {
+  var g;
+  g = d.appendChild(el("linearGradient", { id: "gBoitier", x1: 0, y1: 0, x2: 0, y2: 1 }));
+  [["0%", "#7b8592"], ["18%", "#5d6672"], ["55%", "#4a525d"],
+   ["100%", "#343b45"]].forEach(function (a) {
+    g.appendChild(el("stop", { offset: a[0], "stop-color": a[1] }));
+  });
+  g = d.appendChild(el("radialGradient", { id: "gPhosphore", cx: "50%", cy: "45%" }));
+  g.appendChild(el("stop", { offset: "0%", "stop-color": "#16351f" }));
+  g.appendChild(el("stop", { offset: "100%", "stop-color": "#0c1c12" }));
+  g = d.appendChild(el("linearGradient", { id: "gMolette", x1: 0, y1: 0, x2: 0.3, y2: 1 }));
+  [["0%", "#e2e7ee"], ["40%", "#b3bcc7"], ["100%", "#78818d"]].forEach(function (a) {
+    g.appendChild(el("stop", { offset: a[0], "stop-color": a[1] }));
+  });
+  g = d.appendChild(el("filter", { id: "lueurTrace", x: "-25%", y: "-25%",
+                                   width: "150%", height: "150%" }));
+  g.appendChild(el("feGaussianBlur", { stdDeviation: 2.6, result: "b" }));
+  var m = g.appendChild(el("feMerge"));
+  m.appendChild(el("feMergeNode", { in: "b" }));
+  m.appendChild(el("feMergeNode", { in: "SourceGraphic" }));
+}
+
+/* ==================================================================
+   3. LE YAML — tout ce que la page affiche vient d'ici
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var NL = LIG.length;
+var SECU = DONNEES.securite || [];
+var PROTOCOLE = depouille((DONNEES.protocole || []).join(" · "));
+var MATERIEL = (DONNEES.materiel || []).map(depouille);
+var MATSTR = MATERIEL.join(" ; ");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k) { return depouille((LIG[k] || [])[0]); }
+function secu(motif) {
+  var i, re = new RegExp(motif);
+  for (i = 0; i < SECU.length; i++) if (re.test(SECU[i])) return SECU[i];
+  return SECU[0] || "";
+}
+/* ⚠ §12.29 : un nombre COMMENCE par un chiffre, l'unité est sensible à la
+   casse, et elle ne doit pas être suivie d'une lettre. */
+function nombreApres(texte, avant, unite) {
+  var m = new RegExp(avant + "\\s*(\\d[\\d,.]*)\\s*" + unite +
+                     "(?![A-Za-zÀ-ÿ])").exec(texte);
+  return m ? parseFloat(m[1].replace(",", ".")) : null;
+}
+var S_SECTEUR = secu("secteur 220"), S_VERIF = secu("Vérifier les branchements"),
+    S_REGLAGE = secu("Ne pas modifier les réglages"), S_MAINS = secu("mains sèches"),
+    S_MAISON = secu("à la maison");
+
+/* Sv et Sh sont LUS dans le protocole ; la plage du générateur dans le
+   matériel de la leçon. */
+var SV_P = nombreApres(PROTOCOLE, "Sv\\s*=", "V/div");
+var SH_P = nombreApres(PROTOCOLE, "Sh\\s*=", "ms/div");
+var I_SV_P = SV_POSITIONS.indexOf(SV_P), I_SH_P = SH_POSITIONS.indexOf(SH_P);
+var PLAGE = (function () {
+  var m = /(\d[\d,.]*)\s*[–-]\s*(\d[\d,.]*)\s*V~/.exec(MATSTR);
+  return m ? [parseFloat(m[1].replace(",", ".")), parseFloat(m[2].replace(",", "."))]
+           : [6, 12];
+})();
+/* ⚠ LE PROTOCOLE NE PRESCRIT PAS LA POSITION DU GÉNÉRATEUR. On adopte celle
+   qui reproduit l'oscillogramme de la fiche — U_max = 15 V, donc
+   15/√2 = 10,6066 V~ —, arrondie au cran de 0,1 V du bouton. C'est un choix,
+   il est écrit à l'écran, et il ne change rien à la démonstration : les trois
+   nombres se lisent de la même façon à toute position. */
+var C_RES = 3;
+(function () {
+  var i;
+  for (i = 0; i < ENTETES.length; i++) {
+    if (/Résultat|Resultat/i.test(depouille(ENTETES[i]))) C_RES = i;
+  }
+})();
+var UMAX_FICHE = (function () {
+  var i, m;
+  for (i = 0; i < NL; i++) {
+    if (/Déviation|Y\b/.test(intitule(i))) {
+      m = /(\d[\d,.]*)\s*V(?![A-Za-zÀ-ÿ~])/.exec(cel(i, C_RES));
+      if (m) return parseFloat(m[1].replace(",", "."));
+    }
+  }
+  return 15;
+})();
+var CRAN_GEN = 0.1;
+var GEN_P = Math.round(umaxVersReglage(UMAX_FICHE) / CRAN_GEN) * CRAN_GEN;
+
+/* Les colonnes du tableau, repérées par ce que leur en-tête DIT. */
+var C_LECT = 1, C_SENS = 2;
+(function () {
+  var i, t;
+  for (i = 0; i < ENTETES.length; i++) {
+    t = depouille(ENTETES[i]);
+    if (/Lecture/i.test(t)) C_LECT = i;
+    if (/Sensibilité|Sensibilite/i.test(t)) C_SENS = i;
+  }
+})();
+/* Les trois lignes, repérées de la même façon. */
+function ligneDe(motif) {
+  var i;
+  for (i = 0; i < NL; i++) if (motif.test(intitule(i))) return i;
+  return -1;
+}
+var L_X = ligneDe(/Largeur/i), L_F = ligneDe(/Fréquence|Frequence/i),
+    L_Y = ligneDe(/Déviation|Deviation/i);
+
+/* ==================================================================
+   3bis. LES DURÉES — §5
+   ================================================================== */
+var DUREE_SEANCE = +(DONNEES.duree || 18);
+var MODALITE = DONNEES.modalite || "";
+
+/* ==================================================================
+   4. RÉGLAGES
+   ================================================================== */
+var PROTO = { sv: SV_P, sh: SH_P, gen: GEN_P, f: F_RESEAU };
+var REG = { sv: 1, sh: 1, coup: "AC", bal: true, gen: GEN_P, f: F_RESEAU };
+
+/* ⚠ L'ÉTAPE 9 DEMANDE DE CHANGER S_h : ce n'est pas sortir du protocole,
+   c'est l'exécuter. Le garde-fou ne s'applique donc à S_h que tant que les
+   huit premières étapes ne sont pas faites. */
+function horsProtocole() {
+  if (Math.abs(REG.f - PROTO.f) > 1e-9) return true;
+  if (Math.abs(REG.gen - PROTO.gen) > 1e-9) return true;
+  if (ETAT.regleVu && REG.sv !== PROTO.sv) return true;
+  if (ETAT.umax === null && ETAT.regleVu && REG.sh !== PROTO.sh) return true;
+  return false;
+}
+
+/* ==================================================================
+   5. LE SOLVEUR APPLIQUÉ À CETTE FICHE
+   ================================================================== */
+function srcCourante() { return source("sinus", reglageVersUmax(REG.gen), REG.f); }
+function oscCourant() { return new Oscillo(REG.sv, REG.sh, REG.coup, REG.bal, 0); }
+function brancheOK() { return ETAT.filR && ETAT.filN; }
+function sousTension() { return brancheOK(); }
+/* La période, EN DIVISIONS de l'écran. C'est elle que les deux curseurs
+   doivent encadrer — et sa moitié qui est le piège de la fiche. */
+function periodeDiv() { return (1000 / REG.f) / REG.sh; }
+function yVrai() { return srcCourante().umax / REG.sv; }
+/* La lecture des curseurs, quantifiée au pas de l'instrument (§12.21). */
+function ecartCurseurs() { return Math.abs(ETAT.xB - ETAT.xA); }
+function nMotifs() { return ecartCurseurs() / (periodeDiv() / 2); }
+
+/* ==================================================================
+   6. GÉOMÉTRIE DE LA SCÈNE
+   ================================================================== */
+var W = 1120, H = 760;
+var GEO = null;
+var X_OSC = 40, Y_OSC = 168, DIV_PX = 30;
+var GN_X = 826, GN_Y = 268;                            /* le générateur      */
+var PR_X = 966, PR_Y = 76, PR_W = 124, PR_H = 76;      /* la prise du secteur */
+var PL_X = 610, PL_Y = 404, PL_W = 480, PL_H = 232;    /* la plaque          */
+var Y_BOUTONS = 706;
+var B_Y = { x: 430, y: 420 }, B_M = { x: 512, y: 420 };
+var K_SV = { x: 436, y: 246, r: 24 }, K_SH = { x: 524, y: 246, r: 24 };
+var BAS_SEL = { x: 480, y: 350 };
+var Y_ETIQ = {
+  titre: 152, gene: GN_Y - 62, prise: PR_Y - 8, plaque: PL_Y - 10,
+  repos: PL_Y + PL_H - 12
+};
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   §12.17 : toute clé lue dans le code figure ici.                          */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0;
+var svg = null, COUCHES = {};
+
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+function neufEtat() {
+  return {
+    tSeance: 0, retenue: 0, horsProto: false, regleVu: false,
+    filR: false, filN: false,
+    xA: 0.5, xB: 9.5, yC: 3.6,          /* les trois curseurs, en divisions */
+    poseA: false, poseB: false, poseY: false,
+    xLu: null, T: null, f: null, yLu: null, umax: null,
+    shPremier: null, x2: null, T2: null, verifOk: false
+  };
+}
+/* Le motif élémentaire : DEUX alternances, une positive et une négative.
+   Une seule alternance est le piège que la fiche signale, et il est
+   ATTEIGNABLE ici — les curseurs s'aimantent aussi sur la demi-période. */
+function motifOk() {
+  if (!ETAT.poseA || !ETAT.poseB) return false;
+  var n = nMotifs();
+  return Math.abs(n - Math.round(n)) < 0.02 && Math.round(n) >= 2 &&
+         Math.round(n) % 2 === 0;
+}
+function uneSeuleAlternance() {
+  if (!ETAT.poseA || !ETAT.poseB) return false;
+  var n = nMotifs();
+  return Math.abs(n - Math.round(n)) < 0.02 && Math.round(n) % 2 === 1;
+}
+function regle29() { return REG.sv === PROTO.sv && REG.sh === PROTO.sh; }
+
+/* ==================================================================
+   8. DÉFS SVG
+   ================================================================== */
+function ajouterDefs() {
+  var d = svg.appendChild(el("defs")), g;
+  defsOscillo(d);
+  g = d.appendChild(el("linearGradient", { id: "gMetal", x1: 0, y1: 0, x2: 0, y2: 1 }));
+  [["0%", "#8d97a4"], ["30%", "#c3cbd5"], ["52%", "#f2f5f8"],
+   ["76%", "#aab3bf"], ["100%", "#79828e"]].forEach(function (a) {
+    g.appendChild(el("stop", { offset: a[0], "stop-color": a[1] }));
+  });
+  g = d.appendChild(el("linearGradient", { id: "gBois", x1: 0, y1: 0, x2: 0, y2: 1 }));
+  [["0%", "#c9a464"], ["45%", "#e0c390"], ["100%", "#a8813f"]].forEach(function (a) {
+    g.appendChild(el("stop", { offset: a[0], "stop-color": a[1] }));
+  });
+  g = d.appendChild(el("linearGradient", { id: "gGene", x1: 0, y1: 0, x2: 0, y2: 1 }));
+  [["0%", "#8f6f3a"], ["35%", "#c6a463"], ["60%", "#e6cf9c"],
+   ["100%", "#7a5c2c"]].forEach(function (a) {
+    g.appendChild(el("stop", { offset: a[0], "stop-color": a[1] }));
+  });
+  g = d.appendChild(el("filter", { id: "ombreDouce", x: "-40%", y: "-40%",
+                                   width: "180%", height: "180%" }));
+  g.appendChild(el("feDropShadow", { dx: 0, dy: 2, stdDeviation: 2.4,
+                                     "flood-color": "#12203a", "flood-opacity": .28 }));
+  g = d.appendChild(el("filter", { id: "ombrePrise", x: "-60%", y: "-60%",
+                                   width: "220%", height: "220%" }));
+  g.appendChild(el("feDropShadow", { dx: 0, dy: 7, stdDeviation: 6,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+}
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  var a = { x: x, y: y, "font-size": 12, fill: GRIS, "pointer-events": "none",
+            "font-family": "Arial, Helvetica, sans-serif" }, k;
+  for (k in (o || {})) a[k] = o[k];
+  return ajout(c, el("text", a, s));
+}
+function etiq(c, x, y, s, o) {
+  var a = { "paint-order": "stroke", stroke: "#eef2f6", "stroke-width": 3.4,
+            "stroke-linejoin": "round" }, k;
+  for (k in (o || {})) a[k] = o[k];
+  return txt(c, x, y, s, a);
+}
+
+/* ==================================================================
+   9. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: H, fill: "#eef2f6" }));
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: 146, fill: "#e5ebf2" }));
+  ajout("fond", el("rect", { x: 0, y: 652, width: W, height: 22, fill: "url(#gBois)" }));
+  ajout("fond", el("rect", { x: 0, y: 674, width: W, height: H - 674, fill: "#7d8794" }));
+
+  /* LA PRISE DU SECTEUR — la zone que la page REFUSE, avec la ligne de la
+     fiche. Elle doit exister pour que le refus soit atteignable (§13.6.2). */
+  var g = ajout("poste", el("g", { "data-act": "prise", cursor: "not-allowed" }));
+  g.appendChild(el("rect", { x: PR_X, y: PR_Y, width: PR_W, height: PR_H, rx: 8,
+    fill: "#f2ebdc", stroke: "#b03030", "stroke-width": 2.6 }));
+  g.appendChild(el("circle", { cx: PR_X + PR_W / 2 - 22, cy: PR_Y + PR_H / 2 + 4,
+    r: 8, fill: "#2b3138" }));
+  g.appendChild(el("circle", { cx: PR_X + PR_W / 2 + 22, cy: PR_Y + PR_H / 2 + 4,
+    r: 8, fill: "#2b3138" }));
+  g.appendChild(el("text", { x: PR_X + PR_W / 2, y: PR_Y + PR_H - 7,
+    "text-anchor": "middle", "font-size": 9.5, "font-weight": "bold",
+    fill: "#8c1c1c", "font-family": "Arial, Helvetica, sans-serif",
+    "pointer-events": "none" }, "220 V — INTERDIT"));
+
+  /* LE GÉNÉRATEUR, posé sur la paillasse */
+  g = ajout("poste", el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: GN_X - 74, y: GN_Y - 46, width: 148, height: 92,
+    rx: 7, fill: "url(#gGene)", stroke: "#5f4718", "stroke-width": 2 }));
+  g.appendChild(el("rect", { x: GN_X - 60, y: GN_Y - 34, width: 120, height: 32,
+    rx: 4, fill: "#2b3138" }));
+  g.appendChild(el("path", { d: "M " + pt(GN_X - 44, GN_Y - 18) +
+    " q 11 -17 22 0 q 11 17 22 0 q 11 -17 22 0", fill: "none", stroke: "#ffd24d",
+    "stroke-width": 3 }));
+  GEN_BORNES = [{ x: GN_X - 34, y: GN_Y + 26 }, { x: GN_X + 34, y: GN_Y + 26 }];
+  GEN_BORNES.forEach(function (b, i) {
+    g.appendChild(el("circle", { cx: b.x, cy: b.y, r: 9, fill: "#20262e",
+      stroke: i ? "#c3cbd5" : "#c0392b", "stroke-width": 2 }));
+  });
+  etiq("poste", GN_X, Y_ETIQ.gene, "GÉNÉRATEUR ALTERNATIF BASSE TENSION",
+    { "text-anchor": "middle", "font-size": 10.5, "font-weight": "bold", fill: INK,
+      "letter-spacing": ".06em" });
+
+  /* LA PLAQUE — la place des cordons au repos */
+  ajout("fond", el("rect", { x: PL_X, y: PL_Y, width: PL_W, height: PL_H, rx: 10,
+    fill: "#e8ecf1", stroke: "#b7bfca", "stroke-width": 1.8 }));
+  etiq("fond", PL_X + 8, Y_ETIQ.plaque, "LES CORDONS",
+    { "font-size": 10.5, "font-weight": "bold", fill: INK, "letter-spacing": ".1em" });
+  etiq("fond", W / 2, Y_ETIQ.titre,
+    "COMPTER LES DIVISIONS — LA RÈGLE TRANSPARENTE SUR L'ÉCRAN",
+    { "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: INK,
+      "letter-spacing": ".1em" });
+}
+var GEN_BORNES = [];
+
+/* ==================================================================
+   10. L'OSCILLOSCOPE ET LES CURSEURS
+   ================================================================== */
+var gTrace = null, KSV = null, KSH = null, BSEL = null, gRegle = null;
+function construireOscillo() {
+  GEO = geoOscillo(X_OSC, Y_OSC, DIV_PX);
+  dessinerChassis("poste", GEO, "OSCILLOSCOPE — une voie");
+  var ge = dessinerEcran("poste", GEO);
+  dessinerGraticule(ge, GEO);
+  gTrace = ajout("arriere", el("g", {}));
+  gRegle = ajout("avant", el("g", { "pointer-events": "none" }));
+  dessinerBorne("poste", B_Y.x, B_Y.y, "#c0392b", "entrée Y", "borneY");
+  dessinerBorne("poste", B_M.x, B_M.y, "#20262e", "masse", "masse");
+  KSV = creerKnob("objets", K_SV.x, K_SV.y, K_SV.r, SV_POSITIONS,
+    "SENSIBILITÉ Sv", "V/div", "knob-sv");
+  KSH = creerKnob("objets", K_SH.x, K_SH.y, K_SH.r, SH_POSITIONS,
+    "BALAYAGE Sh", "ms/div", "knob-sh");
+  BSEL = creerBascule("objets", BAS_SEL.x, BAS_SEL.y, 44, 20, "DC", "AC",
+    "SÉLECTEUR", "sel");
+}
+
+var OBJ = {};
+function plaque(g, x, y, w, h) {
+  g.insertBefore(el("rect", { x: x, y: y, width: w, height: h, rx: 6,
+    fill: "#ffffff", "fill-opacity": 0.001 }), g.firstChild);
+}
+function creerObjets() {
+  /* --- LES DEUX CORDONS --- */
+  [["filR", "#c0392b"], ["filN", "#20262e"]].forEach(function (a) {
+    var gg = ajout("objets", el("g", { cursor: "grab", "data-act": "obj-" + a[0] }));
+    gg.appendChild(el("path", { d: "M " + pt(0, -16) + " L " + pt(0, 14),
+      stroke: a[1], "stroke-width": 9, "stroke-linecap": "round",
+      "pointer-events": "none" }));
+    gg.appendChild(el("rect", { x: -3, y: -30, width: 6, height: 16, rx: 2,
+      fill: "url(#gMetal)", stroke: "#6b7480", "stroke-width": 1,
+      "pointer-events": "none" }));
+    plaque(gg, -13, -32, 26, 50);
+    OBJ[a[0]] = { g: gg };
+  });
+
+  /* --- LES TROIS CURSEURS DE LA RÈGLE TRANSPARENTE ---
+     Le matériel de la fiche cite « une règle transparente pour compter les
+     divisions à l'écran ». Elle est ici en trois pièces : deux traits
+     verticaux qui encadrent un motif, un trait horizontal qu'on pose sur le
+     sommet. Chacun s'AIMANTE sur les repères visibles de la courbe — les
+     passages par zéro et le sommet —, exactement comme l'œil le fait. */
+  [["curA", "#ffd24d"], ["curB", "#ffd24d"]].forEach(function (a) {
+    var gg = ajout("avant", el("g", { cursor: "grab", "data-act": "obj-" + a[0] }));
+    gg.appendChild(el("rect", { x: -9, y: -6, width: 18, height: GEO.eh + 12,
+      fill: "#ffffff", "fill-opacity": 0.001 }));
+    gg.appendChild(el("line", { x1: 0, y1: 0, x2: 0, y2: GEO.eh, stroke: a[1],
+      "stroke-width": 1.8, "stroke-dasharray": "5 4", "pointer-events": "none" }));
+    gg.appendChild(el("path", { d: "M " + pt(-8, -14) + " L " + pt(8, -14) +
+      " L " + pt(0, -2) + " Z", fill: a[1], stroke: "#8a5a00", "stroke-width": 1.2,
+      "pointer-events": "none" }));
+    OBJ[a[0]] = { g: gg };
+  });
+  var gy = ajout("avant", el("g", { cursor: "grab", "data-act": "obj-curY" }));
+  gy.appendChild(el("rect", { x: -6, y: -9, width: GEO.ew + 12, height: 18,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  gy.appendChild(el("line", { x1: 0, y1: 0, x2: GEO.ew, y2: 0, stroke: "#7ad7ff",
+    "stroke-width": 1.8, "stroke-dasharray": "5 4", "pointer-events": "none" }));
+  gy.appendChild(el("path", { d: "M " + pt(-16, -8) + " L " + pt(-16, 8) +
+    " L " + pt(-3, 0) + " Z", fill: "#7ad7ff", stroke: "#2d6d8a", "stroke-width": 1.2,
+    "pointer-events": "none" }));
+  OBJ.curY = { g: gy };
+}
+function maison(quoi) {
+  if (quoi === "filR") return ETAT.filR ? { x: B_Y.x, y: B_Y.y }
+                                        : { x: PL_X + 380, y: PL_Y + 150 };
+  if (quoi === "filN") return ETAT.filN ? { x: B_M.x, y: B_M.y }
+                                        : { x: PL_X + 430, y: PL_Y + 150 };
+  if (quoi === "curA") return { x: dx(GEO, ETAT.xA), y: GEO.ey };
+  if (quoi === "curB") return { x: dx(GEO, ETAT.xB), y: GEO.ey };
+  if (quoi === "curY") return { x: GEO.ex, y: dy(GEO, ETAT.yC) };
+  return { x: 0, y: 0 };
+}
+function noeudDe(quoi) { return OBJ[quoi] ? OBJ[quoi].g : null; }
+function replacer(quoi) {
+  var m = maison(quoi), n = noeudDe(quoi);
+  if (n) n.setAttribute("transform", "translate(" + m.x.toFixed(1) + "," +
+                                     m.y.toFixed(1) + ")");
+}
+function replacerTout() { ["filR", "filN", "curA", "curB", "curY"].forEach(replacer); }
+
+var gCordons = null;
+function peindreCordons() {
+  vide(gCordons);
+  [["filR", "#c0392b", 0], ["filN", "#20262e", 1]].forEach(function (a) {
+    if (!ETAT[a[0]]) return;
+    var b = maison(a[0]), s = GEN_BORNES[a[2]];
+    var mx = (b.x + s.x) / 2, my = Math.max(b.y, s.y) + 92;
+    gCordons.appendChild(el("path", { d: "M " + pt(b.x, b.y) + " Q " +
+      pt(mx, my) + " " + pt(s.x, s.y), fill: "none", stroke: a[1],
+      "stroke-width": 5.4, "stroke-linecap": "round", opacity: .95,
+      "pointer-events": "none" }));
+  });
+}
+
+/* ==================================================================
+   11. LES ZONES DE DÉPÔT — §12.16, de la plus PETITE à la plus GRANDE
+   ================================================================== */
+var surbrillance = [];
+function emplacements(quoi) {
+  var z = [];
+  if (quoi === "filR" && !ETAT.filR) {
+    z.push({ id: "prise", x: PR_X + PR_W / 2, y: PR_Y + PR_H / 2, r: 62 });
+    z.push({ id: "borneY", x: B_Y.x, y: B_Y.y, r: 46 });
+    z.push({ id: "masse", x: B_M.x, y: B_M.y, r: 46 });
+  }
+  if (quoi === "filN" && !ETAT.filN) {
+    z.push({ id: "prise", x: PR_X + PR_W / 2, y: PR_Y + PR_H / 2, r: 62 });
+    z.push({ id: "masse", x: B_M.x, y: B_M.y, r: 46 });
+    z.push({ id: "borneY", x: B_Y.x, y: B_Y.y, r: 46 });
+  }
+  if (quoi === "filR" && ETAT.filR) z.push({ id: "repos", x: PL_X + 380, y: PL_Y + 150, r: 66 });
+  if (quoi === "filN" && ETAT.filN) z.push({ id: "repos", x: PL_X + 430, y: PL_Y + 150, r: 66 });
+  if (quoi === "curA" || quoi === "curB") {
+    z.push({ id: "ecran", x: GEO.cx, y: GEO.cy, r: Math.max(GEO.ew, GEO.eh) });
+  }
+  if (quoi === "curY") {
+    z.push({ id: "ecran", x: GEO.cx, y: GEO.cy, r: Math.max(GEO.ew, GEO.eh) });
+  }
+  return z;
+}
+function montrerCibles(quoi) {
+  effacerCibles();
+  if (!quoi) return;
+  emplacements(quoi).forEach(function (e) {
+    if (e.id === "ecran") return;                /* l'écran entier : inutile */
+    surbrillance.push(ajout("arriere", el("circle", {
+      cx: e.x, cy: e.y, r: e.r * 0.82,
+      fill: e.id === "prise" ? ROUGE : GOLD, opacity: .16,
+      stroke: e.id === "prise" ? ROUGE : GOLD, "stroke-width": 2.6,
+      "stroke-dasharray": "8 6", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+function cibleLaPlusProche(quoi, p) {
+  var z = emplacements(quoi), best = null, bd = 1e9, i, d;
+  for (i = 0; i < z.length; i++) {
+    d = Math.sqrt(Math.pow(p.x - z[i].x, 2) + Math.pow(p.y - z[i].y, 2));
+    if (d < z[i].r && d < bd) { bd = d; best = z[i]; }
+  }
+  return best;
+}
+function zoneVoulue(quoi) {
+  var z = emplacements(quoi);
+  return z.length ? z[z.length - 1] : null;
+}
+function zonePar(quoi, id) {
+  var z = emplacements(quoi), i;
+  for (i = 0; i < z.length; i++) if (z[i].id === id) return z[i];
+  return null;
+}
+
+/* ==================================================================
+   12. LES BOUTONS DE SCÈNE
+   ================================================================== */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var ls = lignes(l1, 20), t = [];
+  ls.forEach(function (s, i) {
+    t.push(g.appendChild(el("text", {
+      x: cx, y: cy + (ls.length > 1 ? (i === 0 ? -2 : 12) : 5),
+      "text-anchor": "middle", "font-size": 11, "font-weight": "bold", fill: GRIS,
+      "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, s)));
+  });
+  function peindre(fond, trait, encre, ep) {
+    r.setAttribute("fill", fond); r.setAttribute("stroke", trait);
+    r.setAttribute("stroke-width", ep);
+    t.forEach(function (n) { n.setAttribute("fill", encre); });
+  }
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    armer: function (v) {
+      if (r.getAttribute("data-fait") === "1") return;
+      peindre("#ffffff", v ? GOLD : LIGNE, v ? INK : GRIS, v ? 2.6 : 1.8);
+    },
+    fait: function () { r.setAttribute("data-fait", "1"); peindre("#eef6e6", VERT, VERT, 2); },
+    neuf: function () { r.removeAttribute("data-fait"); peindre("#ffffff", LIGNE, GRIS, 1.8); }
+  };
+  return BOUTONS[act];
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (e) {
+    var n = e.target, a = null;
+    while (n && n !== svg) {
+      if (n.getAttribute && n.getAttribute("data-act")) { a = n.getAttribute("data-act"); break; }
+      n = n.parentNode;
+    }
+    if (!a || /^obj-/.test(a)) return;
+    agir(a);
+  });
+}
+function agir(a) {
+  if (a === "prise") { refus("⛔ Non. " + S_SECTEUR, S_SECTEUR); return; }
+  if (a === "sel") { basculer("sel"); return; }
+  if (a === "compterX") { compterX(); return; }
+  if (a === "calcT") { calculerT(); return; }
+  if (a === "calcF") { calculerF(); return; }
+  if (a === "compterY") { compterY(); return; }
+  if (a === "calcUmax") { calculerUmax(); return; }
+  if (a === "verifier") { verifierT(); return; }
+}
+
+/* ==================================================================
+   13. PRENDRE ET DÉPOSER — §9
+   ================================================================== */
+var prise = null, ptSVG = null, rot = null;
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function saisir(quoi, e) {
+  if (prise || rot) return;                             /* verrou en 1re ligne */
+  e.preventDefault();
+  var m = maison(quoi), p = versSVG(e), g = noeudDe(quoi);
+  if (!g) return;
+  prise = { quoi: quoi, id: e.pointerId, dx: m.x - p.x, dy: m.y - p.y,
+            x0: p.x, y0: p.y, bouge: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  if (/^cur/.test(quoi)) { COUCHES.drag.appendChild(g); }
+  else { g.setAttribute("filter", "url(#ombrePrise)"); COUCHES.drag.appendChild(g); }
+  g.setAttribute("cursor", "grabbing");
+  montrerCibles(quoi);
+  secuGeste(quoi);
+}
+function saisirKnob(quel, e) {
+  if (prise || rot) return;
+  e.preventDefault();
+  rot = { quel: quel, id: e.pointerId, bouge: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+}
+function brancherPrise() {
+  ["filR", "filN", "curA", "curB", "curY"].forEach(function (k) {
+    OBJ[k].g.addEventListener("pointerdown", function (e) { saisir(k, e); });
+  });
+  KSV.g.addEventListener("pointerdown", function (e) { saisirKnob("sv", e); });
+  KSH.g.addEventListener("pointerdown", function (e) { saisirKnob("sh", e); });
+
+  svg.addEventListener("pointermove", function (e) {
+    var p = versSVG(e), g, K;
+    if (rot && e.pointerId === rot.id) {
+      K = rot.quel === "sv" ? KSV : KSH;
+      if (Math.abs(p.x - K.cx) + Math.abs(p.y - K.cy) > 6) {
+        rot.bouge = true;
+        reglerKnob(rot.quel, K.versPoint(p));
+      }
+      return;
+    }
+    if (!prise || e.pointerId !== prise.id) return;
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    g = noeudDe(prise.quoi);
+    /* Un curseur glisse SUR l'écran : il ne se soulève pas. */
+    if (prise.quoi === "curA" || prise.quoi === "curB") {
+      g.setAttribute("transform", "translate(" +
+        borne(p.x, GEO.ex, GEO.ex + GEO.ew).toFixed(1) + "," + GEO.ey + ")");
+      return;
+    }
+    if (prise.quoi === "curY") {
+      g.setAttribute("transform", "translate(" + GEO.ex + "," +
+        borne(p.y, GEO.ey, GEO.ey + GEO.eh).toFixed(1) + ")");
+      return;
+    }
+    g.setAttribute("transform", "translate(" + (p.x + prise.dx).toFixed(1) + "," +
+                                (p.y + prise.dy).toFixed(1) + ")");
+  });
+  function relacher(e) {
+    if (rot && e.pointerId === rot.id) {
+      var r = rot;
+      rot = null;
+      try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+      return;
+    }
+    if (!prise || e.pointerId !== prise.id) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var p = versSVG(e), d = prise, g = noeudDe(prise.quoi);
+    prise = null;
+    effacerCibles();
+    g.removeAttribute("filter");
+    g.setAttribute("cursor", "grab");
+    COUCHES[/^cur/.test(d.quoi) ? "avant" : "objets"].appendChild(g);
+    if (/^cur/.test(d.quoi)) {
+      if (d.quoi === "curY") poserCurseurY(versDivY(GEO, borne(p.y, GEO.ey, GEO.ey + GEO.eh)));
+      else poserCurseurX(d.quoi, versDivX(GEO, borne(p.x, GEO.ex, GEO.ex + GEO.ew)));
+      return;
+    }
+    if (!d.bouge) { replacer(d.quoi); cliquer(d.quoi); return; }
+    var cible = cibleLaPlusProche(d.quoi, p);
+    if (!cible) { replacer(d.quoi); signaler(ouPoser(d.quoi)); return; }
+    deposer(d.quoi, cible);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);       /* ne PAS l'oublier */
+}
+function ouPoser(quoi) {
+  if (quoi === "filR") return ETAT.filR
+    ? "Le cordon rouge est branché : le ramener sur la plaque pour le débrancher."
+    : "Le cordon rouge va sur la borne d'entrée Y de l'oscilloscope.";
+  if (quoi === "filN") return ETAT.filN
+    ? "Le cordon noir est branché : le ramener sur la plaque pour le débrancher."
+    : "Le cordon noir va sur la borne de masse de l'oscilloscope.";
+  return "Les curseurs de la règle se posent sur l'écran.";
+}
+
+/* ==================================================================
+   14. CE QUE FONT LES GESTES — le chemin COMMUN (§12.13)
+   ================================================================== */
+function deposer(quoi, cible) {
+  if (!cible) { replacer(quoi); return; }
+  if (cible.id === "prise") {
+    replacer(quoi);
+    refus("⛔ Non. " + S_SECTEUR, S_SECTEUR);
+    return;
+  }
+  if (quoi === "filR" || quoi === "filN") {
+    if (cible.id === "repos") { debrancher(quoi); return; }
+    brancherFil(quoi, cible.id); return;
+  }
+  replacer(quoi);
+}
+function cliquer(quoi) {
+  signaler(ouPoser(quoi));
+}
+function brancherFil(quoi, ou) {
+  var attendu = quoi === "filR" ? "borneY" : "masse";
+  if (ou !== attendu) {
+    replacer(quoi);
+    refus("Le cordon " + (quoi === "filR" ? "rouge va sur la borne d'entrée Y"
+      : "noir va sur la borne de masse") + " : c'est le branchement EN " +
+      "DÉRIVATION, exactement comme un voltmètre. " + S_VERIF, S_VERIF);
+    return;
+  }
+  ETAT[quoi] = true;                                    /* verrou en 1re ligne */
+  replacer(quoi);
+  succes("Cordon " + (quoi === "filR" ? "rouge branché sur l'entrée Y"
+                                      : "noir branché sur la masse") + ".");
+  majTout();
+}
+function debrancher(quoi) {
+  ETAT[quoi] = false;
+  replacer(quoi);
+  succes("Cordon " + (quoi === "filR" ? "rouge" : "noir") + " débranché.");
+  majTout();
+}
+function basculer(quoi) {
+  if (quoi !== "sel") return;
+  REG.coup = REG.coup === "DC" ? "AC" : "DC";
+  BSEL.poser(REG.coup === "AC");
+  succes("Sélecteur d'entrée sur " + REG.coup + ".");
+  majTout();
+}
+function reglerKnob(quel, idx) {
+  var K = quel === "sv" ? KSV : KSH;
+  K.poser(idx);
+  REG[quel] = K.valeur();
+  if (regle29()) ETAT.regleVu = true;
+  /* §12.19 : UN RÉGLAGE PÉRIME LA LECTURE. Les curseurs ne valent plus pour
+     cette base de temps — le motif n'occupe plus le même nombre de
+     divisions —, donc on les décroche et l'on redemande le placement. */
+  ETAT.poseA = false; ETAT.poseB = false;
+  if (quel === "sv") ETAT.poseY = false;
+  ETAT.retenue = 0;
+  noter((quel === "sv" ? "Sensibilité verticale" : "Balayage") + " sur " +
+    exact(REG[quel], 3) + (quel === "sv" ? " V/div" : " ms/div") +
+    " — un motif y occupe maintenant " + nb(periodeDiv(), 2) + " division(s), " +
+    "et les curseurs sont à replacer.", true);
+  majTout();
+}
+/* ⚠ LES CURSEURS S'AIMANTENT SUR LES REPÈRES VISIBLES DE LA COURBE — les
+   passages par zéro en montant, et le sommet. C'est ce que l'œil fait avec
+   une règle transparente, et c'est ce qui rend le PIÈGE DE LA FICHE
+   atteignable : on peut s'aimanter sur une DEMI-période aussi bien que sur
+   une période entière, et la page dit alors ce que la fiche dit.           */
+function poserCurseurX(quel, d) {
+  var p = periodeDiv(), demi = p / 2, v;
+  if (quel === "curA") {
+    v = Math.round(d / demi) * demi;
+    ETAT.xA = borne(v, 0, N_DIV_X);
+    ETAT.poseA = true;
+  } else {
+    var k = Math.max(1, Math.round((d - ETAT.xA) / demi));
+    if (ETAT.xA + k * demi > N_DIV_X + 1e-9) {
+      /* Le motif visé ne tient pas à droite du curseur gauche : on retombe
+         sur le plus grand nombre ENTIER d'alternances qui tienne, et l'on
+         préfère un nombre PAIR — un motif entier plutôt qu'une alternance
+         orpheline, faute de quoi la page refuserait un geste que l'écran
+         rendait impossible. */
+      k = Math.floor((N_DIV_X - ETAT.xA) / demi + 1e-9);
+      if (k > 2 && k % 2) k -= 1;
+      k = Math.max(1, k);
+    }
+    ETAT.xB = borne(ETAT.xA + k * demi, 0, N_DIV_X);
+    ETAT.poseB = true;
+  }
+  replacer(quel);
+  ETAT.retenue = 0;
+  if (uneSeuleAlternance()) {
+    /* Le piège que la fiche signale, et il se produit pour de bon. */
+    refus("⚠ Attention : les deux curseurs n'encadrent qu'UNE alternance. Un " +
+      "motif élémentaire en comporte DEUX — une positive et une négative. " +
+      "L'écart vaut " + nb(ecartCurseurs(), 1) + " division(s), la période en " +
+      "vaut " + nb(p, 1) + ".", S_REGLAGE);
+    majTout();
+    return;
+  }
+  if (motifOk()) {
+    succes("Les deux curseurs encadrent " + nb(Math.round(nMotifs()) / 2, 0) +
+      " motif(s) élémentaire(s) : " + nb(ecartCurseurs(), 1) + " division(s).");
+  } else {
+    noter("Curseur " + (quel === "curA" ? "gauche" : "droit") + " posé à " +
+      nb(quel === "curA" ? ETAT.xA : ETAT.xB, 1) + " division. Écart courant : " +
+      nb(ecartCurseurs(), 1) + " division(s).", false);
+  }
+  majTout();
+}
+function poserCurseurY(d) {
+  var yv = yVrai(), lu = lireDiv(yv);
+  /* aimantation sur le sommet : c'est le repère visible de la courbe */
+  ETAT.yC = Math.abs(d - yv) <= 0.35 ? lu : lireDiv(borne(d, -N_DIV_Y / 2, N_DIV_Y / 2));
+  ETAT.poseY = Math.abs(ETAT.yC - lu) < 1e-9;
+  replacer("curY");
+  ETAT.retenue = 0;
+  if (ETAT.poseY) {
+    succes("Curseur horizontal posé sur le SOMMET de la courbe : " +
+      nb(ETAT.yC, 1) + " division(s) au-dessus de l'axe du temps.");
+  } else {
+    noter("Curseur horizontal à " + nb(ETAT.yC, 1) + " division(s) — il n'est " +
+      "pas sur le sommet de la courbe. Le sommet est à " + nb(yv, 2) +
+      " division(s).", false);
+  }
+  majTout();
+}
+function compterX() {
+  if (!motifOk()) {
+    signaler(uneSeuleAlternance()
+      ? "Un motif comporte DEUX alternances : replacer le curseur droit."
+      : "Encadrer d'abord UN motif élémentaire avec les deux curseurs.");
+    return;
+  }
+  ETAT.xLu = lireDiv(ecartCurseurs() / (Math.round(nMotifs()) / 2));
+  succes("X = " + exact(ETAT.xLu, 1) + " division(s) pour un motif — lu au pas " +
+    "de l'instrument, " + nb(PAS_LECTURE, 1) + " division.");
+  majTout();
+}
+function calculerT() {
+  if (ETAT.xLu === null) { signaler("Compter X d'abord."); return; }
+  var m = { x: ETAT.xLu, Tms: ETAT.xLu * REG.sh, dTms: SOUS_DIV * REG.sh,
+            dec: decDe(PAS_LECTURE * REG.sh) };
+  ETAT.T = m;
+  if (ETAT.shPremier === null) { ETAT.shPremier = REG.sh; }
+  succes("T = X × Sh = " + exact(ETAT.xLu, 1) + " × " + exact(REG.sh, 3) + " = " +
+    exact(m.Tms, m.dec) + " ms, soit " + exact(m.Tms / 1000, m.dec + 3) + " s.");
+  majTout();
+}
+function calculerF() {
+  if (!ETAT.T) { signaler("Calculer T d'abord."); return; }
+  var Ts = ETAT.T.Tms / 1000;
+  var f = 1 / Ts, df = (ETAT.T.dTms / 1000) / (Ts * Ts);
+  ETAT.f = { f: f, df: df, dec: decDe(df) };
+  succes("f = 1/T = 1 / " + exact(Ts, ETAT.T.dec + 3) + " = " + nb(f, ETAT.f.dec) +
+    " Hz. L'incertitude propagée vaut ±" + nb(df, 1) + " Hz : le premier " +
+    "chiffre après la virgule ne serait pas significatif.");
+  majTout();
+}
+function compterY() {
+  if (!ETAT.poseY) {
+    signaler("Poser d'abord le curseur horizontal sur le SOMMET de la courbe.");
+    return;
+  }
+  ETAT.yLu = ETAT.yC;
+  succes("Y = " + exact(ETAT.yLu, 1) + " division(s) entre l'axe du temps et le " +
+    "sommet — on lit du MILIEU au sommet, jamais d'un sommet à l'autre.");
+  majTout();
+}
+function calculerUmax() {
+  if (ETAT.yLu === null) { signaler("Compter Y d'abord."); return; }
+  var m = mesurerUmax(oscCourant(), srcCourante());
+  ETAT.umax = { umax: ETAT.yLu * REG.sv, dec: m.dec, dU: m.dU,
+                yVrai: m.yVrai, y: ETAT.yLu };
+  succes("U_max = Y × Sv = " + exact(ETAT.yLu, 1) + " × " + exact(REG.sv, 3) +
+    " = " + exact(ETAT.umax.umax, m.dec) + " V.");
+  majTout();
+}
+function verifierT() {
+  if (!ETAT.T) { signaler("Mesurer d'abord la période au réglage prescrit."); return; }
+  if (REG.sh === ETAT.shPremier) {
+    signaler("Changer d'abord la sensibilité horizontale : c'est elle qu'on " +
+      "veut disculper.");
+    return;
+  }
+  if (!motifOk()) {
+    signaler("Replacer les deux curseurs sur un motif à la nouvelle base de temps.");
+    return;
+  }
+  ETAT.x2 = lireDiv(ecartCurseurs() / (Math.round(nMotifs()) / 2));
+  ETAT.T2 = ETAT.x2 * REG.sh;
+  var ecart = Math.abs(ETAT.T2 - ETAT.T.Tms);
+  if (ecart > ETAT.T.dTms + SOUS_DIV * REG.sh) {
+    noter("⚠ Les deux mesures de T ne coïncident pas : " +
+      exact(ETAT.T.Tms, 2) + " ms et " + exact(ETAT.T2, 2) + " ms.", false);
+    majTout();
+    return;
+  }
+  ETAT.verifOk = true;                                  /* verrou en 1re ligne */
+  $("concl").classList.remove("masque");
+  succes("À " + exact(REG.sh, 3) + " ms/div, le motif occupe " +
+    exact(ETAT.x2, 1) + " division(s) au lieu de " + exact(ETAT.xLu, 1) +
+    " — et le produit X × Sh redonne " + exact(ETAT.T2, 2) + " ms. La période " +
+    "n'a pas changé : c'est une propriété de la TENSION, pas de l'écran.");
+  majTout();
+}
+
+/* ==================================================================
+   15. LE RENDU
+   ================================================================== */
+function peindreTout() {
+  var s = srcCourante();
+  dessinerTrace(gTrace, GEO, oscCourant(), sousTension() ? s : null, true);
+  peindreCordons();
+  /* la règle transparente : le bandeau entre les deux curseurs */
+  vide(gRegle);
+  if (ETAT.poseA && ETAT.poseB) {
+    var x1 = dx(GEO, Math.min(ETAT.xA, ETAT.xB)), x2 = dx(GEO, Math.max(ETAT.xA, ETAT.xB));
+    gRegle.appendChild(el("rect", { x: x1, y: GEO.ey, width: x2 - x1,
+      height: GEO.eh, fill: motifOk() ? "#7cf0a8" : "#ffd24d", opacity: .13 }));
+    gRegle.appendChild(el("text", { x: (x1 + x2) / 2, y: GEO.ey + 18,
+      "text-anchor": "middle", "font-size": 12, "font-weight": "bold",
+      fill: motifOk() ? "#7cf0a8" : "#ffd24d",
+      "font-family": "Arial, Helvetica, sans-serif" },
+      "X = " + nb(ecartCurseurs(), 1) + " div"));
+  }
+  if (ETAT.poseY) {
+    gRegle.appendChild(el("text", { x: GEO.ex + GEO.ew - 6, y: dy(GEO, ETAT.yC) - 6,
+      "text-anchor": "end", "font-size": 12, "font-weight": "bold", fill: "#7ad7ff",
+      "font-family": "Arial, Helvetica, sans-serif" },
+      "Y = " + nb(ETAT.yC, 1) + " div"));
+  }
+  replacer("curA"); replacer("curB"); replacer("curY");
+}
+
+/* ==================================================================
+   16. CONSIGNE, JOURNAL, SÉCURITÉ, TABLEAU
+   ================================================================== */
+function dire(t, fini) {
+  if (ETAT.retenue && Date.now() < ETAT.retenue) return;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  ETAT.retenue = 0;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne";
+  ETAT.retenue = Date.now() + 4000;
+}
+function succes(t) { ETAT.retenue = 0; noter(t, true); }
+function refus(t, ligne) { signaler(t); noter(t, false); secuDire(ligne, "refus"); }
+function noter(t, positif) {
+  var n = $("obs");
+  n.textContent = t;
+  n.className = "obs" + (positif ? " pos" : "");
+}
+function secuDire(t, cls) {
+  var b = $("secuBande");
+  $("secuTexte").textContent = t || "";
+  $("secuPic").textContent = cls === "ok" ? "✔" : (cls === "refus" ? "⛔" : "⚠");
+  b.className = "secubande" + (cls ? " " + cls : "");
+  var ul = $("securite"), i;
+  if (!ul) return;
+  for (i = 0; i < ul.children.length; i++) {
+    ul.children[i].className = (SECU[i] === t) ? "actif" : "";
+  }
+}
+function secuGeste(quoi) {
+  if (/^cur/.test(quoi)) secuDire(S_REGLAGE, "");
+  else secuDire(S_VERIF, "");
+}
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;                            /* §11.3 */
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+function consigne() {
+  if (!ETAT.filR) return "Brancher le cordon rouge sur la borne d'entrée Y.";
+  if (!ETAT.filN) return "Brancher le cordon noir sur la borne de masse.";
+  if (REG.coup !== "AC") return "Placer le sélecteur sur AC.";
+  if (ETAT.xLu === null && !regle29()) return "Régler Sv = " + exact(PROTO.sv, 3) +
+    " V/div et Sh = " + exact(PROTO.sh, 3) + " ms/div.";
+  if (ETAT.xLu === null && !motifOk()) return "Encadrer UN motif élémentaire " +
+    "avec les deux curseurs : deux alternances, une positive et une négative.";
+  if (ETAT.xLu === null) return "Compter le nombre X de divisions du motif.";
+  if (!ETAT.T) return "Calculer la période T = X × Sh.";
+  if (!ETAT.f) return "Calculer la fréquence f = 1 / T.";
+  if (ETAT.yLu === null && !ETAT.poseY) return "Poser le curseur horizontal sur " +
+    "le sommet de la courbe.";
+  if (ETAT.yLu === null) return "Compter le nombre Y de divisions du sommet.";
+  if (!ETAT.umax) return "Calculer la valeur maximale U_max = Y × Sv.";
+  if (!ETAT.verifOk) return "Changer la sensibilité horizontale, recompter X, et " +
+    "vérifier que la période n'a pas changé.";
+  return "Expérience terminée : la conclusion est démasquée.";
+}
+
+/* ==================================================================
+   17. LE PARCOURS D'ÉTAPES
+   ================================================================== */
+var ETAPES = [
+  { n: "Brancher, sélecteur AC", f: function () { return brancheOK() && REG.coup === "AC"; } },
+  { n: "Régler Sv et Sh", f: function () { return ETAT.xLu !== null || regle29(); } },
+  { n: "Encadrer un motif", f: function () { return ETAT.xLu !== null || motifOk(); } },
+  { n: "Compter X", f: function () { return ETAT.xLu !== null; } },
+  { n: "T = X × Sh", f: function () { return !!ETAT.T; } },
+  { n: "f = 1 / T", f: function () { return !!ETAT.f; } },
+  { n: "Compter Y", f: function () { return ETAT.yLu !== null; } },
+  { n: "U_max, puis vérifier", f: function () { return ETAT.verifOk; } }
+];
+function majEtapes() {
+  var d = $("etapes"), i, k = -1;
+  for (i = 0; i < ETAPES.length; i++) if (!ETAPES[i].f()) { k = i; break; }
+  if (!d.children.length) {
+    ETAPES.forEach(function (e, j) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">' + (j + 1) + '</span>' + e.n;
+      d.appendChild(n);
+    });
+  }
+  for (i = 0; i < ETAPES.length; i++) {
+    d.children[i].className = ETAPES[i].f() ? "faite" : (i === k ? "actif" : "");
+  }
+}
+
+/* ==================================================================
+   18. LES PANNEAUX HTML ET LES TABLEAUX
+   ================================================================== */
+function construireHTML() {
+  $("titre").textContent = "Paillasse virtuelle — " + depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E2AC-29") + " · " + DONNEES.niveau +
+    " · " + DONNEES.unite + " · " + DONNEES.lecon;
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation ||
+    DONNEES.observation || "");
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion ||
+    DONNEES.conclusion || "");
+  $("bilan").textContent = "T = X × Sh · f = 1/T · U_max = Y × Sv";
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation || "");
+  $("seanceM").textContent = nb(DUREE_SEANCE, 0) + " min · " + MODALITE;
+
+  var t = $("tab"), tr = document.createElement("tr"), i, j, td;
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < NL; i++) {
+    tr = document.createElement("tr");
+    for (j = 0; j < ENTETES.length; j++) {
+      td = document.createElement("td");
+      if (LIG[i] && LIG[i][j]) { td.innerHTML = md(LIG[i][j]); }
+      else { td.className = "vide"; td.textContent = ""; }
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  var ul = $("materiel");
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  ul = $("securite");
+  SECU.forEach(function (s) {
+    var li = document.createElement("li"); li.textContent = s; ul.appendChild(li);
+  });
+
+  $("legendeSeuils").innerHTML = "Une lecture se quantifie au <b>pas de " +
+    "l'instrument</b> : " + nb(PAS_LECTURE, 1) + " division, c'est-à-dire la " +
+    "demi-sous-graduation. Son incertitude est d'<b>une</b> sous-graduation, " +
+    nb(SOUS_DIV, 1) + " division. Un produit lecture × sensibilité est un " +
+    "décimal <b>exact</b> ; une grandeur dérivée — la fréquence, un rapport — " +
+    "prend les décimales que son incertitude propagée justifie, et pas une de " +
+    "plus.";
+  $("srcLecture").innerHTML = "L'écart entre ce que l'on LIT et ce que le " +
+    "signal VAUT est un <b>ajout</b> : la fiche ne le donne pas, et un élève " +
+    "ne peut pas le connaître. Il est ici pour montrer que la quantification " +
+    "de la lecture est la seule source d'erreur du calcul.";
+
+  var ct = $("capotConst"), k;
+  tr = document.createElement("tr");
+  ["Constante", "Valeur", "Provenance"].forEach(function (h) {
+    var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+  });
+  ct.appendChild(tr);
+  for (k in PHYS) {
+    tr = document.createElement("tr");
+    td = document.createElement("td"); td.textContent = PHYS[k].n; tr.appendChild(td);
+    td = document.createElement("td"); td.className = "mes";
+    td.textContent = sci(PHYS[k].v, 3) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(td);
+    td = document.createElement("td"); td.className = "src";
+    td.textContent = PHYS[k].s; tr.appendChild(td);
+    ct.appendChild(tr);
+  }
+  $("capotSrc").textContent = "Le protocole ne prescrit PAS la position du " +
+    "générateur : la page adopte " + exact(GEN_P, 1) + " V~, la valeur qui " +
+    "reproduit l'oscillogramme de la fiche (U_max = " + exact(UMAX_FICHE, 0) +
+    " V, donc " + nb(umaxVersReglage(UMAX_FICHE), 4) + " V~), arrondie au cran " +
+    "de " + nb(CRAN_GEN, 1) + " V du bouton. Sv = " + exact(PROTO.sv, 3) +
+    " V/div et Sh = " + exact(PROTO.sh, 3) + " ms/div, eux, sont lus dans le " +
+    "protocole.";
+  $("eqModele").textContent =
+    "lecture       X = arrondi(écart des curseurs / " + nb(PAS_LECTURE, 1) + " div)\n" +
+    "              Y = arrondi(hauteur du sommet / " + nb(PAS_LECTURE, 1) + " div)\n" +
+    "période       T = X × S_h        décimales : celles de " + nb(PAS_LECTURE, 1) +
+    " × S_h\n" +
+    "fréquence     f = 1 / T          Δf = ΔT/T²  →  décimales de Δf\n" +
+    "valeur max    U_max = Y × S_v    décimales : celles de " + nb(PAS_LECTURE, 1) +
+    " × S_v\n" +
+    "incertitude   ΔX = ΔY = " + nb(SOUS_DIV, 1) + " div   (une sous-graduation)\n" +
+    "motif         DEUX alternances : n = écart / (T/2) doit être PAIR\n" +
+    "contre-       T ne dépend pas de S_h : X change en sens inverse, et\n" +
+    "  épreuve     le produit X × S_h reste le même";
+  $("eqBilan").textContent =
+    "l'oscilloscope trace u = f(t) :\n" +
+    "   axe horizontal = le TEMPS,  gradué par S_h (ms/div)\n" +
+    "   axe vertical   = la TENSION, graduée par S_v (V/div)\n\n" +
+    "la période T est le plus petit intervalle au bout duquel la tension\n" +
+    "reprend la même valeur EN VARIANT DANS LE MÊME SENS — d'où les deux\n" +
+    "alternances, et non une seule.";
+}
+function majTableauSh() {
+  var t = $("tabSh"), tr, td, i, o, m, s = srcCourante();
+  vide(t);
+  tr = document.createElement("tr");
+  ["S_h (ms/div)", "X (div)", "T = X × S_h"].forEach(function (h) {
+    td = document.createElement("th"); td.textContent = h; tr.appendChild(td);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < SH_POSITIONS.length; i++) {
+    o = new Oscillo(REG.sv, SH_POSITIONS[i], "AC", true, 0);
+    m = mesurerPeriode(o, s);
+    if (!m || m.x < 0.5 || m.x > N_DIV_X) continue;
+    tr = document.createElement("tr");
+    if (Math.abs(SH_POSITIONS[i] - REG.sh) < 1e-9) tr.className = "suivi";
+    [exact(SH_POSITIONS[i], 3), exact(m.x, 1), exact(m.Tms, m.dec) + " ms"]
+      .forEach(function (v, j) {
+        td = document.createElement("td");
+        td.className = j ? "mes" : "";
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+    t.appendChild(tr);
+  }
+}
+function majTableauSv() {
+  var t = $("tabSv"), tr, td, i, o, m, s = srcCourante();
+  vide(t);
+  tr = document.createElement("tr");
+  ["S_v (V/div)", "Y (div)", "U_max = Y × S_v"].forEach(function (h) {
+    td = document.createElement("th"); td.textContent = h; tr.appendChild(td);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < SV_POSITIONS.length; i++) {
+    o = new Oscillo(SV_POSITIONS[i], REG.sh, "AC", true, 0);
+    m = mesurerUmax(o, s);
+    if (m.y > N_DIV_Y / 2 || m.y < 0.5) continue;
+    tr = document.createElement("tr");
+    if (Math.abs(SV_POSITIONS[i] - REG.sv) < 1e-9) tr.className = "suivi";
+    [exact(SV_POSITIONS[i], 3), exact(m.y, 1), exact(m.umax, m.dec) + " V"]
+      .forEach(function (v, j) {
+        td = document.createElement("td");
+        td.className = j ? "mes" : "";
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+    t.appendChild(tr);
+  }
+}
+function majLectures() {
+  var s = srcCourante(), mp = mesurerPeriode(oscCourant(), s),
+      mu = mesurerUmax(oscCourant(), s);
+  $("nomMotif").textContent = "un motif occupe " + nb(periodeDiv(), 2) + " div";
+  $("lXbrut").textContent = (ETAT.poseA && ETAT.poseB)
+    ? nb(ecartCurseurs(), 2) + " div" : "—";
+  $("lX").textContent = ETAT.xLu === null ? "—" : exact(ETAT.xLu, 1) + " div";
+  $("lT").textContent = !ETAT.T ? "—" : exact(ETAT.T.Tms, ETAT.T.dec) + " ms";
+  $("lF").textContent = !ETAT.f ? "—" : nb(ETAT.f.f, ETAT.f.dec) + " Hz";
+  $("lY").textContent = ETAT.yLu === null ? "—" : exact(ETAT.yLu, 1) + " div";
+  $("lUmax").textContent = !ETAT.umax ? "—"
+    : exact(ETAT.umax.umax, ETAT.umax.dec) + " V";
+  $("lEcart").textContent = "X : " + nb(Math.abs(mp.x - mp.xVrai), 4) +
+    " div · Y : " + nb(Math.abs(mu.y - mu.yVrai), 4) + " div";
+  $("lIncert").textContent = "±" + nb(SOUS_DIV, 1) + " div, soit ±" +
+    exact(SOUS_DIV * REG.sh, 2) + " ms et ±" + exact(SOUS_DIV * REG.sv, 2) + " V";
+
+  /* --- LE CARNET : ce que les curseurs ont compté (§12.41) --- */
+  var t = $("carnet"), tr, td, i, j;
+  vide(t);
+  tr = document.createElement("tr");
+  ENTETES.forEach(function (h) {
+    td = document.createElement("th"); td.innerHTML = md(h); tr.appendChild(td);
+  });
+  t.appendChild(tr);
+  var lignesC = [];
+  lignesC[L_X] = [intitule(L_X), ETAT.xLu === null ? "—" : exact(ETAT.xLu, 1) + " div",
+    "Sh = " + exact(REG.sh, 3) + " ms/div",
+    !ETAT.T ? "—" : "T = " + exact(ETAT.T.Tms, ETAT.T.dec) + " ms"];
+  lignesC[L_F] = [intitule(L_F), "—",
+    !ETAT.T ? "—" : "T = " + exact(ETAT.T.Tms / 1000, ETAT.T.dec + 3) + " s",
+    !ETAT.f ? "—" : "f = " + nb(ETAT.f.f, ETAT.f.dec) + " Hz"];
+  lignesC[L_Y] = [intitule(L_Y), ETAT.yLu === null ? "—" : exact(ETAT.yLu, 1) + " div",
+    "Sv = " + exact(REG.sv, 3) + " V/div",
+    !ETAT.umax ? "—" : "U_max = " + exact(ETAT.umax.umax, ETAT.umax.dec) + " V"];
+  for (i = 0; i < NL; i++) {
+    tr = document.createElement("tr");
+    for (j = 0; j < ENTETES.length; j++) {
+      td = document.createElement("td");
+      td.className = j ? "mes" : "";
+      td.textContent = (lignesC[i] || [])[j] || "—";
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+}
+/* §11.5 : quand le modèle et la fiche divergent, on le DIT. */
+function verifierAccord() {
+  if (ETAT.horsProto) return true;
+  var ok = true;
+  function cmp(k, c, val) {
+    var f = cel(k, c).replace(/\s+/g, " ").trim();
+    if (f && depouille(val).replace(/\s+/g, " ").trim() !== f) ok = false;
+  }
+  if (ETAT.xLu !== null) cmp(L_X, C_LECT, exact(ETAT.xLu, 1) + " div");
+  if (ETAT.T) cmp(L_X, C_RES, "T = " + exact(ETAT.T.Tms, ETAT.T.dec) + " ms");
+  if (ETAT.f) cmp(L_F, C_RES, "f = " + nb(ETAT.f.f, ETAT.f.dec) + " Hz");
+  if (ETAT.yLu !== null) cmp(L_Y, C_LECT, exact(ETAT.yLu, 1) + " div");
+  if (ETAT.umax) cmp(L_Y, C_RES, "U_max = " + exact(ETAT.umax.umax, ETAT.umax.dec) + " V");
+  if (!ok) {
+    noter("⚠ Le modèle et la fiche divergent sur une lecture — vérifier les " +
+      "constantes et les réglages.", false);
+  }
+  return ok;
+}
+function revelerSelonEtat() {
+  if (ETAT.xLu !== null) { revelerCellule(L_X, C_LECT); revelerCellule(L_X, C_SENS); }
+  if (ETAT.T) { revelerCellule(L_X, C_RES); revelerCellule(L_F, C_LECT);
+                revelerCellule(L_F, C_SENS); }
+  if (ETAT.f) revelerCellule(L_F, C_RES);
+  if (ETAT.yLu !== null) { revelerCellule(L_Y, C_LECT); revelerCellule(L_Y, C_SENS); }
+  if (ETAT.umax) revelerCellule(L_Y, C_RES);
+  verifierAccord();
+}
+
+/* ==================================================================
+   19. LES COMMANDES HTML
+   ================================================================== */
+var CURSEURS = [
+  { id: "rGen", k: "gen", o: "oGen", a: "aideGen",
+    f: function (v) { return exact(v, 1) + " V~ · U_max = " + nb(reglageVersUmax(v), 2) + " V"; },
+    aide: function () {
+      return "La plaque du générateur porte « " + exact(PLAGE[0], 1) + " – " +
+        exact(PLAGE[1], 1) + " V~ ». Le protocole ne prescrit pas de position : " +
+        "la page adopte <b>" + exact(GEN_P, 1) + " V~</b>, celle qui reproduit " +
+        "l'oscillogramme de la fiche. Le sommet est alors à " +
+        nb(yVrai(), 2) + " division(s) sous " + exact(REG.sv, 3) + " V/div.";
+    } },
+  { id: "rF", k: "f", o: "oF", a: "aideF",
+    f: function (v) { return nb(v, 0) + " Hz · T = " + nb(1000 / v, 1) + " ms"; },
+    aide: function () {
+      return "La fréquence n'est <b>pas</b> dans la fiche : celle du réseau, " +
+        nb(F_RESEAU, 0) + " Hz, est une hypothèse sourcée. La bouger change la " +
+        "période mesurée — et c'est bien la preuve que la page la MESURE au " +
+        "lieu de la recopier. Un motif occupe alors " + nb(periodeDiv(), 2) +
+        " division(s).";
+    } }
+];
+function lireReglages() {
+  CURSEURS.forEach(function (c) { REG[c.k] = +$(c.id).value; });
+  ETAT.horsProto = horsProtocole();
+}
+function majAffichageReglages() {
+  CURSEURS.forEach(function (c) {
+    $(c.o).textContent = c.f(REG[c.k]);
+    $(c.a).innerHTML = typeof c.aide === "function" ? c.aide() : c.aide;
+  });
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+function brancherCommandes() {
+  CURSEURS.forEach(function (c) {
+    $(c.id).addEventListener("input", function () {
+      lireReglages();
+      /* §12.19 : changer la source PÉRIME le placement des curseurs. */
+      ETAT.poseA = false; ETAT.poseB = false; ETAT.poseY = false;
+      majTout();
+    });
+  });
+  $("bProto").addEventListener("click", function () {
+    $("rGen").value = PROTO.gen; $("rF").value = PROTO.f;
+    reglerKnob("sv", I_SV_P);
+    reglerKnob("sh", I_SH_P);
+    lireReglages();
+    majTout();
+    noter("Réglages ramenés à ceux du protocole : Sv = " + exact(PROTO.sv, 3) +
+      " V/div, Sh = " + exact(PROTO.sh, 3) + " ms/div, générateur sur " +
+      exact(PROTO.gen, 1) + " V~ à " + nb(PROTO.f, 0) + " Hz.", true);
+  });
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+}
+
+/* ==================================================================
+   20. L'HORLOGE
+   ================================================================== */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 200);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(0.5, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceJ").style.width = borne(f, 0, 1) * 100 + "%";
+  $("seanceT").parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function majTout() {
+  majAffichageReglages();
+  peindreTout();
+  majEtapes();
+  majLectures();
+  majTableauSh(); majTableauSv();
+  revelerSelonEtat();
+  majBoutons();
+  majProtocole();
+  dire(consigne(), ETAT.verifOk);
+}
+function majBoutons() {
+  var a;
+  for (a in BOUTONS) BOUTONS[a].armer(false);
+  if (BOUTONS.compterX) BOUTONS.compterX.armer(motifOk() && ETAT.xLu === null);
+  if (BOUTONS.calcT) BOUTONS.calcT.armer(ETAT.xLu !== null && !ETAT.T);
+  if (BOUTONS.calcF) BOUTONS.calcF.armer(!!ETAT.T && !ETAT.f);
+  if (BOUTONS.compterY) BOUTONS.compterY.armer(ETAT.poseY && ETAT.yLu === null);
+  if (BOUTONS.calcUmax) BOUTONS.calcUmax.armer(ETAT.yLu !== null && !ETAT.umax);
+  if (BOUTONS.verifier) {
+    BOUTONS.verifier.armer(!!ETAT.umax && REG.sh !== ETAT.shPremier &&
+      motifOk() && !ETAT.verifOk);
+  }
+  if (ETAT.xLu !== null && BOUTONS.compterX) BOUTONS.compterX.fait();
+  if (ETAT.T && BOUTONS.calcT) BOUTONS.calcT.fait();
+  if (ETAT.f && BOUTONS.calcF) BOUTONS.calcF.fait();
+  if (ETAT.yLu !== null && BOUTONS.compterY) BOUTONS.compterY.fait();
+  if (ETAT.umax && BOUTONS.calcUmax) BOUTONS.calcUmax.fait();
+  if (ETAT.verifOk && BOUTONS.verifier) BOUTONS.verifier.fait();
+}
+
+/* ==================================================================
+   21. RECOMMENCER
+   ================================================================== */
+function recommencer() {
+  purger(); effacerCibles(); prise = null; rot = null;
+  effacerGuide();          /* aucun halo ne survit a la remise en etat */
+  arreterDeroule();        /* ni un deroule en cours */
+  var garde = ETAT.tSeance || 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = garde;
+  REG.coup = "DC";
+  BSEL.poser(false);
+  KSV.poser(0); KSH.poser(0);
+  REG.sv = KSV.valeur(); REG.sh = KSH.valeur();
+  lireReglages();
+  Object.keys(OBJ).forEach(function (k) {
+    OBJ[k].g.removeAttribute("filter");
+    COUCHES[/^cur/.test(k) ? "avant" : "objets"].appendChild(OBJ[k].g);
+  });
+  replacerTout();
+  Object.keys(BOUTONS).forEach(function (a) { BOUTONS[a].neuf(); });
+
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  $("concl").classList.add("masque");
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  secuDire(S_VERIF, "");
+  majTout();
+  noter("Poste remis en état : l'oscilloscope est déréglé, les cordons sont sur " +
+    "la plaque et la règle transparente est à replacer.", false);
+}
+
+/* ==================================================================
+   22. LE PROTOCOLE GUIDÉ
+   ================================================================== */
+var guideSurb = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b || b.cx === undefined) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+function surlignerObjet(quoi) {
+  var m = maison(quoi);
+  if (!m) return;
+  if (quoi === "curA" || quoi === "curB") {
+    halo(m.x - 22, m.y - 22, 44, GEO.eh + 40, 10); return;
+  }
+  if (quoi === "curY") { halo(GEO.ex - 22, m.y - 22, GEO.ew + 44, 44, 10); return; }
+  halo(m.x - 40, m.y - 44, 80, 92, 14);
+}
+function surlignerOrgane(k) {
+  if (k === "borneY") { halo(B_Y.x - 30, B_Y.y - 30, 60, 68, 14); return; }
+  if (k === "masse") { halo(B_M.x - 30, B_M.y - 30, 60, 68, 14); return; }
+  if (k === "sel") { halo(BAS_SEL.x - 44, BAS_SEL.y - 26, 88, 52, 12); return; }
+  if (k === "sv") { halo(K_SV.x - 44, K_SV.y - 44, 88, 88, 20); return; }
+  if (k === "sh") { halo(K_SH.x - 44, K_SH.y - 44, 88, 88, 20); return; }
+  if (k === "ecran") { halo(GEO.ex - 8, GEO.ey - 8, GEO.ew + 16, GEO.eh + 16, 10); }
+}
+
+var GUIDE = [
+  /* 1. « Relier le générateur alternatif à la borne Y et à la masse,
+        sélecteur sur AC. » */
+  { fait: function () { return brancheOK() && REG.coup === "AC"; },
+    aide: function () {
+      if (!ETAT.filR) return "Faire glisser la fiche du <b>cordon rouge</b> sur " +
+        "la <b>borne d'entrée Y</b>.";
+      if (!ETAT.filN) return "Faire glisser la fiche du <b>cordon noir</b> sur " +
+        "la <b>borne de masse</b>.";
+      return "Pousser le <b>sélecteur</b> sur <b>AC</b>.";
+    },
+    montre: function () {
+      if (!ETAT.filR) { surlignerObjet("filR"); montrerCibles("filR");
+        surlignerOrgane("borneY"); return; }
+      if (!ETAT.filN) { surlignerObjet("filN"); montrerCibles("filN");
+        surlignerOrgane("masse"); return; }
+      surlignerOrgane("sel");
+    } },
+
+  /* 2. « Régler Sv = 5 V/div et Sh = 5 ms/div, de façon à obtenir deux ou
+        trois motifs nets et stables. » */
+  { fait: function () { return ETAT.xLu !== null || regle29(); },
+    aide: function () {
+      if (REG.sv !== PROTO.sv) return "Tourner le bouton de <b>sensibilité " +
+        "verticale</b> jusqu'à <b>" + exact(PROTO.sv, 3) + " V/div</b>.";
+      return "Tourner le bouton de <b>balayage</b> jusqu'à <b>" +
+        exact(PROTO.sh, 3) + " ms/div</b> : l'écran montrera alors " +
+        nb(N_DIV_X / periodeDiv(), 1) + " motifs.";
+    },
+    montre: function () {
+      if (REG.sv !== PROTO.sv) { surlignerOrgane("sv"); return; }
+      surlignerOrgane("sh");
+    } },
+
+  /* 3. « Repérer sur l'écran un motif élémentaire : la portion de courbe qui
+        se reproduit identique à elle-même, avec une alternance positive et
+        une alternance négative. » */
+  { fait: function () { return ETAT.xLu !== null || motifOk(); },
+    aide: function () {
+      if (!ETAT.poseA) return "Poser le <b>curseur gauche</b> sur l'écran : il " +
+        "s'aimante sur les passages par zéro de la courbe.";
+      if (uneSeuleAlternance()) return "⚠ Les deux curseurs n'encadrent qu'une " +
+        "<b>alternance</b>. Un motif en comporte <b>deux</b> : pousser le " +
+        "curseur droit d'une alternance de plus.";
+      return "Poser le <b>curseur droit</b> de façon à encadrer <b>un motif " +
+        "entier</b> — " + nb(periodeDiv(), 1) + " divisions à ce réglage.";
+    },
+    montre: function () {
+      surlignerOrgane("ecran");
+      surlignerObjet(!ETAT.poseA ? "curA" : "curB");
+    } },
+
+  /* 4. « Compter le nombre X de divisions occupées par un seul motif. » */
+  { fait: function () { return ETAT.xLu !== null; },
+    aide: "Presser <b>« Compter X »</b> : la page lit l'écart des deux curseurs " +
+      "et le quantifie au pas de l'instrument.",
+    montre: function () { surlignerBouton("compterX"); surlignerOrgane("ecran"); } },
+
+  /* 5. « Calculer la période T = X × S_h, en ms puis en s. » */
+  { fait: function () { return !!ETAT.T; },
+    aide: "Presser <b>« T = X × Sh »</b>.",
+    montre: function () { surlignerBouton("calcT"); } },
+
+  /* 6. « Calculer la fréquence f = 1/T, en hertz. » */
+  { fait: function () { return !!ETAT.f; },
+    aide: "Presser <b>« f = 1 / T »</b> : le résultat s'écrit avec les " +
+      "décimales que son incertitude autorise, et pas une de plus.",
+    montre: function () { surlignerBouton("calcF"); } },
+
+  /* 7. « Compter le nombre Y de divisions entre l'axe du temps et le
+        sommet. » */
+  { fait: function () { return ETAT.yLu !== null; },
+    aide: function () {
+      if (!ETAT.poseY) return "Poser le <b>curseur horizontal</b> sur le " +
+        "<b>sommet</b> de la courbe — il s'y aimante.";
+      return "Presser <b>« Compter Y »</b>.";
+    },
+    montre: function () {
+      if (!ETAT.poseY) { surlignerObjet("curY"); surlignerOrgane("ecran"); return; }
+      surlignerBouton("compterY");
+    } },
+
+  /* 8. « Calculer la valeur maximale U_max = Y × S_v, en volts. » */
+  { fait: function () { return !!ETAT.umax; },
+    aide: "Presser <b>« U_max = Y × Sv »</b>.",
+    montre: function () { surlignerBouton("calcUmax"); } },
+
+  /* 9. « Changer la sensibilité horizontale, recompter X, recalculer T et
+        vérifier que la période n'a pas changé. » */
+  { fait: function () { return ETAT.verifOk; },
+    aide: function () {
+      if (REG.sh === ETAT.shPremier) return "Tourner le bouton de <b>balayage</b> " +
+        "sur une AUTRE position : c'est lui qu'on veut disculper.";
+      if (!motifOk()) return "Replacer les deux curseurs sur un motif : à " +
+        exact(REG.sh, 3) + " ms/div, il n'occupe plus que " +
+        nb(periodeDiv(), 1) + " division(s).";
+      return "Presser <b>« Vérifier T »</b>.";
+    },
+    montre: function () {
+      if (REG.sh === ETAT.shPremier) { surlignerOrgane("sh"); return; }
+      if (!motifOk()) {
+        surlignerOrgane("ecran");
+        surlignerObjet(!ETAT.poseA ? "curA" : "curB");
+        return;
+      }
+      surlignerBouton("verifier");
+    } }
+];
+
+/* ==================================================================
+   23. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ETAT = neufEtat();
+  ajouterDefs(); ajouterCouches();
+  gCordons = ajout("fils", el("g", {}));
+  construireDecor();
+  construireOscillo();
+  creerObjets();
+
+  var lib = ["Compter X", "T = X × Sh", "f = 1 / T", "Compter Y",
+             "U_max = Y × Sv", "Vérifier T"];
+  var act = ["compterX", "calcT", "calcF", "compterY", "calcUmax", "verifier"];
+  var n = lib.length, wB = 162, dxB = (W - 2 * 100) / (n - 1);
+  lib.forEach(function (l, i) {
+    boutonScene(100 + i * dxB, Y_BOUTONS, wB, 40, l, act[i]);
+  });
+
+  brancherPrise(); brancherBoutons();
+  brancherPlein();   /* le plein ecran : sans cet appel, le bouton du cadre est mort */
+  construireHTML(); brancherCommandes();
+  lireReglages();
+  construireProtocole();
+  recommencer();
+  demarrerHorloge();
+}
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. « Relier le générateur alternatif à la borne Y de l'oscilloscope et à
+        la masse, sélecteur sur AC. » Trois gestes, dont deux glissers. */
+  function () {
+    if (!ETAT.filR) { deposer("filR", zonePar("filR", "borneY")); return 0; }
+    if (!ETAT.filN) { deposer("filN", zonePar("filN", "masse")); return 0; }
+    if (REG.coup !== "AC") { basculer("sel"); return 0; }
+    return 0;
+  },
+
+  /* 2. « Régler la sensibilité verticale sur Sv = 5 V/div et le balayage sur
+        Sh = 5 ms/div, de façon à obtenir deux ou trois motifs nets. »
+        Les deux boutons se TOURNENT, par la fonction du geste. */
+  function () {
+    if (REG.sv !== PROTO.sv) { reglerKnob("sv", I_SV_P); return 0; }
+    if (REG.sh !== PROTO.sh) { reglerKnob("sh", I_SH_P); return 0; }
+    return 0;
+  },
+
+  /* 3. « Repérer sur l'écran un motif élémentaire : la portion de courbe qui
+        se reproduit identique à elle-même, avec une alternance positive et
+        une alternance négative. »
+        ⚠ Le curseur droit vise UN MOTIF ENTIER, c'est-à-dire DEUX
+        alternances : `poserCurseurX` aimante aussi sur la demi-période, et
+        viser celle-ci déclencherait le refus que la fiche annonce. La cible
+        se calcule donc sur `periodeDiv()`, jamais sur un nombre écrit. */
+  function () {
+    if (!ETAT.poseA) { poserCurseurX("curA", 0); return 0; }
+    poserCurseurX("curB", ETAT.xA + periodeDiv());
+    return 0;
+  },
+
+  /* 4. « Compter le nombre X de divisions occupées par un seul motif. » */
+  function () { presserBouton("compterX"); return 0; },
+
+  /* 5. « Calculer la période T = X × S_h, en ms puis en s. » */
+  function () { presserBouton("calcT"); return 0; },
+
+  /* 6. « Calculer la fréquence f = 1 / T, en hertz. » */
+  function () { presserBouton("calcF"); return 0; },
+
+  /* 7. « Compter le nombre Y de divisions entre l'axe du temps et le sommet
+        de la courbe. » Le curseur horizontal s'aimante sur le SOMMET, et
+        c'est le modèle qui dit où il est — jamais une hauteur écrite. */
+  function () {
+    if (!ETAT.poseY) { poserCurseurY(yVrai()); return 0; }
+    presserBouton("compterY");
+    return 0;
+  },
+
+  /* 8. « Calculer la valeur maximale U_max = Y × S_v, en volts. » */
+  function () { presserBouton("calcUmax"); return 0; },
+
+  /* 9. « Changer la sensibilité horizontale, recompter X, recalculer T et
+        vérifier que la période n'a pas changé. »
+        La nouvelle position se CHERCHE parmi celles où un motif tient encore
+        sur l'écran : elle n'est pas écrite. */
+  function () {
+    var i, n;
+    if (REG.sh === ETAT.shPremier) {
+      for (i = 0; i < SH_POSITIONS.length; i++) {
+        if (SH_POSITIONS[i] === ETAT.shPremier) continue;
+        n = (1000 / REG.f) / SH_POSITIONS[i];
+        if (n >= 1 && n <= N_DIV_X) { reglerKnob("sh", i); return 0; }
+      }
+      return 0;
+    }
+    if (!ETAT.poseA) { poserCurseurX("curA", 0); return 0; }
+    if (!motifOk()) { poserCurseurX("curB", ETAT.xA + periodeDiv()); return 0; }
+    presserBouton("verifier");
+    return 0;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, ce qui est le premier
+   usage de cette page en classe. On agrandit le CADRE, pas la mise en
+   page.                                                                    */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

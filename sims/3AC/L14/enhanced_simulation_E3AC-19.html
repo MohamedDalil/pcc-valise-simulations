@@ -1,0 +1,3460 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-19 · D'où vient le nombre écrit en watts ?</title>
+
+<!--
+  ===================================================================
+  E3AC-19 · 3AC · L14 — PAILLASSE VIRTUELLE
+  « D'où vient le nombre écrit en watts sur un appareil électrique ? »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Rien n'est affirmé : les quatre lignes du tableau sont OBTENUES.
+
+  Les deux lampes. Un filament n'est pas ohmique — sa résistance croît
+  avec sa température. La page ne pose donc pas « I = 0,50 A » : elle
+  calcule
+
+      I = I_nom · (U / U_nom)^n        n = 0,468
+
+  loi de filament de tungstène, dont l'exposant est AJUSTÉ sur les
+  relevés de la fiche voisine E3AC-20 (3 V → 0,25 A, 6 V → 0,35 A,
+  9 V → 0,42 A). Sous 12 V, la lampe L1 marquée 6 W est traversée par
+  0,50 A et la L2 marquée 3 W par 0,25 A : les deux lignes de la fiche
+  tombent, et le produit U × I redonne 6,0 W et 3,0 W.
+
+  Les deux appareils de chauffage. Ceux-là sont ohmiques : I = U / R,
+  soit 12/24 = 0,50 A et 12/48 = 0,25 A. L'eau qu'ils chauffent suit
+  une équation différentielle, intégrée par Runge-Kutta d'ordre 4 :
+
+      C · dΔT/dt = P − a · ΔT^1,25
+
+  Le terme de pertes est en ΔT^1,25 et non en ΔT : c'est la loi de la
+  convection naturelle (Nusselt laminaire, h ∝ ΔT^0,25), et c'est elle
+  que la fiche décrit quand elle écrit que la chaleur s'échappe
+  « d'autant plus que l'eau s'échauffe ».
+
+  UN DÉSACCORD AVEC LA FICHE, DÉCLARÉ
+  ------------------------------------
+  La fiche relève 23,8 °C pour R1 et 22,0 °C pour R2, soit un rapport
+  des élévations de 3,8 / 2,0 = 1,90, et elle l'explique par les
+  pertes. L'explication est juste dans son esprit mais elle ne peut
+  pas porter ces nombres-là : dans TOUT modèle de pertes, le rapport
+  des deux élévations reste celui des deux puissances, donc 2,00, et
+  les pertes non linéaires ne l'abaissent ici que de 0,05 %. Pour
+  descendre à 1,90 il faudrait une capacité thermique de 332 J/K, soit
+  MOINS que les 418,5 J/K de l'eau seule : le bécher ne peut
+  qu'ajouter, jamais retrancher.
+
+  La page calcule donc 23,8 °C pour R1 — exactement la fiche — et
+  21,9 °C pour R2, où la fiche écrit 22,0. L'écart vaut UNE graduation
+  de thermomètre. Il est affiché, et non masqué.
+
+  CE QUI EST CALIBRÉ, ET SUR QUOI
+  --------------------------------
+  La capacité thermique n'est pas ajustée : elle se compose, poste par
+  poste, de l'eau (100 g × 4185), du verre du bécher (55 g × 840) et
+  du thermomètre immergé — 472,7 J/K. Seul le coefficient de pertes a
+  est calibré, sur la SEULE ligne R1 du relevé. Il en sort une valeur
+  du bon ordre de grandeur : l'équivalent linéaire à ΔT = 2 K vaut
+  0,006 W/K, quand l'estimation ascendante par la surface du bécher
+  donne 0,2 W/K. En cinq minutes et sur deux degrés, les pertes sont
+  petites — et c'est le relevé lui-même qui le dit.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  Deux lieux, comme dans la fiche : le POSTE, où l'on monte le circuit
+  des lampes, et le BUREAU, où la démonstration de chauffage est
+  lancée en premier et tourne pendant que les postes mesurent.
+  Chaque appareil se prend et se pose. L'ampèremètre branché en
+  dérivation aux bornes du générateur est refusé, avec la raison de la
+  fiche. La résistance brûlante ne se saisit pas à la main.
+
+  ATTENTION — CE QUE LA PAGE NE FAIT PAS
+  --------------------------------------
+  * Elle ne modifie AUCUN fichier partagé.
+  * Elle ne parle pas d'énergie ni de kilowattheure : c'est la leçon
+    suivante. Ici, la puissance seule.
+  * Elle n'écrit jamais la capacité thermique massique devant l'élève :
+    hors programme en 3AC. Elle ne vit que sous le capot.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E3AC-19.
+-->
+
+<style>
+
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.oui{color:var(--green)}
+.lect .v.non{color:#b03030}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.temoin td{background:#f4f6f9}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.rappel{background:var(--bluebg);border-left:3px solid var(--gold);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin-top:8px;
+        color:var(--muted)}
+.rappel b{color:var(--ink)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans
+   la vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:15px;font-weight:700;color:var(--ink);margin-top:2px;
+          font-family:var(--mono)}
+.cases .u.nul{color:#9aa5b2;font-weight:600;font-family:inherit;font-size:13px}
+.cases .u.mal{color:#b03030}
+.bilan2{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin-top:9px;
+        font-size:12px}
+.bilan2 .n{color:var(--muted)}
+.bilan2 .v{font-family:var(--mono);font-weight:700;text-align:right}
+.bilan2 .v.mal{color:#b03030}
+.bilan2 .v.ok{color:var(--green)}
+.lieux{display:flex;gap:6px;margin:0 0 9px}
+.lieux button{flex:1;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;
+  padding:7px 9px;border-radius:8px;border:1.5px solid var(--line);
+  background:#fff;color:var(--muted)}
+.lieux button.on{border-color:var(--gold);background:#fdf6e6;color:var(--ink)}
+.ecart{background:#fdf6e6;border-left:3px solid var(--gold);padding:8px 11px;
+  border-radius:0 7px 7px 0;font-size:11.5px;margin-top:9px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-19 · 3AC · L14</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div class="lieux">
+      <button id="lieuPoste" class="on" type="button">Au poste — les deux lampes</button>
+      <button id="lieuBureau" type="button">Au bureau — les deux chauffages</button>
+    </div>
+
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> La fiche impose <b>la même tension de
+        12 V</b> pour les quatre appareils, <b>100 mL</b> d'eau dans chaque
+        bécher et <b>5 minutes</b> de chauffage — c'est ce qui rend la
+        comparaison honnête. Ce n'est plus le cas : le tableau de référence
+        cesse de se remplir, mais les mesures continuent et le panneau de
+        droite montre ce qu'elles deviennent.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>L'appareil en cours <span class="note" id="mesNom">—</span></h2>
+      <div class="cases" id="mesCases"></div>
+      <div class="bilan2" id="mesBilan"></div>
+      <p class="src" id="mesPhrase" style="margin-top:9px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Le produit U × I contre l'indication <span class="note">quatre appareils</span></h2>
+      <p class="src" style="margin:0 0 6px">Chaque barre pleine est le produit
+        <b>U × I</b> que la page calcule ; le trait noir marque le nombre que le
+        constructeur a inscrit. Les deux se superposent — c'est le résultat de
+        la leçon, et il n'est écrit nulle part à l'avance.</p>
+      <svg id="gBarres" viewBox="0 0 360 210" style="width:100%;height:auto;display:block"
+           role="img" aria-label="Le produit U fois I comparé à l'indication du constructeur"></svg>
+      <div class="bilan2" id="barresBilan"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rU">Tension du générateur</label><output id="oU"></output>
+        <input type="range" id="rU" min="0" max="12" step="0.5" value="0">
+        <div class="aide">Le protocole veut <b>12 V</b> partout : c'est la
+          tension nominale des deux lampes, et c'est ce qui permet de les
+          comparer. Baisser la tension change les deux lectures à la fois.</div>
+      </div>
+      <div class="reg">
+        <label for="rV">Volume d'eau dans chaque bécher</label><output id="oV"></output>
+        <input type="range" id="rV" min="50" max="200" step="10" value="100">
+        <div class="aide">La fiche en met <b>100 mL</b>, le même dans les deux.
+          Plus il y en a, moins l'eau s'échauffe — mais le rapport des deux
+          élévations, lui, ne bouge pas.</div>
+      </div>
+      <div class="reg">
+        <label for="rD">Durée du chauffage</label><output id="oD"></output>
+        <input type="range" id="rD" min="60" max="600" step="30" value="300">
+        <div class="aide">Cinq minutes au protocole, lancées <b>en premier</b>
+          pour qu'elles s'écoulent pendant que les postes mesurent les lampes.
+          Trop court, l'écart passe sous la graduation du thermomètre.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · Les quatre lignes, calculées</h3>
+      <table id="capotLignes"></table>
+
+      <h3>2 · Le filament n'est pas ohmique</h3>
+      <p>Une lampe ne suit pas la loi d'Ohm : son filament rougit, et la
+        résistance du tungstène croît fortement avec la température. La page
+        emploie la loi de filament <span class="fx" id="capotLoi"></span>,
+        d'exposant ajusté sur les trois relevés de la fiche voisine E3AC-20.</p>
+      <table id="capotFil"></table>
+      <p>Sous la tension nominale de 12 V, elle redonne bien les deux
+        intensités du relevé. Le rapport <b>U/I</b> vaut alors 24 Ω pour L1 et
+        48 Ω pour L2 — les mêmes nombres que les deux résistances chauffantes du
+        bureau, ce qui n'est pas un hasard : c'est ainsi qu'elles ont été
+        choisies pour dissiper les mêmes 6 W et 3 W.</p>
+
+      <h3>3 · L'eau qui chauffe</h3>
+      <p class="fx" id="capotEDO"></p>
+      <p>La capacité thermique n'est pas ajustée, elle se compose :</p>
+      <table id="capotCap"></table>
+      <p id="capotPertes"></p>
+
+      <h3>4 · Ce que la page retrouve, comparé à la fiche</h3>
+      <table id="capotAccord"></table>
+      <div class="ecart" id="capotEcart"></div>
+
+      <h3>5 · Pourquoi le rapport 1,90 de la fiche est inatteignable</h3>
+      <p>La fiche relève 3,8 °C et 2,0 °C d'élévation, et lit dans leur rapport
+        <b>1,9</b> la marque des pertes. L'idée est juste, le chiffre ne peut pas
+        l'être. Si les pertes sont proportionnelles à ΔT, la solution
+        ΔT(t) = (P/k)(1 − e<sup>−kt/C</sup>) est <b>proportionnelle à P</b> : le
+        rapport des deux élévations vaut exactement celui des deux puissances,
+        soit 2,00, quelle que soit la valeur des pertes. Elles se simplifient.
+        Le terme non linéaire en ΔV<sup>1,25</sup> qu'emploie la page fait
+        bien descendre le rapport sous 2 — mais de <span id="capotBaisse"></span>
+        seulement.</p>
+      <p>Pour obtenir 1,90 il faudrait <b>C = 332 J/K</b>. Or l'eau seule en
+        apporte déjà 418,5, et le bécher ne peut qu'ajouter. Le couple
+        (3,8 ; 2,0) de la fiche n'est donc pas un résultat de mesure cohérent :
+        c'est un arrondi indépendant sur chacune des deux lignes. Le rapport
+        physique est 2,00, c'est-à-dire exactement 6 W / 3 W — ce que la leçon
+        cherche précisément à faire voir.</p>
+
+      <h3>6 · Les grandeurs du montage</h3>
+      <table id="capotVals"></table>
+
+      <h3>7 · Ce que le modèle simplifie</h3>
+      <ul>
+        <li><b>Les appareils de mesure sont parfaits.</b> Un ampèremètre réel
+        ajoute quelques ohms en série, un voltmètre réel dérive un peu de
+        courant. Sur 24 Ω et sous 12 V, les deux effets pèsent moins que le
+        centième d'ampère affiché.</li>
+        <li><b>Le filament est traité par sa loi empirique.</b> Le calcul
+        complet demanderait l'équilibre entre la puissance dissipée et la
+        puissance rayonnée par le filament, qui donne un exposant voisin de
+        0,6 ; celui de cette lampe-ci vaut 0,468, et il est ajusté, non
+        inventé.</li>
+        <li><b>L'eau du bécher est à température uniforme.</b> Dans la réalité
+        elle s'échauffe d'abord autour de la résistance et un courant de
+        convection la brasse ; le thermomètre en donne une moyenne.</li>
+        <li><b>L'évaporation est comptée dans les pertes</b>, sans être
+        distinguée de la convection ni du rayonnement. Sur deux degrés
+        d'élévation et cinq minutes, les séparer n'apporterait rien.</li>
+        <li><b>La température de départ est la même</b> dans les deux béchers,
+        comme la fiche l'exige. C'est une condition du protocole, pas une
+        approximation : sans elle, la comparaison ne veut rien dire.</li>
+      </ul>
+
+      <h3>8 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-19.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-19",
+  "niveau": "3AC",
+  "unite": "U3",
+  "lecon": "L14",
+  "titre": "D'où vient le nombre écrit en watts sur un appareil électrique ?",
+  "axe": "La puissance électrique : ce que mesure le nombre écrit en watts",
+  "objectif": "Découvrir que le nombre inscrit en **watts** sur une lampe ou sur un appareil de chauffage mesure l'**importance de l'effet** que cet appareil produit — l'éclat d'une lampe, l'échauffement de l'eau —, puis **retrouver ce nombre par la mesure** : relever la tension **U** aux bornes de l'appareil et l'intensité **I** qui le traverse, calculer le produit **U × I**, et constater qu'il redonne le nombre du constructeur. C'est ainsi qu'apparaît la relation **P = U · I** et son unité, le **watt (W)**.",
+  "duree": 24,
+  "modalite": "Travail par postes de 4 apprenants pour les deux lampes ; la comparaison des deux appareils de chauffage se fait en **démonstration au bureau**, lancée dès le début de la manipulation pour que les cinq minutes de chauffage se déroulent pendant que les postes mesurent les lampes.",
+  "materiel": [
+    "Un **générateur de tension continue réglable** (0 – 12 V) ou un bloc de piles de **12 V**, par poste",
+    "Deux **lampes sur douille** portant les indications **12 V – 6 W** (L1) et **12 V – 3 W** (L2)",
+    "Un **multimètre en ampèremètre** (calibre le plus grand d'abord), monté **en série**",
+    "Un **multimètre en voltmètre**, monté **en dérivation** aux bornes de la lampe",
+    "Un **interrupteur** et des **fils de connexion** rouge et noir",
+    "Au bureau : deux **résistances chauffantes gainées** de laboratoire, **24 Ω** et **48 Ω**",
+    "Au bureau : deux **béchers identiques** contenant chacun **100 mL d'eau** à la même température de départ",
+    "Au bureau : deux **thermomètres** de laboratoire (−10 à 110 °C) et un **chronomètre**",
+    "Une calculatrice"
+  ],
+  "securite": [
+    "⚠️ **Aucune manipulation sur le secteur.** Tout le montage est alimenté sous **12 V continus** au plus.",
+    "L'**ampèremètre** se branche **en série** et **jamais** aux bornes du générateur : le brancher en dérivation le met en court-circuit et le détruit.",
+    "Le **voltmètre** se branche **en dérivation**, aux bornes de la lampe seulement.",
+    "Partir toujours du **calibre le plus grand** du multimètre, puis descendre — règle de première année.",
+    "Faire **vérifier le montage par l'enseignant** avant toute mise sous tension.",
+    "La résistance chauffante employée est **gainée** : on ne plonge **jamais** un fil dénudé dans l'eau.",
+    "⚠️ Après cinq minutes de chauffage, la résistance est **brûlante** : on ne la touche pas, on la sort de l'eau avec une pince et on la laisse refroidir.",
+    "Essuyer toute eau renversée avant de rebrancher quoi que ce soit ; manipuler avec les **mains sèches**.",
+    "Ne **jamais** refaire cette expérience à la maison sur une prise de courant."
+  ],
+  "protocole": [
+    "**Au bureau, à lancer en premier.** Verser 100 mL d'eau dans chacun des deux béchers, y plonger un thermomètre, relever la température de départ — elle doit être la **même** dans les deux — puis immerger la résistance chauffante **R1 = 24 Ω** dans le premier bécher et **R2 = 48 Ω** dans le second.",
+    "Alimenter les deux résistances chauffantes **sous la même tension de 12 V**, déclencher le chronomètre et **laisser chauffer 5 minutes** pendant que les postes travaillent sur les lampes.",
+    "**Aux postes.** Réaliser le circuit : générateur, interrupteur ouvert, **ampèremètre en série** et la lampe **L1 (12 V – 6 W)**. Brancher le **voltmètre en dérivation** aux bornes de la lampe.",
+    "Faire vérifier le montage, régler le générateur sur **12 V**, puis fermer l'interrupteur et **observer l'éclat** de la lampe.",
+    "Relever la tension **U** au voltmètre et l'intensité **I** à l'ampèremètre ; calculer le produit **U × I** et l'inscrire dans le tableau, en face de l'indication portée sur la lampe.",
+    "Ouvrir l'interrupteur, remplacer **L1** par la lampe **L2 (12 V – 3 W)**, et **recommencer** les trois relevés sans rien changer d'autre au montage.",
+    "**Retour au bureau, au bout des 5 minutes.** Relever la température finale de chacun des deux béchers, ainsi que **U** et **I** pour chaque résistance chauffante, et compléter les deux dernières lignes du tableau.",
+    "Comparer, ligne par ligne, la colonne **U × I** à la colonne **Indication du constructeur**, puis comparer entre elles les deux élévations de température."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Appareil",
+      "Indication du constructeur",
+      "U mesurée",
+      "I mesurée",
+      "Produit U × I",
+      "Effet observé"
+    ],
+    "lignes": [
+      [
+        "Lampe L1",
+        "12 V – 6 W",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Lampe L2",
+        "12 V – 3 W",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Résistance chauffante R1 (24 Ω)",
+        "12 V – 6 W",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Résistance chauffante R2 (48 Ω)",
+        "12 V – 3 W",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Lampe L1",
+        "12 V – 6 W",
+        "**12 V**",
+        "**0,50 A**",
+        "**6,0 W**",
+        "brille **vivement**"
+      ],
+      [
+        "Lampe L2",
+        "12 V – 3 W",
+        "**12 V**",
+        "**0,25 A**",
+        "**3,0 W**",
+        "brille **faiblement**"
+      ],
+      [
+        "Résistance chauffante R1 (24 Ω)",
+        "12 V – 6 W",
+        "**12 V**",
+        "**0,50 A**",
+        "**6,0 W**",
+        "eau de 20,0 °C à **23,8 °C** en 5 min"
+      ],
+      [
+        "Résistance chauffante R2 (48 Ω)",
+        "12 V – 3 W",
+        "**12 V**",
+        "**0,25 A**",
+        "**3,0 W**",
+        "eau de 20,0 °C à **22,0 °C** en 5 min"
+      ]
+    ]
+  },
+  "observation": "Sous 12 V, la lampe marquée 6 W brille deux fois plus fort que celle marquée 3 W, et la résistance marquée 6 W échauffe l'eau deux fois plus. Dans les quatre cas, U × I redonne le nombre inscrit par le constructeur.",
+  "conclusion": "La puissance électrique P mesure l'importance de l'effet produit par un appareil ; elle s'exprime en watts (W) et se calcule par P = U · I.",
+  "oheric": {
+    "observation": "Sur l'étal du souk, deux ampoules de même verre et de même culot : sur l'une le constructeur a écrit **220 V – 40 W**, sur l'autre **220 V – 100 W**. Branchées sur la même prise, elles n'éclairent pourtant pas de la même façon. Deux bouilloires de même taille portent de même **220 V – 1000 W** et **220 V – 2000 W**, et le marchand assure que la seconde chauffe bien plus vite. Le **volt**, on sait ce qu'il mesure depuis la première année. Mais ce second nombre, ce nombre en **watts**, que mesure-t-il au juste ? Et d'où le constructeur le tire-t-il, puisqu'un appareil neuf n'a encore rien fait ?",
+    "hypothese": "**Si** le nombre écrit en watts mesure l'importance de l'effet que l'appareil produit, **alors** deux appareils branchés **sous la même tension** doivent se classer dans le même ordre que leurs deux nombres : la lampe marquée 6 W doit briller plus que celle marquée 3 W, et le chauffage marqué 6 W doit élever davantage la température de l'eau que celui marqué 3 W, dans le même temps. **Et si** ce nombre est une grandeur électrique, **alors** on doit pouvoir le **retrouver** à partir des deux seules grandeurs que l'on sache mesurer sur un dipôle — la tension **U** à ses bornes et l'intensité **I** qui le traverse. Le produit **U × I** est le candidat le plus simple : il suffit de le calculer et de le comparer au nombre inscrit.",
+    "experience": "Alimenter successivement, **sous la même tension de 12 V**, deux lampes marquées **12 V – 6 W** et **12 V – 3 W** ; comparer leur éclat, puis relever pour chacune **U** au voltmètre branché en dérivation et **I** à l'ampèremètre monté en série, et calculer le produit **U × I**. Faire de même, en démonstration au bureau, avec deux **résistances chauffantes** de **24 Ω** et **48 Ω** immergées chacune dans **100 mL d'eau** et alimentées elles aussi sous **12 V** pendant **5 minutes**, en relevant l'élévation de température de chaque bécher.",
+    "resultats": "**Les lampes.** L1 brille **vivement**, L2 **faiblement**. Aux bornes de L1 : **U = 12 V** et **I = 0,50 A**, donc **U × I = 12 × 0,50 = 6,0 W** ; aux bornes de L2 : **U = 12 V** et **I = 0,25 A**, donc **U × I = 12 × 0,25 = 3,0 W**. **Les appareils de chauffage.** La résistance **R1** est traversée par **I = 0,50 A** sous **12 V**, soit **U × I = 6,0 W**, et l'eau de son bécher passe de **20,0 °C à 23,8 °C** en cinq minutes ; la résistance **R2** est traversée par **I = 0,25 A** sous **12 V**, soit **U × I = 3,0 W**, et son eau ne passe que de **20,0 °C à 22,0 °C** dans le même temps. Dans les **quatre** cas, le produit **U × I** redonne exactement le nombre en watts inscrit par le constructeur.",
+    "interpretation": "Les deux hypothèses sont **validées**. D'une part, l'appareil marqué du plus grand nombre est bien celui qui produit le plus grand effet : L1 éclaire davantage que L2, et R1 échauffe l'eau de **3,8 °C** quand R2 ne l'échauffe que de **2,0 °C** — presque exactement deux fois moins, comme 3 W est la moitié de 6 W. Ce nombre mesure donc l'**importance de l'effet** produit par l'appareil, qu'il s'agisse d'**éclairage** ou de **chauffage** : c'est la **puissance électrique**, notée **P**, et son unité est le **watt**, de symbole **W**. D'autre part, ce nombre n'a rien de mystérieux : il se **calcule**. Le produit de la tension aux bornes de l'appareil par l'intensité qui le traverse le redonne dans les quatre cas, d'où la relation **P = U · I**. C'est ce que le constructeur a fait avant nous : il a mesuré, sous la tension pour laquelle l'appareil est prévu, et il a inscrit le résultat. On remarquera enfin que le rapport des deux élévations de température, **3,8 / 2,0 = 1,9**, n'est pas rigoureusement égal à 2 : une partie de la chaleur s'échappe dans l'air et dans le verre du bécher, et d'autant plus que l'eau s'échauffe. La comparaison reste néanmoins **sans ambiguïté**.",
+    "conclusion": "La **puissance électrique**, notée **P**, est la grandeur physique qui mesure l'**importance de l'effet** produit par un appareil électrique — l'éclat d'une lampe, l'échauffement d'un appareil de chauffage. Son unité dans le Système international est le **watt**, de symbole **W**. Elle se calcule par le produit de la **tension U** aux bornes de l'appareil, en **volts (V)**, par l'**intensité I** du courant qui le traverse, en **ampères (A)** : **P = U · I**, avec **P en watts (W)**. Entre deux appareils alimentés sous la même tension, celui dont la puissance est la plus grande est celui qui produit le plus grand effet."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+
+
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ================================================================== */
+var PHYS = {
+  N_FIL: { v: 0.468, u: "", n: "exposant de la loi de filament",
+    s: "I = I_nom·(U/U_nom)^n. Ajusté sur les TROIS relevés de la fiche voisine E3AC-20 — 3 V→0,25 A, 6 V→0,35 A, 9 V→0,42 A — qui restent tous justes pour n entre 0,457 et 0,478. Le calcul par le rayonnement du filament donnerait 0,6 : l'exposant dépend du filament, et celui-ci est mesuré, non postulé" },
+  C_EAU: { v: 4185, u: "J·kg⁻¹·K⁻¹", n: "capacité thermique massique de l'eau",
+    s: "hors programme en 3AC : ce nombre ne paraît jamais devant l'élève, il ne sert qu'ici" },
+  RHO_EAU: { v: 1.0, u: "g·mL⁻¹", n: "masse volumique de l'eau",
+    s: "100 mL d'eau pèsent 100 g" },
+  M_VERRE: { v: 0.055, u: "kg", n: "masse de verre d'un bécher de 100 mL",
+    s: "un bécher forme basse de 100 mL pèse 50 à 60 g ; il chauffe avec l'eau et compte dans le bilan" },
+  C_VERRE: { v: 840, u: "J·kg⁻¹·K⁻¹", n: "capacité thermique massique du verre",
+    s: "valeur usuelle du borosilicate" },
+  C_DIVERS: { v: 8, u: "J·K⁻¹", n: "thermomètre immergé et gaine de la résistance",
+    s: "la partie plongée du thermomètre et la gaine de la résistance s'échauffent aussi" },
+  A_PERTE: { v: 0.0053, u: "W·K⁻¹·²⁵", n: "coefficient de pertes du bécher",
+    s: "CALIBRÉ, et sur la seule ligne R1 du relevé : c'est la valeur qui donne 23,8 °C. Son équivalent linéaire à ΔT = 2 K vaut 0,006 W/K, du bon ordre de grandeur devant les 0,2 W/K qu'on estime par la surface du bécher — en cinq minutes et sur deux degrés, les pertes sont petites, et c'est le relevé qui le dit" },
+  EXPO_PERTE: { v: 1.25, u: "", n: "exposant des pertes",
+    s: "convection naturelle laminaire : le coefficient d'échange h croît lui-même comme ΔT^0,25, d'où une perte en ΔT^1,25. C'est ce que la fiche décrit en disant que la chaleur s'échappe « d'autant plus que l'eau s'échauffe »" },
+  DIV_T: { v: 0.1, u: "°C", n: "graduation du thermomètre",
+    s: "un thermomètre de laboratoire −10 à 110 °C se lit au dixième de degré" },
+  DIV_U: { v: 0.1, u: "V", n: "résolution du voltmètre au calibre 20 V",
+    s: "la fiche écrit « 12 V » sans décimale ; le voltmètre en donne une" },
+  DIV_I: { v: 0.01, u: "A", n: "résolution de l'ampèremètre au calibre 2 A",
+    s: "la fiche écrit 0,50 A et 0,25 A : le centième d'ampère" },
+  T_DEPART: { v: 20.0, u: "°C", n: "température de départ des deux béchers",
+    s: "la fiche l'impose IDENTIQUE dans les deux, faute de quoi la comparaison ne veut rien dire" },
+  PAS_INT: { v: 0.5, u: "s", n: "pas d'intégration de Runge-Kutta",
+    s: "un demi-pas de seconde sur 300 : l'erreur d'intégration est très en dessous du dixième de degré affiché" }
+};
+
+/* ==================================================================
+   2. CE QUE LA FICHE DIT (§0)
+   ================================================================== */
+function T(k) { return DONNEES[k] || ""; }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return TM().entetes || []; }
+function lignesFiche() { return TM().lignes || []; }
+function valeursFiche() { return TM().valeurs || []; }
+function nbApp() { return lignesFiche().length; }
+function nomApp(i) {
+  var l = lignesFiche()[i];
+  return l && l[0] ? String(l[0]) : String(i + 1);
+}
+function valFiche(i, c) {
+  var v = valeursFiche()[i];
+  return v ? depouille(String(v[c] || "")) : "";
+}
+/* L'indication du constructeur, colonne 1 : « 12 V – 6 W ». On la LIT,
+   on n'écrit pas les nombres à la main. */
+function indication(i) { return valFiche(i, 1); }
+function voltsNominaux(i) {
+  var m = indication(i).match(/([\d,.]+)\s*V/);
+  return m ? parseFloat(m[1].replace(",", ".")) : NaN;
+}
+function wattsNominaux(i) {
+  var m = indication(i).match(/([\d,.]+)\s*W/);
+  return m ? parseFloat(m[1].replace(",", ".")) : NaN;
+}
+/* Une lampe ou un appareil de chauffage ? Le nom de la ligne le dit. */
+function estLampe(i) { return /lampe/i.test(nomApp(i)); }
+/* La résistance d'un appareil de chauffage est écrite dans SON nom :
+   « Résistance chauffante R1 (24 Ω) ». */
+function ohmsDe(i) {
+  var m = nomApp(i).match(/([\d,.]+)\s*Ω/);
+  return m ? parseFloat(m[1].replace(",", ".")) : NaN;
+}
+function secu(motif) {
+  var s = L("securite"), i, re = new RegExp(motif, "i");
+  for (i = 0; i < s.length; i++) if (re.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+/* Le volume d'eau, la durée du chauffage et la tension viennent du
+   PROTOCOLE. Trois précautions, toutes payées comptant :
+     · le nombre doit COMMENCER par un chiffre. « [\d,.]+ » accepte un
+       point tout seul, et « premier. Verser » se lit alors comme un
+       nombre suivi d'un V — d'où un NaN qui traverse toute la page ;
+     · pas de drapeau « i » : une unité est sensible à la casse, et le
+       V de « Verser » n'est pas le volt ;
+     · l'unité ne doit pas être suivie d'une lettre, sans quoi le « m »
+       de mL se retrouverait dans « minutes ».                          */
+function litProtocole(motif, defaut) {
+  var p = L("protocole").concat(L("materiel")), i, m,
+      re = new RegExp("(\\d[\\d,.]*)\\s*" + motif + "(?![A-Za-zÀ-ÿ])");
+  for (i = 0; i < p.length; i++) {
+    m = depouille(p[i]).match(re);
+    if (m) return parseFloat(m[1].replace(",", "."));
+  }
+  return defaut;
+}
+function volumeProto() { return litProtocole("mL", 100); }
+function minutesProto() { return litProtocole("minutes", 5); }
+function tensionProto() { return litProtocole("V", 12); }
+
+/* La température finale de la fiche, lue dans la colonne « Effet observé ».
+   « eau de 20,0 °C à 23,8 °C en 5 min » — on prend le SECOND nombre. */
+function tFinaleFiche(i) {
+  var m = valFiche(i, 5).match(/([\d]+,[\d]+)\s*°C[^°]*$/);
+  return m ? parseFloat(m[1].replace(",", ".")) : NaN;
+}
+function tDepartFiche(i) {
+  var m = valFiche(i, 5).match(/([\d]+,[\d]+)\s*°C/);
+  return m ? parseFloat(m[1].replace(",", ".")) : PHYS.T_DEPART.v;
+}
+/* L'éclat annoncé par la fiche : « brille vivement » / « faiblement ». */
+function eclatFiche(i) { return valFiche(i, 5); }
+
+/* ==================================================================
+   3. LE MODÈLE
+   ==================================================================
+   Deux physiques distinctes, et c'est tout l'intérêt de la leçon :
+   la lampe n'est PAS ohmique, l'appareil de chauffage l'est.        */
+
+/* --- La lampe. Loi de filament, ajustée. ------------------------- */
+function intensiteLampe(i, U) {
+  var Un = voltsNominaux(i), Pn = wattsNominaux(i), In = Pn / Un;
+  if (!(U > 0)) return 0;
+  return In * Math.pow(U / Un, PHYS.N_FIL.v);
+}
+/* --- L'appareil de chauffage. Loi d'Ohm. ------------------------- */
+function intensiteChauffe(i, U) { return U / ohmsDe(i); }
+
+function intensiteVraie(i, U) {
+  return estLampe(i) ? intensiteLampe(i, U) : intensiteChauffe(i, U);
+}
+/* Ce que l'ampèremètre AFFICHE : la valeur vraie, quantifiée. */
+function intensiteLue(i, U) {
+  return Math.round(intensiteVraie(i, U) / PHYS.DIV_I.v) * PHYS.DIV_I.v;
+}
+function tensionLue(U) {
+  return Math.round(U / PHYS.DIV_U.v) * PHYS.DIV_U.v;
+}
+/* Le produit U × I, calculé sur ce que les DEUX appareils affichent —
+   c'est ce que l'élève fait avec sa calculatrice. */
+function produit(i, U) { return tensionLue(U) * intensiteLue(i, U); }
+
+/* L'éclat d'une lampe. Deux lampes sous leur tension nominale ont leur
+   filament à la même température : le flux lumineux suit la puissance.
+   Une même lampe hors de sa tension nominale suit la loi usuelle en
+   (U/U_nom)^3,4 — le filament refroidit, et le rendement s'effondre
+   bien plus vite que la puissance. */
+function eclat(i, U) {
+  var Un = voltsNominaux(i);
+  if (!(U > 0)) return 0;
+  return wattsNominaux(i) * Math.pow(U / Un, 3.4);
+}
+
+/* --- L'eau du bécher. ---------------------------------------------
+   C·dΔT/dt = P − a·ΔT^1,25, intégrée par Runge-Kutta d'ordre 4.      */
+function capaciteThermique(volume_mL) {
+  var mEau = volume_mL * PHYS.RHO_EAU.v / 1000;
+  return mEau * PHYS.C_EAU.v + PHYS.M_VERRE.v * PHYS.C_VERRE.v
+    + PHYS.C_DIVERS.v;
+}
+function pertes(dT) {
+  return dT > 0 ? PHYS.A_PERTE.v * Math.pow(dT, PHYS.EXPO_PERTE.v) : 0;
+}
+function elevation(P, duree, volume_mL) {
+  var C = capaciteThermique(volume_mL), h = PHYS.PAS_INT.v,
+      n = Math.max(1, Math.round(duree / h)), dT = 0, k1, k2, k3, k4, j;
+  function f(x) { return (P - pertes(x)) / C; }
+  for (j = 0; j < n; j++) {
+    k1 = f(dT);
+    k2 = f(dT + h * k1 / 2);
+    k3 = f(dT + h * k2 / 2);
+    k4 = f(dT + h * k3);
+    dT += h * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+  }
+  return dT;
+}
+/* Ce que le thermomètre AFFICHE : la valeur vraie, à la graduation. */
+function temperatureLue(P, duree, volume_mL) {
+  var t = PHYS.T_DEPART.v + elevation(P, duree, volume_mL);
+  return Math.round(t / PHYS.DIV_T.v) * PHYS.DIV_T.v;
+}
+
+/* ==================================================================
+   4. LES VERDICTS
+   ==================================================================
+   Aucun n'est écrit : chacun sort d'une comparaison chiffrée.        */
+
+/* Le produit U × I redonne-t-il l'indication du constructeur ?
+   Le critère vient de la RÉSOLUTION des appareils, pas d'un choix :
+   une erreur d'une graduation sur I pèse U × DIV_I sur le produit. */
+function toleranceProduit(U) { return Math.max(U * PHYS.DIV_I.v, 0.05); }
+function accordProduit(i, U) {
+  return Math.abs(produit(i, U) - wattsNominaux(i)) <= toleranceProduit(U) + 1e-9;
+}
+/* Deux appareils se classent-ils comme leurs deux nombres ? */
+function classementRespecte(a, b, U) {
+  var pa = produit(a, U), pb = produit(b, U),
+      na = wattsNominaux(a), nb2 = wattsNominaux(b);
+  if (Math.abs(na - nb2) < 1e-9) return true;
+  return (pa - pb) * (na - nb2) > 0;
+}
+/* L'écart de température entre les deux béchers est-il LISIBLE ?
+   Le seuil est celui du thermomètre : deux graduations. */
+function ecartLisible(dA, dB) {
+  return Math.abs(dA - dB) >= 2 * PHYS.DIV_T.v - 1e-9;
+}
+
+/* ==================================================================
+   5. L'ÉTAT
+   ================================================================== */
+var svg = null, COUCHES = {};
+var ETAT = null;
+
+function neufEtat() {
+  return {
+    lieu: "poste",
+    /* --- au poste, le circuit des lampes --- */
+    lampe: null,        // index de ligne de la lampe posée dans la douille
+    amp: false,         // ampèremètre en série
+    volt: false,        // voltmètre en dérivation aux bornes de la lampe
+    verifie: false,     // montage vérifié par l'enseignant
+    ferme: false,       // interrupteur fermé
+    /* --- au bureau, la démonstration de chauffage --- */
+    res: { A: null, B: null },       // index de ligne du chauffage immergé
+    thermo: { A: false, B: false },
+    chauffe: 0,         // 0 rien, 1 en cours, 2 terminé
+    tChauffe: 0,        // secondes écoulées
+    chaud: { A: false, B: false },
+    /* Les deux élévations, MÉMORISÉES à la fin du chauffage : sortir la
+       résistance à la pince ne doit pas effacer le résultat de la
+       mesure, pas plus que dans la réalité. */
+    dT: { A: 0, B: 0 },
+    pince: false,       // la pince est en main
+    /* --- commun --- */
+    lu: {},
+    conclu: false,
+    notes: []
+  };
+}
+function montePret() { return ETAT.lampe !== null && ETAT.amp && ETAT.volt; }
+function sousTension() { return montePret() && ETAT.verifie && ETAT.ferme; }
+function cuve(k) { return k === "A" ? "A" : "B"; }
+
+/* ==================================================================
+   6. LA GÉOMÉTRIE
+   ==================================================================
+   ZONES INTERDITES, relevées sur capture :
+     · bandeau de consigne    x 224..896  y < 60
+     · journal d'observation  x < 278     y < 300
+     · plaque de sécurité     x < 276     y 316..452
+   Le circuit et le bureau tiennent l'un et l'autre à droite du
+   journal, et jamais au-dessus de y = 60 entre x = 224 et x = 896.   */
+var W = 1120, H = 760, BANC = 628;
+var Y_BT1 = 660, Y_BT2 = 702;
+
+/* --- Le poste : une boucle rectangulaire, parcourue dans le sens du
+   courant, du + du générateur vers l'interrupteur puis la lampe. --- */
+var CX0 = 330, CX1 = 780, CY0 = 175, CY1 = 450;
+var X_GEN = 555, X_INTER = 412, X_LAMPE = 555;
+var X_AMP = CX1, Y_AMP = 312;
+var Y_VOLT = 560;
+var X_RANGE = 955;
+var Y_R_L1 = 148, Y_R_L2 = 268, Y_R_AMP = 408, Y_R_VOLT = 548;
+
+/* --- Le bureau : deux béchers identiques, côte à côte, sur la
+   paillasse de démonstration. --- */
+var BX = { A: 432, B: 664 }, BY_HAUT = 322, BY_BAS = 476, B_LARG = 122;
+var Y_SOL_B = 476;
+var X_GEN_B = 548, Y_GEN_B = 148;
+var X_RANGE_B = 940;
+var Y_R_R1 = 216, Y_R_R2 = 318, Y_R_THA = 440, Y_R_PINCE = 574;
+/* Un cadre doit contenir son échelle (§12.22). L'intérieur du bécher va
+   de y = 330 à y = 472, soit 142 unités, et ces 142 unités valent la
+   contenance du bécher — 250 mL, la taille qu'on prend pour chauffer
+   100 mL. Le niveau de l'eau est donc PROPORTIONNEL au volume réglé, et
+   c'est ce qui décide si le serpentin trempe ou non.                   */
+var B_INT_HAUT = 330, B_INT_BAS = 472, B_CONTENANCE = 250;
+function hauteurEau(mL) {
+  return (B_INT_BAS - B_INT_HAUT) * borne(mL / B_CONTENANCE, 0, 1);
+}
+
+/* ==================================================================
+   7. DÉFINITIONS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f, m;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0,
+      y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("boitier", [[0, "#e9edf2"], [0.4, "#cdd5de"], [1, "#9aa5b2"]], true);
+  grad("ecran", [[0, "#2b3f33"], [1, "#16261d"]]);
+  grad("verre", [[0, "#f2f8fb", 0.85], [0.5, "#dceaf2", 0.55], [1, "#c6dae6", 0.8]], true);
+  grad("eau", [[0, "#bfe0ef"], [1, "#84bcd8"]]);
+  grad("cuivre", [[0, "#d9a05b"], [0.5, "#b87333"], [1, "#8a5220"]], true);
+  grad("laiton", [[0, "#e8d9a0"], [0.5, "#c9a84c"], [1, "#8f7526"]], true);
+  /* Le halo d'une lampe qui brille : son rayon suit l'éclat calculé. */
+  g = el("radialGradient", { id: "halo" });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fff3c4", "stop-opacity": 0.95 }));
+  g.appendChild(el("stop", { offset: 0.45, "stop-color": "#ffd66b", "stop-opacity": 0.5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#ffbe3d", "stop-opacity": 0 }));
+  D.appendChild(g);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%",
+    height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .26 }));
+  D.appendChild(f);
+  m = D.appendChild(el("marker", { id: "flI", viewBox: "0 0 10 10", refX: 5,
+    refY: 5, markerWidth: 5, markerHeight: 5, orient: "auto" }));
+  m.appendChild(el("path", { d: "M 0,0 L 10,5 L 0,10 z", fill: ORANGE }));
+}
+function ajouterCouches() {
+  ["fond", "poste", "fils", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   8. LE DÉCOR COMMUN
+   ================================================================== */
+function construireFond() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC,
+    fill: "url(#banc)" }));
+}
+function construireSecurite() {
+  var X = 20, Y = 316, LG = 254, HT = 136;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8,
+    "pointer-events": "none" }));
+  txt("poste", X + 11, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.3 });
+  /* On vise la ligne par ce qu'elle DIT (§12.14). Les deux dangers de
+     cette séance : l'ampèremètre en dérivation, et la résistance
+     brûlante. La plaque montre celui du lieu où l'on se trouve. */
+  var motif = ETAT && ETAT.lieu === "bureau" ? "brûlante" : "ampèremètre",
+      phrase = secu(motif).replace(/^⚠️\s*/, "").replace(/\s*:.*$/, "");
+  enrouler(phrase, 34, 4).forEach(function (s, i) {
+    txt("poste", X + 11, Y + 42 + i * 14, s, { ancre: "start", taille: 10,
+        gras: true, couleur: ROUGE });
+  });
+  var bas = ETAT && ETAT.lieu === "bureau"
+    ? ["On la sort avec la PINCE,", "jamais à la main."]
+    : ["Faire vérifier le montage", "avant toute mise sous tension."];
+  bas.forEach(function (s, i) {
+    txt("poste", X + 11, Y + 104 + i * 14, s, { ancre: "start", taille: 10,
+        couleur: "#8a5252" });
+  });
+}
+function construireLegende(s) {
+  txt("ui", W / 2, 742, s, { taille: 9.5, couleur: "#8794a5" });
+}
+
+/* ==================================================================
+   9. LA SCÈNE DU POSTE — le circuit des deux lampes
+   ================================================================== */
+function construireGenerateur() {
+  var g = ajout("objets", el("g", { id: "gen", "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: X_GEN - 76, y: CY0 - 32, width: 152, height: 64,
+    rx: 6, fill: "url(#boitier)", stroke: "#6b7686", "stroke-width": 1.5 }));
+  g.appendChild(el("rect", { x: X_GEN - 64, y: CY0 - 22, width: 68, height: 24,
+    rx: 3, fill: "url(#ecran)" }));
+  g.appendChild(el("text", { id: "genVal", x: X_GEN - 30, y: CY0 - 4,
+    "text-anchor": "middle", "font-size": 13, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "monospace" }, "0,0 V"));
+  g.appendChild(el("circle", { cx: X_GEN + 38, cy: CY0 - 10, r: 15,
+    fill: "#dde4ec", stroke: "#5d6874", "stroke-width": 1.4 }));
+  g.appendChild(el("line", { id: "genAig", x1: X_GEN + 38, y1: CY0 - 10,
+    x2: X_GEN + 38, y2: CY0 - 23, stroke: ROUGE, "stroke-width": 2.4 }));
+  txtIn(g, X_GEN, CY0 + 47, "générateur de tension continue réglable 0 – 12 V",
+    { taille: 9, couleur: "#5d6874" });
+  /* Les deux bornes du générateur — c'est là que l'ampèremètre ne doit
+     JAMAIS aller, et la page doit donc rendre le geste possible. */
+  var b = ajout("objets", el("g", { "data-zone": "bornesGen",
+    "pointer-events": "none" }));
+  [[-52, "+", ROUGE], [52, "−", "#2b3240"]].forEach(function (p) {
+    b.appendChild(el("circle", { cx: X_GEN + p[0], cy: CY0 + 22, r: 5,
+      fill: p[2] }));
+    txtIn(b, X_GEN + p[0], CY0 + 39, p[1], { taille: 11, gras: true,
+      couleur: p[2] });
+  });
+}
+function construireInterrupteur() {
+  var g = ajout("objets", el("g", { id: "inter", "data-act": "inter",
+    cursor: "pointer" }));
+  g.appendChild(el("rect", { x: X_INTER - 34, y: CY0 - 26, width: 68,
+    height: 52, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: X_INTER - 26, y: CY0 - 9, width: 52, height: 20,
+    rx: 4, fill: "#e6ebf1", stroke: "#8d97a3", "stroke-width": 1.2 }));
+  [-18, 18].forEach(function (dx) {
+    d.appendChild(el("circle", { cx: X_INTER + dx, cy: CY0, r: 3.6,
+      fill: "#3b4655" }));
+  });
+  d.appendChild(el("line", { id: "interLame", x1: X_INTER - 18, y1: CY0,
+    x2: X_INTER + 14, y2: CY0 - 15, stroke: "#3b4655", "stroke-width": 3.2,
+    "stroke-linecap": "round" }));
+  txtIn(g, X_INTER, CY0 + 30, "interrupteur", { taille: 9, couleur: "#5d6874" });
+}
+/* La douille, où la lampe se pose. Vide, elle montre son pas de vis. */
+function construireDouille() {
+  var g = ajout("objets", el("g", { "data-zone": "douille",
+    "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: X_LAMPE - 30, y: CY1 - 12, width: 60,
+    height: 30, rx: 4, fill: "#4a5361", stroke: "#333b47", "stroke-width": 1.3 }));
+  g.appendChild(el("rect", { x: X_LAMPE - 15, y: CY1 - 26, width: 30,
+    height: 16, rx: 2, fill: "url(#laiton)" }));
+  [-24, -18, -14].forEach(function (dy, i) {
+    g.appendChild(el("line", { x1: X_LAMPE - 15, y1: CY1 + dy,
+      x2: X_LAMPE + 15, y2: CY1 + dy, stroke: "#8f7526", "stroke-width": 0.9 }));
+  });
+  txtIn(g, X_LAMPE, CY1 + 33, "douille", { taille: 9, couleur: "#5d6874" });
+}
+/* Une lampe : ampoule, filament, culot, et son étiquette de
+   constructeur — qui est LUE dans la fiche, jamais écrite ici. */
+function construireLampe(id, i, x, y, ech) {
+  var g = ajout("objets", el("g", { id: id, "data-act": id, cursor: "grab" }));
+  g.appendChild(el("rect", { x: x - 34 * ech, y: y - 46 * ech, width: 68 * ech,
+    height: 92 * ech, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("circle", { id: id + "-halo", cx: x, cy: y - 12 * ech, r: 1,
+    fill: "url(#halo)", opacity: 0 }));
+  d.appendChild(el("circle", { cx: x, cy: y - 12 * ech, r: 22 * ech,
+    fill: "#eef5fa", "fill-opacity": .78, stroke: "#a9bccb",
+    "stroke-width": 1.3 }));
+  d.appendChild(el("path", { id: id + "-fil",
+    d: "M " + pt(x - 7 * ech, y - 4 * ech) + " L " + pt(x - 4 * ech, y - 18 * ech)
+       + " L " + pt(x, y - 8 * ech) + " L " + pt(x + 4 * ech, y - 18 * ech)
+       + " L " + pt(x + 7 * ech, y - 4 * ech),
+    fill: "none", stroke: "#8b8f96", "stroke-width": 1.8 * ech,
+    "stroke-linejoin": "round" }));
+  d.appendChild(el("rect", { x: x - 11 * ech, y: y + 8 * ech, width: 22 * ech,
+    height: 18 * ech, rx: 2, fill: "url(#laiton)" }));
+  /* L'étiquette doit CONTENIR ce qu'elle porte : « 12 V – 6 W » tient
+     en dix caractères, et un cartouche de 40 unités les tronque. */
+  d.appendChild(el("rect", { x: x - 30 * ech, y: y + 26 * ech, width: 60 * ech,
+    height: 15 * ech, rx: 3, fill: "#fffbe9", stroke: GOLD,
+    "stroke-width": 1 }));
+  txtIn(d, x, y + 36.5 * ech, indication(i), { taille: 9 * ech, gras: true,
+    couleur: "#7a5a12" });
+  txtIn(d, x, y - 40 * ech, nomApp(i), { taille: 9.5 * ech, gras: true,
+    couleur: "#5d6874" });
+  return g;
+}
+/* Un multimètre. Le mode est écrit dessus : c'est ce qui distingue
+   l'ampèremètre du voltmètre, et l'élève doit les placer chacun à sa
+   place. */
+function construireMultimetre(id, mode, x, y) {
+  var g = ajout("objets", el("g", { id: id, "data-act": id, cursor: "grab" }));
+  g.appendChild(el("rect", { x: x - 44, y: y - 58, width: 88, height: 120,
+    fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: x - 37, y: y - 52, width: 74, height: 108,
+    rx: 8, fill: "url(#boitier)", stroke: "#6b7686", "stroke-width": 1.6 }));
+  d.appendChild(el("rect", { x: x - 29, y: y - 44, width: 58, height: 25, rx: 3,
+    fill: "url(#ecran)" }));
+  d.appendChild(el("text", { id: id + "-val", x: x, y: y - 26,
+    "text-anchor": "middle", "font-size": 11.5, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "monospace" }, "----"));
+  d.appendChild(el("circle", { cx: x, cy: y + 5, r: 16, fill: "#dde4ec",
+    stroke: "#6b7686", "stroke-width": 1.3 }));
+  d.appendChild(el("line", { x1: x, y1: y + 5, x2: x, y2: y - 8,
+    stroke: "#b8272b", "stroke-width": 2.3 }));
+  d.appendChild(el("text", { x: x, y: y + 38, "text-anchor": "middle",
+    "font-size": 10.5, "font-weight": "bold", fill: "#3b4655" }, mode));
+  [-15, 15].forEach(function (dx) {
+    d.appendChild(el("circle", { cx: x + dx, cy: y + 49, r: 4.2,
+      fill: "#3b4655" }));
+  });
+  return g;
+}
+/* Les deux emplacements du circuit qui attendent un appareil. */
+function construireEmplacements() {
+  [{ z: "serie", x: X_AMP, y: Y_AMP, t: "en série" },
+   { z: "derivation", x: X_LAMPE, y: Y_VOLT, t: "en dérivation" }
+  ].forEach(function (e) {
+    var g = ajout("poste", el("g", { "data-zone": e.z, "pointer-events": "none" }));
+    g.appendChild(el("rect", { x: e.x - 40, y: e.y - 30, width: 80, height: 60,
+      rx: 7, fill: "#eef3f8", "fill-opacity": .75, stroke: "#b7c3d0",
+      "stroke-width": 1.4, "stroke-dasharray": "5 4" }));
+    txtIn(g, e.x, e.y + 4, e.t, { taille: 9.5, couleur: "#8794a5" });
+  });
+}
+function construireScenePoste() {
+  construireFond();
+  construireSecurite();
+  construireEmplacements();
+  construireGenerateur();
+  construireInterrupteur();
+  construireDouille();
+  ajout("fils", el("g", { id: "gFils" }));
+  ajout("avant", el("g", { id: "gAvant" }));
+  construireLampe("lampe0", 0, X_RANGE, Y_R_L1, 1);
+  construireLampe("lampe1", 1, X_RANGE, Y_R_L2, 1);
+  construireMultimetre("amp", "A", X_RANGE, Y_R_AMP);
+  construireMultimetre("volt", "V", X_RANGE, Y_R_VOLT);
+  construireLegende("schéma habillé — le circuit est résolu à chaque réglage, "
+    + "et le filament d'une lampe n'est pas un conducteur ohmique");
+}
+
+/* ==================================================================
+   10. LA SCÈNE DU BUREAU — les deux appareils de chauffage
+   ================================================================== */
+function construireBecher(k) {
+  var x = BX[k], g = ajout("poste", el("g", { "data-zone": "becher" + k,
+    "pointer-events": "none" }));
+  /* L'INTÉRIEUR d'abord — l'eau —, la paroi ensuite. */
+  g.appendChild(el("rect", { id: "eau" + k, x: x - B_LARG / 2 + 4,
+    y: B_INT_BAS - hauteurEau(100), width: B_LARG - 8,
+    height: hauteurEau(100), fill: "url(#eau)" }));
+  g.appendChild(el("path", { d: "M " + pt(x - B_LARG / 2, BY_HAUT)
+    + " L " + pt(x - B_LARG / 2, BY_BAS) + " L " + pt(x + B_LARG / 2, BY_BAS)
+    + " L " + pt(x + B_LARG / 2, BY_HAUT),
+    fill: "url(#verre)", stroke: "#8fa8b8", "stroke-width": 2.2,
+    "stroke-linejoin": "round" }));
+  /* Le bec verseur et les graduations : un bécher, pas une boîte. */
+  g.appendChild(el("path", { d: "M " + pt(x + B_LARG / 2 - 2, BY_HAUT)
+    + " q 11,-3 15,4", fill: "none", stroke: "#8fa8b8", "stroke-width": 2.2 }));
+  [0.25, 0.5, 0.75].forEach(function (f) {
+    var yy = BY_BAS - f * (BY_BAS - BY_HAUT - 20);
+    g.appendChild(el("line", { x1: x + B_LARG / 2 - 20, y1: yy,
+      x2: x + B_LARG / 2 - 4, y2: yy, stroke: "#8fa8b8", "stroke-width": 1 }));
+  });
+  txtIn(g, x, BY_BAS + 20, "bécher " + k, { taille: 10, gras: true,
+    couleur: "#5d6874" });
+  txtIn(g, x, BY_BAS + 33, "", { taille: 9, couleur: "#8794a5" })
+    .setAttribute("id", "becherLbl" + k);
+}
+/* Une résistance chauffante gainée : un serpentin sous gaine, et deux
+   fils. La gaine est ce que la sécurité exige, et elle se voit. */
+function construireResistance(id, i, x, y, ech) {
+  var g = ajout("objets", el("g", { id: id, "data-act": id, cursor: "grab" }));
+  g.appendChild(el("rect", { x: x - 34 * ech, y: y - 40 * ech, width: 68 * ech,
+    height: 88 * ech, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" })), j, dd = "";
+  d.appendChild(el("line", { x1: x - 9 * ech, y1: y - 38 * ech,
+    x2: x - 9 * ech, y2: y - 6 * ech, stroke: "#b8272b",
+    "stroke-width": 2.6 * ech }));
+  d.appendChild(el("line", { x1: x + 9 * ech, y1: y - 38 * ech,
+    x2: x + 9 * ech, y2: y - 6 * ech, stroke: "#2b3240",
+    "stroke-width": 2.6 * ech }));
+  for (j = 0; j <= 8; j++) {
+    dd += (j ? " L " : "M ") + pt(x + (j % 2 ? 15 : -15) * ech,
+      y - 4 * ech + j * 5.2 * ech);
+  }
+  d.appendChild(el("path", { id: id + "-serp", d: dd, fill: "none",
+    stroke: "#8b8f96", "stroke-width": 3.2 * ech, "stroke-linejoin": "round" }));
+  d.appendChild(el("rect", { x: x - 21 * ech, y: y - 8 * ech, width: 42 * ech,
+    height: 54 * ech, rx: 8 * ech, fill: "#cfe0ea", "fill-opacity": .5,
+    stroke: "#7fa3b8", "stroke-width": 1.4 * ech }));
+  /* Les deux étiquettes vont AU-DESSUS : une fois la résistance
+     immergée, tout ce qui pend sous elle se retrouve sous l'eau. */
+  txtIn(d, x, y - 50 * ech, nomApp(i).replace(/^Résistance chauffante\s*/i, ""),
+    { taille: 9 * ech, gras: true, couleur: "#5d6874" });
+  txtIn(d, x, y - 60 * ech, "gainée", { taille: 8 * ech, couleur: "#4a7a8c" });
+  return g;
+}
+function construireThermometre(id, x, y, ech) {
+  var g = ajout("objets", el("g", { id: id, "data-act": id, cursor: "grab" }));
+  g.appendChild(el("rect", { x: x - 14 * ech, y: y - 52 * ech, width: 28 * ech,
+    height: 104 * ech, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: x - 4 * ech, y: y - 48 * ech, width: 8 * ech,
+    height: 88 * ech, rx: 4 * ech, fill: "#f4f8fb", stroke: "#8fa8b8",
+    "stroke-width": 1.2 }));
+  d.appendChild(el("rect", { id: id + "-col", x: x - 1.8 * ech,
+    y: y + 24 * ech, width: 3.6 * ech, height: 14 * ech, fill: ROUGE }));
+  d.appendChild(el("circle", { cx: x, cy: y + 42 * ech, r: 6 * ech,
+    fill: ROUGE }));
+  [0, 1, 2, 3, 4].forEach(function (j) {
+    d.appendChild(el("line", { x1: x + 4 * ech, y1: y - 40 * ech + j * 17 * ech,
+      x2: x + 9 * ech, y2: y - 40 * ech + j * 17 * ech, stroke: "#8fa8b8",
+      "stroke-width": 0.9 }));
+  });
+  d.appendChild(el("text", { id: id + "-val", x: x, y: y - 56 * ech,
+    "text-anchor": "middle", "font-size": 10.5 * ech, "font-weight": "bold",
+    fill: INK }, "—"));
+  return g;
+}
+function construirePince() {
+  var g = ajout("objets", el("g", { id: "pince", "data-act": "pince",
+    cursor: "pointer" }));
+  g.appendChild(el("rect", { x: X_RANGE_B - 34, y: Y_R_PINCE - 26, width: 68,
+    height: 56, fill: "transparent" }));
+  var d = g.appendChild(el("g", { id: "pinceD", "pointer-events": "none" }));
+  d.appendChild(el("path", { d: "M " + pt(X_RANGE_B - 24, Y_R_PINCE + 16)
+    + " Q " + pt(X_RANGE_B - 4, Y_R_PINCE - 6) + " " + pt(X_RANGE_B - 18, Y_R_PINCE - 20),
+    fill: "none", stroke: "#8b8f96", "stroke-width": 3.4,
+    "stroke-linecap": "round" }));
+  d.appendChild(el("path", { d: "M " + pt(X_RANGE_B + 24, Y_R_PINCE + 16)
+    + " Q " + pt(X_RANGE_B + 4, Y_R_PINCE - 6) + " " + pt(X_RANGE_B + 18, Y_R_PINCE - 20),
+    fill: "none", stroke: "#8b8f96", "stroke-width": 3.4,
+    "stroke-linecap": "round" }));
+  txtIn(d, X_RANGE_B, Y_R_PINCE + 32, "pince", { taille: 9.5, gras: true,
+    couleur: "#5d6874" });
+}
+function construireGenerateurBureau() {
+  var g = ajout("objets", el("g", { id: "genB", "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: X_GEN_B - 82, y: Y_GEN_B - 30, width: 164,
+    height: 60, rx: 6, fill: "url(#boitier)", stroke: "#6b7686",
+    "stroke-width": 1.5 }));
+  g.appendChild(el("rect", { x: X_GEN_B - 70, y: Y_GEN_B - 20, width: 66,
+    height: 24, rx: 3, fill: "url(#ecran)" }));
+  g.appendChild(el("text", { id: "genValB", x: X_GEN_B - 37, y: Y_GEN_B - 2,
+    "text-anchor": "middle", "font-size": 13, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "monospace" }, "0,0 V"));
+  txtIn(g, X_GEN_B + 34, Y_GEN_B - 2, "les DEUX sous", { taille: 9,
+    couleur: "#3b4655" });
+  txtIn(g, X_GEN_B + 34, Y_GEN_B + 11, "la même tension", { taille: 9,
+    gras: true, couleur: "#3b4655" });
+  txtIn(g, X_GEN_B, Y_GEN_B + 45, "alimentation commune des deux appareils de chauffage",
+    { taille: 9, couleur: "#5d6874" });
+}
+function construireChrono() {
+  var g = ajout("ui", el("g", { id: "chrono", "pointer-events": "none" })),
+      X = 150, Y = 520;
+  g.appendChild(el("rect", { x: X - 76, y: Y - 30, width: 152, height: 60,
+    rx: 9, fill: "#fff", stroke: "#c3ccd7", "stroke-width": 1.5 }));
+  g.appendChild(el("text", { id: "chronoT", x: X, y: Y + 8,
+    "text-anchor": "middle", "font-size": 26, "font-weight": "bold",
+    fill: INK, "font-family": "monospace" }, "0:00"));
+  txtIn(g, X, Y + 24, "chronomètre", { taille: 9, couleur: "#8794a5" });
+}
+function construireSceneBureau() {
+  construireFond();
+  ajout("fond", el("rect", { x: 300, y: Y_SOL_B, width: 560, height: 7,
+    fill: "#b9c3cf" }));
+  construireSecurite();
+  construireBecher("A");
+  construireBecher("B");
+  construireGenerateurBureau();
+  construireChrono();
+  ajout("fils", el("g", { id: "gFils" }));
+  ajout("avant", el("g", { id: "gAvant" }));
+  construireResistance("res0", 2, X_RANGE_B, Y_R_R1, 0.9);
+  construireResistance("res1", 3, X_RANGE_B, Y_R_R2, 0.9);
+  construireThermometre("thA", X_RANGE_B - 34, Y_R_THA, 1);
+  construireThermometre("thB", X_RANGE_B + 34, Y_R_THA, 1);
+  construirePince();
+  construireLegende("démonstration du bureau — l'eau suit une équation "
+    + "différentielle intégrée pas à pas, elle ne rejoue pas un nombre");
+}
+
+/* ==================================================================
+   11. LES PLACES ET LES ZONES
+   ==================================================================
+   Une place = où l'objet se DESSINE une fois posé. Une zone = le
+   rectangle qui l'accepte. Les zones sont rendues de la PLUS PETITE à
+   la plus grande (§12.16) : une zone contenue dans une autre doit être
+   testée d'abord, sinon elle est inatteignable.                       */
+/* Le serpentin doit TREMPER : la gaine descend de y−7 à y+41, et le
+   fond utile du bécher est à 472. Le réservoir du thermomètre, lui,
+   tombe à y+42 et doit rester sous la surface au volume du protocole. */
+var Y_RES = 425, Y_THERMO = 392, DX_RES = -22, DX_THERMO = 40;
+
+function placeDe(a) {
+  if (a === "lampe0" || a === "lampe1") return { x: X_LAMPE, y: CY1 - 34 };
+  if (a === "amp") return { x: X_AMP, y: Y_AMP };
+  if (a === "volt") return { x: X_LAMPE, y: Y_VOLT };
+  if (a === "res0" || a === "res1") {
+    var k = ETAT.res.A === numRes(a) ? "A" : "B";
+    return { x: BX[k] + DX_RES, y: Y_RES };
+  }
+  if (a === "thA") return { x: BX.A + DX_THERMO, y: Y_THERMO };
+  if (a === "thB") return { x: BX.B + DX_THERMO, y: Y_THERMO };
+  return null;
+}
+/* La position de DÉPART, celle du dessin d'origine. */
+function depart(a) {
+  var d = {
+    lampe0: { x: X_RANGE, y: Y_R_L1 }, lampe1: { x: X_RANGE, y: Y_R_L2 },
+    amp: { x: X_RANGE, y: Y_R_AMP }, volt: { x: X_RANGE, y: Y_R_VOLT },
+    res0: { x: X_RANGE_B, y: Y_R_R1 }, res1: { x: X_RANGE_B, y: Y_R_R2 },
+    thA: { x: X_RANGE_B - 34, y: Y_R_THA },
+    thB: { x: X_RANGE_B + 34, y: Y_R_THA }
+  };
+  return d[a] || null;
+}
+/* L'index de ligne du tableau que porte chaque objet. */
+function numLampe(a) { return a === "lampe0" ? 0 : 1; }
+function numRes(a) { return a === "res0" ? 2 : 3; }
+
+function zones() {
+  if (ETAT.lieu === "bureau") {
+    return [
+      { n: "becherA", x0: BX.A - B_LARG / 2, x1: BX.A + B_LARG / 2,
+        y0: BY_HAUT - 10, y1: BY_BAS },
+      { n: "becherB", x0: BX.B - B_LARG / 2, x1: BX.B + B_LARG / 2,
+        y0: BY_HAUT - 10, y1: BY_BAS }
+    ];
+  }
+  /* Les bornes du générateur sont CONTENUES dans rien, mais elles sont
+     petites et voisines du boîtier : elles passent en premier. */
+  return [
+    { n: "bornesGen", x0: X_GEN - 66, x1: X_GEN + 66, y0: CY0 + 8, y1: CY0 + 46 },
+    { n: "douille", x0: X_LAMPE - 40, x1: X_LAMPE + 40, y0: CY1 - 32, y1: CY1 + 40 },
+    { n: "serie", x0: X_AMP - 46, x1: X_AMP + 46, y0: Y_AMP - 36, y1: Y_AMP + 36 },
+    { n: "derivation", x0: X_LAMPE - 46, x1: X_LAMPE + 46, y0: Y_VOLT - 36,
+      y1: Y_VOLT + 36 }
+  ];
+}
+function zoneEn(x, y) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) {
+    if (x >= z[i].x0 && x <= z[i].x1 && y >= z[i].y0 && y <= z[i].y1) return z[i].n;
+  }
+  return null;
+}
+/* La zone qu'un objet donné cherche : celle qui l'accepte. Viser
+   « la première zone de la liste » serait faux dès qu'il y en a deux. */
+function zoneVoulue(a) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) if (accepte(z[i].n, a).ok) return z[i].n;
+  return null;
+}
+function centreZone(n) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) {
+    if (z[i].n === n) {
+      return { x: (z[i].x0 + z[i].x1) / 2, y: (z[i].y0 + z[i].y1) / 2 };
+    }
+  }
+  return null;
+}
+
+/* ==================================================================
+   12. CE QUI EST ACCEPTÉ, ET CE QUI EST REFUSÉ AVEC SA RAISON
+   ==================================================================
+   Chaque refus cite la fiche. Un refus sans raison n'apprend rien.   */
+function accepte(zone, a) {
+  var estL = a === "lampe0" || a === "lampe1",
+      estR = a === "res0" || a === "res1",
+      estT = a === "thA" || a === "thB";
+
+  if (zone === "douille") {
+    if (estL) return { ok: true };
+    return { ok: false, pourquoi: "Une douille reçoit une lampe, pas un "
+      + "appareil de mesure." };
+  }
+  if (zone === "serie") {
+    if (a === "amp") return { ok: true };
+    if (a === "volt") {
+      return { ok: false, pourquoi: "Le voltmètre ne se met pas en série : "
+        + depouille(secu("voltmètre")) };
+    }
+    return { ok: false, pourquoi: "Cet emplacement attend un appareil de mesure." };
+  }
+  if (zone === "derivation") {
+    if (a === "volt") return { ok: true };
+    if (a === "amp") {
+      return { ok: false, pourquoi: "L'ampèremètre en dérivation aux bornes "
+        + "de la lampe la court-circuite : tout le courant passerait par "
+        + "l'appareil, et la lampe s'éteindrait." };
+    }
+    return { ok: false, pourquoi: "Cet emplacement attend un appareil de mesure." };
+  }
+  if (zone === "bornesGen") {
+    if (a === "amp") {
+      return { ok: false, grave: true, pourquoi: depouille(secu("ampèremètre")) };
+    }
+    return { ok: false, pourquoi: "Les bornes du générateur ne reçoivent que "
+      + "les fils du circuit." };
+  }
+  if (zone === "becherA" || zone === "becherB") {
+    var k = zone === "becherA" ? "A" : "B";
+    if (estR) {
+      if (ETAT.res[k] !== null) {
+        return { ok: false, pourquoi: "Ce bécher a déjà sa résistance "
+          + "chauffante. La fiche en met UNE dans chacun." };
+      }
+      return { ok: true };
+    }
+    if (estT) {
+      if ((a === "thA") !== (k === "A")) {
+        return { ok: false, pourquoi: "Chaque bécher a son thermomètre, et on "
+          + "ne les échange pas : il faut pouvoir lire les deux en même temps." };
+      }
+      return { ok: true };
+    }
+    return { ok: false, pourquoi: "Un bécher d'eau ne reçoit ici que la "
+      + "résistance chauffante gainée et son thermomètre." };
+  }
+  return { ok: false, pourquoi: "" };
+}
+
+/* ==================================================================
+   13. LE MOTEUR DE GLISSER-DÉPOSER
+   ==================================================================
+   Pointer events, capture sur le SVG, seuil de 5 px pour distinguer le
+   clic du glissé, et pointercancel traité comme un relâchement.       */
+var DRAG = null, SEUIL = 5;
+
+function ptSvg(ev) {
+  var r = svg.getBoundingClientRect(), b = svg.viewBox.baseVal;
+  return { x: (ev.clientX - r.left) / r.width * b.width,
+           y: (ev.clientY - r.top) / r.height * b.height };
+}
+function cible(ev) {
+  var n = ev.target;
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) {
+      return n.getAttribute("data-act");
+    }
+    n = n.parentNode;
+  }
+  return null;
+}
+function noeud(a) { return $(a); }
+function decale(a, dx, dy) {
+  var n = noeud(a);
+  if (n) n.setAttribute("transform", "translate(" + dx.toFixed(1) + ","
+    + dy.toFixed(1) + ")");
+}
+function replacer(a) {
+  var n = noeud(a);
+  if (!n) return;
+  var pose = estPose(a), p, d;
+  if (!pose) { n.removeAttribute("transform"); return; }
+  p = placeDe(a); d = depart(a);
+  if (p && d) decale(a, p.x - d.x, p.y - d.y);
+}
+function estPose(a) {
+  if (a === "lampe0" || a === "lampe1") return ETAT.lampe === numLampe(a);
+  if (a === "amp") return ETAT.amp;
+  if (a === "volt") return ETAT.volt;
+  if (a === "res0" || a === "res1") {
+    return ETAT.res.A === numRes(a) || ETAT.res.B === numRes(a);
+  }
+  if (a === "thA") return ETAT.thermo.A;
+  if (a === "thB") return ETAT.thermo.B;
+  return false;
+}
+
+function surPointerDown(ev) {
+  var a = cible(ev), p;
+  if (!a) return;
+  if (a === "inter") { basculerInter(); return; }
+  if (a === "pince") { prendrePince(); return; }
+  p = ptSvg(ev);
+  DRAG = { a: a, x0: p.x, y0: p.y, bouge: false, dx: 0, dy: 0 };
+  var n = noeud(a);
+  if (n) {
+    DRAG.base = { x: 0, y: 0 };
+    var t = n.getAttribute("transform");
+    if (t) {
+      var m = t.match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
+      if (m) DRAG.base = { x: parseFloat(m[1]), y: parseFloat(m[2]) };
+    }
+    COUCHES.drag.appendChild(n);
+  }
+  if (svg.setPointerCapture) {
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) { /* rien */ }
+  }
+  ev.preventDefault();
+}
+function surPointerMove(ev) {
+  if (!DRAG) return;
+  var p = ptSvg(ev), dx = p.x - DRAG.x0, dy = p.y - DRAG.y0;
+  if (!DRAG.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL) return;
+  DRAG.bouge = true;
+  DRAG.dx = dx; DRAG.dy = dy;
+  decale(DRAG.a, DRAG.base.x + dx, DRAG.base.y + dy);
+  ev.preventDefault();
+}
+function surPointerUp(ev) {
+  if (!DRAG) return;
+  var d = DRAG, p = ptSvg(ev);
+  DRAG = null;
+  COUCHES.objets.appendChild(noeud(d.a));
+  if (!d.bouge) { cliqueSur(d.a); replacer(d.a); redessiner(); return; }
+  var dep = depart(d.a);
+  deposer(d.a, dep.x + d.base.x + d.dx, dep.y + d.base.y + d.dy);
+}
+function surPointerCancel() {
+  if (!DRAG) return;
+  var a = DRAG.a;
+  DRAG = null;
+  COUCHES.objets.appendChild(noeud(a));
+  replacer(a);
+  redessiner();
+}
+
+/* ==================================================================
+   14. LES ACTIONS
+   ================================================================== */
+function note(s) {
+  if (!s) return;
+  ETAT.notes.push(s);
+  if (ETAT.notes.length > 3) ETAT.notes.shift();
+}
+function dernier() {
+  return ETAT.notes.length ? ETAT.notes[ETAT.notes.length - 1] : "";
+}
+
+function deposer(a, x, y) {
+  var z = zoneEn(x, y), r;
+  if (!z) { retirer(a); replacer(a); redessiner(); return; }
+  r = accepte(z, a);
+  if (!r.ok) {
+    note((r.grave ? "⚠️ " : "") + r.pourquoi);
+    replacer(a);
+    redessiner();
+    return;
+  }
+  if (ETAT.ferme && ETAT.lieu === "poste") {
+    note("On ne modifie pas un montage sous tension : ouvrir "
+      + "l'interrupteur d'abord.");
+    replacer(a);
+    redessiner();
+    return;
+  }
+  if (ETAT.chauffe === 1 && ETAT.lieu === "bureau") {
+    note("Le chauffage est en cours : on ne touche plus au montage avant "
+      + "les " + nb(minutesProto(), 0) + " minutes.");
+    replacer(a);
+    redessiner();
+    return;
+  }
+  poser(a, z);
+  replacer(a);
+  redessiner();
+}
+function poser(a, z) {
+  if (a === "lampe0" || a === "lampe1") {
+    ETAT.lampe = numLampe(a);
+    ETAT.verifie = false;
+    note("Lampe " + indication(ETAT.lampe) + " en place. Le montage est à "
+      + "faire vérifier avant toute mise sous tension.");
+  } else if (a === "amp") {
+    ETAT.amp = true; ETAT.verifie = false;
+    note("Ampèremètre en série : c'est le seul montage qui mesure "
+      + "l'intensité qui traverse la lampe.");
+  } else if (a === "volt") {
+    ETAT.volt = true; ETAT.verifie = false;
+    note("Voltmètre en dérivation aux bornes de la lampe.");
+  } else if (a === "res0" || a === "res1") {
+    ETAT.res[z === "becherA" ? "A" : "B"] = numRes(a);
+  } else if (a === "thA") { ETAT.thermo.A = true; }
+  else if (a === "thB") { ETAT.thermo.B = true; }
+}
+function retirer(a) {
+  if (a === "lampe0" || a === "lampe1") {
+    if (ETAT.lampe === numLampe(a)) { ETAT.lampe = null; ETAT.verifie = false; }
+  } else if (a === "amp") { ETAT.amp = false; ETAT.verifie = false; }
+  else if (a === "volt") { ETAT.volt = false; ETAT.verifie = false; }
+  else if (a === "res0" || a === "res1") {
+    var n = numRes(a);
+    if (ETAT.res.A === n) ETAT.res.A = null;
+    if (ETAT.res.B === n) ETAT.res.B = null;
+  } else if (a === "thA") { ETAT.thermo.A = false; }
+  else if (a === "thB") { ETAT.thermo.B = false; }
+}
+/* Un clic sec, sans glissé. Sur une résistance qui a chauffé, c'est le
+   geste que la sécurité interdit. */
+function cliqueSur(a) {
+  var estR = a === "res0" || a === "res1", k;
+  if (estR && ETAT.chauffe === 2) {
+    k = ETAT.res.A === numRes(a) ? "A" : (ETAT.res.B === numRes(a) ? "B" : null);
+    if (k && ETAT.chaud[k]) {
+      if (!ETAT.pince) {
+        note("⚠️ " + depouille(secu("brûlante")));
+        return;
+      }
+      ETAT.chaud[k] = false;
+      ETAT.res[k] = null;
+      ETAT.pince = false;
+      replacer(a);
+      note("Résistance sortie à la pince et mise à refroidir.");
+      return;
+    }
+  }
+  if (estPose(a)) { retirer(a); note("Reposé sur la paillasse."); }
+}
+function prendrePince() {
+  ETAT.pince = !ETAT.pince;
+  note(ETAT.pince
+    ? "Pince en main. Cliquer sur une résistance brûlante pour la sortir."
+    : "Pince reposée.");
+  redessiner();
+}
+function basculerInter() {
+  if (!ETAT.ferme) {
+    if (!montePret()) {
+      note("Le circuit n'est pas complet : il manque " + cequiManque() + ".");
+      redessiner();
+      return;
+    }
+    if (!ETAT.verifie) {
+      note("⚠️ " + depouille(secu("vérifier le montage")));
+      redessiner();
+      return;
+    }
+    ETAT.ferme = true;
+    releverLampe();
+  } else {
+    ETAT.ferme = false;
+    note("Interrupteur ouvert.");
+  }
+  redessiner();
+}
+function cequiManque() {
+  var m = [];
+  if (ETAT.lampe === null) m.push("la lampe");
+  if (!ETAT.amp) m.push("l'ampèremètre en série");
+  if (!ETAT.volt) m.push("le voltmètre en dérivation");
+  return m.join(", ");
+}
+function verifierMontage() {
+  if (!montePret()) {
+    note("Rien à vérifier tant qu'il manque " + cequiManque() + ".");
+  } else {
+    ETAT.verifie = true;
+    note("Montage vérifié par l'enseignant. On peut mettre sous tension.");
+  }
+  redessiner();
+}
+
+/* Relever une lampe : c'est ici que la ligne du tableau se remplit, et
+   elle se remplit avec ce que la page CALCULE. */
+function releverLampe() {
+  var i = ETAT.lampe, U = REG.U;
+  if (i === null) return;
+  if (Math.abs(U - tensionProto()) > 1e-9) {
+    note("Sous " + nb(tensionLue(U), 1) + " V, la lampe n'est plus à sa "
+      + "tension nominale : la ligne du tableau attend les "
+      + nb(tensionProto(), 0) + " V du protocole.");
+    return;
+  }
+  ETAT.lu[i] = {
+    U: tensionLue(U), I: intensiteLue(i, U), P: produit(i, U),
+    effet: phraseEclat(i, U)
+  };
+  note("Relevé : U = " + nb(tensionLue(U), 0) + " V, I = "
+    + nb(intensiteLue(i, U), 2) + " A, donc U × I = "
+    + nb(produit(i, U), 1) + " W.");
+}
+/* L'éclat n'est pas une étiquette : il sort du calcul, et on le compare
+   à l'autre lampe. */
+function phraseEclat(i, U) {
+  var e = eclat(i, U), autre = i === 0 ? 1 : 0, ea = eclat(autre, U);
+  if (e <= 0) return "éteinte";
+  return e >= ea ? "brille vivement" : "brille faiblement";
+}
+
+/* ==================================================================
+   15. LE CHAUFFAGE — une animation, donc setTimeout (§13.5 bis)
+   ==================================================================
+   requestAnimationFrame ne tourne PAS sous le pilote headless. Toute
+   animation de cette maison passe par setTimeout et Date.now().       */
+var ANIM_ON = false, ANIM_T0 = 0;
+var VITESSE = 60;                       // 1 s réelle = 60 s de chauffage
+
+function lancerChauffage() {
+  if (ETAT.res.A === null || ETAT.res.B === null) {
+    note("Il faut les DEUX appareils de chauffage, un par bécher : la "
+      + "comparaison n'a de sens que menée en même temps.");
+    redessiner();
+    return;
+  }
+  if (!ETAT.thermo.A || !ETAT.thermo.B) {
+    note("Il manque un thermomètre : sans lui, on ne relèvera pas la "
+      + "température finale.");
+    redessiner();
+    return;
+  }
+  if (!(REG.U > 0)) {
+    note("Le générateur est à zéro : les deux résistances ne chaufferaient pas.");
+    redessiner();
+    return;
+  }
+  ETAT.chauffe = 1;
+  ETAT.tChauffe = 0;
+  ANIM_ON = true;
+  ANIM_T0 = Date.now();
+  note("Chauffage lancé. Les deux béchers partent de "
+    + nb(PHYS.T_DEPART.v, 1) + " °C.");
+  redessiner();
+  setTimeout(pasChauffage, 16);
+}
+function pasChauffage() {
+  if (!ANIM_ON) return;
+  var t = (Date.now() - ANIM_T0) / 1000 * VITESSE;
+  if (t >= REG.duree) {
+    ETAT.tChauffe = REG.duree;
+    ANIM_ON = false;
+    finirChauffage();
+    return;
+  }
+  ETAT.tChauffe = t;
+  redessiner();
+  setTimeout(pasChauffage, 16);
+}
+function finirChauffage() {
+  ETAT.chauffe = 2;
+  ETAT.chaud.A = true;
+  ETAT.chaud.B = true;
+  ["A", "B"].forEach(function (k) {
+    var i = ETAT.res[k];
+    if (i === null) return;
+    var U = REG.U, P = tensionLue(U) * intensiteLue(i, U),
+        Tf = temperatureLue(P, REG.duree, REG.volume);
+    if (Math.abs(U - tensionProto()) < 1e-9
+        && Math.abs(REG.volume - volumeProto()) < 1e-9
+        && Math.abs(REG.duree - minutesProto() * 60) < 1e-9) {
+      ETAT.lu[i] = { U: tensionLue(U), I: intensiteLue(i, U), P: P,
+        effet: "eau de " + nb(PHYS.T_DEPART.v, 1) + " °C à " + nb(Tf, 1)
+          + " °C en " + nb(minutesProto(), 0) + " min" };
+    }
+  });
+  ETAT.dT.A = elevation(puissanceRes("A"), REG.duree, REG.volume);
+  ETAT.dT.B = elevation(puissanceRes("B"), REG.duree, REG.volume);
+  var dA = ETAT.dT.A, dB = ETAT.dT.B;
+  note(ecartLisible(dA, dB)
+    ? "Fin du chauffage. Les deux thermomètres ne marquent pas la même "
+      + "chose : l'écart vaut " + nb(Math.abs(dA - dB), 1) + " °C, soit "
+      + nb(Math.abs(dA - dB) / PHYS.DIV_T.v, 0) + " graduations."
+    : "Fin du chauffage — mais l'écart entre les deux béchers, "
+      + nb(Math.abs(dA - dB), 2) + " °C, est plus petit que ce que le "
+      + "thermomètre sait lire. Il faut chauffer plus longtemps, ou "
+      + "mettre moins d'eau.");
+  redessiner();
+}
+function puissanceRes(k) {
+  var i = ETAT.res[k];
+  if (i === null) return 0;
+  return tensionLue(REG.U) * intensiteLue(i, REG.U);
+}
+function tempBecher(k) {
+  if (ETAT.chauffe === 0) return PHYS.T_DEPART.v;
+  /* Une fois le chauffage terminé, on rend la valeur MÉMORISÉE : sortir
+     la résistance de l'eau ne refroidit pas le bécher d'un coup. */
+  if (ETAT.chauffe === 2) return PHYS.T_DEPART.v + ETAT.dT[k];
+  return PHYS.T_DEPART.v + elevation(puissanceRes(k), ETAT.tChauffe, REG.volume);
+}
+
+function rezero() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  ANIM_ON = false;
+  var l = ETAT ? ETAT.lieu : "poste";
+  ETAT = neufEtat();
+  ETAT.lieu = l;
+  construireScene();
+  redessiner();
+}
+function allerA(l) {
+  if (ETAT.lieu === l) return;
+  effacerGuide();          /* la scène est rebâtie : le guidage tombe */
+  ANIM_ON = false;
+  if (ETAT.chauffe === 1) {
+    /* Quitter le bureau pendant que ça chauffe est EXACTEMENT ce que la
+       fiche demande : on lance en premier, on va mesurer les lampes, on
+       revient. Le chauffage continue donc tout seul. */
+    ETAT.tChauffe = REG.duree;
+    finirChauffage();
+  }
+  ETAT.lieu = l;
+  construireScene();
+  redessiner();
+}
+
+/* ==================================================================
+   16. LES RÉGLAGES
+   ================================================================== */
+var REG = { U: 0, volume: 100, duree: 300 };
+
+function horsProtocole() {
+  return Math.abs(REG.volume - volumeProto()) > 1e-9
+    || Math.abs(REG.duree - minutesProto() * 60) > 1e-9;
+}
+
+/* ==================================================================
+   17. LA SCÈNE
+   ================================================================== */
+function construireScene() {
+  vide(svg);
+  COUCHES = {};
+  ajouterDefs();
+  ajouterCouches();
+  if (ETAT.lieu === "bureau") construireSceneBureau();
+  else construireScenePoste();
+  ["lampe0", "lampe1", "amp", "volt", "res0", "res1", "thA", "thB"]
+    .forEach(function (a) { if (noeud(a)) replacer(a); });
+  construireBoutons();
+}
+
+/* --- Les fils du poste. ------------------------------------------- */
+function fil(g, pts, o) {
+  o = o || {};
+  g.appendChild(el("polyline", { points: pts.map(function (p) {
+    return pt(p[0], p[1]); }).join(" "), fill: "none",
+    stroke: o.c || "#2b3240", "stroke-width": o.e || 3,
+    "stroke-linejoin": "round", "stroke-linecap": "round",
+    "marker-mid": o.fl ? "url(#flI)" : null }));
+}
+function dessinerFilsPoste() {
+  var g = $("gFils");
+  if (!g) return;
+  vide(g);
+  var passe = sousTension(), c = passe ? "#7a4a1a" : "#2b3240", e = 3;
+  fil(g, [[X_INTER + 18, CY0], [X_GEN - 76, CY0]], { c: c, e: e });
+  fil(g, [[X_GEN + 76, CY0], [CX1, CY0], [CX1, Y_AMP - 44]], { c: c, e: e });
+  if (ETAT.amp) {
+    fil(g, [[CX1, Y_AMP + 44], [CX1, CY1], [X_LAMPE + 30, CY1]], { c: c, e: e });
+  } else {
+    /* Le circuit est OUVERT là où l'ampèremètre manque : les deux
+       bornes sont visibles, et rien ne les relie. */
+    g.appendChild(el("circle", { cx: CX1, cy: Y_AMP - 44, r: 4, fill: "#8d97a3" }));
+    g.appendChild(el("circle", { cx: CX1, cy: Y_AMP + 44, r: 4, fill: "#8d97a3" }));
+    fil(g, [[CX1, Y_AMP + 44], [CX1, CY1], [X_LAMPE + 30, CY1]],
+      { c: "#b7c3d0", e: 2.4 });
+  }
+  fil(g, [[X_LAMPE - 30, CY1], [CX0, CY1], [CX0, CY0], [X_INTER - 18, CY0]],
+    { c: c, e: e });
+  if (ETAT.volt) {
+    fil(g, [[X_LAMPE - 30, CY1], [X_LAMPE - 58, CY1], [X_LAMPE - 58, Y_VOLT],
+      [X_LAMPE - 37, Y_VOLT]], { c: "#4a5a72", e: 2.2 });
+    fil(g, [[X_LAMPE + 30, CY1], [X_LAMPE + 58, CY1], [X_LAMPE + 58, Y_VOLT],
+      [X_LAMPE + 37, Y_VOLT]], { c: "#4a5a72", e: 2.2 });
+  }
+  /* Le sens du courant, quand il passe. */
+  if (passe) {
+    [[X_GEN + 90, CY0 - 13, 0], [CX1 + 15, CY0 + 70, 90],
+     [X_LAMPE, CY1 + 20, 180], [CX0 - 15, CY1 - 70, 270]]
+      .forEach(function (p) {
+        var t = el("path", { d: "M -7,-5 L 5,0 L -7,5 z", fill: ORANGE,
+          "pointer-events": "none",
+          transform: "translate(" + p[0] + "," + p[1] + ") rotate(" + p[2] + ")" });
+        g.appendChild(t);
+      });
+  }
+}
+function dessinerFilsBureau() {
+  var g = $("gFils");
+  if (!g) return;
+  vide(g);
+  var passe = ETAT.chauffe > 0 && REG.U > 0,
+      c = passe ? "#7a4a1a" : "#2b3240";
+  ["A", "B"].forEach(function (k) {
+    if (ETAT.res[k] === null) return;
+    var xr = BX[k] + DX_RES, yt = Y_RES - 38 * 0.9, s = k === "A" ? -1 : 1;
+    fil(g, [[X_GEN_B + s * 46, Y_GEN_B + 30], [X_GEN_B + s * 46, Y_GEN_B + 62],
+      [xr - 8, Y_GEN_B + 62], [xr - 8, yt]], { c: "#b8272b", e: 2.4 });
+    fil(g, [[X_GEN_B + s * 62, Y_GEN_B + 30], [X_GEN_B + s * 62, Y_GEN_B + 84],
+      [xr + 8, Y_GEN_B + 84], [xr + 8, yt]], { c: c, e: 2.4 });
+  });
+}
+
+/* --- L'état visible des objets. ----------------------------------- */
+function rafraichirPoste() {
+  var i = ETAT.lampe, U = REG.U, passe = sousTension();
+  if ($("genVal")) $("genVal").textContent = nb(tensionLue(U), 1) + " V";
+  if ($("genAig")) {
+    var ang = -140 + 280 * (U / 12);
+    $("genAig").setAttribute("transform", "rotate(" + ang.toFixed(1) + " "
+      + (X_GEN + 38) + " " + (CY0 - 10) + ")");
+  }
+  if ($("interLame")) {
+    $("interLame").setAttribute("y2", ETAT.ferme ? CY0 : CY0 - 15);
+    $("interLame").setAttribute("x2", ETAT.ferme ? X_INTER + 18 : X_INTER + 14);
+  }
+  [0, 1].forEach(function (j) {
+    var h = $("lampe" + j + "-halo"), f = $("lampe" + j + "-fil"), e, r;
+    if (!h || !f) return;
+    e = (passe && i === j) ? eclat(j, U) : 0;
+    /* Le rayon du halo suit l'éclat CALCULÉ, rapporté au plus grand des
+       deux appareils sous leur tension nominale. */
+    r = 22 + 52 * Math.min(1, e / maxEclat());
+    h.setAttribute("r", e > 0 ? r.toFixed(1) : 1);
+    h.setAttribute("opacity", e > 0 ? Math.min(1, 0.35 + e / maxEclat()) : 0);
+    f.setAttribute("stroke", e > 0
+      ? melange("#8b8f96", "#fff0a8", Math.min(1, e / maxEclat() * 1.6))
+      : "#8b8f96");
+    f.setAttribute("stroke-width", e > 0 ? 2.6 : 1.8);
+  });
+  if ($("amp-val")) {
+    $("amp-val").textContent = (ETAT.amp && passe)
+      ? nb(intensiteLue(i, U), 2) + " A" : (ETAT.amp ? "0,00 A" : "----");
+  }
+  if ($("volt-val")) {
+    $("volt-val").textContent = (ETAT.volt && passe)
+      ? nb(tensionLue(U), 1) + " V" : (ETAT.volt ? "0,0 V" : "----");
+  }
+  dessinerFilsPoste();
+}
+function maxEclat() {
+  var m = 0, j;
+  for (j = 0; j < nbApp(); j++) {
+    if (estLampe(j)) m = Math.max(m, wattsNominaux(j));
+  }
+  return m || 1;
+}
+function rafraichirBureau() {
+  if ($("genValB")) {
+    $("genValB").textContent = nb(tensionLue(REG.U), 1) + " V";
+  }
+  if ($("chronoT")) $("chronoT").textContent = mmss(ETAT.tChauffe);
+  ["A", "B"].forEach(function (k) {
+    var T = tempBecher(k), dT = T - PHYS.T_DEPART.v,
+        eau = $("eau" + k), col = $("th" + k + "-col"),
+        val = $("th" + k + "-val"), lbl = $("becherLbl" + k),
+        i = ETAT.res[k];
+    if (eau) {
+      /* L'eau se colore avec son échauffement — et son niveau est
+         PROPORTIONNEL au volume réglé, sur un bécher de 250 mL. */
+      var f = Math.min(1, dT / 5), h = hauteurEau(REG.volume);
+      eau.setAttribute("y", (B_INT_BAS - h).toFixed(1));
+      eau.setAttribute("height", h.toFixed(1));
+      eau.setAttribute("fill", f > 0.02 ? melange("#a8d4e8", "#e8a878", f)
+        : "url(#eau)");
+    }
+    if (col) {
+      /* La colonne du thermomètre monte AVEC la température : 1 °C
+         d'élévation vaut 4 unités de hauteur, échelle déclarée. */
+      var hh = 14 + dT * 4;
+      col.setAttribute("height", hh.toFixed(1));
+      col.setAttribute("y", (Y_THERMO + 38 - hh).toFixed(1));
+    }
+    if (val) {
+      val.textContent = ETAT.thermo[k]
+        ? nb(Math.round(T / PHYS.DIV_T.v) * PHYS.DIV_T.v, 1) + " °C" : "—";
+    }
+    if (lbl) {
+      lbl.textContent = i === null ? nb(REG.volume, 0) + " mL d'eau"
+        : nomApp(i).replace(/^Résistance chauffante\s*/i, "") + " · "
+          + nb(REG.volume, 0) + " mL";
+    }
+    /* Une résistance brûlante se voit : son serpentin rougit. */
+    var id = i === 2 ? "res0" : (i === 3 ? "res1" : null),
+        s = id ? $(id + "-serp") : null;
+    if (s) {
+      s.setAttribute("stroke", ETAT.chaud[k] ? "#c2410c"
+        : (ETAT.chauffe === 1 ? melange("#8b8f96", "#c2410c", Math.min(1, dT / 3))
+        : "#8b8f96"));
+    }
+  });
+  if ($("pinceD")) {
+    $("pinceD").setAttribute("transform", ETAT.pince
+      ? "translate(0,-10) rotate(-12 " + X_RANGE_B + " " + Y_R_PINCE + ")" : "");
+  }
+  dessinerFilsBureau();
+}
+
+/* ==================================================================
+   18. LES PANNEAUX
+   ================================================================== */
+function laConsigne() {
+  if (ETAT.lieu === "bureau") {
+    if (ETAT.res.A === null || ETAT.res.B === null) {
+      return "Au bureau, et à lancer EN PREMIER. Plonger la résistance "
+        + "chauffante de chaque appareil dans son bécher : "
+        + nomApp(2).replace(/^Résistance chauffante\s*/i, "") + " dans le A, "
+        + nomApp(3).replace(/^Résistance chauffante\s*/i, "") + " dans le B.";
+    }
+    if (!ETAT.thermo.A || !ETAT.thermo.B) {
+      return "Plonger un thermomètre dans chaque bécher : la température de "
+        + "départ doit être la même dans les deux.";
+    }
+    if (ETAT.chauffe === 0) {
+      return "Alimenter les deux résistances sous la même tension de "
+        + nb(tensionProto(), 0) + " V, puis lancer le chronomètre pour "
+        + nb(minutesProto(), 0) + " minutes.";
+    }
+    if (ETAT.chauffe === 1) {
+      return "Le chauffage tourne. C'est le moment d'aller mesurer les deux "
+        + "lampes au poste — la fiche le prescrit ainsi.";
+    }
+    if (ETAT.chaud.A || ETAT.chaud.B) {
+      return "Relever les deux températures finales, puis sortir les "
+        + "résistances brûlantes À LA PINCE.";
+    }
+    return "Comparer les deux élévations de température, puis conclure.";
+  }
+  if (ETAT.lampe === null) {
+    return "Visser une lampe dans la douille. Commencer par "
+      + nomApp(0) + ", marquée " + indication(0) + ".";
+  }
+  if (!ETAT.amp) return "Insérer l'ampèremètre EN SÉRIE, à l'emplacement "
+    + "prévu sur la boucle.";
+  if (!ETAT.volt) return "Brancher le voltmètre EN DÉRIVATION, aux bornes de "
+    + "la lampe.";
+  if (!ETAT.verifie) return "Faire vérifier le montage par l'enseignant avant "
+    + "toute mise sous tension.";
+  if (!ETAT.ferme) {
+    return "Régler le générateur sur " + nb(tensionProto(), 0)
+      + " V, puis fermer l'interrupteur et observer l'éclat.";
+  }
+  if (ETAT.lu[ETAT.lampe] === undefined) {
+    return "Relever U au voltmètre et I à l'ampèremètre, et calculer le "
+      + "produit U × I.";
+  }
+  if (ETAT.lu[0] === undefined || ETAT.lu[1] === undefined) {
+    return "Ouvrir l'interrupteur, remplacer la lampe par l'autre, et "
+      + "recommencer sans rien changer d'autre.";
+  }
+  if (ETAT.lu[2] === undefined || ETAT.lu[3] === undefined) {
+    return "Les deux lampes sont faites. Retourner au bureau relever les "
+      + "deux appareils de chauffage.";
+  }
+  return "Les quatre lignes sont remplies : comparer colonne par colonne, "
+    + "puis conclure.";
+}
+
+function remplirTableau() {
+  var t = $("tab"), e = entetes(), i, c, tr, th, td, v;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  e.forEach(function (h) {
+    th = tr.appendChild(document.createElement("th"));
+    th.textContent = depouille(h);
+  });
+  for (i = 0; i < nbApp(); i++) {
+    tr = t.appendChild(document.createElement("tr"));
+    if (ETAT.lampe === i && ETAT.lieu === "poste") tr.className = "en-cours";
+    for (c = 0; c < e.length; c++) {
+      td = tr.appendChild(document.createElement("td"));
+      if (c === 0) { td.textContent = nomApp(i); td.className = "nom"; continue; }
+      if (c === 1) { td.textContent = indication(i); continue; }
+      v = ETAT.lu[i];
+      if (v === undefined) { td.innerHTML = '<span class="vide">—</span>'; continue; }
+      if (c === 2) td.textContent = nb(v.U, 0) + " V";
+      else if (c === 3) td.textContent = nb(v.I, 2) + " A";
+      else if (c === 4) td.textContent = nb(v.P, 1) + " W";
+      else td.textContent = v.effet;
+      td.className = "rempli";
+    }
+  }
+}
+
+function remplirMesure() {
+  var i = ETAT.lieu === "bureau" ? ETAT.res.A : ETAT.lampe,
+      U = REG.U, cs = $("mesCases"), bl = $("mesBilan"), lignes = [];
+  $("mesNom").textContent = i === null || i === undefined ? "—" : nomApp(i);
+  vide(cs); vide(bl);
+  function cas(t, u, cl) {
+    var d = document.createElement("div");
+    d.innerHTML = '<div class="t">' + t + '</div><div class="u '
+      + (cl || "") + '">' + u + "</div>";
+    cs.appendChild(d);
+  }
+  if (i === null || i === undefined) {
+    cas("Aucun appareil", "en place", "nul");
+    cas("Le tableau", "attend", "nul");
+    $("mesPhrase").textContent = "Poser un appareil pour que la page calcule.";
+    return;
+  }
+  var actif = ETAT.lieu === "bureau" ? ETAT.chauffe > 0 : sousTension(),
+      Iv = actif ? intensiteLue(i, U) : 0,
+      Uv = actif ? tensionLue(U) : 0;
+  cas("Indication du constructeur", indication(i));
+  cas("U aux bornes", actif ? nb(Uv, 1) + " V" : "0,0 V", actif ? "" : "nul");
+  cas("I dans l'appareil", actif ? nb(Iv, 2) + " A" : "0,00 A", actif ? "" : "nul");
+  cas("Produit U × I", actif ? nb(Uv * Iv, 1) + " W" : "—", actif ? "" : "nul");
+  if (actif) {
+    lignes.push(["Indication en watts", nb(wattsNominaux(i), 1) + " W", ""]);
+    lignes.push(["Écart au produit calculé",
+      nb(Math.abs(Uv * Iv - wattsNominaux(i)), 2) + " W",
+      accordProduit(i, U) ? "ok" : "mal"]);
+    lignes.push(["Une graduation d'ampèremètre pèse",
+      nb(toleranceProduit(U), 2) + " W", ""]);
+    if (estLampe(i)) {
+      lignes.push(["Rapport U/I du filament", nb(Uv / (Iv || 1e-9), 1) + " Ω",
+        ""]);
+    } else {
+      lignes.push(["Résistance de l'appareil", nb(ohmsDe(i), 0) + " Ω", ""]);
+    }
+  }
+  lignes.forEach(function (l) {
+    var a = document.createElement("div"), b = document.createElement("div");
+    a.className = "n"; a.textContent = l[0];
+    b.className = "v " + l[2]; b.textContent = l[1];
+    bl.appendChild(a); bl.appendChild(b);
+  });
+  $("mesPhrase").textContent = !actif
+    ? (ETAT.lieu === "bureau" ? "Le chauffage n'est pas lancé."
+       : "Le circuit est ouvert : rien ne passe, et les deux appareils "
+         + "affichent zéro.")
+    : (estLampe(i)
+       ? "Le rapport U/I d'un filament n'est pas constant : il change avec "
+         + "la tension, parce que le filament chauffe. Ce n'est pas un "
+         + "conducteur ohmique."
+       : "Cet appareil-ci est ohmique : son rapport U/I ne bouge pas, quelle "
+         + "que soit la tension.");
+}
+
+/* Les quatre barres : le produit calculé, contre le nombre inscrit. */
+function dessinerBarres() {
+  var g = $("gBarres"), i, n = nbApp(), Lg = 360, Ht = 210,
+      x0 = 34, y0 = 172, larg = (Lg - x0 - 14) / n, pmax = 0;
+  vide(g);
+  for (i = 0; i < n; i++) pmax = Math.max(pmax, wattsNominaux(i));
+  pmax = Math.max(pmax * 1.35, 1);
+  function yy(p) { return y0 - (y0 - 26) * borne(p / pmax, 0, 1); }
+  [0, 2, 4, 6].forEach(function (v) {
+    if (v > pmax) return;
+    g.appendChild(el("line", { x1: x0 - 4, y1: yy(v), x2: Lg - 10, y2: yy(v),
+      stroke: v ? "#eef1f5" : "#c3ccd7", "stroke-width": 1 }));
+    g.appendChild(el("text", { x: x0 - 8, y: yy(v) + 3.5, "text-anchor": "end",
+      "font-size": 9, fill: "#8794a5" }, nb(v, 0)));
+  });
+  g.appendChild(el("text", { x: 8, y: 18, "font-size": 9.5, fill: "#8794a5" },
+    "puissance (W)"));
+  for (i = 0; i < n; i++) {
+    var cx = x0 + larg * (i + 0.5), v2 = ETAT.lu[i],
+        p = v2 ? v2.P : 0, nom2 = wattsNominaux(i);
+    g.appendChild(el("rect", { x: cx - larg * 0.3, y: yy(p),
+      width: larg * 0.6, height: Math.max(0, y0 - yy(p)),
+      fill: v2 ? (accordProduit(i, tensionProto()) ? "#7fa86a" : "#c98b4b")
+        : "#e6ebf1", rx: 2 }));
+    g.appendChild(el("line", { x1: cx - larg * 0.38, y1: yy(nom2),
+      x2: cx + larg * 0.38, y2: yy(nom2), stroke: INK, "stroke-width": 2.4 }));
+    g.appendChild(el("text", { x: cx, y: y0 + 13, "text-anchor": "middle",
+      "font-size": 9, fill: "#5d6874" },
+      nomApp(i).replace(/^Résistance chauffante\s*/i, "")
+        .replace(/\s*\(.*\)$/, "")));
+    if (v2) {
+      g.appendChild(el("text", { x: cx, y: yy(p) - 5, "text-anchor": "middle",
+        "font-size": 9.5, "font-weight": "bold", fill: INK },
+        nb(p, 1) + " W"));
+    }
+  }
+  g.appendChild(el("line", { x1: x0 - 4, y1: y0, x2: Lg - 10, y2: y0,
+    stroke: "#c3ccd7", "stroke-width": 1.4 }));
+  /* La légende doit tenir DANS le cadre de 360 unités : le trait à 150
+     et vingt-six caractères à 9 px finissent à 340. */
+  g.appendChild(el("line", { x1: 150, y1: 192, x2: 170, y2: 192, stroke: INK,
+    "stroke-width": 2.4 }));
+  g.appendChild(el("text", { x: 175, y: 195, "font-size": 9, fill: "#5d6874" },
+    "nombre inscrit par le constructeur"));
+
+  var bl = $("barresBilan"), faits = 0, accords = 0;
+  vide(bl);
+  for (i = 0; i < n; i++) {
+    if (ETAT.lu[i] !== undefined) {
+      faits++;
+      if (accordProduit(i, tensionProto())) accords++;
+    }
+  }
+  function li(a, b, c) {
+    var p1 = document.createElement("div"), p2 = document.createElement("div");
+    p1.className = "n"; p1.textContent = a;
+    p2.className = "v " + (c || ""); p2.textContent = b;
+    bl.appendChild(p1); bl.appendChild(p2);
+  }
+  li("Appareils relevés", faits + " sur " + n, "");
+  li("Produit U × I conforme à l'indication", accords + " sur " + faits,
+    faits && accords === faits ? "ok" : (faits ? "mal" : ""));
+  if (ETAT.lu[0] !== undefined && ETAT.lu[1] !== undefined) {
+    li("Les deux lampes se classent comme leurs nombres",
+      classementRespecte(0, 1, tensionProto()) ? "oui" : "non",
+      classementRespecte(0, 1, tensionProto()) ? "ok" : "mal");
+  }
+  if (ETAT.chauffe === 2) {
+    var dA = ETAT.dT.A, dB = ETAT.dT.B;
+    li("Élévations des deux béchers",
+      nb(dA, 1) + " °C  /  " + nb(dB, 1) + " °C", "");
+    li("Leur rapport", nb(dB > 0 ? dA / dB : 0, 2),
+      ecartLisible(dA, dB) ? "ok" : "mal");
+  }
+}
+
+function remplirConclusion() {
+  var n = nbApp(), i, tous = true, accords = true;
+  for (i = 0; i < n; i++) {
+    if (ETAT.lu[i] === undefined) tous = false;
+    else if (!accordProduit(i, tensionProto())) accords = false;
+  }
+  ETAT.conclu = tous && accords;
+  $("concl").className = "box" + (ETAT.conclu ? "" : " masque");
+  if (!ETAT.conclu) return;
+  $("conclTxt").innerHTML = md(T("conclusion"));
+  var b = $("bilan");
+  vide(b);
+  var dA = ETAT.dT.A, dB = ETAT.dT.B;
+  [["Les quatre produits U × I", "retrouvent le nombre inscrit"],
+   ["La lampe " + indication(0), nb(ETAT.lu[0].P, 1) + " W calculés"],
+   ["La lampe " + indication(1), nb(ETAT.lu[1].P, 1) + " W calculés"],
+   ["Les deux élévations de température",
+    nb(dA, 1) + " °C contre " + nb(dB, 1) + " °C"],
+   ["Leur rapport", nb(dB > 0 ? dA / dB : 0, 2) + " — celui des puissances"]
+  ].forEach(function (l) {
+    var d = document.createElement("div");
+    d.innerHTML = "<b>" + l[0] + "</b> · " + l[1];
+    b.appendChild(d);
+  });
+}
+
+/* ==================================================================
+   19. SOUS LE CAPOT
+   ================================================================== */
+function tableau(id, entete, lignes) {
+  var t = $(id), tr, c;
+  if (!t) return;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  entete.forEach(function (h) {
+    c = tr.appendChild(document.createElement("th"));
+    c.innerHTML = h;
+  });
+  lignes.forEach(function (l) {
+    tr = t.appendChild(document.createElement("tr"));
+    l.forEach(function (v) {
+      c = tr.appendChild(document.createElement("td"));
+      c.innerHTML = v;
+    });
+  });
+}
+function remplirCapot() {
+  var i, L1 = [], U = tensionProto();
+  for (i = 0; i < nbApp(); i++) {
+    L1.push([nomApp(i), indication(i),
+      estLampe(i) ? "filament, loi ajustée" : "ohmique, I = U/R",
+      nb(intensiteVraie(i, U), 4) + " A", nb(intensiteLue(i, U), 2) + " A",
+      nb(produit(i, U), 2) + " W", nb(wattsNominaux(i), 1) + " W"]);
+  }
+  tableau("capotLignes", ["appareil", "indication", "modèle", "I calculée",
+    "I affichée", "U × I", "inscrit"], L1);
+
+  $("capotLoi").textContent = "I = I_nom · (U / U_nom)^" + nb(PHYS.N_FIL.v, 3);
+  var F = [];
+  [3, 6, 9, 12].forEach(function (u) {
+    var In = 2.1 / 6;                    // la lampe de la fiche voisine
+    var iv = In * Math.pow(u / 6, PHYS.N_FIL.v);
+    F.push([nb(u, 0) + " V", nb(iv, 4) + " A",
+      nb(Math.round(iv / 0.01) * 0.01, 2) + " A",
+      nb(u / iv, 1) + " Ω"]);
+  });
+  tableau("capotFil", ["tension", "I calculée", "I affichée",
+    "R = U/I du filament"], F);
+
+  $("capotEDO").textContent = "C · dΔT/dt = P − a · ΔT^"
+    + nb(PHYS.EXPO_PERTE.v, 2) + "   intégrée par Runge-Kutta d'ordre 4, "
+    + "au pas de " + nb(PHYS.PAS_INT.v, 1) + " s";
+  var mEau = volumeProto() * PHYS.RHO_EAU.v / 1000;
+  tableau("capotCap", ["poste", "détail", "capacité"], [
+    ["l'eau", nb(mEau, 3) + " kg × " + nb(PHYS.C_EAU.v, 0) + " J·kg⁻¹·K⁻¹",
+     nb(mEau * PHYS.C_EAU.v, 1) + " J/K"],
+    ["le verre du bécher", nb(PHYS.M_VERRE.v, 3) + " kg × "
+     + nb(PHYS.C_VERRE.v, 0), nb(PHYS.M_VERRE.v * PHYS.C_VERRE.v, 1) + " J/K"],
+    ["thermomètre et gaine", "estimation", nb(PHYS.C_DIVERS.v, 1) + " J/K"],
+    ["<b>total</b>", "<b>rien d'ajusté</b>",
+     "<b>" + nb(capaciteThermique(volumeProto()), 1) + " J/K</b>"]
+  ]);
+  $("capotPertes").innerHTML = "Le coefficient de pertes <b>a = "
+    + nb(PHYS.A_PERTE.v, 4) + " W·K⁻¹·²⁵</b> est le SEUL nombre calibré, et il "
+    + "l'est sur la seule ligne R1 du relevé. Son équivalent linéaire à "
+    + "ΔT = 2 K vaut " + nb(PHYS.A_PERTE.v * Math.pow(2, PHYS.EXPO_PERTE.v) / 2, 4)
+    + " W/K, à comparer aux 0,2 W/K qu'on estime en partant de la surface du "
+    + "bécher — convection, rayonnement et évaporation réunis. En cinq minutes "
+    + "et sur deux degrés, les pertes sont petites, et c'est le relevé "
+    + "lui-même qui l'impose.";
+
+  var A = [], d5 = minutesProto() * 60, v5 = volumeProto();
+  for (i = 0; i < nbApp(); i++) {
+    var pf = valFiche(i, 5), pc;
+    if (estLampe(i)) {
+      pc = phraseEclat(i, U);
+    } else {
+      pc = "eau de " + nb(PHYS.T_DEPART.v, 1) + " °C à "
+        + nb(temperatureLue(produit(i, U), d5, v5), 1) + " °C en "
+        + nb(minutesProto(), 0) + " min";
+    }
+    A.push([nomApp(i), valFiche(i, 3) + " · " + valFiche(i, 4),
+      nb(intensiteLue(i, U), 2) + " A · " + nb(produit(i, U), 1) + " W",
+      pf, pc]);
+  }
+  tableau("capotAccord", ["appareil", "fiche : I et U×I", "page : I et U×I",
+    "fiche : effet", "page : effet"], A);
+
+  var TfB = temperatureLue(produit(3, U), d5, v5), att = tFinaleFiche(3);
+  $("capotEcart").innerHTML = "<b>Le seul désaccord.</b> Sur la ligne "
+    + nomApp(3) + ", la fiche écrit <b>" + nb(att, 1) + " °C</b> et la page "
+    + "calcule <b>" + nb(TfB, 1) + " °C</b>. L'écart vaut "
+    + nb(Math.abs(TfB - att) / PHYS.DIV_T.v, 0) + " graduation de thermomètre, "
+    + "soit la précision même de l'instrument. La ligne R1, elle, tombe "
+    + "exactement sur la fiche.";
+  var r = elevation(produit(2, U), d5, v5) / elevation(produit(3, U), d5, v5);
+  $("capotBaisse").textContent = nb(100 * (2 - r) / 2, 3) + " %";
+
+  var V = [], k;
+  for (k in PHYS) {
+    V.push(["<b>" + k + "</b>", PHYS[k].n,
+      nb(PHYS[k].v, PHYS[k].v < 0.01 ? 4 : (PHYS[k].v < 10 ? 3 : 1))
+        + (PHYS[k].u ? " " + PHYS[k].u : ""), PHYS[k].s]);
+  }
+  tableau("capotVals", ["symbole", "grandeur", "valeur", "d'où elle vient"], V);
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+}
+
+/* ==================================================================
+   20. LE RENDU
+   ================================================================== */
+function redessiner() {
+  if (ETAT.lieu === "bureau") rafraichirBureau(); else rafraichirPoste();
+  $("consigne").textContent = laConsigne();
+  $("obs").textContent = dernier() || "—";
+  $("lieuPoste").className = ETAT.lieu === "poste" ? "on" : "";
+  $("lieuBureau").className = ETAT.lieu === "bureau" ? "on" : "";
+  remplirTableau();
+  remplirMesure();
+  dessinerBarres();
+  remplirConclusion();
+  $("alerte").className = "alerte" + (horsProtocole() ? " on" : "");
+  majBoutons();
+  majSeance();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+}
+function majSeance() {
+  var d = Number(T("duree")) || 24, faits = 0, i;
+  for (i = 0; i < nbApp(); i++) if (ETAT.lu[i] !== undefined) faits++;
+  var f = faits / nbApp();
+  $("seanceT").textContent = mmss(f * d * 60);
+  $("seanceB").textContent = "durée prescrite " + d + " min";
+  $("seanceM").textContent = " · " + faits + " appareil"
+    + (faits > 1 ? "s" : "") + " sur " + nbApp();
+  $("seanceJ").style.width = (f * 100).toFixed(0) + "%";
+}
+
+/* ==================================================================
+   21. LES BOUTONS
+   ================================================================== */
+var BOUTONS = [];
+function boutonSvg(id, x, y, lg, txte, act) {
+  var g = ajout("ui", el("g", { id: id, cursor: "pointer" }));
+  g.appendChild(el("rect", { x: x - lg / 2, y: y - 16, width: lg, height: 32,
+    rx: 9, fill: "#fff", stroke: "#c3ccd7", "stroke-width": 1.5 }));
+  g.appendChild(el("text", { x: x, y: y + 4.5, "text-anchor": "middle",
+    "font-size": 11.5, "font-weight": "bold", fill: INK,
+    "pointer-events": "none" }, txte));
+  g.addEventListener("click", act);
+  BOUTONS.push({ id: id, g: g });
+  return g;
+}
+function construireBoutons() {
+  BOUTONS = [];
+  if (ETAT.lieu === "poste") {
+    boutonSvg("btVerif", 300, Y_BT1, 240, "Faire vérifier le montage",
+      verifierMontage);
+    boutonSvg("btInter", 560, Y_BT1, 220, "Fermer l'interrupteur",
+      basculerInter);
+    boutonSvg("btLire", 820, Y_BT1, 220, "Relever U et I", function () {
+      if (!sousTension()) {
+        note("Rien à relever : le circuit n'est pas sous tension.");
+      } else { releverLampe(); }
+      redessiner();
+    });
+  } else {
+    boutonSvg("btChauffe", 330, Y_BT1, 300, "Lancer le chauffage",
+      lancerChauffage);
+    boutonSvg("btPince", 620, Y_BT1, 200, "Prendre la pince", prendrePince);
+    boutonSvg("btRelever", 860, Y_BT1, 250, "Relever les températures",
+      function () {
+        if (ETAT.chauffe !== 2) {
+          note("Le chauffage n'est pas terminé.");
+        } else {
+          note("Bécher A : " + nb(tempBecher("A"), 1) + " °C · bécher B : "
+            + nb(tempBecher("B"), 1) + " °C.");
+        }
+        redessiner();
+      });
+  }
+  boutonSvg("btAller", 560, Y_BT2, 420,
+    ETAT.lieu === "poste" ? "Aller au bureau (les deux chauffages)"
+      : "Revenir au poste (les deux lampes)",
+    function () { allerA(ETAT.lieu === "poste" ? "bureau" : "poste"); });
+}
+function majBoutons() {
+  function etat(id, actif, txte) {
+    var b = null, i;
+    for (i = 0; i < BOUTONS.length; i++) if (BOUTONS[i].id === id) b = BOUTONS[i].g;
+    if (!b) return;
+    b.setAttribute("opacity", actif ? 1 : 0.42);
+    b.setAttribute("cursor", actif ? "pointer" : "not-allowed");
+    if (txte) b.lastChild.textContent = txte;
+  }
+  if (ETAT.lieu === "poste") {
+    etat("btVerif", montePret() && !ETAT.verifie,
+      ETAT.verifie ? "Montage vérifié ✓" : "Faire vérifier le montage");
+    etat("btInter", montePret() && ETAT.verifie,
+      ETAT.ferme ? "Ouvrir l'interrupteur" : "Fermer l'interrupteur");
+    etat("btLire", sousTension());
+  } else {
+    etat("btChauffe", ETAT.chauffe === 0,
+      ETAT.chauffe === 1 ? "Chauffage en cours…"
+        : (ETAT.chauffe === 2 ? "Chauffage terminé ✓" : "Lancer le chauffage"));
+    etat("btPince", ETAT.chauffe === 2,
+      ETAT.pince ? "Pince en main ✓" : "Prendre la pince");
+    etat("btRelever", ETAT.chauffe === 2);
+  }
+}
+
+/* ==================================================================
+   22. LE DÉMARRAGE
+   ================================================================== */
+function brancherCurseurs() {
+  function lier(id, out, ch, fmt) {
+    var r = $(id);
+    r.addEventListener("input", function () {
+      ch(parseFloat(r.value));
+      $(out).textContent = fmt();
+      redessiner();
+    });
+    $(out).textContent = fmt();
+  }
+  lier("rU", "oU", function (v) {
+    REG.U = v;
+    /* Changer la tension PÉRIME les relevés : ils ont été pris sous une
+       autre tension, et les garder mentirait (§12.19). En revanche elle
+       n'OUVRE pas l'interrupteur : on tourne le bouton d'un générateur
+       sans couper le circuit, et voir l'éclat suivre la tension est
+       précisément ce qu'il y a à montrer. */
+    if (Math.abs(v - tensionProto()) > 1e-9) ETAT.lu = {};
+  }, function () { return nb(REG.U, 1) + " V"; });
+  lier("rV", "oV", function (v) {
+    REG.volume = v;
+    if (ETAT.chauffe) { ETAT.chauffe = 0; ETAT.tChauffe = 0; ANIM_ON = false; }
+    delete ETAT.lu[2]; delete ETAT.lu[3];
+  }, function () { return nb(REG.volume, 0) + " mL"; });
+  lier("rD", "oD", function (v) {
+    REG.duree = v;
+    if (ETAT.chauffe) { ETAT.chauffe = 0; ETAT.tChauffe = 0; ANIM_ON = false; }
+    delete ETAT.lu[2]; delete ETAT.lu[3];
+  }, function () { return mmss(REG.duree) + " (" + nb(REG.duree / 60, 0)
+    + " min)"; });
+}
+function remplirListes() {
+  ["materiel", "securite"].forEach(function (k) {
+    var u = $(k);
+    vide(u);
+    L(k).forEach(function (s) {
+      var li = document.createElement("li");
+      li.innerHTML = md(s);
+      u.appendChild(li);
+    });
+  });
+}
+/* ==================================================================
+   23. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideDefaire = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  /* Un surlignage qui n'ajoute pas de nœud — le contour posé sur un bouton
+     de la colonne — se défait par une fonction, pas par un removeChild. */
+  guideDefaire.forEach(function (f) { try { f(); } catch (e) { /* rien */ } });
+  guideDefaire = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = W / s.width, ky = H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* ⚠️ On vise par [data-act], jamais par #id : un dégradé de <defs> porte
+   parfois le même nom qu'un objet de la scène, et querySelector rendrait
+   le dégradé — dont la boîte est nulle. */
+function surlignerActe(a, m) {
+  return surlignerNoeud('[data-act="' + a + '"]', m);
+}
+/* Un élément de la PAGE — un bouton de commande, le tableau, un graphe :
+   il n'est pas dans le SVG, on ne peut donc pas lui poser de halo. On lui
+   pose un contour, et on le défait avec le reste du guidage. */
+function surlignerHtml(id) {
+  var b = $(id);
+  if (!b) return null;
+  var av = b.style.outline, ao = b.style.outlineOffset;
+  b.style.outline = "3px dashed " + GOLD;
+  b.style.outlineOffset = "3px";
+  guideDefaire.push(function () {
+    b.style.outline = av; b.style.outlineOffset = ao;
+  });
+  return b;
+}
+/* La ZONE où poser. Cette page-ci ne surligne pas ses zones pendant le
+   glissé : on dessine donc le rectangle nous-mêmes, aux cotes que
+   `zones()` donne — jamais à des cotes recopiées ici, sinon la cible et
+   la zone qui accepte divergeraient au premier changement de géométrie. */
+function montrerZoneGuide(nom) {
+  var z = zones(), i, r;
+  for (i = 0; i < z.length; i++) {
+    if (z[i].n !== nom) continue;
+    r = ajout("ui", el("rect", { "class": "cibleGuide",
+      x: z[i].x0, y: z[i].y0, width: z[i].x1 - z[i].x0,
+      height: z[i].y1 - z[i].y0, rx: 10, fill: GOLD, "fill-opacity": .10,
+      stroke: GOLD, "stroke-width": 2.4, "stroke-dasharray": "7 5",
+      "pointer-events": "none" }));
+    guideSurb.push(r);
+    return r;
+  }
+  return null;
+}
+/* §12.16 — la zone que l'objet cherche est celle que accepte() ACCEPTE,
+   jamais zones()[0] : sans quoi la cible du guide et le dépôt réel
+   divergeraient dès qu'il y a deux emplacements possibles. */
+function zoneVoulueGuide(a) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) if (accepte(z[i].n, a).ok) return z[i].n;
+  return null;
+}
+function montrerCiblesGuide(a) {
+  var n = zoneVoulueGuide(a);
+  return n ? montrerZoneGuide(n) : null;
+}
+
+/* Un bouton de scène : sa géométrie est lue sur le rectangle qu'il porte,
+   ce qui évite de toucher à boutonSvg(). ⚠️ Les boutons ne sont bâtis que
+   pour le LIEU courant : hors du bon lieu, il n'y a rien à surligner. */
+function surlignerBoutonSvg(id) {
+  var n = svg.querySelector("#" + id), r = n && n.querySelector("rect");
+  if (!r) return null;
+  return haloGuide(+r.getAttribute("x") - 7, +r.getAttribute("y") - 7,
+                   +r.getAttribute("width") + 14,
+                   +r.getAttribute("height") + 14, 13);
+}
+/* La fiche fait travailler DEUX lieux : le bureau où l'on lance le
+   chauffage, et le poste où l'on mesure les lampes. Une étape du bureau
+   montrée depuis le poste ne montrerait rien : on désigne alors le
+   bouton de passage, et l'aide le dit. */
+function ailleurs(l) {
+  if (ETAT.lieu === l) return false;
+  surlignerBoutonSvg("btAller");
+  return true;
+}
+function motLieu(l) {
+  return l === "bureau" ? "Aller d'abord <b>au bureau</b> : "
+                        : "Revenir d'abord <b>au poste</b> : ";
+}
+/* L'objet qui reste à poser, dans l'ordre où la fiche les nomme. */
+function manquantBureau() {
+  if (ETAT.res.A === null) return "res0";
+  if (ETAT.res.B === null) return "res1";
+  if (!ETAT.thermo.A) return "thA";
+  if (!ETAT.thermo.B) return "thB";
+  return null;
+}
+function manquantPoste() {
+  if (ETAT.lampe === null) return "lampe0";
+  if (!ETAT.amp) return "amp";
+  if (!ETAT.volt) return "volt";
+  return null;
+}
+function montrerObjet(a) {
+  if (!a) return false;
+  surlignerActe(a);
+  montrerCiblesGuide(a);
+  return true;
+}
+function bureauPret() {
+  return ETAT.res.A !== null && ETAT.res.B !== null
+      && ETAT.thermo.A && ETAT.thermo.B;
+}
+/* La lampe a-t-elle été vue sous tension au moins une fois ? La ligne du
+   tableau en fait foi, et l'interrupteur pour l'instant présent. */
+function lampeVue() {
+  return ETAT.lu[0] !== undefined || ETAT.lu[1] !== undefined || ETAT.ferme;
+}
+
+/* Les huit étapes de la fiche. Les prédicats sortent de la cascade de
+   laConsigne() et de majBoutons() — ils ne sont pas inventés. */
+var GUIDE = [
+  { fait: function () { return bureauPret(); },
+    aide: function () {
+      var a = manquantBureau();
+      if (ETAT.lieu !== "bureau") {
+        return motLieu("bureau") + "c'est la démonstration à lancer <b>en "
+          + "premier</b>, et elle chauffera pendant que les postes mesurent "
+          + "les lampes.";
+      }
+      if (a === "res0" || a === "res1") {
+        return "Les deux béchers portent déjà leurs 100 mL. Immerger la "
+          + "résistance <b>" + nomApp(numRes(a)).replace(/^Résistance chauffante\s*/i, "")
+          + "</b> dans le bécher " + (a === "res0" ? "A" : "B") + " : la "
+          + "gaine doit <b>tremper</b>.";
+      }
+      if (a) return "Plonger le thermomètre dans le bécher "
+        + (a === "thA" ? "A" : "B") + " : la température de départ doit être "
+        + "la <b>même</b> dans les deux.";
+      return "Les deux béchers sont équipés.";
+    },
+    montre: function () {
+      if (ailleurs("bureau")) return;
+      montrerObjet(manquantBureau());
+    } },
+
+  { fait: function () { return ETAT.chauffe >= 1; },
+    aide: function () {
+      if (ETAT.lieu !== "bureau") return motLieu("bureau") + "le chauffage "
+        + "des deux résistances n'a pas encore été lancé.";
+      return "Vérifier que le générateur du bureau est sur <b>"
+        + nb(tensionProto(), 0) + " V</b> — les deux résistances doivent "
+        + "chauffer sous la <b>même</b> tension —, puis presser « Lancer le "
+        + "chauffage » : le chronomètre part pour " + nb(minutesProto(), 0)
+        + " minutes.";
+    },
+    montre: function () {
+      if (ailleurs("bureau")) return;
+      surlignerBoutonSvg("btChauffe");
+      surlignerHtml("rU");
+    } },
+
+  { fait: function () { return montePret(); },
+    aide: function () {
+      var a = manquantPoste();
+      if (ETAT.lieu !== "poste") return motLieu("poste") + "c'est là que se "
+        + "monte le circuit des lampes, pendant que le chauffage tourne.";
+      if (a === "lampe0") return "Visser dans la douille la lampe <b>"
+        + nomApp(0) + "</b>, marquée " + indication(0) + ".";
+      if (a === "amp") return "Insérer l'<b>ampèremètre en série</b>, à "
+        + "l'emplacement prévu sur le côté droit de la boucle.";
+      if (a === "volt") return "Brancher le <b>voltmètre en dérivation</b>, "
+        + "aux bornes de la lampe — jamais aux bornes du générateur.";
+      return "Le circuit est complet.";
+    },
+    montre: function () {
+      if (ailleurs("poste")) return;
+      montrerObjet(manquantPoste());
+    } },
+
+  { fait: function () { return ETAT.verifie && lampeVue(); },
+    aide: function () {
+      if (ETAT.lieu !== "poste") return motLieu("poste") + "le montage "
+        + "attend d'être vérifié.";
+      if (!montePret()) return "Terminer le montage avant de le faire "
+        + "vérifier : il manque " + cequiManque() + ".";
+      if (!ETAT.verifie) return "Presser « <b>Faire vérifier le montage</b> » : "
+        + "la fiche l'exige avant toute mise sous tension. "
+        + (ETAT.lampe !== null && ETAT.lu[ETAT.lampe] === undefined
+           ? "Le montage a changé, il est donc à revérifier." : "");
+      return "Régler le générateur sur <b>" + nb(tensionProto(), 0) + " V</b>, "
+        + "puis fermer l'interrupteur et <b>observer l'éclat</b> de la lampe.";
+    },
+    montre: function () {
+      if (ailleurs("poste")) return;
+      if (!ETAT.verifie) { surlignerBoutonSvg("btVerif"); return; }
+      surlignerBoutonSvg("btInter");
+      surlignerHtml("rU");
+    } },
+
+  { fait: function () { return ETAT.lu[0] !== undefined; },
+    aide: function () {
+      if (ETAT.lieu !== "poste") return motLieu("poste") + "la première lampe "
+        + "n'a pas encore rendu sa ligne.";
+      return "Relever <b>U</b> au voltmètre et <b>I</b> à l'ampèremètre, puis "
+        + "presser « Relever U et I » : le produit <b>U × I</b> s'inscrit en "
+        + "face de l'indication portée sur la lampe, " + indication(0) + ".";
+    },
+    montre: function () {
+      if (ailleurs("poste")) return;
+      surlignerBoutonSvg("btLire");
+    } },
+
+  { fait: function () { return ETAT.lu[1] !== undefined; },
+    aide: function () {
+      if (ETAT.lieu !== "poste") return motLieu("poste") + "la seconde lampe "
+        + "reste à mesurer.";
+      if (ETAT.lampe !== 1) return "Ouvrir l'interrupteur, dévisser <b>"
+        + nomApp(0) + "</b> — un clic sec la repose — et visser <b>"
+        + nomApp(1) + "</b>, marquée " + indication(1) + ", <b>sans rien "
+        + "changer d'autre</b> au montage.";
+      return "La seconde lampe est en place : refaire les trois relevés — "
+        + "vérifier, fermer, relever.";
+    },
+    montre: function () {
+      if (ailleurs("poste")) return;
+      if (ETAT.lampe !== 1) { surlignerActe("lampe1"); montrerCiblesGuide("lampe1"); return; }
+      surlignerBoutonSvg(ETAT.verifie ? "btLire" : "btVerif");
+    } },
+
+  { fait: function () {
+      return ETAT.lu[2] !== undefined && ETAT.lu[3] !== undefined; },
+    aide: function () {
+      if (ETAT.lieu !== "bureau") return motLieu("bureau") + "au bout des "
+        + nb(minutesProto(), 0) + " minutes, les deux béchers attendent leur "
+        + "relevé.";
+      if (ETAT.chauffe === 1) return "Le chauffage tourne encore. Il finira "
+        + "de lui-même ; le curseur « vitesse » n'existe pas ici, la fiche "
+        + "prescrit " + nb(minutesProto(), 0) + " minutes.";
+      if (ETAT.chauffe === 0) return "Le chauffage n'a pas été lancé : "
+        + "revenir à l'étape 2.";
+      return "Presser « <b>Relever les températures</b> », puis sortir les "
+        + "résistances <b>À LA PINCE</b> — elles sont brûlantes. Les deux "
+        + "dernières lignes du tableau portent U, I et U × I de chaque "
+        + "appareil de chauffage.";
+    },
+    montre: function () {
+      if (ailleurs("bureau")) return;
+      if (ETAT.chauffe === 0) { surlignerBoutonSvg("btChauffe"); return; }
+      surlignerBoutonSvg("btRelever");
+      surlignerBoutonSvg("btPince");
+    } },
+
+  { fait: function () { return ETAT.conclu; },
+    aide: function () {
+      var n = 0, i;
+      for (i = 0; i < nbApp(); i++) if (ETAT.lu[i] !== undefined) n++;
+      if (n < nbApp()) return "Il reste " + (nbApp() - n) + " ligne(s) à "
+        + "remplir avant de pouvoir comparer.";
+      return "Comparer, ligne par ligne, la colonne <b>U × I</b> à la colonne "
+        + "<b>Indication du constructeur</b>, puis comparer entre elles les "
+        + "deux élévations de température. La conclusion se dévoile d'elle-même "
+        + "quand les quatre lignes s'accordent avec la fiche.";
+    },
+    montre: function () {
+      surlignerHtml("tab");
+      surlignerHtml("gBarres");
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : le rendu
+     de la page tourne avant que le panneau ne soit bâti. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape redevienne lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  /* la consigne de l'étape redevient lisible — c'est le SEUL
+     affichage touché, aucun état de l'expérience ne bouge */
+  $("consigne").textContent = laConsigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+
+/* Cette page nomme note() ce que les autres nomment noter(), et c'est
+   redessiner() qui porte la ligne dans #obs. On donne au module le nom
+   qu'il attend ; le texte passe par le MEME journal que les observations
+   de la paillasse. */
+function noter(t) { note(t); redessiner(); }
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 2, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* ------------------------------------------------------------------
+     Cette paillasse n'a pas de boutons `data-act` : ses boutons de scène
+     sont des <g> à qui boutonSvg() attache l'écouteur directement, et ses
+     objets se posent par deposer(a, x, y) — la fonction que surPointerUp()
+     appelle. `presserBouton()` du module ne les verrait donc pas : chaque
+     geste vise le nœud par son id et lui envoie un vrai clic. Les deux
+     LIEUX (poste / bureau) se rejoignent par les boutons HTML de la
+     colonne, `lieuPoste` et `lieuBureau`, branchés sur allerA().
+     ------------------------------------------------------------------ */
+
+  /* 1. AU BUREAU — les deux résistances chauffantes dans leurs béchers,
+     puis les deux thermomètres. UN objet par pression : on demande à la
+     page lequel manque (manquantBureau) et où il va (zoneVoulue puis
+     centreZone) ; aucune coordonnée n'est écrite ici. */
+  function () {
+    if (ETAT.lieu !== "bureau") { presserHTML("lieuBureau"); return 460; }
+    var a = manquantBureau();
+    if (!a) return 0;
+    var n = zoneVoulue(a), c = n ? centreZone(n) : null;
+    if (!c) return 0;
+    deposer(a, c.x, c.y);
+    return 360;
+  },
+
+  /* 2. les deux résistances SOUS LA MÊME TENSION de 12 V, puis le
+     chauffage. Le générateur du bureau est à 0 V au départ : on pousse le
+     curseur que l'élève a sous la main jusqu'à la tension que le protocole
+     prescrit — tensionProto(), lue dans la fiche —, et on lance dans la
+     même pression : régler seul ne changerait rien à l'état, et le déroulé
+     attendrait douze secondes pour rien. */
+  function () {
+    if (ETAT.lieu !== "bureau") { presserHTML("lieuBureau"); return 460; }
+    var r = $("rU");
+    if (r && Math.abs(REG.U - tensionProto()) > 1e-9) {
+      r.value = String(tensionProto());
+      r.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    var b = svg.querySelector("#btChauffe");
+    if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return 700;
+  },
+
+  /* 3. AU POSTE — la lampe dans la douille, l'ampèremètre en série, le
+     voltmètre en dérivation, UN par pression. Quitter le bureau pendant
+     que ça chauffe est ce que la fiche demande, et allerA() le sait : il
+     mène le chauffage à son terme tout seul. */
+  function () {
+    if (ETAT.lieu !== "poste") { presserHTML("lieuPoste"); return 620; }
+    var a = manquantPoste();
+    if (!a) return 0;
+    var n = zoneVoulue(a), c = n ? centreZone(n) : null;
+    if (!c) return 0;
+    deposer(a, c.x, c.y);
+    return 360;
+  },
+
+  /* 4. faire vérifier le montage, puis fermer l'interrupteur et observer
+     l'éclat. C'est basculerInter() qui, en fermant, appelle releverLampe()
+     — la ligne du tableau se remplit donc du même geste. */
+  function () {
+    if (ETAT.lieu !== "poste") { presserHTML("lieuPoste"); return 620; }
+    if (!montePret()) return 0;
+    var b;
+    if (!ETAT.verifie) {
+      b = svg.querySelector("#btVerif");
+      if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return 400;
+    }
+    var r = $("rU");
+    if (r && Math.abs(REG.U - tensionProto()) > 1e-9) {
+      r.value = String(tensionProto());
+      r.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (!ETAT.ferme) {
+      b = svg.querySelector("#btInter");
+      if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return 560;
+    }
+    return 0;
+  },
+
+  /* 5. relever U et I sur la première lampe. La fermeture de l'étape 4 a
+     déjà rendu la ligne ; si elle manque encore — tension changée entre
+     temps, montage repris —, on refait la séquence, et « Relever U et I »
+     en dernier recours. */
+  function () {
+    if (ETAT.lieu !== "poste") { presserHTML("lieuPoste"); return 620; }
+    var b, r = $("rU");
+    if (r && Math.abs(REG.U - tensionProto()) > 1e-9) {
+      r.value = String(tensionProto());
+      r.dispatchEvent(new Event("input", { bubbles: true }));
+      return 320;
+    }
+    if (!ETAT.verifie) {
+      b = svg.querySelector("#btVerif");
+      if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return 400;
+    }
+    if (!ETAT.ferme) {
+      b = svg.querySelector("#btInter");
+      if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return 560;
+    }
+    b = svg.querySelector("#btLire");
+    if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return 460;
+  },
+
+  /* 6. la seconde lampe, SANS RIEN CHANGER D'AUTRE : ouvrir d'abord —
+     deposer() refuse tout net de modifier un montage sous tension —, puis
+     REMPLACER L1 par L2, faire revérifier, refermer.
+
+     Le remplacement se fait en UNE pression, et c'est délibéré : dévisser
+     seul laisse ETAT.lampe à null, donc montePret() faux, donc le panneau
+     recule à l'étape 3 — dont le geste remonte L1, et le déroulé tourne en
+     rond. On dévisse et on visse dans la même pression, et le montage
+     n'est jamais incomplet entre deux évaluations de l'étape courante.
+
+     Le dévissage compte quand même : c'est un CLIC SEC (pointerdown puis
+     pointerup au même point, sans glissé — surPointerUp() en déduit le
+     clic et appelle cliqueSur()), et c'est son replacer() qui renvoie L1
+     au râtelier. Poser L2 par-dessus L1 sans dévisser laisserait le dessin
+     de L1 dans la douille. */
+  function () {
+    if (ETAT.lieu !== "poste") { presserHTML("lieuPoste"); return 620; }
+    var b, n, r0, o0, z, c;
+    if (ETAT.lampe !== 1) {
+      if (ETAT.ferme) {
+        b = svg.querySelector("#btInter");
+        if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        return 400;
+      }
+      if (ETAT.lampe !== null) {
+        n = svg.querySelector('[data-act="lampe' + ETAT.lampe + '"]');
+        if (n) {
+          r0 = n.getBoundingClientRect();
+          o0 = { bubbles: true, pointerId: 1, isPrimary: true,
+                 clientX: r0.left + r0.width / 2,
+                 clientY: r0.top + r0.height / 2 };
+          n.dispatchEvent(new PointerEvent("pointerdown", o0));
+          n.dispatchEvent(new PointerEvent("pointerup", o0));
+        }
+      }
+      z = zoneVoulue("lampe1");
+      c = z ? centreZone(z) : null;
+      if (!c) return 0;
+      deposer("lampe1", c.x, c.y);
+      return 420;
+    }
+    if (!ETAT.verifie) {
+      b = svg.querySelector("#btVerif");
+      if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return 400;
+    }
+    if (!ETAT.ferme) {
+      b = svg.querySelector("#btInter");
+      if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return 560;
+    }
+    b = svg.querySelector("#btLire");
+    if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return 460;
+  },
+
+  /* 7. RETOUR AU BUREAU : relever les températures, puis sortir les deux
+     résistances À LA PINCE — elles sont brûlantes, et la sécurité de la
+     fiche l'exige. ⚠ Cette étape est déjà cochée quand on y arrive : son
+     prédicat ne porte que sur les deux dernières lignes du tableau, et
+     c'est finirChauffage() qui les écrit à la fin du chauffage. Le geste
+     est écrit quand même — il est le bon si l'on revient sur l'étape. */
+  function () {
+    if (ETAT.lieu !== "bureau") { presserHTML("lieuBureau"); return 620; }
+    var b;
+    if (ETAT.chauffe === 0) {
+      b = svg.querySelector("#btChauffe");
+      if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return 700;
+    }
+    if (ETAT.chauffe === 1) return 900;      /* il finit de lui-même */
+    b = svg.querySelector("#btRelever");
+    if (b) b.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return 460;
+  },
+
+  /* 8. comparer U × I à l'indication du constructeur, et les deux
+     élévations entre elles. Il n'y a AUCUN bouton : remplirConclusion()
+     déduit l'accord du tableau à chaque rendu, et démasque la conclusion
+     dès que les quatre lignes s'accordent avec la fiche. Le geste de cette
+     étape est donc de lire — rien à presser. */
+  function () { return 0; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  ETAT = neufEtat();
+  construireProtocole();   /* AVANT le premier majProtocole() */
+  REG.volume = volumeProto();
+  REG.duree = minutesProto() * 60;
+  $("titre").textContent = depouille(T("titre"));
+  $("ref").textContent = "E3AC-19 · " + T("niveau") + " · " + T("lecon");
+  document.title = "Paillasse virtuelle — E3AC-19 · " + depouille(T("titre"));
+  $("objectif").innerHTML = md(T("objectif"));
+  $("observation").innerHTML = md(OH("observation"));
+  remplirListes();
+  svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Paillasse : le circuit des deux lampes et "
+    + "la démonstration des deux appareils de chauffage");
+  svg.style.width = "100%";
+  svg.style.height = "auto";
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  $("paillasse").appendChild(svg);
+  construireScene();
+  svg.addEventListener("pointerdown", surPointerDown);
+  svg.addEventListener("pointermove", surPointerMove);
+  svg.addEventListener("pointerup", surPointerUp);
+  svg.addEventListener("pointercancel", surPointerCancel);
+  $("rezero").addEventListener("click", rezero);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("lieuPoste").addEventListener("click", function () { allerA("poste"); });
+  $("lieuBureau").addEventListener("click", function () { allerA("bureau"); });
+  brancherCurseurs();
+  remplirCapot();
+  redessiner();
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else { demarrer(); }
+
+})();
+</script>
+</body>
+</html>

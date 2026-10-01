@@ -1,0 +1,2704 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-15 · Peut-on mesurer une force avec un nombre ? Le dynamomètre</title>
+
+<!--
+  ===================================================================
+  E3AC-15 · 3AC · L10 — PAILLASSE VIRTUELLE
+  « Peut-on mesurer une force avec un nombre ? Le dynamomètre »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Un ressort de raideur k tiré par une force F s'allonge de F/k. L'index
+  se place au bout de cet allongement, et l'élève LIT une graduation.
+  Trois choses s'enchaînent, et aucune n'est écrite d'avance :
+
+  1. LA VALEUR D'UNE DIVISION est un quotient : portée ÷ nombre de
+     divisions. 10 N sur 50 divisions font 0,20 N ; 2 N sur 40 font
+     0,05 N. La page les calcule à partir des deux nombres inscrits sur
+     le tube, comme l'élève.
+
+  2. LA LECTURE EST QUANTIFIÉE. On ne lit pas la force, on lit la
+     graduation la plus proche : lu = arrondi(F / division) × division.
+     C'est ce qui fait que la MÊME force de 1,450 N se lit 1,40 N sur
+     l'appareil de portée 10 N et 1,45 N sur celui de portée 2 N. Les
+     deux lectures ne se contredisent pas — la seconde est plus fine,
+     et la page le montre au lieu de le dire.
+
+  3. HORS PORTÉE n'est pas une case du tableau, c'est une conséquence :
+     dès que F dépasse la portée inscrite, l'index bute sur la dernière
+     graduation et la page refuse de donner un nombre.
+
+  LES DEUX ERREURS QUE LA FICHE VEUT FAIRE SENTIR
+  -----------------------------------------------
+  Elles sont manipulables, et elles se paient.
+
+  * LE ZÉRO NON RÉGLÉ. Un décalage de l'index à vide s'ajoute à TOUTES
+    les mesures du poste. Le protocole finit par un contrôle du zéro, et
+    la fiche prévient : « si ce n'est pas le cas, toutes les mesures du
+    poste sont à refaire ». La page applique cette sanction-là.
+
+  * LA PARALLAXE. L'œil placé plus haut que l'index voit celui-ci décalé
+    devant une graduation qui n'est pas la sienne. Le décalage apparent
+    se calcule par un simple rapport de triangles, avec l'épaisseur du
+    tube et la distance de l'œil.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  Il accroche l'appareil au support, règle son zéro à la molette, y
+  suspend un solide, place son œil, et lit. Changer d'appareil, c'est
+  changer de portée — et découvrir que le plus petit ne convient pas
+  toujours.
+
+  ATTENTION — CE QUE LA PAGE NE FAIT PAS
+  --------------------------------------
+  * Elle ne modifie AUCUN fichier partagé.
+  * Elle ne suspend jamais (S₂) au dynamomètre de 2 N sans prévenir :
+    la fiche l'interdit, et la page reproduit l'essai de dépassement
+    comme elle le prescrit — sans décoller le solide de la paillasse.
+  * Elle ne parle pas de la loi de Hooke ni de raideur devant l'élève :
+    hors programme. Ces mots n'existent que sous « Sous le capot ».
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E3AC-15 :
+  titre, objectif, matériel, sécurité, protocole, les cinq lignes du
+  tableau avec leurs portées, et la conclusion.
+-->
+
+<style>
+
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.oui{color:var(--green)}
+.lect .v.non{color:#b03030}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.temoin td{background:#f4f6f9}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.rappel{background:var(--bluebg);border-left:3px solid var(--gold);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin-top:8px;
+        color:var(--muted)}
+.rappel b{color:var(--ink)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+
+.cases{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:15px;font-weight:700;color:var(--ink);margin-top:2px;
+          font-family:var(--mono)}
+.cases .u.nul{color:#9aa5b2;font-weight:600;font-family:inherit;font-size:13px}
+.cases .u.mal{color:#b03030}
+.bilan2{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin-top:9px;
+        font-size:12px}
+.bilan2 .n{color:var(--muted)}
+.bilan2 .v{font-family:var(--mono);font-weight:700;text-align:right}
+.bilan2 .v.mal{color:#b03030}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-15 · 3AC · L10</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le protocole exige que le zéro soit réglé
+        à vide et que l'œil soit bien en face de l'index. Ce n'est plus le cas :
+        les lectures sont faussées, et le tableau de référence cesse donc de se
+        remplir. Le panneau de droite, lui, dit exactement de combien.
+      </div>
+      <div class="alerte" id="alerteZero">
+        <b>Contrôle du zéro : l'index n'est pas revenu sur 0.</b> La fiche est
+        formelle — « toutes les mesures du poste sont à refaire ». Le tableau a
+        donc été effacé. C'est sévère, et c'est le prix d'un appareil mal réglé.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La mesure en cours <span class="note" id="mesNom">—</span></h2>
+      <div class="cases" id="mesCases"></div>
+      <div class="bilan2" id="mesBilan"></div>
+      <p class="src" id="mesPhrase" style="margin-top:9px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Les deux appareils <span class="note">même force, deux lectures</span></h2>
+      <p class="src" style="margin:0 0 6px">La même force, lue sur les deux
+        tubes. L'écart entre les deux lectures est celui de la division.</p>
+      <svg id="gComp" viewBox="0 0 360 150" style="width:100%;height:auto;display:block"
+           role="img" aria-label="La même force lue sur les deux dynamomètres"></svg>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rZero">Réglage du zéro, à vide</label><output id="oZero"></output>
+        <input type="range" id="rZero" min="-2" max="2" step="0.25" value="0">
+        <div class="aide">En divisions. Tout écart s'ajoute à CHAQUE mesure du
+          poste, et le contrôle final du zéro le rattrape.</div>
+      </div>
+      <div class="reg">
+        <label for="rOeil">Hauteur de l'œil au-dessus de l'index</label>
+        <output id="oOeil"></output>
+        <input type="range" id="rOeil" min="0" max="20" step="1" value="0">
+        <div class="aide">À 0, l'œil est bien en face. Plus haut, l'index paraît
+          devant une graduation qui n'est pas la sienne : c'est l'erreur de
+          parallaxe.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · Les trois calculs</h3>
+      <p class="fx" id="capotCalculs"></p>
+      <p>Le troisième est le seul qui compte vraiment pour la leçon : <b>on ne
+        lit pas la force, on lit la graduation la plus proche</b>. C'est de là
+        que vient tout l'écart entre les deux appareils.</p>
+
+      <h3>2 · Pourquoi 1,40 N et 1,45 N ne se contredisent pas</h3>
+      <table id="capotDeux"></table>
+      <p id="capotDeuxTxt"></p>
+
+      <h3>3 · Ce que la page retrouve, comparé à la fiche</h3>
+      <table id="capotAccord"></table>
+
+      <h3>4 · Les deux erreurs, chiffrées</h3>
+      <table id="capotErreurs"></table>
+
+      <h3>5 · Les grandeurs du montage</h3>
+      <table id="capotVals"></table>
+
+      <h3>6 · Ce que le modèle simplifie</h3>
+      <ul>
+        <li><b>Le ressort est parfaitement linéaire</b> jusqu'à la portée. Un
+        ressort réel s'écarte un peu de la proportionnalité près de sa limite,
+        et c'est une des raisons pour lesquelles on ne mesure pas en bout
+        d'échelle.</li>
+        <li><b>Aucun frottement de l'index</b> dans le tube. En classe, l'index
+        d'un appareil fatigué colle et il faut tapoter le tube.</li>
+        <li><b>Le poids du crochet et du fil est déjà compensé</b> par le
+        réglage du zéro, comme sur un appareil réel.</li>
+        <li><b>Le chariot est tiré par un fil oblique, à 21° de l'horizontale</b>,
+        alors que la fiche le fait tirer <b>à l'horizontale</b>, dynamomètre
+        intercalé — c'est-à-dire retiré de la potence et tenu couché. Sur une
+        paillasse sans frottement notable, la force lue est la même : ce qui
+        change, c'est le geste. <b>Le choix de garder le tube vertical est
+        délibéré, et il est celui de l'enseignant</b> : l'index se lit alors
+        comme sur les six autres mesures, et la parallaxe — qui est tout le
+        sujet des étapes 2 et 4 — reste un écart vertical entre l'œil et
+        l'index. Couché, l'appareil obligerait à contre-tourner toutes les
+        graduations et à changer l'axe de la parallaxe. À dire en classe :
+        <b>sur la paillasse, on tire à l'horizontale</b>.</li>
+        <li><b>La parallaxe est traitée en géométrie pure</b> — un rapport de
+        triangles entre l'épaisseur du tube et la distance de l'œil. On néglige
+        que l'œil accommode et que le tube est cylindrique.</li>
+      </ul>
+
+      <h3>7 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-15.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-15",
+  "niveau": "3AC",
+  "unite": "U2",
+  "lecon": "L10",
+  "titre": "Peut-on mesurer une force avec un nombre ? Le dynamomètre",
+  "axe": "Mesurer l'intensité d'une force : le dynamomètre",
+  "objectif": "Établir que l'**allongement d'un ressort** croît avec l'intensité de la force qui le tire, et s'en servir pour **mesurer** cette intensité en **newtons** avec un dynamomètre : reconnaître ses parties, lire sa **portée**, calculer la valeur d'une **division**, régler le **zéro**, lire sans erreur de parallaxe et **choisir l'appareil qui convient**.",
+  "duree": 25,
+  "modalite": "groupes de 3 — 8 postes",
+  "materiel": [
+    "Un **dynamomètre de portée 10 N** à **50 divisions**, un par poste",
+    "Un **dynamomètre de portée 2 N** à **40 divisions**, un par poste",
+    "Un **support (potence) avec noix et tige**, pour suspendre les appareils bien verticalement",
+    "Deux solides de laboratoire, **(S₁)** et **(S₂)**, munis d'un anneau d'accrochage, (S₂) nettement plus gros que (S₁)",
+    "Un **fil** court et solide, et un petit **chariot** de mécanique",
+    "Une **règle graduée** et le tableau de résultats à compléter",
+    "Le schéma légendé du dynamomètre, projeté au tableau"
+  ],
+  "securite": [
+    "**Ne jamais dépasser la portée** inscrite sur le tube : au-delà, le ressort se déforme définitivement et l'appareil est perdu pour toute la classe. En cas de doute, commencer par le dynamomètre de **plus grande** portée, puis affiner.",
+    "**Accrocher le solide en douceur**, sans le lâcher d'un coup : un choc sur le ressort le détend et le fausse.",
+    "**Ne jamais suspendre le solide (S₂) au dynamomètre de portée 2 N.** L'essai de dépassement se fait **sans jamais décoller le solide de la paillasse** : on accroche, puis on soulève **très progressivement** ; dès que l'index atteint la dernière graduation, on **repose immédiatement** le solide. C'est ce qu'il faut voir, et cela suffit.",
+    "Vérifier la **stabilité du support** avant d'y suspendre quoi que ce soit, et ne jamais placer la main ou le pied sous un solide suspendu.",
+    "**Ne pas tirer sur le crochet avec le doigt passé dans l'anneau** : si le fil casse, le crochet revient brutalement.",
+    "Reposer les appareils **à plat** sur la paillasse en fin de manipulation, jamais suspendus sous charge."
+  ],
+  "protocole": [
+    "Observer le dynamomètre de portée 10 N et **nommer ses parties** sur le schéma projeté : anneau de suspension, tube gradué, ressort, index, crochet de mesure.",
+    "Lire la **portée** inscrite sur le tube, puis **compter les divisions** du tube et calculer la valeur d'**une division** : portée divisée par nombre de divisions.",
+    "Fixer le dynamomètre au support, bien **vertical**, et **régler le zéro** à vide : à force nulle, l'index doit être exactement sur le trait 0.",
+    "Suspendre le solide **(S₁)** au crochet à l'aide du fil, **attendre l'immobilisation** de l'index, puis lire l'intensité de la force exercée par le fil sur le solide, l'œil **bien en face** de l'index. Noter la valeur avec son unité.",
+    "**Recommencer la même mesure** avec le dynamomètre de portée **2 N**, après avoir de nouveau calculé la valeur d'une division et réglé le zéro. Comparer les deux valeurs lues.",
+    "Remplacer (S₁) par le solide **(S₂)** sur le dynamomètre de portée **10 N**, régler le zéro, mesurer et noter.",
+    "Accrocher (S₂) au dynamomètre de portée **2 N** **sans le décoller de la paillasse**, et soulever **très progressivement** : observer que l'index atteint la **dernière graduation** avant même que le solide ne quitte la table ; **reposer aussitôt** et conclure sur ce qui se passe quand la force dépasse la portée.",
+    "Poser le chariot sur la paillasse, y attacher le fil, intercaler le dynamomètre de portée 10 N et **tirer horizontalement** à vitesse constante ; lire l'intensité de la force exercée par le fil sur le chariot.",
+    "**Contrôle du zéro** : décrocher tout, laisser l'appareil au repos et vérifier que l'index est revenu **exactement** sur 0. Si ce n'est pas le cas, toutes les mesures du poste sont à refaire."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Force mesurée",
+      "Portée",
+      "1 division",
+      "Intensité lue"
+    ],
+    "lignes": [
+      [
+        "Fil sur le solide (S₁)",
+        "10 N",
+        "",
+        ""
+      ],
+      [
+        "Fil sur le solide (S₁)",
+        "2 N",
+        "",
+        ""
+      ],
+      [
+        "Fil sur le solide (S₂)",
+        "10 N",
+        "",
+        ""
+      ],
+      [
+        "Fil sur le solide (S₂)",
+        "2 N",
+        "",
+        ""
+      ],
+      [
+        "Fil sur le chariot tiré",
+        "10 N",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Fil sur le solide (S₁)",
+        "10 N",
+        "0,2 N",
+        "1,4 N"
+      ],
+      [
+        "Fil sur le solide (S₁)",
+        "2 N",
+        "0,05 N",
+        "1,45 N"
+      ],
+      [
+        "Fil sur le solide (S₂)",
+        "10 N",
+        "0,2 N",
+        "4,6 N"
+      ],
+      [
+        "Fil sur le solide (S₂)",
+        "2 N",
+        "0,05 N",
+        "**hors portée**"
+      ],
+      [
+        "Fil sur le chariot tiré",
+        "10 N",
+        "0,2 N",
+        "2,0 N"
+      ]
+    ]
+  },
+  "observation": "Le ressort du dynamomètre s'allonge d'autant plus que la force qui le tire est intense, et l'index s'immobilise devant une graduation qui donne directement l'intensité en newtons.",
+  "conclusion": "L'intensité d'une force se mesure avec un dynamomètre et s'exprime en newton (N). On règle le zéro à vide, on ne dépasse jamais la portée de l'appareil et on lit l'index l'œil bien en face.",
+  "oheric": {
+    "observation": "Au souk, le marchand de fruits accroche son sac d'oranges à un **peson à ressort** suspendu à une poutre : plus le sac est chargé, plus le ressort s'allonge et plus l'aiguille descend. Il regarde et annonce : « ça fait trois ». Nous savons déjà **comparer** deux forces — le ressort du bureau s'allonge davantage avec le solide (S₂) qu'avec le solide (S₁), donc la force exercée par (S₂) est **plus intense**. Mais comparer n'est pas mesurer : nous ne savons pas encore dire **de combien**. **Peut-on donner l'intensité d'une force par un nombre, et avec quel appareil ?**",
+    "hypothese": "**Si** l'allongement du ressort augmente lorsque la force qui le tire devient plus intense, **alors** il suffit de porter une **graduation** le long du ressort pour lire directement l'intensité de la force : le ressort devient un **instrument de mesure**. Et **si** la lecture doit donner le même nombre pour tout le monde, **alors** il faut deux précautions : que l'appareil indique **zéro** quand aucune force ne le tire, et que l'on lise l'index **de face**.",
+    "experience": "Suspendre à un support un **dynamomètre de portée 10 N** portant 50 divisions : en déduire qu'une division vaut **0,2 N**. Régler le **zéro** à vide, puis y suspendre successivement les solides **(S₁)** et **(S₂)** et lire l'intensité de la force exercée par le fil sur chacun. Reprendre la **même** mesure avec un **dynamomètre de portée 2 N** portant 40 divisions, dont une division vaut **0,05 N**, et comparer. Terminer par une force **horizontale** : le chariot tiré par un fil sur lequel le dynamomètre est intercalé. Vérifier enfin, appareils déchargés, que l'index est **revenu sur zéro**.",
+    "resultats": "Dès qu'on suspend un solide, le **ressort s'allonge** et l'index descend devant les graduations ; il s'immobilise sur un trait et y reste tant que rien ne bouge. Au dynamomètre de **portée 10 N**, dont une division vaut **0,2 N**, l'index s'arrête sur la **septième** division pour le solide **(S₁)** : la force exercée par le fil sur (S₁) vaut **1,4 N**. Le même solide mesuré au dynamomètre de **portée 2 N**, dont une division vaut **0,05 N**, donne **1,45 N**. Avec le solide **(S₂)**, le dynamomètre de portée 10 N indique **4,6 N** ; celui de portée **2 N**, lui, ne donne **aucune valeur** : son index part jusqu'en **butée**, la force dépassant sa portée. Le chariot tiré horizontalement donne **2,0 N**. Enfin, tous les solides retirés, l'index de chaque appareil est **revenu exactement sur 0**.",
+    "interpretation": "L'index avance d'autant plus que la force qui tire est intense : c'est bien l'**allongement du ressort** qui est lu, et la graduation le traduit directement en **newtons**. L'hypothèse est **validée**, et le ressort gradué est bien un instrument de mesure. Le **retour à zéro** de l'index, une fois tout décroché, est le **témoin** de l'expérience : il vérifie qu'à force **nulle** l'appareil indique **zéro**, donc que le ressort n'a pas été faussé pendant les mesures. Sans ce contrôle, un appareil décalé aurait donné cinq valeurs toutes fausses **de la même quantité**, sans que rien ne le signale. Les deux valeurs trouvées pour (S₁) — **1,4 N** et **1,45 N** — ne se contredisent pas : l'appareil de portée 2 N a des divisions **quatre fois plus fines**, il lit donc plus **précisément**, tandis que celui de portée 10 N ne peut pas donner mieux que le trait le plus proche. Toute mesure est **approchée**, et sa finesse est celle des divisions de l'appareil. Reste le cas de (S₂) : le dynamomètre de portée 2 N est pourtant le plus fin, et il ne mesure **rien du tout**. La plus petite portée n'est donc la meilleure que **tant qu'elle suffit** — d'où la règle : parmi les appareils dont la portée dépasse la force à mesurer, choisir celui dont la portée est la **plus petite**. Enfin, la dernière mesure montre qu'un dynamomètre ne mesure pas seulement des forces verticales : tiré **horizontalement** sur le chariot, il indique 2,0 N. **Ce qu'il mesure est l'intensité d'une force, en newton — jamais une masse en kilogramme** ; le peson du marchand, qui affiche des kilogrammes, donne en réalité un nombre de newtons déguisé.",
+    "conclusion": "**L'intensité d'une force est une grandeur physique mesurable : elle se mesure à l'aide d'un dynamomètre et s'exprime en newton, de symbole N.** Le dynamomètre fonctionne grâce à l'**allongement d'un ressort** : plus la force est intense, plus le ressort s'allonge et plus l'index avance devant les graduations. Avant toute mesure, on lit la **portée** de l'appareil, on calcule la valeur d'une **division** et on **règle le zéro** à vide ; on tient l'appareil **dans la direction de la force**, on attend l'immobilisation de l'index et on lit **l'œil en face**. On ne dépasse **jamais** la portée, et parmi les appareils qui conviennent on choisit celui dont la portée est la **plus petite**, car ses divisions sont les plus fines."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+
+
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ==================================================================
+   Les trois forces ne sont pas choisies : elles sont DÉDUITES des cinq
+   lectures de la fiche. Une lecture de 1,40 N sur une division de
+   0,20 N encadre la force dans [1,30 ; 1,50[ ; la même force lue
+   1,45 N sur une division de 0,05 N l'encadre dans [1,425 ; 1,475[.
+   L'intersection donne 1,450 N, et c'est la seule valeur compatible
+   avec les DEUX appareils. Même raisonnement pour (S₂) et le chariot.  */
+var PHYS = {
+  G: { v: 9.81, u: "m·s⁻²", n: "intensité de la pesanteur",
+    s: "valeur usuelle au Maroc" },
+  F_S1: { v: 1.450, u: "N", n: "force exercée par le fil sur le solide (S₁)",
+    s: "DÉDUITE des deux lectures de la fiche : 1,40 N à 0,20 N près ET 1,45 N à 0,05 N près ne se recoupent qu'en 1,450 N — soit une masse de 148 g" },
+  F_S2: { v: 4.600, u: "N", n: "force exercée par le fil sur le solide (S₂)",
+    s: "DÉDUITE de la lecture 4,60 N sur l'appareil de 10 N — soit une masse de 469 g, et bien au-delà de la portée de 2 N" },
+  F_CHAR: { v: 2.000, u: "N", n: "force exercée par le fil sur le chariot tiré",
+    s: "DÉDUITE de la lecture 2,00 N sur l'appareil de 10 N, à vitesse constante" },
+  K_10: { v: 125.0, u: "N·m⁻¹", n: "raideur du ressort de l'appareil de 10 N",
+    s: "10 N pour 8 cm de course utile : c'est ce que donne un dynamomètre de laboratoire de cette portée" },
+  K_2: { v: 25.0, u: "N·m⁻¹", n: "raideur du ressort de l'appareil de 2 N",
+    s: "2 N pour la même course de 8 cm : à portée plus faible, ressort plus souple — c'est ce qui rend l'appareil plus fin" },
+  COURSE: { v: 0.080, u: "m", n: "course utile du tube gradué",
+    s: "8 cm entre le zéro et la dernière graduation, sur les deux appareils" },
+  EP_TUBE: { v: 0.012, u: "m", n: "épaisseur du tube gradué",
+    s: "12 mm entre le plan de l'index et celui des graduations : c'est cet écart qui crée la parallaxe" },
+  D_OEIL: { v: 0.350, u: "m", n: "distance de l'œil au tube",
+    s: "35 cm, la distance de lecture d'un élève penché sur sa paillasse" },
+  SEUIL_ZERO: { v: 0.15, u: "division", n: "tolérance sur le réglage du zéro",
+    s: "un sixième de division : en deçà, l'index est tenu pour exactement sur le 0 — repère de LECTURE" },
+  SEUIL_PARA: { v: 0.30, u: "division", n: "décalage de parallaxe toléré",
+    s: "au-delà, la lecture change de graduation et devient fausse — repère de LECTURE" }
+};
+
+/* ==================================================================
+   2. CE QUE LA FICHE DIT (§0)
+   ================================================================== */
+function T(k) { return DONNEES[k] || ""; }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return TM().entetes || []; }
+function lignesFiche() { return TM().lignes || []; }
+function valeursFiche() { return TM().valeurs || []; }
+function nbMesures() { return lignesFiche().length; }
+/* Chaque ligne de la fiche est un couple (force à mesurer, portée). */
+function nomForce(i) {
+  var l = lignesFiche()[i];
+  return l && l[0] ? String(l[0]) : "mesure " + i;
+}
+function porteeLigne(i) {
+  var l = lignesFiche()[i];
+  return l && l[1] ? String(l[1]) : "10 N";
+}
+function lectureFiche(i) {
+  var v = valeursFiche()[i];
+  return v ? depouille(String(v[3] || "")) : "";
+}
+function divisionFiche(i) {
+  var v = valeursFiche()[i];
+  return v ? depouille(String(v[2] || "")) : "";
+}
+/* La formule que la fiche emploie pour dire « au-delà de la portée ». */
+function motHorsPortee() {
+  var v = valeursFiche(), i, s;
+  for (i = 0; i < v.length; i++) {
+    s = depouille(String(v[i][3] || ""));
+    if (!/^[\d,.\s]+N$/.test(s) && s) return s;
+  }
+  return "hors portée";
+}
+function secu(motif) {
+  var s = L("securite"), i, re = new RegExp(motif, "i");
+  for (i = 0; i < s.length; i++) if (re.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+
+/* ==================================================================
+   3. LES DEUX APPAREILS
+   ==================================================================
+   Leur portée et leur nombre de divisions sont lus dans le MATÉRIEL de
+   la fiche — « portée 10 N à 50 divisions », « portée 2 N à 40
+   divisions » — et non écrits ici. Si la fiche changeait d'appareils,
+   la page suivrait.                                                     */
+function appareils() {
+  var mat = L("materiel"), out = [], i, m, re;
+  re = /portée\s*(?:de\s*)?\*{0,2}(\d+(?:[.,]\d+)?)\s*N\*{0,2}[^\n]*?(\d+)\s*\*{0,2}divisions/i;
+  for (i = 0; i < mat.length; i++) {
+    m = re.exec(depouille(mat[i]));
+    if (m) out.push({ portee: parseFloat(m[1].replace(",", ".")),
+                      ndiv: parseInt(m[2], 10) });
+  }
+  if (!out.length) out = [{ portee: 10, ndiv: 50 }, { portee: 2, ndiv: 40 }];
+  return out;
+}
+var APP = null;
+function app(k) {
+  if (!APP) APP = appareils();
+  return APP[k] || APP[0];
+}
+function nbApp() { if (!APP) APP = appareils(); return APP.length; }
+function nomApp(k) { return nb(app(k).portee, 0) + " N"; }
+function division(k) { return app(k).portee / app(k).ndiv; }
+/* Combien de décimales une division justifie-t-elle ? 0,2 N en justifie
+   une, 0,05 N en justifie deux. Écrire un chiffre de plus reviendrait à
+   revendiquer une précision que l'appareil n'a pas. */
+function decDiv(k) {
+  return Math.max(0, Math.ceil(-Math.log(division(k)) / Math.LN10 - 1e-9));
+}
+function nbF(v, k) { return nb(v, decDiv(k)); }
+function raideur(k) { return app(k).portee / PHYS.COURSE.v; }
+/* L'appareil dont la portée correspond à celle qu'une ligne demande. */
+function appDeLigne(i) {
+  var p = parseFloat(porteeLigne(i)), k;
+  for (k = 0; k < nbApp(); k++) if (Math.abs(app(k).portee - p) < 1e-9) return k;
+  return 0;
+}
+
+/* ==================================================================
+   4. LE SOLVEUR
+   ==================================================================
+   Trois pas, dans cet ordre, et rien d'autre :
+     l'allongement  = F / k
+     la position de l'index, en divisions, décalage de zéro compris
+     la lecture     = la graduation la plus proche, vue de l'œil
+   La lecture est donc QUANTIFIÉE : c'est elle, et non la force, que
+   l'élève écrit sur sa feuille.                                        */
+var REG = { zero: 0, oeil: 0 };
+
+function forceDe(nom) {
+  if (/S₁|S1/.test(nom)) return PHYS.F_S1.v;
+  if (/S₂|S2/.test(nom)) return PHYS.F_S2.v;
+  return PHYS.F_CHAR.v;
+}
+function allongement(F, k) { return F / raideur(k); }
+/* La position de l'index, en divisions depuis le trait 0 du tube. */
+function indexDiv(F, k) {
+  return F / division(k) + REG.zero;
+}
+/* Le décalage apparent dû à la parallaxe, en divisions. Rapport de
+   triangles : l'œil, l'index, la graduation, sur l'épaisseur du tube. */
+function parallaxeDiv(k) {
+  var e = PHYS.EP_TUBE.v * (REG.oeil / 100) / PHYS.D_OEIL.v;   // en mètres
+  return e / (PHYS.COURSE.v / app(k).ndiv);                    // en divisions
+}
+/* Ce que l'élève LIT : la graduation la plus proche de l'index tel qu'il
+   le voit. Rend null si la force dépasse la portée. */
+function lire(F, k) {
+  if (F > app(k).portee + 1e-12) return null;
+  var d = indexDiv(F, k) + parallaxeDiv(k);
+  return borne(Math.round(d), 0, app(k).ndiv) * division(k);
+}
+/* La lecture JUSTE : zéro réglé, œil en face. C'est la référence. */
+function lireJuste(F, k) {
+  if (F > app(k).portee + 1e-12) return null;
+  return Math.round(F / division(k)) * division(k);
+}
+function horsPortee(F, k) { return F > app(k).portee + 1e-12; }
+
+/* Le protocole exige le zéro réglé et l'œil en face. */
+function zeroRegle() { return Math.abs(REG.zero) < PHYS.SEUIL_ZERO.v; }
+function oeilEnFace(k) {
+  return Math.abs(parallaxeDiv(k === undefined ? 0 : k)) < PHYS.SEUIL_PARA.v;
+}
+function horsProtocole() { return !zeroRegle() || !oeilEnFace(0); }
+
+/* Contrôle interne : au protocole, les cinq lignes calculées doivent
+   redonner les cinq lectures de la fiche. */
+function accordAvecLaFiche() {
+  var i, k, F, lu, att, faux = [];
+  for (i = 0; i < nbMesures(); i++) {
+    k = appDeLigne(i);
+    F = forceDe(nomForce(i));
+    lu = lireJuste(F, k);
+    att = lectureFiche(i);
+    if (lu === null) {
+      if (/^[\d,.\s]+N$/.test(att)) faux.push(i + "/portée");
+    } else if (nb(lu, 2) + " N" !== att.replace(/\s+/g, " ")) {
+      faux.push(i + " lu " + nb(lu, 2) + " attendu " + att);
+    }
+  }
+  return faux;
+}
+
+/* ==================================================================
+   5. L'ÉTAT
+   ================================================================== */
+var svg = null, COUCHES = {};
+var gTube = null, gIndex = null, gGrad = null, gCharge = null, gOeil = null;
+var gRack = [], gSolides = {};
+var ETAT = null;
+
+function neufEtat() {
+  return {
+    app: -1,           // l'appareil accroché au support, -1 = aucun
+    charge: null,      // ce qui pend au crochet : "S1", "S2", "chariot"
+    lu: {},            // les lignes renseignées, par indice
+    horsVu: {},        // les lignes où le dépassement a été CONSTATÉ
+    controle: false,   // le contrôle final du zéro a été fait
+    conclu: false,
+    notes: []
+  };
+}
+
+/* ==================================================================
+   6. LA GÉOMÉTRIE
+   ==================================================================
+   ZONES INTERDITES, relevées sur capture :
+     · bandeau de consigne    x 224..896  y < 60
+     · journal d'observation  x < 278     y < 300
+     · plaque de sécurité     x < 276     y 316..452
+   Le montage occupe donc x 300..1090.
+
+   L'ÉCHELLE DU TUBE EST VRAIE : la course utile de 8 cm fait 200
+   unités, soit 2500 unités par mètre. Un allongement de 1,45 N sur un
+   ressort de 125 N·m⁻¹ vaut 11,6 mm, et l'index descend de 29 unités —
+   ce qui se voit.                                                       */
+var W = 1120, H = 760, BANC = 628;
+var Y_BT1 = 660, Y_BT2 = 700;
+var PAILL_Y = 540;
+var X_G = 300, X_D = 1090;
+var PX_M = 2500;                          // l'échelle du tube
+/* ⚠️ Mesuré, pas estimé : le socle de la potence fait 156 unités de
+   large. À X_POT = 470 il couvrait de 392 à 548, c'est-à-dire pile la
+   place des trois charges. La potence recule, les charges restent à
+   gauche, et rien ne se chevauche. */
+var X_POT = 566;                          // le montant de la potence
+/* ⚠️ Mesuré, pas estimé : à Y_BRAS = 132 le bas du crochet tombait à 480 et
+   la paillasse est à 540. Le solide (S₂) fait 60 de haut plus 12 d'anneau :
+   il ne tenait pas entre les deux, il traversait la table. Tout le bâti
+   remonte donc de 16. */
+var Y_BRAS = 116;                         // la traverse
+var X_DYN = 692;                          // l'axe de l'appareil suspendu
+var Y_ANNEAU = 144;                       // l'anneau de suspension
+/* Le demi-côté de chaque solide. Le DESSIN le lit, et la POSE au crochet le
+   lit aussi — c'est ce partage qui garantit que l'anneau du solide arrive
+   sur le crochet et non dans le tube (§12.18). */
+var RAYON = { S1: 20, S2: 30, chariot: 0 };
+/* ⚠️ Le chariot tiré passe À DROITE de la potence. À gauche — sa place
+   d'avant — son fil traversait le socle du bâti, 156 unités de fonte, et il
+   se posait sur les emplacements de repos de (S₁) et (S₂), étiquettes
+   comprises. */
+var X_CHAR = 850;
+var H_TUBE = 200;                         // la course utile, à l'échelle
+var Y_ZERO = Y_ANNEAU + 74;               // le trait 0 du tube
+var X_RACK = 900, Y_RACK = 214, DY_RACK = 132;
+var X_SOL = 330, DX_SOL = 62;             // les solides, sur la paillasse
+
+/* ⚠️ LE MILIEU DE L'ANNEAU DU CROCHET DE MESURE. C'est là que la charge
+   s'accroche, et sa place s'en déduit. Une constante unique — l'ancien
+   `yCroc` — ne pouvait convenir aux deux solides : leur anneau part de
+   `2r + 12` au-dessus de leur origine, et ce nombre n'est pas le même. Le
+   solide remontait donc dans le tube et masquait les dernières graduations,
+   celles qu'on lui demande justement de lire. */
+function yCrochet() { return Y_ZERO + H_TUBE + 38; }
+function yPoseCharge(c) { return yCrochet() + 14 + 2 * (RAYON[c] || 0); }
+
+function yIndex() {
+  if (ETAT.app < 0) return Y_ZERO;
+  var F = ETAT.charge ? forceDe(ETAT.charge) : 0;
+  var d = indexDiv(F, ETAT.app);
+  return Y_ZERO + borne(d, 0, app(ETAT.app).ndiv)
+       / app(ETAT.app).ndiv * H_TUBE;
+}
+/* Là où l'œil CROIT voir l'index : c'est cette position-là que l'élève
+   rapporte à la graduation, et c'est elle qui donne la lecture. */
+function yVu() {
+  if (ETAT.app < 0) return Y_ZERO;
+  var F = ETAT.charge ? forceDe(ETAT.charge) : 0;
+  var d = indexDiv(F, ETAT.app) + parallaxeDiv(ETAT.app);
+  return Y_ZERO + borne(d, 0, app(ETAT.app).ndiv)
+       / app(ETAT.app).ndiv * H_TUBE;
+}
+
+/* ==================================================================
+   7. DÉFINITIONS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("bois", [[0, "#c99a58"], [0.5, "#a97c3c"], [1, "#8a6128"]]);
+  grad("inox", [[0, "#8d97a5"], [0.28, "#e7ecf1"], [0.55, "#aab4c0"], [1, "#79838f"]], true);
+  grad("tube", [[0, "#ffffff", .92], [0.18, "#e8eef4", .8], [0.55, "#f7fafc", .7],
+                [0.88, "#cfd8e2", .85], [1, "#ffffff", .9]], true);
+  grad("laiton", [[0, "#e6c76a"], [0.5, "#c8a038"], [1, "#96751f"]], true);
+  grad("s1", [[0, "#7fa8d8"], [0.5, "#4f7cb5"], [1, "#375c8c"]]);
+  grad("s2", [[0, "#e8a33d"], [0.5, "#cf7f1c"], [1, "#a86212"]]);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .26 }));
+  D.appendChild(f);
+}
+function ajouterCouches() {
+  ["fond", "poste", "appareil", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   8. LE DÉCOR
+   ================================================================== */
+function construireFond() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC, fill: "url(#banc)" }));
+  ajout("poste", el("rect", { x: X_G - 14, y: PAILL_Y, width: X_D - X_G + 28,
+    height: 14, rx: 3, fill: "url(#bois)", stroke: "#6d4d1e", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: X_G, y: PAILL_Y + 14, width: X_D - X_G,
+    height: 14, fill: "#8a6128", opacity: .85, "pointer-events": "none" }));
+  [X_G + 22, X_D - 38].forEach(function (px) {
+    ajout("poste", el("rect", { x: px, y: PAILL_Y + 28, width: 16,
+      height: BANC - PAILL_Y - 28, fill: "#7d5722", stroke: "#5f4118",
+      "stroke-width": 1.2, "pointer-events": "none" }));
+  });
+}
+
+/* La potence : socle lesté, montant, noix, tige. La fiche insiste sur sa
+   stabilité, et elle doit donc se voir stable. */
+function construirePotence() {
+  var g = ajout("poste", el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: X_POT - 78, y: PAILL_Y - 16, width: 156,
+    height: 16, rx: 3, fill: "#6b7686", stroke: "#48525e", "stroke-width": 1.4 }));
+  g.appendChild(el("rect", { x: X_POT - 7, y: Y_BRAS, width: 14,
+    height: PAILL_Y - 16 - Y_BRAS, fill: "url(#inox)", stroke: "#5d6874",
+    "stroke-width": 1.2 }));
+  /* La noix, et la tige horizontale qui porte l'appareil. */
+  g.appendChild(el("rect", { x: X_POT - 14, y: Y_BRAS - 4, width: 28, height: 26,
+    rx: 4, fill: "#7c848f", stroke: "#48525e", "stroke-width": 1.3 }));
+  g.appendChild(el("rect", { x: X_POT, y: Y_BRAS + 3, width: X_DYN - X_POT + 16,
+    height: 11, rx: 3, fill: "url(#inox)", stroke: "#5d6874", "stroke-width": 1.2 }));
+  txtIn(g, X_POT, PAILL_Y + 44, "potence lestée", { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* Le rack : les deux appareils, avant d'être accrochés. */
+function construireRack() {
+  var k, g, y;
+  for (k = 0; k < nbApp(); k++) {
+    y = Y_RACK + k * DY_RACK;
+    g = ajout("objets", el("g", { "data-act": "app-" + k, cursor: "grab",
+      id: "rack-" + k }));
+    g.appendChild(el("rect", { x: -34, y: -22, width: 68, height: 108,
+      fill: "transparent" }));
+    dessinerDynamometre(g.appendChild(el("g", { "pointer-events": "none" })),
+      k, 0.42);
+    gRack.push(g);
+    txt("poste", X_RACK, y + 116, "portée " + nomApp(k) + " · "
+      + app(k).ndiv + " divisions", { taille: 9.5, couleur: "#9aa5b2" });
+  }
+}
+
+/* Un dynamomètre, dessiné à l'échelle e. Cinq parties, toutes nommées
+   par la fiche : anneau, tube gradué, ressort, index, crochet. */
+function dessinerDynamometre(g, k, e) {
+  var h = H_TUBE * e, lg = 30 * e, i, y, n = app(k).ndiv, pas;
+  /* L'anneau de suspension. */
+  g.appendChild(el("circle", { cx: 0, cy: -14 * e, r: 9 * e, fill: "none",
+    stroke: "url(#laiton)", "stroke-width": 4 * e }));
+  /* La molette de réglage du zéro. */
+  g.appendChild(el("rect", { x: -11 * e, y: -6 * e, width: 22 * e, height: 12 * e,
+    rx: 3 * e, fill: "url(#laiton)", stroke: "#7a5f14", "stroke-width": 1.1 }));
+  /* Le tube gradué. */
+  g.appendChild(el("rect", { x: -lg / 2, y: 8 * e, width: lg, height: h + 26 * e,
+    rx: 4 * e, fill: "url(#tube)", stroke: "#7c848f", "stroke-width": 1.3 }));
+  /* Les graduations : toutes, pas une sur cinq. C'est en les comptant
+     que l'élève trouve la valeur d'une division. */
+  pas = h / n;
+  for (i = 0; i <= n; i++) {
+    y = 8 * e + 14 * e + i * pas;
+    g.appendChild(el("line", { x1: -lg / 2 + 2 * e, y1: y,
+      x2: -lg / 2 + (i % 10 === 0 ? 13 : (i % 5 === 0 ? 9 : 6)) * e, y2: y,
+      stroke: "#5d6874", "stroke-width": (i % 10 === 0 ? 1.4 : 0.8) * e }));
+    if (i % 10 === 0 && e > 0.7) {
+      txtIn(g, lg / 2 - 3 * e, y + 3.4 * e,
+        nb(i * app(k).portee / n, i === 0 ? 0 : 1),
+        { taille: 9 * e, ancre: "end", couleur: "#5d6874" });
+    }
+  }
+  /* Le crochet de mesure. */
+  g.appendChild(el("path", { d: "M 0," + (8 * e + h + 26 * e) + " l 0," + (10 * e)
+    + " m 0,0 a " + (7 * e) + "," + (7 * e) + " 0 1 0 " + (0.1 * e) + ",0",
+    stroke: "url(#laiton)", "stroke-width": 3 * e, fill: "none" }));
+  /* ⚠ LA PORTÉE GRAVÉE NE SE DESSINE QUE SI ELLE SE LIT — même garde que les
+     nombres de graduation, plus haut (`e > 0.7`). Au rack, seule échelle où
+     l'appareil est tracé aujourd'hui (e = 0,42), ce texte faisait 4,6 unités :
+     illisible, posé EN PLEIN SUR L'ANNEAU DE LAITON du crochet — sa boîte,
+     246 à 258 en repère local, tombait dans l'anneau qui va de 244 à 258 —
+     et il répétait mot pour mot la légende posée dix unités plus bas,
+     « portée 10 N · 50 divisions », qu'il chevauchait de 41 %. Rien ne se
+     perd : la légende porte la même portée, en plus grand et au clair. */
+  if (e > 0.7) {
+    txtIn(g, 0, 8 * e + h + 46 * e, nomApp(k),
+      { taille: 11 * e, gras: true, couleur: "#5d6874" });
+  }
+}
+
+/* Les trois charges, posées sur la paillasse. */
+function construireSolides() {
+  [["S1", "s1"], ["S2", "s2"], ["chariot", null]].forEach(
+    function (c, j) {
+      var x = X_SOL + j * DX_SOL;
+      var g = ajout("objets", el("g", { "data-act": "ch-" + c[0], cursor: "grab",
+        id: "sol-" + c[0] }));
+      /* La plaque de préhension épouse le solide, anneau compris (§12.38). */
+      var rr = RAYON[c[0]] || 0;
+      g.appendChild(el("rect", { x: -Math.max(32, rr + 8),
+        y: -(2 * rr + 18), width: 2 * Math.max(32, rr + 8),
+        height: 2 * rr + 24, fill: "transparent" }));
+      var d = g.appendChild(el("g", { "pointer-events": "none" }));
+      if (c[0] === "chariot") {
+        d.appendChild(el("rect", { x: -26, y: -20, width: 52, height: 10, rx: 3,
+          fill: "url(#inox)", stroke: "#5d6874", "stroke-width": 1.2 }));
+        [-16, 16].forEach(function (rx) {
+          d.appendChild(el("circle", { cx: rx, cy: -5, r: 5.5, fill: "#39414d",
+            stroke: "#20262f", "stroke-width": 1.3 }));
+        });
+        txtIn(d, 0, -26, "chariot", { taille: 9, couleur: "#6b7686" });
+      } else {
+        var r = rr;
+        d.appendChild(el("path", { d: "M 0,-" + (2 * r + 12) + " a 6,6 0 1 1 0.1,0",
+          stroke: "#8d97a5", "stroke-width": 2.4, fill: "none" }));
+        d.appendChild(el("rect", { x: -r, y: -2 * r, width: 2 * r, height: 2 * r,
+          rx: 3, fill: "url(#" + c[1] + ")", stroke: "#3a4a5e",
+          "stroke-width": 1.3 }));
+        txtIn(d, 0, -r + 4, c[0] === "S1" ? "S₁" : "S₂",
+          { taille: 12, gras: true, couleur: "#fff" });
+      }
+      gSolides[c[0]] = g;
+      txt("poste", x, PAILL_Y + 44, c[0] === "chariot" ? "le chariot"
+        : "solide (" + (c[0] === "S1" ? "S₁" : "S₂") + ")",
+        { taille: 9.5, couleur: "#9aa5b2" });
+    });
+}
+
+/* L'œil : sa hauteur EST le réglage de parallaxe, et on le déplace à la
+   main comme on déplace sa tête. */
+function construireOeil() {
+  var g = ajout("avant", el("g", { "data-act": "oeil", cursor: "ns-resize",
+    id: "oeil" }));
+  gOeil = g;
+  g.appendChild(el("rect", { x: -34, y: -22, width: 68, height: 44,
+    fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("path", { d: "M -22,0 q 22,-15 44,0 q -22,15 -44,0 Z",
+    fill: "#fff", stroke: "#5d6874", "stroke-width": 1.3 }));
+  d.appendChild(el("circle", { cx: 0, cy: 0, r: 6.5, fill: "#3b5b7a" }));
+  d.appendChild(el("circle", { cx: 0, cy: 0, r: 2.6, fill: "#12203a" }));
+  d.appendChild(el("circle", { cx: -2.2, cy: -2.2, r: 1.6, fill: "#fff" }));
+  txtIn(d, 0, 26, "l'œil", { taille: 9.5, couleur: "#8a6a1e", gras: true });
+  txtIn(d, 0, 37, "à glisser", { taille: 8.5, couleur: "#9aa5b2" });
+}
+
+function construireSecurite() {
+  var X = 20, Y = 316, LG = 254, HT = 136;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8, "pointer-events": "none" }));
+  txt("poste", X + 11, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.3 });
+  /* On vise la ligne par ce qu'elle DIT (§12.14) : le vrai risque ici est
+     de perdre l'appareil pour toute la classe. */
+  enrouler(secu("dépasser la portée").replace(/\s*:.*$/, ""), 34, 4)
+    .forEach(function (s, i) {
+      txt("poste", X + 11, Y + 42 + i * 14, s, { ancre: "start", taille: 10,
+          gras: true, couleur: ROUGE });
+    });
+  txt("poste", X + 11, Y + 104, "Accrocher le solide en douceur,", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+  txt("poste", X + 11, Y + 118, "sans le lâcher d'un coup.", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+}
+
+function construireLegende() {
+  txt("ui", W / 2, 742, "schéma habillé — la course du tube est à l'échelle, "
+    + "et l'index se place là où le ressort le met",
+    { taille: 9.5, couleur: "#8794a5" });
+}
+
+/* ==================================================================
+   9. L'APPAREIL SUSPENDU
+   ==================================================================
+   Il est redessiné à chaque changement d'appareil : les graduations ne
+   sont pas les mêmes, et leur nombre EST la donnée que l'élève compte. */
+function construireAppareil() {
+  var g = COUCHES.appareil, k = ETAT.app, d, i, y, n, pas;
+  vide(g);
+  if (k < 0) return;
+  n = app(k).ndiv;
+  d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.setAttribute("transform", "translate(" + pt(X_DYN, Y_ANNEAU) + ")");
+  /* L'anneau, passé sur la tige de la potence. */
+  d.appendChild(el("circle", { cx: 0, cy: -14, r: 11, fill: "none",
+    stroke: "url(#laiton)", "stroke-width": 5 }));
+  /* Le tube gradué : c'est lui qui porte l'échelle. */
+  var yG0 = (Y_ZERO - Y_ANNEAU);
+  /* ⚠️ LE TUBE MONTE JUSQU'À LA MOLETTE. Commencé 16 unités au-dessus du
+     trait 0, il laissait CINQUANTE unités de vide entre la molette et lui :
+     l'anneau tenait à la tige de la potence, et le tube flottait dessous
+     sans rien pour l'y relier. C'est ce que l'enseignant a vu sur capture.
+     Le corps de l'appareil au-dessus du trait 0 n'est pas un remplissage :
+     c'est là que loge le ressort avant d'être tiré. */
+  d.appendChild(el("rect", { x: -21, y: 6, width: 42, height: yG0 + H_TUBE + 10,
+    rx: 5, fill: "url(#tube)", stroke: "#7c848f", "stroke-width": 1.6 }));
+  /* La bague de tête, qui fait la jonction avec la molette du zéro. */
+  d.appendChild(el("rect", { x: -25, y: 2, width: 50, height: 13, rx: 4,
+    fill: "#8d97a5", stroke: "#5d6874", "stroke-width": 1.2 }));
+  pas = H_TUBE / n;
+  for (i = 0; i <= n; i++) {
+    y = (Y_ZERO - Y_ANNEAU) + i * pas;
+    d.appendChild(el("line", { x1: -19, y1: y,
+      x2: -19 + (i % 10 === 0 ? 15 : (i % 5 === 0 ? 10 : 6)), y2: y,
+      stroke: "#5d6874", "stroke-width": i % 10 === 0 ? 1.5 : 0.8 }));
+    if (i % 10 === 0) {
+      d.appendChild(el("text", { x: 18, y: y + 3.6, "text-anchor": "end",
+        "font-size": 9.5, fill: "#5d6874" }, nb(i * app(k).portee / n, i ? 1 : 0)));
+    }
+  }
+  /* L'étiquette passe AU-DESSUS du tube : sous lui, elle tombait sur la
+     charge suspendue. */
+  d.appendChild(el("text", { x: 0, y: -32, "text-anchor": "middle",
+    "font-size": 11, "font-weight": "bold", fill: "#5d6874" },
+    "portée " + nomApp(k) + " · " + n + " div."));
+  /* Le crochet de mesure. */
+  d.appendChild(el("path", { d: "M 0," + (yG0 + H_TUBE + 16) + " l 0,14 m 0,0 "
+    + "a 8,8 0 1 0 0.1,0", stroke: "url(#laiton)", "stroke-width": 3.4,
+    fill: "none" }));
+  /* La MOLETTE du zéro : elle se glisse, c'est le réglage de la fiche. */
+  var m = g.appendChild(el("g", { "data-act": "molette", cursor: "ns-resize",
+    id: "molette" }));
+  m.appendChild(el("rect", { x: X_DYN - 24, y: Y_ANNEAU - 12, width: 48,
+    height: 26, fill: "transparent" }));
+  var md = m.appendChild(el("g", { "pointer-events": "none" }));
+  md.appendChild(el("rect", { x: X_DYN - 14, y: Y_ANNEAU - 6, width: 28,
+    height: 14, rx: 4, fill: "url(#laiton)", stroke: "#7a5f14", "stroke-width": 1.2 }));
+  for (i = -3; i <= 3; i++) {
+    md.appendChild(el("line", { x1: X_DYN + i * 4, y1: Y_ANNEAU - 5,
+      x2: X_DYN + i * 4, y2: Y_ANNEAU + 7, stroke: "#7a5f14", "stroke-width": .9 }));
+  }
+  /* L'INDEX : le seul élément qui bouge, et celui qu'on lit. */
+  gIndex = g.appendChild(el("g", { id: "index", "pointer-events": "none" }));
+  gIndex.appendChild(el("path", { d: "M " + pt(X_DYN - 21, 0) + " L "
+    + pt(X_DYN + 21, 0), stroke: ROUGE, "stroke-width": 2.4 }));
+  gIndex.appendChild(el("path", { d: "M " + pt(X_DYN - 30, -5) + " L "
+    + pt(X_DYN - 21, 0) + " L " + pt(X_DYN - 30, 5) + " Z", fill: ROUGE }));
+  /* Ce que l'ŒIL croit voir, quand il n'est pas en face. */
+  gCharge = g.appendChild(el("g", { id: "vu", "pointer-events": "none" }));
+  gCharge.appendChild(el("path", { d: "M " + pt(X_DYN - 21, 0) + " L "
+    + pt(X_DYN + 21, 0), stroke: "#b03030", "stroke-width": 1.6,
+    "stroke-dasharray": "4 4", opacity: .8 }));
+}
+
+/* ==================================================================
+   10. LE MOTEUR DE MANIPULATION
+   ================================================================== */
+var PRISE = null, SEUIL_PX = 5, FANTOME = null;
+function ptSvg(ev) {
+  var p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function noeudAct(n) {
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+function cible(x, y) {
+  var s = svg.createSVGPoint(), n;
+  s.x = x; s.y = y;
+  s = s.matrixTransform(svg.getScreenCTM());
+  n = noeudAct(document.elementFromPoint(s.x, s.y));
+  return n ? n.getAttribute("data-act") : null;
+}
+function brancherManipulation() {
+  svg.addEventListener("pointerdown", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act"), p;
+    if (!a) return;
+    p = ptSvg(ev);
+    PRISE = { act: a, x0: p.x, y0: p.y, bouge: false,
+              z0: REG.zero, o0: REG.oeil };
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
+  });
+  svg.addEventListener("pointermove", function (ev) {
+    if (!PRISE) return;
+    var p = ptSvg(ev), dx = p.x - PRISE.x0, dy = p.y - PRISE.y0;
+    if (!PRISE.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL_PX) return;
+    PRISE.bouge = true;
+    if (PRISE.act === "molette") reglerZero(PRISE.z0, dy);
+    else if (PRISE.act === "oeil") deplacerOeil(PRISE.o0, dy);
+    else montrerFantome(PRISE.act, p.x, p.y);
+  });
+  function lacher(ev) {
+    if (!PRISE) return;
+    var pr = PRISE, p = ptSvg(ev);
+    PRISE = null;
+    effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (!pr.bouge) return;
+    if (pr.act === "molette" || pr.act === "oeil") { redessiner(); return; }
+    deposer(pr.act, p.x, p.y);
+  }
+  svg.addEventListener("pointerup", lacher);
+  svg.addEventListener("pointercancel", function (ev) {
+    if (!PRISE) return;
+    PRISE = null; effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    redessiner();
+  });
+}
+/* La molette : un pas de tube vaut une division, et le curseur du
+   panneau commande la MÊME grandeur (§12.13). */
+function reglerZero(z0, dy) {
+  if (ETAT.app < 0) { signaler("Accrocher d'abord un appareil au support."); return; }
+  var parDiv = H_TUBE / app(ETAT.app).ndiv;
+  REG.zero = borne(z0 + dy / parDiv, -2, 2);
+  $("rZero").value = (Math.round(REG.zero * 4) / 4).toFixed(2);
+  REG.zero = parseFloat($("rZero").value);
+  majSorties();
+  redessiner();
+}
+function deplacerOeil(o0, dy) {
+  REG.oeil = borne(o0 - dy / 4, 0, 20);
+  $("rOeil").value = Math.round(REG.oeil);
+  REG.oeil = parseFloat($("rOeil").value);
+  majSorties();
+  redessiner();
+}
+function montrerFantome(a, x, y) {
+  if (!FANTOME) {
+    FANTOME = COUCHES.drag.appendChild(el("g", { opacity: .8,
+      "pointer-events": "none" }));
+    var src = svg.querySelector('[data-act="' + a + '"]'), c;
+    if (src) {
+      c = src.cloneNode(true);
+      c.removeAttribute("data-act");
+      c.setAttribute("pointer-events", "none");
+      FANTOME.appendChild(c);
+    }
+  }
+  FANTOME.setAttribute("transform", "translate(" + pt(x, y) + ")");
+  surlignerZones(a, x, y);
+}
+function effacerFantome() {
+  if (FANTOME) { COUCHES.drag.removeChild(FANTOME); FANTOME = null; }
+  var z = svg.querySelector("#zones");
+  if (z) vide(z);
+}
+
+/* ==================================================================
+   11. LES ZONES
+   ==================================================================
+   ⚠️ De la plus PETITE à la plus GRANDE (§12.16) : le crochet est sur
+   la tige, et la tige est sur la potence.                               */
+function zoneTige() {
+  return { type: "tige", x: X_DYN, y: Y_BRAS + 8, r: 62 };
+}
+function zoneCrochet() {
+  return { type: "crochet", x: X_DYN, y: Y_ZERO + H_TUBE + 30, r: 58 };
+}
+function zonePaillasse() {
+  return { type: "paillasse", x: (X_G + X_D) / 2, y: PAILL_Y - 16,
+           rx: (X_D - X_G) / 2, ry: 54 };
+}
+function emplacements(a) {
+  if (a.indexOf("app-") === 0) return [zoneTige(), zonePaillasse()];
+  if (a.indexOf("ch-") === 0) return [zoneCrochet(), zonePaillasse()];
+  return [];
+}
+function dansZone(z, x, y) {
+  if (z.rx) return Math.abs(x - z.x) < z.rx && Math.abs(y - z.y) < z.ry;
+  return Math.hypot(x - z.x, y - z.y) < z.r;
+}
+function zoneSous(a, x, y) {
+  var z = emplacements(a), i;
+  for (i = 0; i < z.length; i++) if (dansZone(z[i], x, y)) return z[i];
+  return null;
+}
+function surlignerZones(a, x, y) {
+  var g = svg.querySelector("#zones");
+  if (!g) g = COUCHES.ui.appendChild(el("g", { id: "zones", "pointer-events": "none" }));
+  vide(g);
+  emplacements(a).forEach(function (z) {
+    var ok = dansZone(z, x, y);
+    if (z.rx) {
+      g.appendChild(el("rect", { x: z.x - z.rx, y: z.y - z.ry, width: 2 * z.rx,
+        height: 2 * z.ry, rx: 8, fill: "none", stroke: ok ? GOLD : "#c8b98a",
+        "stroke-width": ok ? 2.4 : 1.4, "stroke-dasharray": "7 5" }));
+    } else {
+      g.appendChild(el("circle", { cx: z.x, cy: z.y, r: z.r, fill: "none",
+        stroke: ok ? GOLD : "#c8b98a", "stroke-width": ok ? 2.4 : 1.4,
+        "stroke-dasharray": "7 5" }));
+    }
+  });
+}
+
+/* ==================================================================
+   12. LES DÉPÔTS
+   ================================================================== */
+function accepte(a, z) {
+  if (!z) return false;
+  if (a.indexOf("app-") === 0) {
+    return z.type === "tige" && ETAT.app !== +a.slice(4);
+  }
+  if (a.indexOf("ch-") === 0) {
+    return z.type === "crochet" && ETAT.app >= 0 && ETAT.charge !== a.slice(3);
+  }
+  return false;
+}
+function refus(a, z) {
+  if (a.indexOf("app-") === 0) {
+    if (z && z.type === "tige") return "Cet appareil est déjà en place.";
+    return "Accrocher l'appareil par son ANNEAU à la tige de la potence, bien "
+         + "vertical : suspendu de travers, il ne mesurerait pas la force qu'on "
+         + "croit.";
+  }
+  if (a.indexOf("ch-") === 0) {
+    if (ETAT.app < 0) return "Accrocher d'abord un dynamomètre au support : "
+      + "il n'y a pas encore de crochet où suspendre quoi que ce soit.";
+    if (z && z.type === "crochet") return "Cette charge est déjà suspendue.";
+    return "Suspendre la charge au CROCHET DE MESURE, en bas du tube — et en "
+         + "douceur : un choc détend le ressort et fausse l'appareil.";
+  }
+  return "";
+}
+function deposer(a, x, y) {
+  var z = zoneSous(a, x, y), k;
+  if (!accepte(a, z)) { signaler(refus(a, z)); redessiner(); return; }
+  if (a.indexOf("app-") === 0) {
+    k = +a.slice(4);
+    ETAT.app = k;
+    ETAT.charge = null;
+    ETAT.controle = false;
+    noter("Dynamomètre de portée " + nomApp(k) + " accroché à la potence. "
+        + "Son tube porte " + app(k).ndiv + " divisions : une division vaut "
+        + nb(app(k).portee, 0) + " ÷ " + app(k).ndiv + " = "
+        + nbF(division(k), k) + " N.");
+    construireAppareil();
+    succes();
+    redessiner();
+    return;
+  }
+  ETAT.charge = a.slice(3);
+  ETAT.controle = false;
+  mesurer();
+}
+
+/* ==================================================================
+   13. MESURER
+   ==================================================================
+   La force est là, le ressort s'allonge, l'index se place. Ce que la
+   page inscrit, c'est ce que l'ŒIL LIT — donc la graduation la plus
+   proche, décalage de zéro et parallaxe compris.                       */
+function mesurer() {
+  var k = ETAT.app, F = forceDe(ETAT.charge), i, lu, hp = horsPortee(F, k);
+  if (hp) {
+    i = ligneDe(ETAT.charge, k);
+    if (i >= 0) ETAT.horsVu[i] = true;
+    noter("L'index bute sur la dernière graduation avant même que la charge "
+        + "ne quitte la paillasse : la force dépasse la portée de "
+        + nomApp(k) + ". On repose aussitôt — au-delà, le ressort se "
+        + "déformerait définitivement.");
+    succes();
+    redessiner();
+    return;
+  }
+  lu = lire(F, k);
+  i = ligneDe(ETAT.charge, k);
+  if (i >= 0 && !horsProtocole()) {
+    ETAT.lu[i] = lu;
+    noter("Mesure lue sur le tube : " + nbF(lu, k) + " N. Une division vaut "
+        + nbF(division(k), k) + " N, donc on lit à une demi-division près.");
+  } else if (i >= 0) {
+    noter("Mesure faussée : " + (zeroRegle() ? "" : "le zéro n'est pas réglé"
+        + (oeilEnFace(k) ? "" : " et ")) + (oeilEnFace(k) ? ""
+        : "l'œil n'est pas en face") + ". La ligne du tableau reste vide, mais "
+        + "l'écart se lit à droite.");
+  }
+  succes();
+  redessiner();
+}
+/* Quelle ligne de la fiche cette mesure renseigne-t-elle ? On la
+   retrouve par le COUPLE (charge, portée), tel que la fiche l'écrit. */
+function ligneDe(charge, k) {
+  var i, n, cible = charge === "S1" ? "S₁" : (charge === "S2" ? "S₂" : "chariot");
+  for (i = 0; i < nbMesures(); i++) {
+    n = nomForce(i);
+    if (appDeLigne(i) !== k) continue;
+    if (charge === "chariot" && /chariot/i.test(n)) return i;
+    if (charge !== "chariot" && n.indexOf(cible) >= 0) return i;
+  }
+  return -1;
+}
+function nbLignesFaites() {
+  var i, n = 0;
+  for (i = 0; i < nbMesures(); i++) {
+    if (ETAT.lu[i] !== undefined || ETAT.horsVu[i]) n++;
+  }
+  return n;
+}
+
+/* Le contrôle final du zéro. La fiche est formelle : si l'index n'est
+   pas revenu sur 0, TOUT est à refaire. La page applique la sanction. */
+function controlerZero() {
+  if (ETAT.charge) {
+    signaler("Décrocher d'abord la charge : le contrôle se fait à vide.");
+    return;
+  }
+  if (ETAT.app < 0) { signaler("Aucun appareil au support."); return; }
+  ETAT.controle = true;
+  if (zeroRegle()) {
+    noter("Contrôle du zéro : l'index est revenu exactement sur 0. "
+        + "Les mesures du poste sont valables.");
+  } else {
+    ETAT.lu = {};
+    ETAT.horsVu = {};
+    ETAT.conclu = false;
+    noter("Contrôle du zéro : l'index est à " + nb(REG.zero, 2)
+        + " division du 0. La fiche est formelle — toutes les mesures du "
+        + "poste sont à refaire. Le tableau a été effacé.");
+  }
+  succes();
+  redessiner();
+}
+
+/* ==================================================================
+   14. LE CARNET ET LA CONSIGNE
+   ================================================================== */
+var MSG = null, MSG_JUSQUA = 0;
+function signaler(t) { MSG = t; MSG_JUSQUA = Date.now() + 4200; majConsigne(); }
+function succes() { MSG = null; MSG_JUSQUA = 0; majConsigne(); }
+function noter(t) {
+  ETAT.notes.push(t);
+  while (ETAT.notes.length > 2) ETAT.notes.shift();
+  var o = $("obs");
+  o.textContent = ETAT.notes.join(" ");
+  o.className = "obs pos";
+}
+function consigne() { return $("consigne").textContent; }
+function majConsigne() {
+  if (MSG && Date.now() < MSG_JUSQUA) { $("consigne").textContent = MSG; return; }
+  MSG = null;
+  $("consigne").textContent = consigneEtape();
+}
+function consigneEtape() {
+  var i;
+  if (ETAT.app < 0) return "Accrocher un dynamomètre à la tige de la potence.";
+  if (!zeroRegle()) return "Régler le zéro à vide : glisser la molette jusqu'à "
+    + "ce que l'index soit exactement sur le trait 0.";
+  if (!oeilEnFace(ETAT.app)) return "Mettre l'œil bien en face de l'index : "
+    + "de biais, on lit une graduation qui n'est pas la sienne.";
+  for (i = 0; i < nbMesures(); i++) {
+    if (ETAT.lu[i] === undefined && !ETAT.horsVu[i]) {
+      return "Mesurer « " + nomForce(i) + " » avec l'appareil de portée "
+        + porteeLigne(i) + ".";
+    }
+  }
+  if (!ETAT.controle) return "Tout décrocher, et contrôler que l'index est "
+    + "revenu exactement sur 0.";
+  return "Comparer les deux lectures d'une même force, et conclure.";
+}
+
+/* ==================================================================
+   15. LE RENDU
+   ================================================================== */
+function redessiner() {
+  var k = ETAT.app, i;
+  for (i = 0; i < nbApp(); i++) {
+    gRack[i].setAttribute("transform", "translate(" + pt(X_RACK, Y_RACK + i * DY_RACK) + ")");
+    gRack[i].setAttribute("opacity", ETAT.app === i ? .25 : 1);
+  }
+  ["S1", "S2", "chariot"].forEach(function (c, j) {
+    var g = gSolides[c], pendu = (ETAT.charge === c);
+    /* Le chariot ne se suspend pas : il roule. Attaché au crochet par son
+       fil, il reste sur la paillasse — c'est le montage de la fiche. */
+    g.setAttribute("transform", (pendu && c !== "chariot")
+      ? "translate(" + pt(X_DYN, yPoseCharge(c)) + ")"
+      : (pendu ? "translate(" + pt(X_CHAR, PAILL_Y) + ")"
+               : "translate(" + pt(X_SOL + j * DX_SOL, PAILL_Y) + ")"));
+    g.setAttribute("opacity", 1);
+  });
+  /* Le fil : du crochet à la charge, tendu. */
+  var gf = svg.querySelector("#filCharge");
+  if (!gf) gf = COUCHES.appareil.appendChild(el("g", { id: "filCharge",
+    "pointer-events": "none" }));
+  vide(gf);
+  if (ETAT.charge === "chariot") {
+    gf.appendChild(el("path", { d: "M " + pt(X_DYN, yCrochet() + 8) + " L "
+      + pt(X_CHAR, PAILL_Y - 15), stroke: "#b9a878", "stroke-width": 2 }));
+  }
+  if (gIndex) {
+    gIndex.setAttribute("transform", "translate(0," + yIndex().toFixed(1) + ")");
+    gCharge.setAttribute("transform", "translate(0," + yVu().toFixed(1) + ")");
+    gCharge.setAttribute("opacity",
+      Math.abs(yVu() - yIndex()) > 1.5 ? 1 : 0);
+  }
+  /* L'œil : sa hauteur est le réglage, et il regarde l'index. */
+  gOeil.setAttribute("transform", "translate("
+    + pt(X_DYN + 92, yIndex() - REG.oeil * 4) + ")");
+  majTableau();
+  majPanneaux();
+  majBoutons();
+  majConsigne();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+  $("alerte").style.display = horsProtocole() && !ETAT.controle ? "block" : "none";
+  $("alerteZero").style.display =
+    (ETAT.controle && !zeroRegle()) ? "block" : "none";
+}
+
+/* ==================================================================
+   16. LES BOUTONS COLLECTIFS
+   ================================================================== */
+var BOUTONS = [
+  { id: "app0", t: "Prendre l'appareil de 10 N", f: function () {
+      deposerDirect("app-0");
+    }, fait: function () { return ETAT.app === 0; } },
+  { id: "app1", t: "Prendre l'appareil de 2 N", f: function () {
+      deposerDirect("app-1");
+    }, fait: function () { return ETAT.app === 1; } },
+  { id: "zero", t: "Régler le zéro", f: function () {
+      if (ETAT.app < 0) { signaler("Accrocher d'abord un appareil."); return; }
+      if (ETAT.charge) { signaler("Le zéro se règle À VIDE : décrocher la "
+        + "charge d'abord."); return; }
+      REG.zero = 0;
+      $("rZero").value = "0";
+      majSorties();
+      noter("Zéro réglé : à vide, l'index est exactement sur le trait 0.");
+      succes();
+    }, fait: function () { return ETAT.app >= 0 && zeroRegle(); } },
+  { id: "decrocher", t: "Décrocher la charge", f: function () {
+      if (!ETAT.charge) { signaler("Rien n'est suspendu."); return; }
+      ETAT.charge = null;
+      succes();
+    }, fait: function () { return false; } },
+  { id: "S1", t: "Suspendre (S₁)", f: function () { deposerDirect("ch-S1"); },
+    fait: function () { return ETAT.charge === "S1"; } },
+  { id: "S2", t: "Suspendre (S₂)", f: function () { deposerDirect("ch-S2"); },
+    fait: function () { return ETAT.charge === "S2"; } },
+  { id: "chariot", t: "Tirer le chariot", f: function () { deposerDirect("ch-chariot"); },
+    fait: function () { return ETAT.charge === "chariot"; } },
+  { id: "controle", t: "Contrôler le zéro", f: controlerZero,
+    fait: function () { return ETAT.controle && zeroRegle(); } },
+  { id: "conclure", t: "Comparer et conclure", f: function () {
+      if (nbLignesFaites() < nbMesures()) {
+        signaler("Il reste " + (nbMesures() - nbLignesFaites())
+          + " mesure(s) à faire : le tableau se remplit une ligne à la fois.");
+        return;
+      }
+      if (!ETAT.controle) {
+        signaler("Le contrôle du zéro manque. Sans lui, rien ne garantit que "
+          + "les mesures du poste valent quelque chose.");
+        return;
+      }
+      if (!zeroRegle()) { signaler("Le zéro n'est pas réglé."); return; }
+      ETAT.conclu = true;
+      noter("La même force se lit " + nb(lireJuste(PHYS.F_S1.v, 0), 2)
+          + " N sur l'appareil de " + nomApp(0) + " et "
+          + nb(lireJuste(PHYS.F_S1.v, 1), 2) + " N sur celui de " + nomApp(1)
+          + " : les deux sont justes, la seconde est plus fine.");
+      succes();
+    }, fait: function () { return ETAT.conclu; } }
+];
+function deposerDirect(a) {
+  var z = emplacements(a)[0];
+  if (!z) return;
+  deposer(a, z.x, z.y);
+}
+function construireBoutons() {
+  var g = ajout("ui", el("g", { id: "boutons" })), b;
+  var rangs = [[], []];
+  BOUTONS.forEach(function (bt, i) { rangs[i < 4 ? 0 : 1].push(bt); });
+  rangs.forEach(function (rang, r) {
+    var y = r ? Y_BT2 : Y_BT1, tot = 0, x;
+    rang.forEach(function (bt) { bt.lg = 16 + bt.t.length * 6.35; tot += bt.lg + 9; });
+    x = (W - tot + 9) / 2;
+    rang.forEach(function (bt) {
+      b = g.appendChild(el("g", { "data-act": "bt-" + bt.id, cursor: "pointer",
+        id: "bt-" + bt.id }));
+      b.appendChild(el("rect", { x: x, y: y - 15, width: bt.lg, height: 30,
+        rx: 8, fill: "#eef4ea", stroke: "#9fb98a", "stroke-width": 1.4 }));
+      txtIn(b, x + bt.lg / 2, y + 5, bt.t, { taille: 11.5, couleur: "#2f4a1e" });
+      x += bt.lg + 9;
+    });
+  });
+}
+function majBoutons() {
+  BOUTONS.forEach(function (bt) {
+    var n = svg.querySelector("#bt-" + bt.id);
+    if (!n) return;
+    var r = n.querySelector("rect"), on = bt.fait();
+    r.setAttribute("fill", on ? "#d7e8c8" : "#eef4ea");
+    r.setAttribute("stroke", on ? "#5f8a3a" : "#9fb98a");
+    r.setAttribute("stroke-width", on ? 2.2 : 1.4);
+  });
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act");
+    if (!a || a.indexOf("bt-") !== 0) return;
+    var id = a.slice(3), i;
+    for (i = 0; i < BOUTONS.length; i++) {
+      if (BOUTONS[i].id === id) { BOUTONS[i].f(); redessiner(); return; }
+    }
+  });
+}
+
+/* ==================================================================
+   17. LE TABLEAU DE LA FICHE
+   ==================================================================
+   Quatre colonnes. Les deux premières sont l'énoncé de la fiche ; la
+   troisième est un QUOTIENT que la page calcule, la quatrième est la
+   LECTURE quantifiée. Ni l'une ni l'autre n'est recopiée.              */
+function majTableau() {
+  var t = $("tab"), i, tr, td, k, F, hp;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  entetes().forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = depouille(h);
+  });
+  for (i = 0; i < nbMesures(); i++) {
+    k = appDeLigne(i);
+    F = forceDe(nomForce(i));
+    hp = horsPortee(F, k);
+    tr = t.appendChild(document.createElement("tr"));
+    if (ETAT.app === k && ETAT.charge && ligneDe(ETAT.charge, k) === i) {
+      tr.className = "suivi";
+    }
+    tr.appendChild(document.createElement("td")).textContent = nomForce(i);
+    tr.appendChild(document.createElement("td")).textContent = porteeLigne(i);
+    /* La valeur d'une division ne s'affiche qu'une fois l'appareil pris
+       en main : c'est un calcul que l'élève doit faire, pas un cadeau. */
+    td = tr.appendChild(document.createElement("td"));
+    if (ETAT.app === k || ETAT.lu[i] !== undefined || ETAT.horsVu[i]) {
+      td.textContent = nbF(division(k), k) + " N";
+      td.className = "mes";
+    } else { td.className = "vide"; }
+    td = tr.appendChild(document.createElement("td"));
+    if (hp && ETAT.app === k && ETAT.charge
+        && ligneDe(ETAT.charge, k) === i) {
+      td.textContent = motHorsPortee();
+      td.className = "mes";
+      td.style.color = "#b03030";
+    } else if (hp && ETAT.horsVu && ETAT.horsVu[i]) {
+      td.textContent = motHorsPortee();
+      td.className = "mes";
+      td.style.color = "#b03030";
+    } else if (ETAT.lu[i] !== undefined) {
+      td.textContent = nbF(ETAT.lu[i], k) + " N";
+      td.className = "mes";
+    } else { td.className = "vide"; }
+  }
+  $("concl").className = ETAT.conclu ? "box" : "box masque";
+}
+
+/* ==================================================================
+   18. LES PANNEAUX
+   ================================================================== */
+function majPanneaux() { majMesure(); majComparaison(); }
+function el2(tag, cls, t) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (t !== undefined) n.textContent = t;
+  return n;
+}
+function majMesure() {
+  var g = $("mesCases"), k = ETAT.app, F, lu, juste, d;
+  vide(g);
+  $("mesNom").textContent = k < 0 ? "—"
+    : "portée " + nomApp(k) + (ETAT.charge ? " · " + nomCharge(ETAT.charge) : " · à vide");
+  function C(t, v, cls) {
+    d = g.appendChild(el2("div"));
+    d.appendChild(el2("div", "t", t));
+    d.appendChild(el2("div", "u" + (cls || (v ? "" : " nul")), v || "à mesurer"));
+  }
+  if (k < 0) {
+    C("portée", null); C("1 division", null); C("intensité lue", null);
+    $("mesPhrase").textContent = "Accrocher un dynamomètre au support : sa "
+      + "portée et son nombre de divisions sont inscrits sur le tube.";
+    vide($("mesBilan"));
+    return;
+  }
+  C("portée", nb(app(k).portee, 0) + " N");
+  C("1 division", nb(app(k).portee, 0) + " ÷ " + app(k).ndiv + " = "
+    + nbF(division(k), k) + " N");
+  if (!ETAT.charge) {
+    C("intensité lue", null);
+  } else {
+    F = forceDe(ETAT.charge);
+    if (horsPortee(F, k)) {
+      C("intensité lue", motHorsPortee(), " mal");
+    } else {
+      lu = lire(F, k);
+      juste = lireJuste(F, k);
+      C("intensité lue", nbF(lu, k) + " N",
+        Math.abs(lu - juste) > 1e-9 ? " mal" : "");
+    }
+  }
+  majBilanMesure(k);
+  $("mesPhrase").textContent = phraseMesure(k);
+}
+function nomCharge(c) {
+  return c === "S1" ? "solide (S₁)" : (c === "S2" ? "solide (S₂)" : "chariot tiré");
+}
+function majBilanMesure(k) {
+  var g = $("mesBilan"), F, lignes = [], para = parallaxeDiv(k);
+  vide(g);
+  lignes.push(["réglage du zéro", nb(REG.zero, 2) + " division",
+    zeroRegle() ? "" : "mal"]);
+  lignes.push(["décalage de parallaxe", nb(para, 2) + " division",
+    oeilEnFace(k) ? "" : "mal"]);
+  if (ETAT.charge) {
+    F = forceDe(ETAT.charge);
+    lignes.push(["allongement du ressort",
+      nb(allongement(F, k) * 1000, 1) + " mm", ""]);
+    if (!horsPortee(F, k)) {
+      lignes.push(["lecture juste, œil en face et zéro réglé",
+        nbF(lireJuste(F, k), k) + " N", ""]);
+    }
+  }
+  lignes.forEach(function (li) {
+    g.appendChild(el2("div", "n", li[0]));
+    g.appendChild(el2("div", "v" + (li[2] ? " mal" : ""), li[1]));
+  });
+}
+function phraseMesure(k) {
+  var F, lu, juste, e;
+  if (!zeroRegle()) {
+    return "Le zéro n'est pas réglé : l'index part de "
+      + nb(REG.zero, 2) + " division au lieu de 0, et ce décalage s'ajoute à "
+      + "TOUTES les mesures du poste. Le contrôle final le rattrapera.";
+  }
+  if (!oeilEnFace(k)) {
+    return "L'œil est à " + nb(REG.oeil, 0) + " cm au-dessus de l'index : "
+      + "à travers l'épaisseur du tube, il le voit devant une graduation qui "
+      + "n'est pas la sienne. C'est l'erreur de parallaxe, et elle vaut ici "
+      + nb(parallaxeDiv(k), 2) + " division.";
+  }
+  if (!ETAT.charge) {
+    return "Appareil réglé, œil en face. Suspendre une charge au crochet.";
+  }
+  F = forceDe(ETAT.charge);
+  if (horsPortee(F, k)) {
+    return "La force dépasse la portée de " + nomApp(k) + " : l'index bute sur "
+      + "la dernière graduation. On repose aussitôt — c'est tout ce qu'il faut "
+      + "voir, et c'est ce que la fiche demande.";
+  }
+  lu = lire(F, k);
+  juste = lireJuste(F, k);
+  e = Math.abs(F - lu);
+  return "On ne lit pas la force, on lit la graduation la plus proche : "
+    + nb(lu, 2) + " N, à " + nb(e * 1000, 0) + " mN de la valeur exacte. "
+    + "Une division vaut " + nb(division(k), 2) + " N, donc on ne peut pas "
+    + "faire mieux que la demi-division.";
+}
+
+/* La même force sur les deux tubes : c'est la comparaison que la fiche
+   demande, et le graphe la rend évidente. */
+function mesureFaite(k) {
+  var i = ligneDe("S1", k);
+  return i >= 0 && ETAT.lu[i] !== undefined;
+}
+function majComparaison() {
+  var s = $("gComp"), k, F = PHYS.F_S1.v, y, x0 = 92, x1 = 330, lu, vus = 0;
+  vide(s);
+  s.appendChild(el("rect", { x: 8, y: 10, width: 344, height: 118, rx: 6,
+    fill: "#fbfaf6", stroke: "#e4dfd0", "stroke-width": 1 }));
+  function X(v) { return x0 + v / 2.2 * (x1 - x0); }
+  for (k = 0; k < nbApp(); k++) if (mesureFaite(k)) vus++;
+  if (!vus) {
+    s.appendChild(el("text", { x: 180, y: 66, "text-anchor": "middle",
+      "font-size": 12, fill: "#9aa5b2" },
+      "mesurer (S₁) avec chacun des deux appareils"));
+    s.appendChild(el("text", { x: 180, y: 84, "text-anchor": "middle",
+      "font-size": 11, fill: "#9aa5b2" },
+      "la comparaison n'a de sens qu'une fois les deux lectures faites"));
+    return;
+  }
+  for (k = 0; k < nbApp(); k++) {
+    if (!mesureFaite(k)) continue;
+    y = 42 + k * 46;
+    s.appendChild(el("text", { x: x0 - 8, y: y + 4, "text-anchor": "end",
+      "font-size": 10.5, fill: INK }, "portée " + nomApp(k)));
+    /* Le tube, avec ses divisions — celles qui tiennent dans le cadre. */
+    s.appendChild(el("line", { x1: x0, y1: y, x2: x1, y2: y,
+      stroke: "#cfd6de", "stroke-width": 6, "stroke-linecap": "round" }));
+    var n = app(k).ndiv, i, xx;
+    for (i = 0; i <= n; i++) {
+      xx = X(i * division(k));
+      if (xx > x1) break;
+      s.appendChild(el("line", { x1: xx, y1: y - 4, x2: xx, y2: y + 4,
+        stroke: "#9aa5b2", "stroke-width": i % 10 === 0 ? 1.3 : 0.6 }));
+    }
+    /* La force vraie, et la graduation qu'on lit. */
+    lu = lireJuste(F, k);
+    if (vus >= nbApp()) {
+      s.appendChild(el("line", { x1: X(F), y1: y - 13, x2: X(F), y2: y + 13,
+        stroke: "#9aa5b2", "stroke-width": 1.2, "stroke-dasharray": "3 3" }));
+    }
+    if (lu !== null) {
+      s.appendChild(el("circle", { cx: X(lu), cy: y, r: 5, fill: ORANGE }));
+      s.appendChild(el("text", { x: X(lu), y: y - 12, "text-anchor": "middle",
+        "font-size": 10, "font-weight": "bold", fill: ORANGE }, nb(lu, 2) + " N"));
+    }
+  }
+  /* La force VRAIE ne se montre qu'une fois les deux lectures faites :
+     avant, elle donnerait la réponse que l'élève doit encadrer. */
+  if (vus >= nbApp()) {
+    s.appendChild(el("text", { x: X(F), y: 22, "text-anchor": "middle",
+      "font-size": 9, fill: "#6b7686" }, "la force vraie : " + nb(F, 3) + " N"));
+  }
+  s.appendChild(el("text", { x: 180, y: 142, "text-anchor": "middle",
+    "font-size": 9, fill: "#9aa5b2" },
+    "l'écart entre les deux lectures ne dépasse jamais une demi-division"));
+}
+
+/* ==================================================================
+   19. LES CURSEURS
+   ==================================================================
+   ⚠️ Valeurs initiales sur la grille du pas (§12.12) : 0 est multiple
+   de 0,25 ; 0 de 1. Et le curseur commande LA MÊME grandeur que la
+   molette et que l'œil qu'on déplace à la main (§12.13).               */
+function majSorties() {
+  $("oZero").textContent = nb(REG.zero, 2) + " division";
+  $("oOeil").textContent = nb(REG.oeil, 0) + " cm";
+}
+function brancherCurseurs() {
+  function lier(id, cle) {
+    var r = $(id);
+    function maj() {
+      REG[cle] = parseFloat(r.value);
+      majSorties();
+      /* Un réglage faussé périme les mesures déjà prises : on ne laisse
+         pas au tableau des nombres obtenus autrement (§12.19). */
+      if (ETAT && horsProtocole()) { ETAT.conclu = false; }
+      if (svg) redessiner();
+    }
+    r.addEventListener("input", maj);
+    maj();
+  }
+  lier("rZero", "zero");
+  lier("rOeil", "oeil");
+}
+
+/* ==================================================================
+   20. SÉANCE, REMISE À ZÉRO, TEXTES
+   ================================================================== */
+var T0 = Date.now();
+function majSeance() {
+  var d = (DONNEES.duree || 25) * 60, e = (Date.now() - T0) / 1000;
+  $("seanceT").textContent = mmss(Math.min(e, d));
+  $("seanceJ").style.width = borne(100 * e / d, 0, 100) + "%";
+}
+function rezero() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  ETAT = neufEtat();
+  MSG = null; MSG_JUSQUA = 0;
+  REG.zero = 0; REG.oeil = 0;
+  $("rZero").value = "0";
+  $("rOeil").value = "0";
+  majSorties();
+  $("obs").textContent = "—";
+  $("obs").className = "obs";
+  construireAppareil();
+  redessiner();
+}
+function remplirTextes() {
+  $("titre").textContent = depouille(T("titre"));
+  document.title = "Paillasse virtuelle — " + DONNEES.id + " · " + depouille(T("titre"));
+  $("ref").textContent = DONNEES.id + " · " + T("niveau") + " · " + T("lecon")
+    + " · résultats calculés";
+  $("objectif").innerHTML = md(T("objectif"));
+  $("observation").innerHTML = md(T("observation"));
+  $("conclTxt").innerHTML = md(T("conclusion"));
+  $("seanceB").textContent = "durée prescrite par la fiche";
+  $("seanceM").textContent = " " + (DONNEES.duree || 25) + " min · "
+    + depouille(T("modalite"));
+  ["materiel", "securite"].forEach(function (k) {
+    var u = $(k);
+    vide(u);
+    L(k).forEach(function (x) {
+      var li = document.createElement("li");
+      li.innerHTML = md(x);
+      u.appendChild(li);
+    });
+  });
+  $("capotCalculs").textContent =
+    "allongement  =  F / k\n"
+    + "1 division   =  portée / nombre de divisions\n"
+    + "lecture      =  arrondi( (F / division) + zéro + parallaxe ) × division";
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+  majCapotDeux();
+  majCapotAccord();
+  majCapotErreurs();
+  majCapotVals();
+}
+function majCapotDeux() {
+  var t = $("capotDeux"), tr, k, F = PHYS.F_S1.v, lu;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Appareil", "1 division", "F / division", "arrondi", "lecture"]
+    .forEach(function (h) {
+      tr.appendChild(document.createElement("th")).textContent = h;
+    });
+  for (k = 0; k < nbApp(); k++) {
+    lu = lireJuste(F, k);
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = "portée " + nomApp(k);
+    tr.appendChild(document.createElement("td")).textContent = nb(division(k), 2) + " N";
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(F / division(k), 3);
+    tr.appendChild(document.createElement("td")).textContent =
+      String(Math.round(F / division(k)));
+    tr.appendChild(document.createElement("td")).textContent =
+      lu === null ? motHorsPortee() : nb(lu, 2) + " N";
+  }
+  $("capotDeuxTxt").textContent = "La force vaut " + nb(F, 3)
+    + " N dans les deux cas. Sur l'appareil de " + nomApp(0)
+    + ", elle tombe entre deux graduations et l'on arrondit à "
+    + nb(lireJuste(F, 0), 2) + " ; sur celui de " + nomApp(1)
+    + ", les graduations sont quatre fois plus serrées et l'on lit "
+    + nb(lireJuste(F, 1), 2) + ". Les deux lectures sont justes, à leur "
+    + "précision près — et l'écart entre elles, "
+    + nb(Math.abs(lireJuste(F, 0) - lireJuste(F, 1)), 2)
+    + " N, ne dépasse pas la demi-division du plus grossier des deux.";
+}
+function majCapotAccord() {
+  var t = $("capotAccord"), tr, i, k, F, lu, att;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Ligne de la fiche", "Force (déduite)", "1 division", "Modèle", "Fiche"]
+    .forEach(function (h) {
+      tr.appendChild(document.createElement("th")).textContent = h;
+    });
+  for (i = 0; i < nbMesures(); i++) {
+    k = appDeLigne(i);
+    F = forceDe(nomForce(i));
+    lu = lireJuste(F, k);
+    att = lectureFiche(i);
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent =
+      nomForce(i) + " · " + porteeLigne(i);
+    tr.appendChild(document.createElement("td")).textContent = nb(F, 3) + " N";
+    tr.appendChild(document.createElement("td")).textContent = nb(division(k), 2) + " N";
+    tr.appendChild(document.createElement("td")).textContent =
+      lu === null ? motHorsPortee() : nb(lu, 2) + " N";
+    tr.appendChild(document.createElement("td")).textContent = att;
+  }
+}
+function majCapotErreurs() {
+  var t = $("capotErreurs"), tr, z, h, lu, F = PHYS.F_S1.v;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Réglage", "Décalage", "Lecture de (S₁) sur 10 N", "Écart"]
+    .forEach(function (h2) {
+      tr.appendChild(document.createElement("th")).textContent = h2;
+    });
+  var sauve = { z: REG.zero, o: REG.oeil };
+  [[-1, 0], [-0.5, 0], [0, 0], [0.5, 0], [1, 0]].forEach(function (c) {
+    REG.zero = c[0]; REG.oeil = c[1];
+    lu = lire(F, 0);
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = "zéro décalé";
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(c[0], 2) + " division";
+    tr.appendChild(document.createElement("td")).textContent = nb(lu, 2) + " N";
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(lu - lireJuste(F, 0), 2) + " N";
+  });
+  [5, 10, 20].forEach(function (hc) {
+    REG.zero = 0; REG.oeil = hc;
+    lu = lire(F, 0);
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = "œil au-dessus";
+    tr.appendChild(document.createElement("td")).textContent =
+      hc + " cm → " + nb(parallaxeDiv(0), 2) + " division";
+    tr.appendChild(document.createElement("td")).textContent = nb(lu, 2) + " N";
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(lu - lireJuste(F, 0), 2) + " N";
+  });
+  REG.zero = sauve.z; REG.oeil = sauve.o;
+}
+function majCapotVals() {
+  var t = $("capotVals"), tr, k;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Grandeur", "Valeur", "D'où elle vient"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  for (k in PHYS) {
+    if (!PHYS.hasOwnProperty(k)) continue;
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].n;
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(PHYS[k].v, PHYS[k].v >= 10 ? 1 : 3) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].s;
+  }
+}
+
+/* ==================================================================
+   21. DÉMARRAGE
+   ================================================================== */
+/* ==================================================================
+   22. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = W / s.width, ky = H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* Un bouton de scène : sa géométrie est lue sur le rectangle qu'il porte,
+   ce qui évite de toucher à construireBoutons(). */
+function surlignerBouton(id) {
+  var n = svg.querySelector("#bt-" + id), r = n && n.querySelector("rect");
+  if (!r) return null;
+  return haloGuide(+r.getAttribute("x") - 7, +r.getAttribute("y") - 7,
+                   +r.getAttribute("width") + 14,
+                   +r.getAttribute("height") + 14, 13);
+}
+/* La ZONE où poser : on réemploie le surligneur de la page — un second
+   mécanisme de cible ferait deux traits de couleurs différentes pour la
+   même chose — puis on confie ses rectangles à effacerGuide, pour
+   qu'aucun ne survive au guidage. */
+function montrerCibles(a, x, y) {
+  surlignerZones(a, x, y);
+  var g = svg.querySelector("#zones"), i;
+  if (!g) return;
+  for (i = 0; i < g.childNodes.length; i++) guideSurb.push(g.childNodes[i]);
+}
+
+/* Une ligne du tableau est faite si elle a été LUE, ou si le dépassement
+   de portée y a été constaté — la fiche compte l'un comme l'autre. Les
+   indices ne sont pas écrits : on les demande à ligneDe(), qui les
+   retrouve par le couple (charge, portée) tel que la fiche l'écrit. */
+function ligneFaite(i) {
+  return i >= 0 && (ETAT.lu[i] !== undefined || !!ETAT.horsVu[i]);
+}
+function montrerAppareil(k) {
+  var z = zoneTige();
+  surlignerNoeud('[data-act="app-' + k + '"]');
+  montrerCibles("app-" + k, z.x, z.y);
+}
+function montrerCharge(c) {
+  var z = zoneCrochet();
+  surlignerNoeud('[data-act="ch-' + c + '"]');
+  montrerCibles("ch-" + c, z.x, z.y);
+}
+/* Une mesure : d'abord le bon appareil au support, ensuite la charge au
+   crochet. Le guide montre celui des deux gestes qui reste à faire. */
+function montrerMesure(c, k) {
+  if (ETAT.app !== k) { montrerAppareil(k); return; }
+  montrerCharge(c);
+}
+function aideMesure(c, k) {
+  var nom = c === "S1" ? "(S₁)" : (c === "S2" ? "(S₂)" : "le chariot");
+  return ETAT.app !== k
+    ? "Accrocher d'abord le dynamomètre de portée <b>" + nomApp(k)
+      + "</b> à la tige de la potence."
+    : "Suspendre <b>" + nom + "</b> au crochet de mesure, attendre "
+      + "l'immobilisation de l'index, et lire l'œil bien en face.";
+}
+
+/* Les neuf étapes de la fiche. Les étapes 1 et 2 partagent un prédicat :
+   la page nomme les parties de l'appareil et affiche la valeur d'une
+   division dès qu'il est accroché — il n'y a rien à faire de plus. */
+var GUIDE = [
+  { fait: function () { return ETAT.app >= 0; },
+    aide: "Prendre le dynamomètre de portée <b>" + nomApp(0) + "</b> au "
+        + "râtelier et l'accrocher par son <b>anneau</b> à la tige : ses "
+        + "parties — anneau, tube gradué, ressort, index, crochet — sont "
+        + "alors sous les yeux.",
+    montre: function () { montrerAppareil(0); } },
+
+  { fait: function () { return ETAT.app >= 0; },
+    aide: function () {
+      return "Lire la portée inscrite sur le tube et compter ses divisions : "
+        + nb(app(ETAT.app < 0 ? 0 : ETAT.app).portee, 0) + " N ÷ "
+        + app(ETAT.app < 0 ? 0 : ETAT.app).ndiv + " divisions. Le tableau "
+        + "affiche le quotient.";
+    },
+    montre: function () { surlignerNoeud(COUCHES.appareil, 6); } },
+
+  { fait: function () { return ETAT.app >= 0 && zeroRegle(); },
+    aide: "L'appareil est <b>bien vertical</b> sur le support : régler "
+        + "maintenant le <b>zéro à vide</b> — glisser la molette, ou presser "
+        + "« Régler le zéro » — jusqu'à ce que l'index soit sur le trait 0.",
+    montre: function () {
+      surlignerNoeud("#molette", 10);
+      surlignerBouton("zero");
+    } },
+
+  { fait: function () { return ligneFaite(ligneDe("S1", 0)); },
+    aide: function () { return aideMesure("S1", 0); },
+    montre: function () { montrerMesure("S1", 0); } },
+
+  { fait: function () { return ligneFaite(ligneDe("S1", 1)); },
+    aide: function () {
+      return "<b>Recommencer la même mesure</b> avec l'appareil de portée "
+        + nomApp(1) + " : recalculer la valeur d'une division, régler le "
+        + "zéro, puis resuspendre (S₁). " + aideMesure("S1", 1);
+    },
+    montre: function () { montrerMesure("S1", 1); } },
+
+  { fait: function () { return ligneFaite(ligneDe("S2", 0)); },
+    aide: function () {
+      return "Remplacer (S₁) par <b>(S₂)</b> sur l'appareil de portée "
+        + nomApp(0) + ". " + aideMesure("S2", 0);
+    },
+    montre: function () { montrerMesure("S2", 0); } },
+
+  { fait: function () { return ligneFaite(ligneDe("S2", 1)); },
+    aide: function () {
+      return "Accrocher (S₂) à l'appareil de portée " + nomApp(1)
+        + " et soulever <b>très progressivement</b> : l'index butera sur la "
+        + "dernière graduation avant même que le solide ne quitte la "
+        + "paillasse. On repose aussitôt. " + aideMesure("S2", 1);
+    },
+    montre: function () { montrerMesure("S2", 1); } },
+
+  { fait: function () { return ligneFaite(ligneDe("chariot", 0)); },
+    aide: function () {
+      return "Poser le <b>chariot</b> sur la paillasse, intercaler l'appareil "
+        + "de portée " + nomApp(0) + " et <b>tirer horizontalement</b> à "
+        + "vitesse constante. " + aideMesure("chariot", 0);
+    },
+    montre: function () { montrerMesure("chariot", 0); } },
+
+  { fait: function () { return ETAT.controle; },
+    aide: "<b>Tout décrocher</b>, laisser l'appareil au repos, et vérifier que "
+        + "l'index est revenu exactement sur 0. Si ce n'est pas le cas, la "
+        + "fiche est formelle : toutes les mesures du poste sont à refaire.",
+    montre: function () {
+      surlignerBouton("controle");
+      surlignerNoeud("#index", 10);
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : les
+     curseurs appellent redessiner() avant le démarrage du panneau. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape soit lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  MSG = null; MSG_JUSQUA = 0;
+  majConsigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 2, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1 et 2 — PRENDRE L'APPAREIL DE 10 N et l'accrocher par son anneau à la
+     tige. Les deux étapes partagent le prédicat `ETAT.app >= 0` : la page
+     nomme les parties de l'appareil et affiche la valeur d'une division dès
+     qu'il est accroché, il n'y a rien à faire de plus. Le bouton passe par
+     `deposerDirect()`, donc par le même `deposer()` que le glisser. */
+  function () { presserBouton("bt-app0"); return 460; },
+  function () { presserBouton("bt-app0"); return 460; },
+
+  /* 3 — LE ZÉRO À VIDE. La page livre l'appareil réglé (`REG.zero` vaut 0),
+     si bien que ce prédicat est déjà vrai dès l'étape 1 et que le panneau
+     saute par-dessus : il déduit, il ne compte pas. Le geste reste écrit,
+     car un coup de molette suffirait à le faire redescendre ici. */
+  function () { presserBouton("bt-zero"); return 460; },
+
+  /* 4 à 8 — LES CINQ LIGNES DU TABLEAU, chacune un couple (charge, portée)
+     que `ligneDe()` retrouve dans la fiche. Deux vrais clics par ligne :
+     l'appareil de la portée demandée, puis la charge au crochet. C'est
+     `mesurer()` qui écrit — et ce qu'il écrit est ce que l'ŒIL LIT, zéro et
+     parallaxe compris.
+
+     Changer d'appareil décroche la charge (`deposer` remet `ETAT.charge` à
+     null) : les deux gestes s'enchaînent donc sans se gêner. */
+  function () {
+    if (ETAT.app !== 0) presserBouton("bt-app0");
+    presserBouton("bt-S1");
+    return 560;
+  },
+  function () {
+    if (ETAT.app !== 1) presserBouton("bt-app1");
+    presserBouton("bt-S1");
+    return 560;
+  },
+  function () {
+    if (ETAT.app !== 0) presserBouton("bt-app0");
+    presserBouton("bt-S2");
+    return 560;
+  },
+  /* (S₂) sur l'appareil de 2 N : la force dépasse la portée. La ligne se
+     renseigne quand même — la fiche compte le dépassement CONSTATÉ comme un
+     résultat, et `mesurer()` pose `ETAT.horsVu`. */
+  function () {
+    if (ETAT.app !== 1) presserBouton("bt-app1");
+    presserBouton("bt-S2");
+    return 560;
+  },
+  function () {
+    if (ETAT.app !== 0) presserBouton("bt-app0");
+    presserBouton("bt-chariot");
+    return 560;
+  },
+
+  /* 9 — LE CONTRÔLE FINAL DU ZÉRO, à vide : il faut donc décrocher d'abord,
+     sans quoi `controlerZero()` refuse. Les deux gestes tiennent dans la
+     même pression parce que « Décrocher » ne laisse aucune trace au
+     journal : pressé seul, il donnerait une pression morte.
+
+     ⚠ « Comparer et conclure » N'EST PAS dans la fiche — le protocole
+     s'arrête au contrôle du zéro —, mais c'est lui qui démasque la
+     conclusion. On le rattache donc à la dernière étape, comme le brief le
+     prescrit. Il refuse tant qu'une ligne manque ou que le contrôle n'a pas
+     été fait : rien n'est écrit ici. */
+  function () {
+    if (ETAT.charge) presserBouton("bt-decrocher");
+    presserBouton("bt-controle");
+    presserBouton("bt-conclure");
+    return 640;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  var p = $("paillasse");
+  svg = p.appendChild(el("svg", { viewBox: "0 0 " + W + " " + H,
+    width: "100%", role: "img",
+    "aria-label": "Paillasse virtuelle : deux dynamomètres, deux solides et un chariot" }));
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  ajouterDefs();
+  ajouterCouches();
+  construireFond();
+  construirePotence();
+  construireSecurite();
+  ETAT = neufEtat();
+  construireRack();
+  construireSolides();
+  construireOeil();
+  construireBoutons();
+  construireLegende();
+  brancherManipulation();
+  brancherBoutons();
+  brancherCurseurs();
+  remplirTextes();
+  $("rezero").addEventListener("click", rezero);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  construireProtocole();
+  construireAppareil();
+  redessiner();
+  majSeance();
+  setInterval(majSeance, 1000);
+  setInterval(function () {
+    if (MSG && Date.now() >= MSG_JUSQUA) { MSG = null; majConsigne(); }
+  }, 400);
+  var faux = accordAvecLaFiche();
+  if (faux.length) {
+    console.warn("E3AC-15 : le modèle ne redonne plus la fiche — " + faux.join(", "));
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else {
+  demarrer();
+}
+})();
+</script>
+</body>
+</html>

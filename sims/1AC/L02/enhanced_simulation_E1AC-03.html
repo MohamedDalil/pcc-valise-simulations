@@ -1,0 +1,2693 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-03 · volume propre, pas de forme propre</title>
+
+<!-- ⚠️ SKILL §12.47 : l'écouteur d'erreurs se pose AVANT le script de la page.
+     Posé en fin de body, il ne voit AUCUNE erreur de démarrage — elles ont
+     déjà eu lieu, et l'on croit à un défaut du harnais. -->
+<script>
+window.__erreurs = [];
+window.addEventListener("error", function (e) {
+  window.__erreurs.push(String(e.message));
+  var c = document.getElementById("consigne");
+  if (c) { c.textContent = "Erreur JavaScript : " + e.message; }
+});
+</script>
+
+<!--
+CE QUE CETTE PAGE EST, ET CE QU'ELLE N'EST PAS (SKILL_PAILLASSES §1.3)
+
+  * Elle est AUTONOME : ni `generer.py`, ni `moteur.js`, ni `simulation.html.j2`,
+    et elle ne s'ouvre pas depuis `index.html`. Elle DOUBLE
+    `simulation_E1AC-03.html`, elle ne la remplace pas.
+  * Elle n'a pas de vue 3D (§3.1 du SKILL principal).
+  * Elle s'écarte volontairement du §5 : on cherche qu'un objet se reconnaisse
+    comme un objet et donne envie d'y porter la main.
+  * SCHÉMA HABILLÉ — et là encore, presque tout est à l'échelle, parce que
+    tout le modèle est géométrique. Sont à l'échelle, à 1,4 unité de dessin
+    par millimètre : les quatre profils intérieurs (éprouvette 100 mL ISO 6706,
+    verrerie 250 mL DIN 12331 / 12380), la hauteur atteinte par le liquide
+    dans chacun, le diamètre de sa surface libre, et l'angle d'inclinaison de
+    la cuve. N'est PAS à l'échelle : l'épaisseur du film laissé sur la paroi
+    au transvasement — deux centièmes de millimètre, invisibles.
+
+CE QUE LE MODÈLE CALCULE, ET QUI N'EST PAS ÉCRIT
+
+  « Le liquide prend la forme du récipient et garde son volume » ne s'écrit
+  pas : ON CHANGE DE RÉCIPIENT ET L'ON CONSTATE. Trois choses sont obtenues,
+  aucune n'est affirmée :
+
+    * LA FORME. Elle se NOMME d'après le profil que le liquide parcourt : si
+      le rayon intérieur ne varie pas d'un demi-millimètre entre le fond et la
+      surface, c'est un cylindre — et il est dit « large » quand sa surface est
+      plus large que sa hauteur, ce qui se calcule et ne se juge pas à l'œil.
+      Sinon, c'est le profil du récipient qui donne le nom. Les cinq mots de la
+      fiche — cylindrique, conique, sphérique, cylindrique large, cylindrique
+      — sortent tous les cinq de ce test.
+    * LE VOLUME QUI SE CONSERVE, ET CE QUI LE LUI FAIT PERDRE. Un film d'eau
+      mouille la paroi à chaque transvasement, et son épaisseur sort de la loi
+      de Landau-Levich-Bretherton : e = 0,94 · l(c) · Ca^(2/3), soit 0,020 mm.
+      Sur les quatre transvasements du protocole, cela ne fait rien du tout
+      SI l'on reverse toute l'eau — et 0,6 mL si l'on se contente d'égoutter,
+      2 mL si l'on verse à la volée. C'est le sens de « sans perte » et de
+      « reverser TOUTE l'eau », et le curseur « soin » permet de le vérifier :
+      on ne relit alors plus 50 mL, et le tableau de la fiche cesse d'être
+      renseigné.
+    * L'HORIZONTALITÉ. La surface libre n'est pas dessinée horizontale : elle
+      est CALCULÉE dans le repère de la cuve, qui, elle, s'incline avec la
+      cale. L'angle entre la surface et le fil à plomb vaut alors 90,00°
+      quelle que soit l'épaisseur de la cale — et c'est cela, la démonstration.
+
+  Modèle validé en Python d'abord — `_scratch_LOT1/modeles.py`, fonction
+  `e03()` : les cinq formes, les cinq volumes et les quatre inclinaisons,
+  tous conformes à la fiche.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:56%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"\2713";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{display:block;font-size:9.5px;letter-spacing:.09em;
+         text-transform:uppercase;color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"\2713";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.ang{font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-03</span>
+</div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+        <div class="cmd"><button id="bProto" type="button" class="sec">Revenir au protocole</button></div>
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">
+        Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ce réglage-ci</b> a donné.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Instruments <span class="note">ce que la mesure donne</span></h2>
+      <div class="lect">
+        <div><div class="k">Récipient</div><div class="v" id="lRec">—</div></div>
+        <div><div class="k">Forme prise par le liquide</div><div class="v" id="lForme">—</div></div>
+        <div><div class="k">Volume lu dans l'éprouvette</div><div class="v" id="lVol">—</div></div>
+        <div><div class="k">Perte cumulée aux transvasements</div><div class="v" id="lPerte">—</div></div>
+        <div><div class="k">Inclinaison de la cuve</div><div class="v" id="lPente">—</div></div>
+        <div><div class="k">Surface libre / fil à plomb</div><div class="v" id="lAngle">—</div></div>
+      </div>
+      <div class="src" style="margin-top:8px">
+        Le film laissé sur la paroi mesure <b id="lFilm">—</b> : invisible, mais
+        il se paie au quatrième transvasement.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages <span class="note">le volume vient de la fiche ;<br>le soin et la cale sont des AJOUTS</span></h2>
+
+      <div class="reg">
+        <label for="rV0">Volume mesuré au départ</label><output id="oV0"></output>
+        <input type="range" id="rV0" min="20" max="90" step="5" value="50">
+        <div class="aide">La fiche prescrit <b>50 mL</b> : c'est la valeur du
+          protocole. Toute autre valeur est une variante, et le tableau de la
+          fiche cesse alors d'être renseigné.</div>
+      </div>
+
+      <div class="reg">
+        <label for="rSoin">Soin du transvasement</label><output id="oSoin"></output>
+        <input type="range" id="rSoin" min="0" max="2" step="1" value="2">
+        <div class="aide">Ajout — <b>2</b> est le geste de la fiche : à
+          l'entonnoir, en reversant toute l'eau. <b>1</b> : à l'entonnoir, mais
+          simplement égoutté. <b>0</b> : à la volée, sans entonnoir. C'est là
+          que la conservation du volume paraît fausse — et ce n'est pas le
+          liquide qui a changé.</div>
+      </div>
+
+      <div class="reg">
+        <label for="rCale">Épaisseur de la cale</label><output id="oCale"></output>
+        <input type="range" id="rCale" min="0" max="40" step="5" value="20">
+        <div class="aide">Ajout — la fiche ne la chiffre pas. <b>Elle ne figure
+          pas dans le protocole de référence</b> : elle ne change rien au
+          tableau, qui ne porte que sur les transvasements. La bouger ne coupe
+          donc pas le relevé.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>Le modèle — trois calculs, aucune affirmation</h3>
+      <div class="eq" id="eqCapot"></div>
+
+      <h3>Ce que devient la matière</h3>
+      <div class="eq">Rien. Aucune transformation chimique : on transvase, c'est tout.
+Ce qui change d'un récipient à l'autre, c'est la FORME du liquide.
+Ce qui ne change pas, c'est son VOLUME — à ceci près que la paroi
+en retient un film de 0,020 mm, et que ce film, lui, est réel :
+
+   surface mouillée x 0,020 mm  =  le volume qui ne suit pas.
+
+C'est pour cela que la fiche écrit « sans perte », « à l'aide de
+l'entonnoir » et « reverser TOUTE l'eau ». Les trois consignes
+disent la même chose, et le modèle la chiffre.</div>
+
+      <h3>Les constantes de la verrerie</h3>
+      <table id="capotRec"></table>
+      <p class="src">Cotes normalisées : éprouvette graduée 100 mL (ISO 6706,
+      D intérieur 26 mm), bécher forme basse 250 mL (DIN 12331), erlenmeyer
+      250 mL (DIN 12380), ballon à fond plat 250 mL. Cuve à faces planes :
+      180 x 90 mm.</p>
+      <h3>Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li>Il ne modélise pas le <b>ménisque</b> : la surface libre est
+        traitée comme un plan. C'est faux de deux millimètres contre le verre,
+        et c'est justement ce que la leçon suivante (E1AC-05) doit montrer.</li>
+        <li>Il ignore les <b>éclaboussures</b> et les gouttes qui restent sur
+        l'entonnoir : la seule perte comptée est le film de paroi.</li>
+        <li>Il traite la <b>viscosité et la tension superficielle</b> comme
+        celles de l'eau pure à 20 °C. Un colorant alimentaire les change de
+        quelques pour cent — moins que ce que la lecture sait voir.</li>
+        <li>La cuve inclinée est supposée <b>ni pleine ni presque vide</b> :
+        au-delà de l'inclinaison où la surface atteint un bord, la profondeur
+        moyenne cesse de suffire et le modèle ne le dit pas.</li>
+        <li>Il ne dit rien du <b>temps</b> que met un liquide à se remettre à
+        plat : la surface est calculée à l'équilibre, alors qu'en salle elle
+        oscille une seconde ou deux après qu'on a glissé la cale.</li>
+        <li>Il ne sait pas qu'un liquide <b>mouille</b> ou non : sur du verre
+        gras, ou avec du mercure, le film n'existe pas et la conclusion sur la
+        perte tomberait à faux.</li>
+        <li>Le seuil qui sépare « cylindrique » de « conique » — un
+        <b>demi-millimètre</b> de variation de rayon — est un seuil d'ASPECT.
+        Il laisse un facteur 5 de marge sous lui (l'éprouvette, 0,0 mm) et un
+        facteur 5 au-dessus (l'erlenmeyer, 2,6 mm).</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-03.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-03",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L02",
+  "titre": "Les propriétés physiques d'un liquide",
+  "axe": "Les propriétés physiques des liquides",
+  "objectif": "Montrer qu'un liquide possède un volume propre mais pas de forme propre, et que sa surface libre au repos est toujours plane et horizontale.",
+  "duree": 15,
+  "modalite": "groupes de 4 — 8 postes",
+  "materiel": [
+    "Eau colorée (eau + colorant alimentaire)",
+    "Éprouvette graduée de 100 mL",
+    "Bécher, erlenmeyer, ballon à fond plat",
+    "Entonnoir",
+    "Cuve transparente à faces planes",
+    "Équerre et fil à plomb",
+    "Cale de bois"
+  ],
+  "securite": [
+    "Essuyer immédiatement tout liquide renversé : le sol mouillé est glissant.",
+    "Manipuler la verrerie avec précaution ; ne jamais forcer un entonnoir dans un col.",
+    "Ne goûter aucun liquide, même coloré comme une boisson."
+  ],
+  "protocole": [
+    "Mesurer 50 mL d'eau colorée dans l'éprouvette graduée.",
+    "Transvaser cette eau dans l'erlenmeyer, puis dans le ballon, puis dans le bécher.",
+    "Après chaque transvasement, observer et dessiner la forme prise par le liquide.",
+    "Reverser toute l'eau dans l'éprouvette graduée et relire le volume.",
+    "Poser la cuve remplie d'eau sur la paillasse ; approcher l'équerre et le fil à plomb de la surface libre.",
+    "Glisser une cale sous un bord de la cuve pour l'incliner, puis recommencer la vérification."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Récipient",
+      "Éprouvette (départ)",
+      "Erlenmeyer",
+      "Ballon",
+      "Bécher",
+      "Éprouvette (retour)"
+    ],
+    "lignes": [
+      [
+        "Forme prise par le liquide",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Volume lu (mL)",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Forme prise par le liquide",
+        "cylindrique",
+        "conique",
+        "sphérique",
+        "cylindrique large",
+        "cylindrique"
+      ],
+      [
+        "Volume lu (mL)",
+        "50",
+        "50",
+        "50",
+        "50",
+        "50"
+      ]
+    ]
+  },
+  "observation": "Le liquide prend la forme de chaque récipient, mais le volume relu au retour dans l'éprouvette est toujours de 50 mL ; la surface libre reste perpendiculaire au fil à plomb, même quand la cuve est inclinée.",
+  "conclusion": "Un liquide possède un volume propre mais pas de forme propre : il prend la forme du récipient qui le contient. Au repos, sa surface libre est plane et horizontale. Un liquide s'écoule : c'est un fluide, et il ne peut pas être saisi entre les doigts.",
+  "oheric": {
+    "observation": "La même bouteille d'eau, versée dans un verre, dans une casserole ou dans une gourde, prend à chaque fois une forme différente. Pourtant, on affirme qu'il s'agit toujours d'« un litre d'eau ». Quelque chose se conserve-t-il au cours de ces transvasements ?",
+    "hypothese": "Si le liquide change de forme, alors c'est peut-être sa quantité qui change aussi ; sinon, c'est que le liquide possède un volume qui lui est propre et que seule sa forme dépend du récipient.",
+    "experience": "Faire passer un volume mesuré d'eau colorée dans trois récipients de formes différentes, puis le ramener dans l'éprouvette graduée pour le remesurer. Vérifier ensuite à l'équerre et au fil à plomb l'orientation de la surface libre, la cuve étant posée à plat puis inclinée.",
+    "resultats": "Le liquide épouse la forme de chacun des récipients. Le volume relu dans l'éprouvette au retour est toujours de 50 mL. La surface libre reste perpendiculaire au fil à plomb, que la cuve soit posée à plat ou inclinée.",
+    "interpretation": "La forme du liquide change d'un récipient à l'autre : le liquide n'a donc pas de forme propre. Le volume, lui, reste rigoureusement le même : le liquide possède donc un **volume propre**. Le fil à plomb indiquant la verticale, une surface qui lui reste perpendiculaire est **horizontale** : l'inclinaison du récipient ne change rien à l'orientation de la surface libre.",
+    "conclusion": "Un liquide possède un **volume propre** mais **pas de forme propre** : il prend la forme du récipient qui le contient. Au repos, sa **surface libre est plane et horizontale**. Un liquide s'écoule — c'est un **fluide** — et il ne peut pas être saisi entre les doigts."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   A. OUTILS — identiques d'une paillasse à l'autre
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030", FOND = "#f2f5f9";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Le gras et l'italique du YAML : dépouillés pour un `<text>` SVG, rendus
+   pour du HTML. ⚠️ SKILL §12.48 : on ne recopie JAMAIS le motif dans un
+   commentaire de bloc — l'astérisque échappé y refermerait le commentaire. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+/* Le YAML, lu — jamais retapé. */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var N_COL = ENTETES.length;
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+/* Le compte des cellules À DÉVOILER se CALCULE depuis le tableau du YAML : il
+   n'est jamais écrit à la main. C'est lui qui attrape le §12.12 — une page dont
+   tous les gestes marchent et dont le tableau ne se remplit jamais. */
+var N_CELL = (function () {
+  var n = 0, k, c;
+  for (k = 0; k < N_LIG; k++) {
+    for (c = 1; c < N_COL; c++) if ((VAL[k] || [])[c]) n++;
+  }
+  return n;
+})();
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i;
+  for (i = 0; i < m.length; i++) if (motif.test(m[i])) return depouille(m[i]);
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i;
+  for (i = 0; i < s.length; i++) if (motif.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+function proto(motif) {
+  var p = DONNEES.protocole || [], i;
+  for (i = 0; i < p.length; i++) if (motif.test(p[i])) return depouille(p[i]);
+  return "";
+}
+/* SKILL §5 — les durées viennent de la fiche, jamais du code. */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, quinze: 15, vingt: 20 };
+var DUREE_SEANCE = +(DONNEES.duree || 15);
+
+/* ==================================================================
+   B. L'ÉTAT, LES MINUTERIES
+   ================================================================== */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0;
+var svg = null, DEFS = null, COUCHES = {};
+var OBJ = {}, GROUPES = {}, BOUTONS = {};
+var ANIM_ON = true;
+
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+/* ==================================================================
+   C. LES COUCHES — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées, tuyaux, halos — DERRIÈRE les appareils
+     poste   le mobilier fixe
+     arriere l'intérieur de la verrerie, le liquide, les zones de dépôt
+     objets  ce qui se manipule
+     avant   les PAROIS DE VERRE et les étiquettes
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout             */
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function titrePoste(x, y, s, ancre) {
+  return txt("avant", x, y, s, { ancre: ancre || "middle", taille: 11.5, gras: true,
+                                 couleur: GOLD, halo: true });
+}
+function ombreAuSol(cx, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: BANC + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Les défs que TOUTES les paillasses emploient. Chaque page y ajoute les
+   siennes dans `ajouterDefs()`. */
+function defsCommunes() {
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+  /* Le verre : voile de teinte, reflet vertical net près du bord gauche,
+     arête sombre à droite. Sans le reflet, ce n'est jamais du verre. */
+  g = el("linearGradient", { id: "verrerie", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0,    "stop-color": "#ffffff", "stop-opacity": .72 }));
+  g.appendChild(el("stop", { offset: 0.14, "stop-color": "#dbe6ef", "stop-opacity": .34 }));
+  g.appendChild(el("stop", { offset: 0.55, "stop-color": "#eef4f9", "stop-opacity": .16 }));
+  g.appendChild(el("stop", { offset: 0.9,  "stop-color": "#c9d7e3", "stop-opacity": .38 }));
+  g.appendChild(el("stop", { offset: 1,    "stop-color": "#ffffff", "stop-opacity": .66 }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "inox", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#8d97a5" }));
+  g.appendChild(el("stop", { offset: .28, "stop-color": "#e7ecf1" }));
+  g.appendChild(el("stop", { offset: .55, "stop-color": "#aab4c0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#79838f" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c8a86a" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#a5813f" }));
+  DEFS.appendChild(g);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%",
+                     width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .28 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%",
+                     width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .38 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flou", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 7 }));
+  DEFS.appendChild(f);
+}
+
+/* ==================================================================
+   D. LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                           */
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function brancherActe(act, fn) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (n) n.addEventListener("click", function (e) { reprendreAnim(); fn(e); });
+}
+
+/* ==================================================================
+   E. PLACEMENT ET ANIMATION
+   ==================================================================
+   ⚠️ SKILL §1.2 bis — CHAQUE ÉTAPE DOIT SE VOIR SE FAIRE. Un objet qui SAUTE
+   de sa place de départ à sa place d'arrivée montre deux états ; il ne montre
+   pas le geste. Tout déplacement passe donc par `glisserVers`, qui interpole
+   par une échelle de MINUTERIES — `setTimeout` + `Date.now()`, jamais
+   `requestAnimationFrame` : sous le pilote, rAF n'est pas appelé et
+   l'animation disparaîtrait SANS lever d'erreur (SKILL §13.5 bis).
+   L'animation ne DÉCIDE de rien : le solveur a déjà l'état d'arrivée.      */
+/* ⚠️ `arreterDeroule()` coupe l'animation là où elle en est — c'est voulu :
+   la scène doit se figer sur le geste qu'on vient d'interrompre. Mais le
+   geste SUIVANT, lui, doit se voir se faire. Toute action de l'élève réarme
+   donc l'animation, APRÈS avoir purgé les images restées en attente : sans
+   cette purge, le mouvement interrompu reprendrait tout seul. */
+function reprendreAnim() { if (!ANIM_ON) { purger(); ANIM_ON = true; } }
+function poser(id, x, y, rot, ech) {
+  var o = OBJ[id];
+  o.x = x; o.y = y;
+  if (rot !== undefined && rot !== null) o.rot = rot;
+  if (ech !== undefined && ech !== null) o.ech = ech;
+  GROUPES[id].setAttribute("transform", "translate(" + x.toFixed(1) + "," +
+    y.toFixed(1) + ") rotate(" + (o.rot || 0).toFixed(1) + ")" +
+    (o.ech && o.ech !== 1 ? " scale(" + o.ech.toFixed(3) + ")" : ""));
+}
+function replacer(id) {
+  var a = ancre(id, OBJ[id].place);
+  poser(id, a[0], a[1], a.length > 2 ? a[2] : 0);
+}
+function replacerTout() { var k; for (k in OBJ) replacer(k); }
+/* Le trajet, en douze pas lissés. `fin` est appelé à l'arrivée — mais l'ÉTAT,
+   lui, est posé AVANT l'appel (SKILL §6.2) : `fin` ne sert qu'à l'image. */
+function glisserVers(id, x1, y1, rot1, ms, fin) {
+  var o = OBJ[id], x0 = o.x, y0 = o.y, r0 = o.rot || 0, PAS = 12, i;
+  if (rot1 === null || rot1 === undefined) rot1 = r0;
+  for (i = 1; i <= PAS; i++) (function (i) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = i / PAS, e = t * t * (3 - 2 * t);
+      poser(id, x0 + (x1 - x0) * e, y0 + (y1 - y0) * e, r0 + (rot1 - r0) * e);
+      dessiner();
+      if (i === PAS && fin) fin();
+    }, Math.max(16, ms * i / PAS));
+  })(i);
+}
+/* Une grandeur du MODÈLE qui rejoint sa valeur d'arrivée sous les yeux : le
+   niveau qui monte, la couleur qui vire, le piston qui glisse. La valeur
+   d'arrivée est déjà calculée ; on ne fait que la rejoindre. */
+function animerVers(lire, ecrire, cible, ms, fin) {
+  var v0 = lire(), PAS = 12, i;
+  for (i = 1; i <= PAS; i++) (function (i) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = i / PAS, e = t * t * (3 - 2 * t);
+      ecrire(v0 + (cible - v0) * e);
+      dessiner();
+      if (i === PAS && fin) fin();
+    }, Math.max(16, ms * i / PAS));
+  })(i);
+}
+
+/* ==================================================================
+   F. PRENDRE ET DÉPOSER (SKILL §9)
+   ==================================================================
+   Le pointeur est capturé sur le SVG lui-même, pas sur l'objet : sans cela,
+   un mouvement rapide sort de la forme et le glissement s'arrête net au
+   milieu du geste, sans erreur.                                             */
+var prise = null, ptSVG = null;
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+var surbrillance = [];
+function montrerCibles(id) {
+  effacerCibles();
+  if (!id) return;
+  emplacements(id).forEach(function (z) {
+    if (z.propre) return;                       /* sa propre place */
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 12,
+      fill: GOLD, opacity: .16, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* La zone que `deposer` accepterait — un bouton ne vise JAMAIS
+   `emplacements(id)[0]`, sinon bouton et glisser divergent (SKILL §12.16). */
+function zoneVoulue(id, type) {
+  var z = emplacements(id), i;
+  for (i = 0; i < z.length; i++) if (z[i].type === type) return z[i];
+  return null;
+}
+function brancherPrise(liste) {
+  liste.forEach(function (id) {
+    GROUPES[id].addEventListener("pointerdown", function (e) {
+      if (prise) return;                        /* verrou en PREMIÈRE ligne */
+      var r = typeof refusPrise === "function" ? refusPrise(id) : null;
+      if (r === false) return;                  /* muet : l'objet n'existe pas */
+      if (r) { signaler(r); return; }
+      e.preventDefault();
+      var p = versSVG(e), o = OBJ[id];
+      prise = { id: id, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+                x0: p.x, y0: p.y, bouge: false };
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      GROUPES[id].setAttribute("filter", "url(#ombrePrise)");
+      GROUPES[id].setAttribute("cursor", "grabbing");
+      COUCHES.drag.appendChild(GROUPES[id]);
+      montrerCibles(id);
+    });
+  });
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    poser(prise.id, p.x + prise.dx, p.y + prise.dy);
+    dessiner();
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var id = prise.id, o = OBJ[id];
+    GROUPES[id].removeAttribute("filter");
+    GROUPES[id].setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(GROUPES[id]);
+    effacerCibles();
+    if (!prise.bouge) {                    /* un clic, pas un glissement */
+      prise = null; replacer(id); dessiner(); return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(id).forEach(function (z) {
+      var d = Math.sqrt((o.x - z.x) * (o.x - z.x) + (o.y - z.y) * (o.y - z.y));
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    prise = null;
+    deposer(id, best);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);   /* ne PAS l'oublier */
+}
+/* Un objet qui n'a nulle part où aller revient chez lui, et le refus DIT où
+   poser. On ne laisse jamais un objet flotter. */
+function deposer(id, z) {
+  reprendreAnim();
+  if (!z) {
+    replacer(id);
+    var d = emplacements(id).filter(function (e) { return !e.propre; })
+      .map(function (e) { return e.quoi; }).join(", ou ");
+    signaler("Rien ici. " + (d ? "Poser " + d + "." : "Reposer l'objet à sa place."));
+    dessiner(); return;
+  }
+  if (z.propre) {
+    OBJ[id].place = z.type;
+    var a = ancre(id, z.type);
+    glisserVers(id, a[0], a[1], a.length > 2 ? a[2] : 0, 420);
+    succes(); avancer(); return;
+  }
+  accepter(id, z);
+}
+
+/* ==================================================================
+   G. CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.textContent = cells[i];
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerColonneEntiere(c) {
+  var k;
+  for (k = 0; k < N_LIG; k++) revelerCellule(k, c);
+}
+function majCompteurCellules() {
+  $("nbCell").textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). */
+function signalerDivergence(nom, msg) {
+  if (ETAT.horsProto) return;
+  if (ETAT.divNoms.indexOf("|" + nom + "|") >= 0) return;
+  ETAT.divNoms += "|" + nom + "|";
+  ETAT.diverge += (ETAT.diverge ? "<br>" : "") + msg;
+  $("diverge").innerHTML = ETAT.diverge;
+  $("diverge").style.display = "block";
+}
+
+/* ==================================================================
+   H. LE PARCOURS D'ÉTAPES, LA CONSIGNE, LA SÉANCE
+   ================================================================== */
+function construireEtapes() {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < ETAPES.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + ETAPES[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majProtocole();
+  majPanneaux();
+  if (typeof armer === "function") armer();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance() {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "");
+  majSeance();
+}
+/* ⚠️ SKILL §5.4 — le minuteur de séance court en temps RÉEL, jamais accéléré :
+   il mesure ce que la manipulation coûte à l'enseignant, pas ce que le modèle
+   simule. Et il SURVIT à « Recommencer ».                                   */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tic, 50);
+}
+function tic() {
+  var m = Date.now(), dt = Math.min(0.25, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+  if (typeof avancerScene === "function") avancerScene(dt);
+}
+
+/* ==================================================================
+   I. LES PANNEAUX HTML COMMUNS
+   ================================================================== */
+function construireHTMLCommun() {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · résultats calculés";
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  /* Le tableau des constantes se REGÉNÈRE depuis PHYS — jamais retapé dans le
+     HTML (SKILL §7.3). */
+  var ct = $("capotConst");
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  Object.keys(PHYS).forEach(function (c) {
+    var p = PHYS[c], a = Math.abs(p.v), s;
+    /* Une constante s'écrit avec les chiffres qu'elle mérite : la notation
+       scientifique dès qu'un zéro de tête ou de queue rendrait le nombre
+       illisible — « 0,0001 s⁻¹ » ne dit rien de 5,2 × 10⁻⁵. */
+    if (a !== 0 && (a < 0.01 || a >= 1e5)) s = sci(p.v, 2);
+    else s = nb(p.v, a >= 100 ? 0 : (a >= 1 ? 2 : 3));
+    ct.appendChild(ligneTab([p.n, s + " " + p.u, p.s]));
+  });
+  construireEtapes();
+  construireProtocole();
+  construireSeance();
+}
+
+/* ==================================================================
+   J. LES RÉGLAGES — PROTO contre REG (SKILL §11.3)
+   ==================================================================
+   `PROTO` porte les valeurs PRESCRITES par la fiche, `REG` les courantes. Dès
+   qu'un réglage s'en écarte, le tableau de la fiche cesse d'être renseigné —
+   il consigne l'expérience prescrite, pas une variante — un bandeau l'explique,
+   le carnet de mesures continue, et un bouton rétablit tout.               */
+function litCurseurs() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id);
+    if (n) REG[c.cle] = parseFloat(n.value);
+  });
+}
+function majSorties() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.out);
+    if (n) n.textContent = c.fmt(REG[c.cle]);
+  });
+}
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+function majHorsProto() {
+  ETAT.horsProto = horsProtocole();
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+/* ⚠️ SKILL §12.34 — un état a plusieurs reflets ; les remettre un par un en
+   oublie toujours un. On repasse par la fonction qui les tient TOUS.       */
+function reglerTout() {
+  litCurseurs();
+  majSorties();
+  majHorsProto();
+  if (typeof surReglage === "function") surReglage();
+  dessiner();
+  avancer();
+}
+function revenirProtocole() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id);
+    if (n && PROTO[c.cle] !== undefined) n.value = PROTO[c.cle];
+  });
+  reglerTout();
+}
+/* ⚠️ SKILL §12.12 — LE DÉFAUT LE PLUS SILENCIEUX DE TOUTE LA SÉRIE.
+   Avec `min="0"` et `step="0.02"`, la valeur `0.15` n'est pas sur la grille :
+   le navigateur la ramène SANS RIEN DIRE à 0,14. `REG` ne vaut alors jamais
+   `PROTO`, `horsProtocole()` rend `true` dès le chargement, `revelerCellule`
+   sort à sa première ligne — et le tableau de la fiche reste vide pendant que
+   toute la manipulation fonctionne. Le contrôle tient en dix lignes, rien
+   d'autre ne le trouve, et il PARLE.                                       */
+function verifierPasCurseurs() {
+  var mauvais = [];
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id), mi, st, v;
+    if (!n) return;
+    mi = parseFloat(n.min); st = parseFloat(n.step); v = parseFloat(n.value);
+    if (!(st > 0)) return;
+    if (Math.abs((v - mi) / st - Math.round((v - mi) / st)) > 1e-6) mauvais.push(c.id);
+  });
+  if (mauvais.length) {
+    noter("⚠ curseur hors de sa grille de pas : " + mauvais.join(", "), false);
+  }
+}
+
+/* ==================================================================
+   K. RECOMMENCER, ET DÉMARRER
+   ==================================================================
+   « Recommencer » remet l'expérience à zéro SANS toucher aux réglages : on
+   refait la même manipulation dans les mêmes conditions. Il purge toutes les
+   minuteries en attente, remet les objets à leur place et à leurs couches,
+   rend le tableau vierge, REMASQUE la conclusion — sans quoi l'élève suivant
+   trouve la réponse déjà écrite — et CONSERVE le minuteur de séance.       */
+function recommencer() {
+  purger();
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  ANIM_ON = true;
+  var s = ETAT.tSeance;
+  ETAT = neufEtat();
+  ETAT.tSeance = s;                     /* la séance ne se rembobine pas (§5.4) */
+  remettreScene();
+  replacerTout();
+  viderTableau();
+  var k;
+  for (k in BOUTONS) BOUTONS[k].neuf();
+  $("diverge").style.display = "none";
+  $("diverge").innerHTML = "";
+  majHorsProto();
+  if (typeof surReglage === "function") surReglage();
+  dessiner();
+  avancer();
+}
+function brancherCurseurs() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id);
+    if (n) n.addEventListener("input", reglerTout);
+  });
+  var b = $("bProto");
+  if (b) b.addEventListener("click", revenirProtocole);
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  if (typeof brancherPage === "function") brancherPage();
+}
+function demarrer() {
+  var cadre = $("paillasse");
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet" });
+  cadre.insertBefore(svg, cadre.firstChild);
+  DEFS = svg.appendChild(el("defs", {}));
+  defsCommunes();
+  ajouterDefs();
+  ajouterCouches();
+  ETAT = neufEtat();
+  ETAT.tSeance = 0;
+  construireDecor();
+  construireScene();
+  construireHTMLCommun();
+  brancherCurseurs();
+  verifierPasCurseurs();
+  litCurseurs();
+  majSorties();
+  majHorsProto();
+  if (typeof surReglage === "function") surReglage();
+  viderTableau();
+  remettreScene();
+  replacerTout();
+  dessiner();
+  avancer();
+  demarrerHorloge();
+}
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ================================================================== */
+var PHYS = {
+  RHO: { v: 998.2, u: "kg/m3", n: "masse volumique de l'eau", s: "a 20 °C" },
+  GAMMA: { v: 0.0728, u: "N/m", n: "tension superficielle de l'eau", s: "a 20 °C" },
+  MU: { v: 1.002e-3, u: "Pa.s", n: "viscosite dynamique de l'eau", s: "a 20 °C" },
+  G: { v: 9.81, u: "m/s2", n: "pesanteur", s: "valeur normale" },
+  V_RETRAIT: { v: 0.05, u: "m/s", n: "vitesse de retrait de la paroi",
+               s: "redressement d'un recipient qu'on vient de vider" },
+  SEUIL_R: { v: 0.5, u: "mm", n: "SEUIL D'ASPECT — cylindre ou non",
+             s: "deux rayons qui different de moins d'un demi-millimetre se " +
+                "lisent comme un cylindre" },
+  DIV_EPR: { v: 1, u: "mL", n: "valeur d'une division de l'eprouvette",
+             s: "100 mL, chiffree tous les 10 mL, dix divisions entre deux chiffres" }
+};
+
+/* La verrerie, aux cotes normalisees, en millimetres. */
+var RECIP = {
+  "Éprouvette": { genre: "cyl", dInt: 26, haut: 250, col: 26, x: 82, cap: 100 },
+  "Erlenmeyer": { genre: "cone", dInt: 85, haut: 145, col: 34, x: 212, cap: 250 },
+  "Ballon": { genre: "sphere", dInt: 85, haut: 135, col: 34, x: 352, cap: 250 },
+  "Bécher": { genre: "cyl", dInt: 70, haut: 95, col: 70, x: 482, cap: 250 }
+};
+/* Le PARCOURS vient du protocole de la fiche, pas d'ici : on y lit l'ordre
+   des recipients, et les intitules de colonnes du tableau les nomment. */
+var PARCOURS = ["Éprouvette", "Erlenmeyer", "Ballon", "Bécher", "Éprouvette"];
+var COLONNES = ENTETES.slice(1);
+var N_COLS = COLONNES.length;
+var CUVE = { L: 180, H: 90, e: 6, x: 700, eau: 55 };   /* mm */
+
+/* ==================================================================
+   2. LES RÉGLAGES
+   ==================================================================
+   ⚠ `cale` N'EST PAS DANS `PROTO`, ET C'EST VOULU. Le garde-fou du §11.3
+   coupe le tableau de la fiche des qu'un reglage s'ecarte du protocole. Or
+   l'epaisseur de la cale ne change RIEN au tableau — il ne porte que sur les
+   transvasements. L'y mettre aurait coupe le relevé pour une raison qui ne le
+   concerne pas.                                                             */
+var PROTO = { v0: 50, soin: 2 };
+var REG = { v0: 50, soin: 2, cale: 20 };
+var CURSEURS = [
+  { id: "rV0", out: "oV0", cle: "v0", fmt: function (v) { return nb(v, 0) + " mL"; } },
+  { id: "rSoin", out: "oSoin", cle: "soin", fmt: function (v) {
+      return v >= 2 ? "2 — tout reversé" : (v >= 1 ? "1 — égoutté" : "0 — à la volée"); } },
+  { id: "rCale", out: "oCale", cle: "cale", fmt: function (v) { return nb(v, 0) + " mm"; } }
+];
+
+/* ==================================================================
+   3. LE SOLVEUR
+   ================================================================== */
+function rayonInterieur(rk, h) {
+  var R = RECIP[rk], D = R.dInt, hE, r, y, hM, hS;
+  if (R.genre === "cyl") return D / 2;
+  if (R.genre === "cone") {
+    hE = R.haut * 0.62;
+    if (h >= hE) return R.col / 2;
+    return D / 2 - (D - R.col) / 2 * (h / hE);
+  }
+  r = D / 2;
+  hM = 0.13 * r;
+  hS = 2 * r - hM;
+  if (h >= hS) return R.col / 2;
+  y = h + hM - r;
+  return Math.sqrt(Math.max(0, r * r - y * y));
+}
+function hauteurPourVolume(rk, vmL) {
+  var cible = vmL * 1000, v = 0, h = 0, pas = 0.1, r;
+  if (vmL <= 0) return 0;
+  while (v < cible && h < RECIP[rk].haut) {
+    r = rayonInterieur(rk, h);
+    v += Math.PI * r * r * pas;
+    h += pas;
+  }
+  return h;
+}
+/* ⚠ LA FORME SE NOMME, ELLE NE SE DECRETE PAS. Le test porte sur le PROFIL
+   que le liquide parcourt, du fond a sa surface. « Large » n'est pas une
+   impression : c'est une nappe plus large que haute, et le rapport tranche. */
+function formeDe(rk, vmL) {
+  var h = hauteurPourVolume(rk, vmL);
+  var rb = rayonInterieur(rk, 0.5), rh = rayonInterieur(rk, h);
+  if (h <= 0) return "—";
+  if (Math.abs(rh - rb) < PHYS.SEUIL_R.v) {
+    return 2 * rh > h ? "cylindrique large" : "cylindrique";
+  }
+  return RECIP[rk].genre === "sphere" ? "sphérique" : "conique";
+}
+/* Landau-Levich-Bretherton : l'epaisseur du film laisse sur la paroi. */
+function epaisseurFilm() {
+  var lc = Math.sqrt(PHYS.GAMMA.v / (PHYS.RHO.v * PHYS.G.v));
+  var ca = PHYS.MU.v * PHYS.V_RETRAIT.v / PHYS.GAMMA.v;
+  return 0.94 * lc * Math.pow(ca, 2 / 3);         /* m */
+}
+function perteTransvasement(rk, vmL, soin) {
+  if (soin >= 2) return 0;                        /* on reverse TOUTE l'eau */
+  var e = epaisseurFilm() * 1000, h = hauteurPourVolume(rk, vmL), s, x, pas = 0.5;
+  s = Math.PI * Math.pow(rayonInterieur(rk, 0), 2);
+  for (x = 0; x < h; x += pas) s += 2 * Math.PI * rayonInterieur(rk, x) * pas;
+  return s * e * (soin === 0 ? 3 : 1) / 1000;     /* mm3 -> mL */
+}
+/* La lecture dans l'eprouvette : une division vaut 1 mL, et l'oeil partage
+   l'intervalle jusqu'au cinquieme (SKILL §12.21 — les decimales suivent la
+   division, et une division de 1 mL n'en justifie AUCUNE). */
+function volumeLu(vmL) {
+  var pas = PHYS.DIV_EPR.v / 5;
+  return Math.round(vmL / pas) * pas;
+}
+function ecrireVolume(vmL) { return nb(volumeLu(vmL), 0); }
+/* L'inclinaison de la cuve, et ce qui ne bouge pas avec elle. */
+function penteCuve() {
+  return Math.asin(Math.min(0.6, REG.cale / CUVE.L)) * 180 / Math.PI;
+}
+/* ⚠ CE N'EST PAS UNE AFFIRMATION, C'EST UNE CONSEQUENCE. La surface libre est
+   horizontale dans le repere du MONDE ; le fil a plomb y est vertical. Leur
+   angle vaut donc 90°, quelle que soit l'inclinaison de la cuve — et la page
+   le CALCULE dans le repere de la cuve, ou ni l'un ni l'autre n'est droit. */
+function angleSurfaceFil() {
+  var a = penteCuve() * Math.PI / 180;
+  /* dans le repere de la cuve : surface = (cos a, -sin a) ; fil = (sin a, cos a) */
+  var ps = Math.cos(a) * Math.sin(a) + (-Math.sin(a)) * Math.cos(a);
+  return Math.acos(Math.max(-1, Math.min(1, ps))) * 180 / Math.PI;
+}
+
+/* ==================================================================
+   4. L'ÉTAT
+   ================================================================== */
+function neufEtat() {
+  var e = { tSeance: 0, nCell: 0, horsProto: false, diverge: "", divNoms: "",
+            vol: {}, volVu: {}, volAt: {}, ou: "", etape: 0, perte: 0,
+            passe: [], observe: false, retour: false, traitVu: 0,
+            equerre: false, cale: false, verifAvant: false, verifApres: false,
+            penteVue: 0, dernier: "" }, i;
+  for (i in RECIP) { e.vol[i] = 0; e.volVu[i] = 0; }
+  return e;
+}
+/* L'avancement du parcours : combien d'etapes du transvasement sont faites.
+   `passe` retient les recipients traverses, DANS L'ORDRE — c'est lui qui dit
+   quelle colonne du tableau se renseigne.                                   */
+function prochainRecipient() {
+  return ETAT.etape + 1 < PARCOURS.length ? PARCOURS[ETAT.etape + 1] : null;
+}
+
+/* ==================================================================
+   5. GÉOMÉTRIE
+   ==================================================================
+   ⚠ Zones interdites, remesurees sur cette page a 1900 x 900 : consigne
+   x 238..882 y <= 110 ; journal x 14..272 y <= 150 ; boutons ronds x >= 1000
+   y <= 62. Le sommet de l'eprouvette — le point le plus haut de la scene —
+   est a y = 216, et son intitule a 202 : sous le journal, donc, et a sa
+   droite.                                                                   */
+var W = 1120, H = 760;
+var BANC = 566, Y_BOUTONS = 690;
+var ECH = 1.4;
+var POSTE = { x: 856, y: 402, w: 248, h: 164 };
+var FLACON0 = { x: 900, y: 566 }, EQU0 = { x: 996, y: 512 }, CALE0 = { x: 1068, y: 556 };
+var Y_ETIQ = { epr: 202, erlen: 349, ballon: 363, becher: 419, cuve: 384,
+               angle: 412, poste: 390 };
+function hautU(rk) { return RECIP[rk].haut * ECH; }
+function cuveY() { return BANC - CUVE.H * ECH; }
+
+/* ==================================================================
+   6. LES DÉFS
+   ================================================================== */
+function ajouterDefs() {
+  var g;
+  g = el("linearGradient", { id: "plateau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#eef2f6" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#cfd8e2" }));
+  DEFS.appendChild(g);
+  /* l'eau COLORÉE de la fiche : le colorant ne change rien au modele, il rend
+     seulement la surface libre lisible au tableau */
+  g = el("linearGradient", { id: "eauC", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#7fd0e8" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#1f7fa8" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "bois2", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#d8b478" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#9a7433" }));
+  DEFS.appendChild(g);
+}
+
+/* ==================================================================
+   7. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: 30, fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC + 30, width: W, height: H - BANC - 30,
+                             fill: "url(#banc)" }));
+  ajout("fond", el("line", { x1: 0, y1: BANC, x2: W, y2: BANC,
+                             stroke: "#8a6a2a", "stroke-width": 2 }));
+  ajout("fond", el("rect", { x: 0, y: Y_BOUTONS - 34, width: W, height: 68,
+                             fill: "#12203a", opacity: .07 }));
+}
+
+/* ==================================================================
+   8. LES POSTES
+   ================================================================== */
+var VUE = { rec: {}, cote: {}, coteT: {}, cuve: null, filet: null };
+
+function contourInterieur(rk, sens) {
+  var R = RECIP[rk], n = 30, i, h, r, p = [];
+  for (i = 0; i <= n; i++) {
+    h = R.haut * i / n;
+    r = rayonInterieur(rk, h);
+    p.push([sens * r * ECH, -h * ECH]);
+  }
+  return p;
+}
+function cheminVerre(rk) {
+  var g = contourInterieur(rk, -1), d = contourInterieur(rk, 1), s, i;
+  s = "M " + pt(g[0][0], g[0][1]);
+  for (i = 1; i < g.length; i++) s += " L " + pt(g[i][0], g[i][1]);
+  s += " L " + pt(d[d.length - 1][0], d[d.length - 1][1]);
+  for (i = d.length - 2; i >= 0; i--) s += " L " + pt(d[i][0], d[i][1]);
+  return s + " Z";
+}
+/* Le liquide : le profil interieur jusqu'a la surface, et une surface PLANE —
+   c'est toute la difference avec le tas de la lecon precedente, qui, lui,
+   porte un cone de repos. */
+function cheminEau(rk, hmm) {
+  var n = 22, i, h, r, s = "";
+  if (hmm <= 0.05) return "";
+  for (i = 0; i <= n; i++) {
+    h = hmm * i / n;
+    r = rayonInterieur(rk, h);
+    s += (i ? " L " : "M ") + pt(-r * ECH, -h * ECH);
+  }
+  for (i = n; i >= 0; i--) {
+    h = hmm * i / n;
+    r = rayonInterieur(rk, h);
+    s += " L " + pt(r * ECH, -h * ECH);
+  }
+  return s + " Z";
+}
+
+function construireRecipient(rk) {
+  var R = RECIP[rk], tr = "translate(" + R.x + "," + BANC + ")", v = {};
+  /* ⚠ SKILL §8 — l'INTÉRIEUR et le liquide AVANT la paroi, et donc dans des
+     couches differentes : `arriere` pour le creux et l'eau, `avant` pour le
+     verre. Le defaut a ete commis deux fois dans le dossier.               */
+  var gArr = ajout("arriere", el("g", { transform: tr }));
+  var gAv = ajout("avant", el("g", { transform: tr }));
+  v.gArr = gArr; v.gAv = gAv;
+  ombreAuSol(R.x, R.dInt * ECH / 2 - 3, .28);
+  v.creux = gArr.appendChild(el("path", { d: cheminVerre(rk), fill: "#f4f8fb",
+    opacity: .85 }));
+  v.eau = gArr.appendChild(el("path", { d: "", fill: "url(#eauC)", opacity: .88 }));
+  v.surf = gArr.appendChild(el("ellipse", { cx: 0, cy: 0, rx: 0, ry: 3,
+    fill: "#bfe8f6", opacity: 0 }));
+  v.paroi = gAv.appendChild(el("path", { d: cheminVerre(rk), fill: "url(#verrerie)",
+    stroke: "#7f93a6", "stroke-width": 2.4, "stroke-linejoin": "round" }));
+  v.reflet = gAv.appendChild(el("path", { d: "M " +
+    pt(-R.dInt * ECH * 0.3, -R.haut * ECH * 0.72) + " L " +
+    pt(-R.dInt * ECH * 0.32, -R.haut * ECH * 0.16), fill: "none", stroke: "#ffffff",
+    "stroke-width": 3.6, opacity: .62, "stroke-linecap": "round" }));
+  gAv.appendChild(el("ellipse", { cx: 0, cy: -R.haut * ECH, rx: R.col * ECH / 2,
+    ry: 3.2, fill: "none", stroke: "#7f93a6", "stroke-width": 2.4 }));
+  /* Les GRADUATIONS de l'eprouvette : c'est par elles qu'on lit, et elles se
+     calculent depuis la division, jamais dessinees au jugé. */
+  if (rk === "Éprouvette") graduations(gAv, rk);
+  /* La cote vit DANS le groupe du recipient : elle le suit quand on le
+     souleve pour verser (SKILL §12.18 — un intitule suit son objet). */
+  v.cote = gAv.appendChild(el("path", { d: "", fill: "none", stroke: GOLD,
+    "stroke-width": 1.5 }));
+  v.coteT = gAv.appendChild(el("text", { x: 0, y: 0, "font-size": 9,
+    "font-weight": "bold", fill: GOLD, "paint-order": "stroke",
+    stroke: "#f4f7fa", "stroke-width": 3, "stroke-linejoin": "round",
+    "pointer-events": "none" }, ""));
+  VUE.rec[rk] = v;
+}
+function graduations(g, rk) {
+  var R = RECIP[rk], v, h, r, gros;
+  for (v = 10; v <= R.cap; v += 10) {
+    h = hauteurPourVolume(rk, v);
+    if (h > R.haut - 6) break;
+    r = rayonInterieur(rk, h) * ECH;
+    gros = v % 20 === 0;
+    g.appendChild(el("line", { x1: -r, y1: -h * ECH, x2: -r + (gros ? 16 : 9),
+      y2: -h * ECH, stroke: "#5a6474", "stroke-width": gros ? 1.6 : 1.1 }));
+    if (gros) {
+      g.appendChild(el("text", { x: r + 4, y: -h * ECH + 3, "font-size": 8,
+        fill: "#5a6474", "pointer-events": "none" }, String(v)));
+    }
+  }
+}
+
+/* La cuve a faces planes, l'equerre, le fil a plomb, la cale. */
+function construireCuve() {
+  var g = ajout("arriere", el("g", {})), L = CUVE.L * ECH, Hc = CUVE.H * ECH, e = 3;
+  VUE.cuve = { g: g };
+  ombreAuSol(CUVE.x, L / 2, .3);
+  VUE.cuve.eau = g.appendChild(el("path", { d: "", fill: "url(#eauC)", opacity: .86 }));
+  VUE.cuve.paroi = g.appendChild(el("path", {
+    d: "M " + pt(-L / 2 - e, -Hc) + " L " + pt(-L / 2 - e, e) + " L " + pt(L / 2 + e, e) +
+       " L " + pt(L / 2 + e, -Hc) + " L " + pt(L / 2, -Hc) + " L " + pt(L / 2, 0) +
+       " L " + pt(-L / 2, 0) + " L " + pt(-L / 2, -Hc) + " Z",
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2.4,
+    "stroke-linejoin": "round" }));
+  /* le trait de surface, celui qu'on compare au fil a plomb */
+  VUE.cuve.trait = g.appendChild(el("line", { x1: 0, y1: 0, x2: 0, y2: 0,
+    stroke: "#0d5f80", "stroke-width": 2.2, "stroke-dasharray": "8 5" }));
+  VUE.cuve.angle = txt("avant", 0, 0, "", { taille: 10, gras: true, couleur: INK,
+    halo: true });
+}
+function dessinerEquerre(g) {
+  g.appendChild(el("rect", { x: -14, y: -66, width: 90, height: 96, rx: 8,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  /* l'equerre : un L, branche verticale et branche horizontale */
+  g.appendChild(el("path", { d: "M 0 -60 L 12 -60 L 12 12 L 70 12 L 70 24 L 0 24 Z",
+    fill: "#f0d9a8", stroke: "#a8823a", "stroke-width": 1.6 }));
+  g.appendChild(el("path", { d: "M 4 -56 L 8 -56 L 8 16 L 66 16 L 66 20 L 4 20 Z",
+    fill: "none", stroke: "#ffffff", "stroke-width": 1, opacity: .7 }));
+  /* le fil a plomb, accroche en haut de la branche verticale */
+  g.appendChild(el("line", { x1: 6, y1: -58, x2: 6, y2: 6, stroke: "#3d4553",
+    "stroke-width": 1.4 }));
+  g.appendChild(el("path", { d: "M 6 6 l 7 12 l -7 16 l -7 -16 z", fill: "#5a6474",
+    stroke: "#39414f", "stroke-width": 1.2 }));
+}
+function dessinerCale(g) {
+  g.appendChild(el("rect", { x: -30, y: -22, width: 60, height: 34, rx: 6,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  g.appendChild(el("path", { d: "M -26 8 L 26 8 L 26 " + (8 - 24) + " Z",
+    fill: "url(#bois2)", stroke: "#7a5a22", "stroke-width": 1.4 }));
+}
+function dessinerFlacon(g) {
+  g.appendChild(el("rect", { x: -28, y: -100, width: 56, height: 104, rx: 8,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  g.appendChild(el("path", { d: "M -24 -80 l 48 0 l 0 68 a 8 8 0 0 1 -8 8 l -32 0 " +
+    "a 8 8 0 0 1 -8 -8 z", fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2.2 }));
+  g.appendChild(el("path", { d: "M -20 -56 l 40 0 l 0 44 a 5 5 0 0 1 -5 5 l -30 0 " +
+    "a 5 5 0 0 1 -5 -5 z", fill: "url(#eauC)", opacity: .9 }));
+  g.appendChild(el("rect", { x: -13, y: -96, width: 26, height: 17, rx: 4,
+    fill: "#5a6474", stroke: "#39414f", "stroke-width": 1.3 }));
+  g.appendChild(el("path", { d: "M -18 -76 l 0 58", fill: "none", stroke: "#ffffff",
+    "stroke-width": 3, opacity: .6 }));
+}
+function dessinerEntonnoir(g) {
+  g.appendChild(el("path", { d: "M -26 -18 L 26 -18 L 5 10 L 5 30 L -5 30 L -5 10 Z",
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 1.8,
+    "stroke-linejoin": "round" }));
+}
+
+function construireScene() {
+  var i, rk;
+  for (i in RECIP) construireRecipient(i);
+  titrePoste(RECIP["Éprouvette"].x + 34, Y_ETIQ.epr, "Éprouvette 100 mL");
+  titrePoste(RECIP["Erlenmeyer"].x, Y_ETIQ.erlen, "Erlenmeyer 250 mL");
+  titrePoste(RECIP["Ballon"].x, Y_ETIQ.ballon, "Ballon 250 mL");
+  titrePoste(RECIP["Bécher"].x, Y_ETIQ.becher, "Bécher 250 mL");
+  construireCuve();
+  titrePoste(CUVE.x, Y_ETIQ.cuve, "Cuve à faces planes");
+
+  ajout("poste", el("rect", { x: POSTE.x, y: POSTE.y, width: POSTE.w, height: POSTE.h,
+    rx: 12, fill: "url(#plateau)", stroke: "#a8b3bf", "stroke-width": 2 }));
+  ombreAuSol(POSTE.x + POSTE.w / 2, POSTE.w / 2 - 8, .22);
+  titrePoste(POSTE.x + POSTE.w / 2, Y_ETIQ.poste, "Poste — eau colorée et outils");
+
+  /* l'entonnoir, cite par le materiel : il parait pendant qu'on verse */
+  VUE.entonnoir = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  dessinerEntonnoir(VUE.entonnoir);
+  VUE.filet = ajout("avant", el("path", { d: "", fill: "none", stroke: "#3fa8cf",
+    "stroke-width": 5, opacity: 0, "stroke-linecap": "round" }));
+
+  objet("flacon", "poste", dessinerFlacon);
+  objet("equerre", "poste", dessinerEquerre);
+  objet("cale", "poste", dessinerCale);
+  for (i = 0; i < 4; i++) {
+    (function (rk) {
+      var g = ajout("objets", el("g", { cursor: "grab" }));
+      GROUPES["v:" + rk] = g;
+      OBJ["v:" + rk] = { x: 0, y: 0, rot: 0, ech: 1, place: "banc", chez: "banc",
+                         rk: rk };
+      /* la plaque de PRÉHENSION : un profil de verre n'offre au pointeur que
+         son contour, et viser le centre d'un ballon ne saisit rien (§12.38) */
+      g.appendChild(el("rect", { x: -RECIP[rk].dInt * ECH / 2 - 6,
+        y: -RECIP[rk].haut * ECH, width: RECIP[rk].dInt * ECH + 12,
+        height: RECIP[rk].haut * ECH, rx: 8, fill: "#ffffff", "fill-opacity": 0.001 }));
+    })(["Éprouvette", "Erlenmeyer", "Ballon", "Bécher"][i]);
+  }
+  brancherPrise(Object.keys(OBJ));
+
+  boutonScene(196, Y_BOUTONS, 232, 46, "Relever les", "formes", "relever");
+  boutonScene(452, Y_BOUTONS, 232, 46, "Reverser dans", "l'éprouvette", "reverser");
+  boutonScene(710, Y_BOUTONS, 232, 46, "Vérifier à", "l'équerre", "verifier");
+  brancherActe("relever", function () { releverFormes(); });
+  brancherActe("reverser", function () { reverser(); });
+  brancherActe("verifier", function () { verifier(); });
+  txt("avant", 950, Y_BOUTONS - 6, "échelle du dessin", { taille: 10, couleur: GRIS });
+  txt("avant", 950, Y_BOUTONS + 12, "1 mm = " + nb(ECH, 1) + " unités",
+      { taille: 13, gras: true, couleur: INK });
+}
+function objet(id, chez, dessin) {
+  var g = ajout("objets", el("g", { cursor: "grab" }));
+  GROUPES[id] = g;
+  OBJ[id] = { x: 0, y: 0, rot: 0, ech: 1, place: chez, chez: chez };
+  dessin(g);
+  return g;
+}
+
+/* ==================================================================
+   9. LES PLACES ET LES ZONES
+   ================================================================== */
+function ancre(id, place) {
+  if (id.indexOf("v:") === 0) return [RECIP[OBJ[id].rk].x, BANC, 0];
+  if (id === "flacon") return [FLACON0.x, FLACON0.y, 0];
+  if (id === "equerre") {
+    if (place === "cuve") return [CUVE.x - 34, cuveTopMonde() - 12, 0];
+    return [EQU0.x, EQU0.y, 0];
+  }
+  if (place === "sous") return [CUVE.x - CUVE.L * ECH / 2 + 16, BANC - 9, 0];
+  return [CALE0.x, CALE0.y, 0];
+}
+/* Le HAUT DE L'EAU DE LA CUVE dans le repere du monde : l'equerre s'y pose,
+   et c'est cette cote-la qui doit etre relue par le dessin (SKILL §12.49). */
+function cuveTopMonde() { return BANC - CUVE.eau * ECH; }
+function zoneRec(rk, type, quoi) {
+  return { type: type, rk: rk, quoi: quoi, x: RECIP[rk].x,
+           y: BANC - hautU(rk) / 2, hw: RECIP[rk].dInt * ECH / 2 + 12,
+           hh: hautU(rk) / 2, r: 150 };
+}
+function zoneCuve(type, quoi, dy) {
+  return { type: type, quoi: quoi, x: CUVE.x, y: BANC + (dy || 0),
+           hw: CUVE.L * ECH / 2, hh: 34, r: 170 };
+}
+/* ⚠ SKILL §12.16 — de la plus PETITE zone a la plus GRANDE. */
+function emplacements(id) {
+  var z = [], rk, i, ordre;
+  if (id === "flacon") {
+    if (!ETAT.vol["Éprouvette"] && !ETAT.etape) {
+      z.push(zoneRec("Éprouvette", "remplir", "le flacon au-dessus de l'éprouvette"));
+    }
+    z.push({ type: "poste", propre: true, quoi: "le flacon sur le poste",
+             x: FLACON0.x, y: FLACON0.y - 50, hw: 34, hh: 56, r: 120 });
+    return z;
+  }
+  if (id === "equerre") {
+    z.push(zoneCuve("cuve", "l'équerre contre la surface libre", -CUVE.eau * ECH));
+    z.push({ type: "poste", propre: true, quoi: "l'équerre sur le poste",
+             x: EQU0.x, y: EQU0.y - 20, hw: 46, hh: 50, r: 110 });
+    return z;
+  }
+  if (id === "cale") {
+    z.push({ type: "sous", quoi: "la cale sous un bord de la cuve",
+             x: CUVE.x - CUVE.L * ECH / 2 + 16, y: BANC - 6, hw: 46, hh: 26, r: 120 });
+    z.push({ type: "poste", propre: true, quoi: "la cale sur le poste",
+             x: CALE0.x, y: CALE0.y - 10, hw: 34, hh: 26, r: 110 });
+    return z;
+  }
+  rk = OBJ[id].rk;
+  if (ETAT.vol[rk] > 0) {
+    ordre = ["Éprouvette", "Bécher", "Ballon", "Erlenmeyer"];   /* du plus etroit */
+    for (i = 0; i < ordre.length; i++) {
+      if (ordre[i] !== rk) z.push(zoneRec(ordre[i], "verser", "verser dans un autre récipient"));
+    }
+  }
+  z.push({ type: "banc", propre: true, quoi: "le récipient à sa place",
+           x: RECIP[rk].x, y: BANC - hautU(rk) / 2, hw: RECIP[rk].dInt * ECH / 2 + 14,
+           hh: hautU(rk) / 2, r: 60 });
+  return z;
+}
+function refusPrise(id) {
+  if (id === "equerre" && !ETAT.retour) {
+    return "L'équerre et le fil à plomb viennent après le relevé des volumes : " +
+           "finir d'abord les transvasements.";
+  }
+  if (id === "cale" && !ETAT.equerre) {
+    return "Vérifier d'abord la surface libre cuve posée à plat : sans cela, " +
+           "l'inclinaison ne prouve rien.";
+  }
+  return null;
+}
+function accepter(id, z) {
+  if (id === "flacon" && z.type === "remplir") { mesurer(); return; }
+  if (id === "equerre" && z.type === "cuve") { poserEquerre(); return; }
+  if (id === "cale" && z.type === "sous") { poserCale(); return; }
+  if (id.indexOf("v:") === 0 && z.type === "verser") {
+    verser(OBJ[id].rk, z.rk);
+    return;
+  }
+  replacer(id);
+  dessiner();
+}
+
+/* ==================================================================
+   10. LES GESTES
+   ==================================================================
+   ⚠ SKILL §6.2 et §1.2 bis : l'ETAT d'abord, l'image ensuite ; et le niveau
+   MONTE, il ne parait pas.                                                  */
+function mesurer() {
+  if (ETAT.vol["Éprouvette"] > 0) { replacerAnime("flacon"); return 0; }
+  ETAT.vol["Éprouvette"] = REG.v0;
+  ETAT.ou = "Éprouvette";
+  ETAT.etape = 0;
+  ETAT.dernier = "Éprouvette";
+  ETAT.volAt[0] = REG.v0;
+  if (ETAT.passe.indexOf(0) < 0) ETAT.passe.push(0);
+  revelerCellule(1, 1);
+  noter("Éprouvette graduée : " + ecrireVolume(REG.v0) + " mL d'eau colorée, lus " +
+        "au bas du ménisque.", true);
+  succes();
+  avancer();
+  glisserVers("flacon", RECIP["Éprouvette"].x + 40, BANC - hautU("Éprouvette") - 24,
+              -42, 320, function () {
+    montrerFilet("Éprouvette", 620);
+    animerVers(function () { return ETAT.volVu["Éprouvette"]; },
+               function (v) { ETAT.volVu["Éprouvette"] = v; }, REG.v0, 640, function () {
+      replacerAnime("flacon");
+    });
+  });
+  return 1380;
+}
+function verser(de, vers) {
+  var v = ETAT.vol[de], p, arrive, attendu, i, pente, sp, cp, H;
+  if (v <= 0) {
+    replacerAnime("v:" + de);
+    signaler("Ce récipient est vide : il n'y a rien à transvaser.");
+    return 0;
+  }
+  attendu = prochainRecipient();
+  if (vers !== attendu) {
+    replacerAnime("v:" + de);
+    signaler("Le protocole verse dans " + (attendu || "l'éprouvette") +
+             " : c'est l'ordre du transvasement qui donne les colonnes du tableau.");
+    return 0;
+  }
+  p = perteTransvasement(de, v, REG.soin);
+  arrive = Math.max(0, v - p);
+  ETAT.vol[de] = 0;                                /* l'etat, tout de suite */
+  ETAT.vol[vers] = arrive;
+  ETAT.perte += p;
+  ETAT.etape++;
+  ETAT.ou = vers;
+  ETAT.dernier = vers;
+  ETAT.volAt[ETAT.etape] = arrive;
+  if (ETAT.passe.indexOf(ETAT.etape) < 0) ETAT.passe.push(ETAT.etape);
+  revelerCellule(1, ETAT.etape + 1);
+  if (ETAT.etape === PARCOURS.length - 1) {
+    ETAT.retour = true;
+    revelerCellule(0, ETAT.etape + 1);
+  }
+  noter(vers + " : le liquide y prend une forme " + formeDe(vers, arrive) +
+        (p > 0.05 ? " — et " + nb(p, 2) + " mL sont restés sur la paroi"
+                  : " — rien n'est resté sur la paroi"), true);
+  succes();
+  avancer();
+  /* LE GESTE : le recipient vient au-dessus de l'autre, s'incline, un filet
+     coule, le niveau de depart DESCEND pendant que celui d'arrivee MONTE. */
+  /* ⚠ LE BEC, PAS LE PIED. `poser` fait tourner l'objet autour de sa BASE :
+     a -52 deg, le bec — le point (0, -H) — arrive a 0,79 x H vers la GAUCHE
+     du pied et 0,62 x H au-dessus. Viser la cible avec le PIED mettait donc
+     le bec a cote de 140 a 280 unites selon la hauteur du recipient : hors
+     scene pour l'eprouvette (250 mm), au-dessus du voisin pour les autres,
+     et le filet coulait dans le vide. On resout dans l'autre sens : on place
+     le pied pour que le BEC tombe sur la bouche du recipient qui recoit.
+     `montrerFilet` dessine alors un filet qui part vraiment du bec.        */
+  pente = -52;
+  sp = Math.sin(pente * Math.PI / 180);
+  cp = Math.cos(pente * Math.PI / 180);
+  H = hautU(de);
+  glisserVers("v:" + de, RECIP[vers].x - H * sp,
+              BANC - hautU(vers) - 10 + H * cp, pente, 380, function () {
+    montrerFilet(vers, 700);
+    animerVers(function () { return ETAT.volVu[de]; },
+               function (x) { ETAT.volVu[de] = x; }, 0, 700);
+    animerVers(function () { return ETAT.volVu[vers]; },
+               function (x) { ETAT.volVu[vers] = x; }, arrive, 700, function () {
+      replacerAnime("v:" + de);
+    });
+  });
+  return 1560;
+}
+function reverser() {
+  var de = ETAT.ou;
+  if (!de) { signaler("Il n'y a pas encore d'eau à reverser."); return 0; }
+  if (ETAT.etape !== PARCOURS.length - 2) {
+    signaler("Le protocole reverse dans l'éprouvette APRÈS le bécher : il reste " +
+             "des récipients à traverser.");
+    return 0;
+  }
+  return verser(de, "Éprouvette");
+}
+function releverFormes() {
+  var i, n = 0;
+  if (ETAT.etape < 1) {
+    signaler("Transvaser d'abord : il n'y a qu'une forme à relever.");
+    return 0;
+  }
+  for (i = 0; i < ETAT.passe.length; i++) {
+    if (ETAT.passe[i] >= N_COLS) continue;
+    revelerCellule(0, ETAT.passe[i] + 1);
+    n++;
+  }
+  ETAT.observe = true;
+  noter("Formes relevées : " + ETAT.passe.map(function (k) {
+    return PARCOURS[k] + " → " + formeDe(PARCOURS[k], k === ETAT.etape
+      ? ETAT.vol[PARCOURS[k]] : REG.v0);
+  }).join(" · "), true);
+  succes();
+  avancer();
+  /* le relevé se VOIT : la surface de chaque récipient traversé bat une fois */
+  for (i = 0; i < ETAT.passe.length; i++) (function (rk, j) {
+    tard(function () {
+      var v = ETAT.volVu[rk];
+      if (v <= 0) return;
+      animerVers(function () { return ETAT.volVu[rk]; },
+                 function (x) { ETAT.volVu[rk] = x; }, v * 0.72, 160, function () {
+        animerVers(function () { return ETAT.volVu[rk]; },
+                   function (x) { ETAT.volVu[rk] = x; }, v, 220);
+      });
+    }, 170 * j);
+  })(PARCOURS[ETAT.passe[i]], i);
+  return 1240;
+}
+function poserEquerre() {
+  var a;
+  ETAT.equerre = true;
+  ETAT.verifAvant = true;
+  noter("Cuve posée à plat : la surface libre fait " + nb(angleSurfaceFil(), 2) +
+        "° avec le fil à plomb — elle est horizontale.", true);
+  succes();
+  avancer();
+  OBJ.equerre.place = "cuve";
+  a = ancre("equerre", "cuve");
+  glisserVers("equerre", a[0], a[1], 0, 520);
+  return 760;
+}
+function poserCale() {
+  var a;
+  ETAT.cale = true;
+  noter("Cale de " + nb(REG.cale, 0) + " mm : la cuve s'incline de " +
+        nb(penteCuve(), 1) + "° — et la surface, elle, ne bouge pas.", true);
+  succes();
+  avancer();
+  OBJ.cale.place = "sous";
+  a = ancre("cale", "sous");
+  glisserVers("cale", a[0], a[1], 0, 360, function () {
+    /* la cuve BASCULE sous les yeux : elle ne saute pas d'une assiette a
+       l'autre, et la surface libre reste horizontale pendant tout le temps
+       que dure le mouvement */
+    animerVers(function () { return ETAT.penteVue; },
+               function (v) { ETAT.penteVue = v; }, penteCuve(), 620);
+  });
+  return 1180;
+}
+function verifier() {
+  if (!ETAT.equerre) {
+    signaler("Approcher d'abord l'équerre et le fil à plomb de la surface libre.");
+    return 0;
+  }
+  if (!ETAT.cale) {
+    ETAT.verifAvant = true;
+    noter("Cuve à plat : " + nb(angleSurfaceFil(), 2) + "° entre la surface et le " +
+          "fil à plomb.", true);
+  } else {
+    ETAT.verifApres = true;
+    noter("Cuve inclinée de " + nb(penteCuve(), 1) + "° : la surface fait toujours " +
+          nb(angleSurfaceFil(), 2) + "° avec le fil à plomb. Elle est restée " +
+          "horizontale.", true);
+    $("concl").classList.remove("masque");
+  }
+  succes();
+  avancer(ETAT.verifApres);
+  /* la verification se VOIT : le trait de surface s'allonge d'un bord a l'autre */
+  ETAT.traitVu = 0;
+  animerVers(function () { return ETAT.traitVu; },
+             function (v) { ETAT.traitVu = v; }, 1, 560);
+  return 900;
+}
+function montrerFilet(vers, ms) {
+  var x = RECIP[vers].x, y0 = BANC - hautU(vers) - 16;
+  VUE.entonnoir.setAttribute("transform", "translate(" + x + "," + (y0 - 4) + ")");
+  VUE.entonnoir.setAttribute("opacity", REG.soin >= 1 ? 1 : 0);
+  VUE.filet.setAttribute("d", "M " + pt(x, y0 - 26) + " L " + pt(x, y0 + 22));
+  VUE.filet.setAttribute("opacity", .85);
+  tard(function () {
+    VUE.filet.setAttribute("opacity", 0);
+    VUE.entonnoir.setAttribute("opacity", 0);
+  }, ms);
+}
+function replacerAnime(id) {
+  var a = ancre(id, OBJ[id].place);
+  glisserVers(id, a[0], a[1], a.length > 2 ? a[2] : 0, 420);
+}
+
+/* ==================================================================
+   11. LE RENDU
+   ================================================================== */
+function dessiner() {
+  var rk, v, h, x, r, L, Hc, a, tan, yg, yd, tr, o;
+  for (rk in RECIP) {
+    v = VUE.rec[rk];
+    o = OBJ["v:" + rk];
+    /* le verre, son creux et son eau suivent l'objet qu'on tient a la souris :
+       sans cela, le glisser ne deplacerait qu'une plaque invisible */
+    tr = "translate(" + o.x.toFixed(1) + "," + o.y.toFixed(1) + ") rotate(" +
+         (o.rot || 0).toFixed(1) + ")";
+    v.gArr.setAttribute("transform", tr);
+    v.gAv.setAttribute("transform", tr);
+    /* l'integration du profil coute 2 500 pas : on ne la refait que si le
+       volume a bouge, et surement pas cinq fois par seconde pour rien */
+    if (v.vCache !== ETAT.volVu[rk]) {
+      v.vCache = ETAT.volVu[rk];
+      v.hCache = hauteurPourVolume(rk, v.vCache);
+    }
+    h = v.hCache;
+    v.eau.setAttribute("d", cheminEau(rk, h));
+    r = rayonInterieur(rk, h) * ECH;
+    v.surf.setAttribute("cy", (-h * ECH).toFixed(1));
+    v.surf.setAttribute("rx", r.toFixed(1));
+    v.surf.setAttribute("opacity", h > 0.5 ? .55 : 0);
+    x = RECIP[rk].dInt * ECH / 2 + 5;
+    if (h > 1) {
+      v.cote.setAttribute("d", "M " + pt(x, 0) + " L " + pt(x + 8, 0) +
+        " M " + pt(x + 4, 0) + " L " + pt(x + 4, -h * ECH) +
+        " M " + pt(x, -h * ECH) + " L " + pt(x + 8, -h * ECH));
+      v.coteT.textContent = nb(h, 0) + " mm";
+      v.coteT.setAttribute("x", (x + 11).toFixed(1));
+      v.coteT.setAttribute("y", (-h * ECH / 2 + 3).toFixed(1));
+    } else {
+      v.cote.setAttribute("d", "");
+      v.coteT.textContent = "";
+    }
+  }
+  /* LA CUVE. Le groupe tourne de la pente ; la surface, elle, est calculee
+     DANS ce repere pour rester horizontale dans le monde. C'est le §12.18 :
+     le dessin RELIT la geometrie, il ne la recopie pas. */
+  L = CUVE.L * ECH; Hc = CUVE.H * ECH;
+  a = ETAT.penteVue * Math.PI / 180;
+  /* ⚠ Le pivot est le coin BAS-DROIT, celui qui reste au contact : la cale
+     est sous le bord gauche, et c'est ce bord-la qui se souleve. Pivoter au
+     centre aurait enfonce la moitie droite dans la paillasse. */
+  tr = "translate(" + (CUVE.x + L / 2).toFixed(1) + "," + BANC + ") rotate(" +
+       ETAT.penteVue.toFixed(2) + ") translate(" + (-L / 2).toFixed(1) + ",0)";
+  VUE.cuve.g.setAttribute("transform", tr);
+  tan = Math.tan(a);
+  yg = -CUVE.eau * ECH + (L / 2) * tan;
+  yd = -CUVE.eau * ECH - (L / 2) * tan;
+  yg = Math.max(-Hc, Math.min(0, yg));
+  yd = Math.max(-Hc, Math.min(0, yd));
+  VUE.cuve.eau.setAttribute("d", "M " + pt(-L / 2, 0) + " L " + pt(L / 2, 0) +
+    " L " + pt(L / 2, yd) + " L " + pt(-L / 2, yg) + " Z");
+  VUE.cuve.trait.setAttribute("x1", (-L / 2 * (ETAT.traitVu || 0)).toFixed(1));
+  VUE.cuve.trait.setAttribute("y1", (-CUVE.eau * ECH + (L / 2 * (ETAT.traitVu || 0)) * tan).toFixed(1));
+  VUE.cuve.trait.setAttribute("x2", (L / 2 * (ETAT.traitVu || 0)).toFixed(1));
+  VUE.cuve.trait.setAttribute("y2", (-CUVE.eau * ECH - (L / 2 * (ETAT.traitVu || 0)) * tan).toFixed(1));
+  VUE.cuve.trait.setAttribute("opacity", ETAT.equerre ? .9 : 0);
+  VUE.cuve.angle.textContent = ETAT.equerre
+    ? nb(angleSurfaceFil(), 2) + "° avec le fil à plomb"
+    : "";
+  VUE.cuve.angle.setAttribute("x", CUVE.x);
+  VUE.cuve.angle.setAttribute("y", Y_ETIQ.angle);
+}
+
+/* ==================================================================
+   12. LES PANNEAUX
+   ================================================================== */
+function majPanneaux() {
+  var rk = ETAT.ou, t, i, k, c, vol;
+  $("lRec").textContent = rk || "—";
+  $("lRec").className = "v" + (rk ? "" : " off");
+  $("lForme").textContent = rk ? formeDe(rk, ETAT.vol[rk]) : "—";
+  $("lForme").className = "v" + (rk ? "" : " off");
+  $("lVol").textContent = ETAT.vol["Éprouvette"] > 0
+    ? ecrireVolume(ETAT.vol["Éprouvette"]) + " mL" : "—";
+  $("lVol").className = "v" + (ETAT.vol["Éprouvette"] > 0 ? "" : " off");
+  $("lPerte").textContent = ETAT.etape > 0 ? nb(ETAT.perte, 2) + " mL" : "—";
+  /* ⚠ L'INSTRUMENT LIT LE MODÈLE, PAS L'ANIMATION. `penteVue` rejoint la
+     valeur calculee en six cents millisecondes ; l'afficher aurait fait lire
+     « 2,4° » sur un panneau pendant que le carnet ecrivait « 6,4° » — deux
+     panneaux voisins qui se contredisent (SKILL §12.37). */
+  $("lPente").textContent = nb(ETAT.cale ? penteCuve() : 0, 1) + "°";
+  $("lAngle").textContent = ETAT.equerre ? nb(angleSurfaceFil(), 2) + "°" : "—";
+  $("lAngle").className = "v" + (ETAT.equerre ? "" : " off");
+  $("lFilm").textContent = nb(epaisseurFilm() * 1000, 3) + " mm";
+
+  t = $("carnet");
+  vide(t);
+  t.appendChild(ligneTab(["Étape", "récipient", "volume", "hauteur",
+                          "diamètre de la surface", "forme"], true));
+  for (i = 0; i < PARCOURS.length; i++) {
+    k = PARCOURS[i];
+    if (ETAT.passe.indexOf(i) < 0) {
+      t.appendChild(ligneTab([COLONNES[i] || k, k, "—", "—", "—", "—"]));
+      continue;
+    }
+    vol = ETAT.volAt[i];
+    t.appendChild(ligneTab([COLONNES[i] || k, k, ecrireVolume(vol) + " mL",
+      nb(hauteurPourVolume(k, vol), 1) + " mm",
+      nb(2 * rayonInterieur(k, hauteurPourVolume(k, vol)), 1) + " mm",
+      formeDe(k, vol)]));
+    if (formeDe(k, vol) !== cel(0, i + 1) && cel(0, i + 1)) {
+      signalerDivergence(COLONNES[i], "Sur <b>" + COLONNES[i] + "</b>, le modèle " +
+        "nomme la forme « " + formeDe(k, vol) + " » là où la fiche écrit « " +
+        cel(0, i + 1) + " ».");
+    }
+  }
+  t.appendChild(ligneTab(["Cuve à plat", "cuve", "—", "—", "—",
+    ETAT.verifAvant ? nb(0, 1) + "° d'inclinaison, surface à 90,00°" : "—"]));
+  t.appendChild(ligneTab(["Cuve calée", "cuve", "—", "—", "—",
+    ETAT.verifApres ? nb(penteCuve(), 1) + "° d'inclinaison, surface à " +
+      nb(angleSurfaceFil(), 2) + "°" : "—"]));
+
+  c = $("capotRec");
+  if (c && !c.children.length) {
+    c.appendChild(ligneTab(["Récipient", "capacité", "D intérieur", "hauteur",
+                            "col"], true));
+    for (i in RECIP) {
+      c.appendChild(ligneTab([i, RECIP[i].cap + " mL", RECIP[i].dInt + " mm",
+        RECIP[i].haut + " mm", RECIP[i].col + " mm"]));
+    }
+  }
+  if ($("eqCapot") && !$("eqCapot").textContent) {
+    $("eqCapot").textContent =
+      "r(h)      profil interieur — cylindre, cone tronque, sphere sur meplat\n" +
+      "V(h) = integrale de pi r(h)^2 dh   -> la HAUTEUR atteinte par un volume\n" +
+      "forme   : |r(surface) - r(fond)| < 0,5 mm  -> cylindre\n" +
+      "          et « large » si 2 r(surface) > hauteur\n" +
+      "          sinon, le profil du recipient donne le nom\n" +
+      "\n" +
+      "film    : l(c) = racine(gamma / rho g) = 2,73 mm  (longueur capillaire)\n" +
+      "          Ca  = mu V / gamma = 6,9 x 10-4\n" +
+      "          e   = 0,94 l(c) Ca^(2/3) = 0,020 mm     (Landau-Levich)\n" +
+      "          perte = surface mouillee x e\n" +
+      "\n" +
+      "cuve    : inclinaison = arcsin(cale / longueur)\n" +
+      "          surface libre horizontale dans le MONDE, donc a -alpha dans\n" +
+      "          le repere de la cuve ; le fil a plomb y est a +alpha\n" +
+      "          angle des deux = 90,00°, quelle que soit la cale";
+  }
+}
+
+
+/* ==================================================================
+   13. LA CONSIGNE, LES ÉTAPES
+   ================================================================== */
+function consigne() {
+  if (!ETAT.vol["Éprouvette"] && !ETAT.etape) {
+    return "Mesurer " + nb(REG.v0, 0) + " mL d'eau colorée dans l'éprouvette graduée.";
+  }
+  if (ETAT.etape < PARCOURS.length - 2) {
+    return "Transvaser l'eau dans " + prochainRecipient() + " — transvasement " +
+           (ETAT.etape + 1) + " sur " + (PARCOURS.length - 2) + ".";
+  }
+  if (!ETAT.observe) return "Relever la forme prise par le liquide dans chaque récipient.";
+  if (!ETAT.retour) return "Reverser TOUTE l'eau dans l'éprouvette et relire le volume.";
+  if (!ETAT.equerre) return "Approcher l'équerre et le fil à plomb de la surface libre.";
+  if (!ETAT.verifApres) return "Glisser la cale sous un bord de la cuve, puis vérifier de nouveau.";
+  return "Le liquide n'a pas de forme propre, mais un volume propre, et sa " +
+         "surface libre est horizontale.";
+}
+function armer() {
+  var c = etapeCourante();
+  BOUTONS.relever.armer(c === 2);
+  BOUTONS.reverser.armer(c === 3);
+  BOUTONS.verifier.armer(c === 5 && ETAT.cale);
+  if (ETAT.observe) BOUTONS.relever.fait();
+  if (ETAT.retour) BOUTONS.reverser.fait();
+  if (ETAT.verifApres) BOUTONS.verifier.fait();
+}
+function surReglage() {
+  /* ⚠ SKILL §12.19 — un curseur perime l'enregistrement. La cale, elle, se
+     relit tout de suite : c'est le seul reglage dont la scene depende. */
+  ETAT.penteVue = ETAT.cale ? penteCuve() : 0;
+  if (!ETAT.etape && ETAT.vol["Éprouvette"] > 0) {
+    ETAT.vol["Éprouvette"] = REG.v0;
+    ETAT.volVu["Éprouvette"] = REG.v0;
+  }
+  majPanneaux();
+}
+var ETAPES = ["Mesurer 50 mL dans l'éprouvette",
+              "Transvaser : erlenmeyer, ballon, bécher",
+              "Relever les formes",
+              "Reverser et relire le volume",
+              "L'équerre et le fil à plomb",
+              "La cale, puis vérifier de nouveau",
+              "Le tableau complet",
+              "Lire la conclusion"];
+function faits() {
+  return [ETAT.vol["Éprouvette"] > 0 || ETAT.etape > 0,
+          ETAT.etape >= PARCOURS.length - 2,
+          ETAT.observe,
+          ETAT.retour,
+          ETAT.equerre,
+          ETAT.verifApres,
+          ETAT.nCell >= N_CELL,
+          ETAT.verifApres && ETAT.nCell >= N_CELL];
+}
+function remettreScene() {
+  var k;
+  for (k in OBJ) { OBJ[k].place = OBJ[k].chez; OBJ[k].ech = 1; OBJ[k].rot = 0; }
+  ETAT.traitVu = 0;
+  VUE.filet.setAttribute("opacity", 0);
+  VUE.entonnoir.setAttribute("opacity", 0);
+}
+
+/* ==================================================================
+   L. LE PROTOCOLE GUIDÉ (SKILL §12 bis)
+   ==================================================================
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Une page où
+      l'élève clique et regarde la réponse s'écrire ne manipule rien : c'est
+      le refus explicite de l'enseignant. Le bouton écrit la consigne,
+      SURLIGNE l'objet à prendre et la zone où le poser — le geste reste à
+      faire.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape suivante ». */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* ⚠️ SKILL §12bis.3-5 — `getBBox()` est LOCAL : sous un groupe translaté ou
+   tourné, le halo tombe à côté. On passe par la boîte écran, ramenée au
+   repère du viewBox. */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+function surlignerObjet(id) {
+  var b = boiteSVG(GROUPES[id]);
+  if (b) { halo(b.x - 9, b.y - 9, b.w + 18, b.h + 18, 16); return; }
+  var o = OBJ[id];                              /* repli, si la mise en page manque */
+  if (o) halo(o.x - 60, o.y - 60, 120, 120, 16);
+}
+function surlignerZone(id, type) {
+  var z = zoneVoulue(id, type);
+  if (z) halo(z.x - z.hw - 6, z.y - z.hh - 6, 2 * z.hw + 12, 2 * z.hh + 12, 14);
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+function surlignerHTML(id) {
+  /* ⚠️ SKILL §12bis.3-7 — un `<button>` de la colonne ne peut pas recevoir un
+     halo SVG. Contour en style en ligne, et une fermeture d'annulation :
+     un style ne se défait pas par `removeChild`. */
+  var n = $(id);
+  if (!n) return;
+  var av = n.style.boxShadow;
+  n.style.boxShadow = "0 0 0 3px " + GOLD;
+  guideSurb.push({ parentNode: { removeChild: function () { n.style.boxShadow = av; } } });
+}
+
+/* Un predicat par ligne du protocole, dans SON ordre. L'etape courante est la
+   PREMIERE non faite : elle se deduit, elle ne se compte pas, et c'est ce qui
+   lui permet de reculer. Les six predicats sont monotones.
+
+   ⚠ L'etape 3 de la fiche — « apres chaque transvasement, observer et
+   dessiner la forme » — n'est pas un geste sur la matiere : c'est un RELEVÉ.
+   Elle a donc son bouton, et il ne fait que dévoiler ce que le solveur a
+   deja calcule pour chaque recipient traverse. */
+var GUIDE = [
+  { fait: function () { return ETAT.vol["Éprouvette"] > 0 || ETAT.etape > 0; },
+    aide: function () {
+      return "Glisser le <b>flacon d'eau colorée</b> au-dessus de l'éprouvette " +
+        "graduée : elle se remplit jusqu'à <b>" + nb(REG.v0, 0) + " mL</b>, et " +
+        "le niveau monte sous vos yeux.";
+    },
+    montre: function () {
+      surlignerObjet("flacon");
+      surlignerZone("flacon", "remplir");
+    } },
+
+  { fait: function () { return ETAT.etape >= PARCOURS.length - 2; },
+    aide: function () {
+      var p = prochainRecipient();
+      if (ETAT.etape >= PARCOURS.length - 2) return "Les trois transvasements sont faits.";
+      return "<b>Transvasement " + (ETAT.etape + 1) + " sur " +
+        (PARCOURS.length - 2) + ".</b> Glisser <b>" + ETAT.ou + "</b> au-dessus de " +
+        "<b>" + p + "</b> : c'est l'ordre du protocole, et c'est lui qui donne " +
+        "les colonnes du tableau.";
+    },
+    montre: function () {
+      var p = prochainRecipient();
+      if (!p || !ETAT.ou) return;
+      surlignerObjet("v:" + ETAT.ou);
+      surlignerZone("v:" + ETAT.ou, "verser");
+    } },
+
+  { fait: function () { return ETAT.observe; },
+    aide: "Relever la forme prise par le liquide dans chacun des récipients " +
+          "traversés. Elle est <b>nommée d'après le profil</b> que le liquide " +
+          "parcourt, pas d'après ce qu'on croit voir.",
+    montre: function () { surlignerBouton("relever"); } },
+
+  { fait: function () { return ETAT.retour; },
+    aide: "Reverser <b>toute</b> l'eau dans l'éprouvette et relire le volume. " +
+          "« Toute » n'est pas une politesse : le curseur « soin » montre ce " +
+          "qu'on perd sans elle.",
+    montre: function () {
+      if (ETAT.ou) { surlignerObjet("v:" + ETAT.ou); surlignerZone("v:" + ETAT.ou, "verser"); }
+      surlignerBouton("reverser");
+    } },
+
+  { fait: function () { return ETAT.equerre; },
+    aide: "Approcher l'<b>équerre et le fil à plomb</b> de la surface libre de " +
+          "la cuve, posée à plat.",
+    montre: function () {
+      surlignerObjet("equerre");
+      surlignerZone("equerre", "cuve");
+    } },
+
+  { fait: function () { return ETAT.verifApres; },
+    aide: function () {
+      if (!ETAT.cale) {
+        return "Glisser la <b>cale de bois</b> sous un bord de la cuve : elle " +
+          "s'inclinera de <b>" + nb(penteCuve(), 1) + "°</b>.";
+      }
+      return "La cuve est inclinée de <b>" + nb(penteCuve(), 1) + "°</b> : " +
+        "vérifier de nouveau à l'équerre.";
+    },
+    montre: function () {
+      if (!ETAT.cale) { surlignerObjet("cale"); surlignerZone("cale", "sous"); return; }
+      surlignerBouton("verifier");
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, premier usage de cette
+   page en classe. On agrandit le CADRE, pas la mise en page.             */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. MESURER 50 mL. Un GLISSER du flacon sur l'eprouvette, sur la zone
+     qu'`emplacements()` propose dans l'etat courant. */
+  function () {
+    var z = zoneDe("flacon", "remplir");
+    if (z) { deposer("flacon", z); return 1400; }
+    return 0;
+  },
+
+  /* 2. LES TROIS TRANSVASEMENTS. Un par pression : l'etape reste courante
+     tant qu'il en manque un, et c'est l'AIDE qui porte le compte. La zone
+     visee est celle du recipient que le PROTOCOLE designe, jamais une
+     position ecrite en dur. */
+  function () {
+    var p = prochainRecipient(), z;
+    if (!p || !ETAT.ou) return 0;
+    z = emplacements("v:" + ETAT.ou).filter(function (x) {
+      return x.type === "verser" && x.rk === p;
+    })[0];
+    if (z) { deposer("v:" + ETAT.ou, z); return 1580; }
+    return 0;
+  },
+
+  /* 3. RELEVER LES FORMES. Un releve, donc un bouton — et il ne fait que
+     devoiler ce que le solveur a deja calcule. */
+  function () { return releverFormes(); },
+
+  /* 4. REVERSER TOUTE L'EAU. Le meme geste que les transvasements, vers
+     l'eprouvette : `reverser()` appelle `verser()`, la fonction de la main. */
+  function () {
+    var z;
+    if (ETAT.ou) {
+      z = emplacements("v:" + ETAT.ou).filter(function (x) {
+        return x.type === "verser" && x.rk === "Éprouvette";
+      })[0];
+      if (z) { deposer("v:" + ETAT.ou, z); return 1580; }
+    }
+    return reverser();
+  },
+
+  /* 5. L'ÉQUERRE ET LE FIL À PLOMB. Un GLISSER sur la cuve. */
+  function () {
+    var z = zoneDe("equerre", "cuve");
+    if (z) { deposer("equerre", z); return 800; }
+    return 0;
+  },
+
+  /* 6. LA CALE, PUIS LA SECONDE VÉRIFICATION. Deux gestes pour une seule
+     ligne de protocole : l'etape reste courante entre les deux, et c'est
+     l'aide qui le dit. */
+  function () {
+    var z;
+    if (!ETAT.cale) {
+      z = zoneDe("cale", "sous");
+      if (z) { deposer("cale", z); return 1200; }
+      return 0;
+    }
+    return verifier();
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   DÉMARRAGE
+   ================================================================== */
+demarrer();
+
+})();
+</script>
+</body>
+</html>

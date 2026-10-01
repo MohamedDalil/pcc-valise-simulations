@@ -1,0 +1,2984 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-20 · La tension nominale d'un appareil</title>
+
+<!--
+  ===================================================================
+  E3AC-20 · 3AC · L14 — PAILLASSE VIRTUELLE
+  « Que se passe-t-il si l'on ne respecte pas la tension nominale ? »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Une seule lampe, marquée 6 V – 2,1 W, sous trois tensions. Rien
+  n'est étiqueté ; trois grandeurs sortent d'un même modèle.
+
+  1. L'INTENSITÉ. Un filament n'est pas ohmique. La page emploie
+
+         I = I_nom · (U / U_nom)^n        n = 0,468
+
+     avec I_nom = P_nom / U_nom = 2,1/6 = 0,35 A — l'intensité nominale
+     que le protocole demande justement de calculer. L'exposant est
+     AJUSTÉ sur les trois relevés de la fiche, et il reste valable pour
+     tout n entre 0,457 et 0,478 : le résultat ne tient pas à un
+     réglage fin. Il redonne 0,25 A, 0,35 A et 0,42 A.
+
+  2. LA TEMPÉRATURE DU FILAMENT. Un filament qui rayonne dissipe
+     P = σεA·T⁴, et sa résistance croît comme T. En combinant, U croît
+     comme T^2,5, donc
+
+         T = T_nom · (U / U_nom)^0,4
+
+     soit 1971 K sous 3 V, 2600 K sous 6 V, 3058 K sous 9 V.
+
+  3. LA COULEUR. Elle se lit dans une table de couleurs du corps noir,
+     et non dans un mot recopié de la fiche. À 1971 K le filament est
+     rouge orangé, à 2600 K blanc chaud, à 3058 K blanc éclatant : la
+     fiche écrit « faible et rougeâtre », « normal et blanc », « très
+     vif », et ces trois descriptions se retrouvent sans être écrites
+     nulle part dans le code.
+
+  LA RUPTURE DU FILAMENT, ET CE QU'ELLE COÛTE EN HONNÊTETÉ
+  ---------------------------------------------------------
+  La fiche observe qu'à 9 V le filament grille « en quelques
+  secondes ». La loi standard de durée de vie d'une lampe à
+  incandescence,
+
+         L = L_nom · (U_nom / U)^12
+
+  donne, pour une lampe NEUVE de 1000 h : 4 millions d'heures sous
+  3 V, 1000 h sous 6 V, et 7,7 h sous 9 V. Sept heures, pas quelques
+  secondes. L'écart n'est pas une erreur de la fiche : une lampe de
+  laboratoire a déjà servi, et son filament est déjà aminci.
+
+  La page ne triche donc pas sur la loi — elle comprime le TEMPS, et
+  elle l'affiche. Le compteur d'usure avance à une accélération
+  déclarée à l'écran, si bien que les 7,7 heures de vie restante sous
+  9 V s'écoulent en quelques secondes de page. Sous 6 V, le même
+  compteur ne bouge pratiquement pas : il faudrait mille heures. C'est
+  cette comparaison-là, et non la rupture elle-même, qui porte la
+  leçon.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  Il monte le circuit, puis il TOURNE le bouton du générateur — un
+  vrai geste de rotation, pas un bouton qui rejoue une valeur. La
+  tension suit l'angle, et tout le reste suit la tension : l'éclat, la
+  couleur, l'intensité, la puissance, l'usure. Le réglage à 9 V est
+  refusé tant que la consigne de sécurité de la fiche n'a pas été
+  exécutée.
+
+  ATTENTION — CE QUE LA PAGE NE FAIT PAS
+  --------------------------------------
+  * Elle ne modifie AUCUN fichier partagé.
+  * Elle n'écrit jamais « σ », « corps noir » ni « kelvin » devant
+    l'élève : hors programme en 3AC. Ces mots ne vivent que sous le
+    capot.
+  * Elle ne parle pas d'énergie consommée : c'est la leçon suivante.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E3AC-20.
+-->
+
+<style>
+
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.oui{color:var(--green)}
+.lect .v.non{color:#b03030}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.temoin td{background:#f4f6f9}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.rappel{background:var(--bluebg);border-left:3px solid var(--gold);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin-top:8px;
+        color:var(--muted)}
+.rappel b{color:var(--ink)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans
+   la vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:15px;font-weight:700;color:var(--ink);margin-top:2px;
+          font-family:var(--mono)}
+.cases .u.nul{color:#9aa5b2;font-weight:600;font-family:inherit;font-size:13px}
+.cases .u.mal{color:#b03030}
+.bilan2{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin-top:9px;
+        font-size:12px}
+.bilan2 .n{color:var(--muted)}
+.bilan2 .v{font-family:var(--mono);font-weight:700;text-align:right}
+.bilan2 .v.mal{color:#b03030}
+.bilan2 .v.ok{color:var(--green)}
+.diag{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}
+.diag>div{border-radius:7px;padding:8px 6px;text-align:center;font-size:10.5px;
+  font-weight:700;background:#f2f5f8;color:#9aa5b2;border:1.5px solid transparent}
+.diag>div.on{background:#fdf6e6;border-color:var(--gold);color:var(--ink)}
+.diag>div.on.mal{background:#fdeeee;border-color:#e0b4b4;color:#b03030}
+.diag>div.on.ok{background:#eef6ea;border-color:#a8c89a;color:#375623}
+.usure{margin-top:10px}
+.usure .barre{height:12px;border-radius:6px;background:#eef1f5;overflow:hidden;
+  margin-top:4px}
+.usure .barre i{display:block;height:100%;background:linear-gradient(90deg,
+  #7fa86a,#c98b4b 62%,#b03030);width:0}
+.ecart{background:#fdf6e6;border-left:3px solid var(--gold);padding:8px 11px;
+  border-radius:0 7px 7px 0;font-size:11.5px;margin-top:9px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-20 · 3AC · L14</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglage hors protocole.</b> La fiche ne retient que trois
+        réglages — <b>3 V</b>, <b>6 V</b> et <b>9 V</b> — et elle interdit d'aller
+        au-delà de 9 V. Le bouton est ailleurs : le tableau de référence
+        cesse de se remplir, mais la lampe, elle, continue de réagir, et le
+        panneau de droite montre comment.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La lampe sous tension <span class="note" id="mesNom">—</span></h2>
+      <div class="cases" id="mesCases"></div>
+      <div class="diag" id="diag">
+        <div id="diagBas">au-dessous<br>de U nominale</div>
+        <div id="diagEgal">à la tension<br>nominale</div>
+        <div id="diagHaut">au-dessus<br>de U nominale</div>
+      </div>
+      <div class="bilan2" id="mesBilan"></div>
+      <div class="usure">
+        <div style="display:flex;justify-content:space-between;font-size:11px">
+          <span style="color:var(--muted)">Usure du filament</span>
+          <span id="usureTxt" style="font-family:var(--mono);font-weight:700"></span>
+        </div>
+        <div class="barre"><i id="usureJ"></i></div>
+        <p class="src" id="usurePhrase" style="margin-top:6px"></p>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La puissance en fonction de la tension <span class="note">elle ne double pas quand U double</span></h2>
+      <p class="src" style="margin:0 0 6px">La courbe est <b>calculée</b> point par
+        point ; les pastilles sont les trois réglages de la fiche, une fois
+        relevés. Le trait horizontal marque la puissance nominale, et son
+        croisement avec la courbe donne la tension nominale — sans qu'on l'ait
+        écrit nulle part.</p>
+      <svg id="gCourbe" viewBox="0 0 360 240" style="width:100%;height:auto;display:block"
+           role="img" aria-label="La puissance de la lampe en fonction de la tension"></svg>
+      <div class="bilan2" id="courbeBilan"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rU">Tension du générateur</label><output id="oU"></output>
+        <input type="range" id="rU" min="0" max="12" step="0.5" value="0">
+        <div class="aide">On peut aussi <b>tourner le bouton</b> du générateur à
+          la souris, sur la paillasse. La sécurité de la fiche interdit de
+          dépasser <b>9 V</b> avec cette lampe.</div>
+      </div>
+      <div class="reg">
+        <label for="rA">Accélération du temps</label><output id="oA"></output>
+        <input type="range" id="rA" min="0" max="5" step="1" value="3">
+        <div class="aide">Le compteur d'usure avance à cette vitesse. Sans
+          accélération, il faudrait mille heures pour user la lampe sous sa
+          tension nominale — et sept heures encore sous 9 V. C'est le seul
+          artifice de cette page, et il est affiché.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · Les trois lignes, calculées</h3>
+      <table id="capotLignes"></table>
+      <p id="capotNominale"></p>
+
+      <h3>2 · Le filament n'est pas un conducteur ohmique</h3>
+      <p>C'est le point que l'interprétation de la fiche relève : la puissance
+        ne double pas quand la tension double. Elle est presque triplée, parce
+        que l'intensité croît elle aussi — mais moins vite que la tension,
+        puisque la résistance du filament augmente avec sa température.</p>
+      <table id="capotFil"></table>
+
+      <h3>3 · La température du filament, et sa couleur</h3>
+      <p>Un filament incandescent perd sa puissance par rayonnement,
+        <span class="fx">P = σ·ε·A·T⁴</span>, tandis que la résistance du
+        tungstène croît à peu près comme <span class="fx">T</span>. De
+        <span class="fx">P = U²/R</span> il vient
+        <span class="fx" id="capotLoiT"></span>. La couleur n'est pas un mot
+        recopié : elle se lit dans la table des couleurs du corps noir.</p>
+      <table id="capotTemp"></table>
+
+      <h3>4 · La durée de vie, et le temps comprimé</h3>
+      <p class="fx" id="capotLoiL"></p>
+      <table id="capotVie"></table>
+      <div class="ecart" id="capotEcart"></div>
+
+      <h3>5 · Ce que la page retrouve, comparé à la fiche</h3>
+      <table id="capotAccord"></table>
+
+      <h3>6 · Les grandeurs du montage</h3>
+      <table id="capotVals"></table>
+
+      <h3>7 · Ce que le modèle simplifie</h3>
+      <ul>
+        <li><b>L'exposant du filament est ajusté, non calculé.</b> Le modèle
+        physique complet donne 0,6 ; cette lampe-ci donne 0,468. L'exposant
+        dépend de la géométrie du filament et du gaz de remplissage, et le
+        relevé de la fiche est ce qui le fixe.</li>
+        <li><b>La température nominale est tabulée.</b> 2600 K est la valeur
+        usuelle d'un filament de lampe basse tension ; c'est le seul nombre de
+        cette page qui ne se déduise ni de la fiche ni d'un calcul.</li>
+        <li><b>La rupture est instantanée</b> dès que l'usure atteint 100 %.
+        Un filament réel s'amincit d'abord en un point, puis cède ; la
+        loi employée décrit la durée moyenne, pas l'instant exact.</li>
+        <li><b>Les appareils de mesure sont parfaits</b> et les fils sans
+        résistance. Sur 17 Ω et sous 9 V au plus, l'écart est très inférieur
+        au centième d'ampère affiché.</li>
+        <li><b>Le régime est établi.</b> Une lampe met quelques dizaines de
+        millisecondes à atteindre sa température ; l'appel de courant à
+        l'allumage, quand le filament est encore froid, vaut près de dix fois
+        l'intensité nominale et n'est pas représenté.</li>
+      </ul>
+
+      <h3>8 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-20.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-20",
+  "niveau": "3AC",
+  "unite": "U3",
+  "lecon": "L14",
+  "titre": "Que se passe-t-il si l'on ne respecte pas la tension nominale d'un appareil ?",
+  "axe": "Les caractéristiques nominales d'un appareil électrique",
+  "objectif": "Établir, en faisant varier la seule tension d'alimentation d'une lampe marquée **6 V – 2,1 W**, que les indications de la **plaque signalétique** ne sont pas décoratives : elles fixent les **conditions du fonctionnement normal**. Au-dessous de la tension nominale l'appareil fonctionne au ralenti, à la tension nominale il consomme exactement sa **puissance nominale**, au-dessus il force et se **détériore**.",
+  "duree": 20,
+  "modalite": "Démonstration au bureau, montage projeté au vidéoprojecteur et mesures dictées à la classe qui complète son tableau. **Le troisième réglage, à 9 V, détruit la lampe** : il se fait une seule fois, sur une lampe prévue à cet effet, la classe observant à distance.",
+  "materiel": [
+    "Un **générateur de tension continue réglable** de **0 à 12 V**",
+    "Une **lampe sur douille** portant l'indication **6 V – 2,1 W**, et **deux lampes de rechange** identiques",
+    "Un **multimètre en voltmètre**, branché **en dérivation** aux bornes de la lampe",
+    "Un **multimètre en ampèremètre**, monté **en série** dans le circuit",
+    "Un **interrupteur** et des **fils de connexion**",
+    "Une **collection de plaques signalétiques** photographiées et projetées : lampe, fer à repasser, chauffe-eau, téléviseur, chargeur de téléphone"
+  ],
+  "securite": [
+    "⚠️ **Aucune manipulation sur le secteur.** Le générateur ne délivre ici que **9 V** au maximum.",
+    "⚠️ Le réglage à **9 V** dépasse volontairement la tension nominale : la lampe **grille**. L'enseignant seul l'exécute, **une seule fois**, la classe se tenant à distance de la paillasse.",
+    "Ne jamais dépasser **9 V** : au-delà, le filament peut se rompre brutalement.",
+    "Ouvrir l'interrupteur avant tout changement de lampe, et laisser la lampe **refroidir** avant de la démonter.",
+    "L'ampèremètre reste **en série**, le voltmètre **en dérivation** ; partir du plus grand calibre.",
+    "⚠️ **Ne jamais reproduire cette expérience à la maison** : brancher sur le secteur 220 V un appareil prévu pour une tension plus faible provoque sa destruction immédiate et un **risque d'incendie**.",
+    "Les **plaques signalétiques** des appareils de la maison s'observent **sans rien démonter, sans rien ouvrir et sans rien débrancher**."
+  ],
+  "protocole": [
+    "Projeter et lire ensemble les **plaques signalétiques** d'une lampe, d'un fer à repasser et d'un chargeur de téléphone : y repérer le nombre en **volts** et le nombre en **watts**.",
+    "Réaliser le circuit : générateur réglable, interrupteur, **ampèremètre en série**, lampe **6 V – 2,1 W**, et **voltmètre en dérivation** aux bornes de la lampe.",
+    "Régler le générateur sur **3 V**, fermer l'interrupteur, **vérifier au voltmètre** que la tension aux bornes de la lampe vaut bien 3 V, relever **I**, calculer **U × I** et décrire l'**éclat**.",
+    "Ouvrir l'interrupteur, régler le générateur sur **6 V** — la **tension nominale** —, refermer, et refaire les trois mêmes relevés.",
+    "Comparer la puissance ainsi mesurée au nombre **2,1 W** inscrit sur la lampe.",
+    "Ouvrir l'interrupteur, régler le générateur sur **9 V**, faire reculer la classe, refermer **brièvement** et observer l'éclat de la lampe jusqu'à la rupture du filament.",
+    "Ouvrir immédiatement l'interrupteur, puis compléter la dernière ligne du tableau avec les valeurs relevées avant la rupture.",
+    "Reprendre la plaque **6 V – 2,1 W** et calculer l'**intensité nominale** de la lampe par **I = P / U**, puis la comparer à l'intensité mesurée sous 6 V."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Réglage du générateur",
+      "U aux bornes de la lampe",
+      "I dans la lampe",
+      "P = U × I",
+      "Comparaison à la puissance nominale (2,1 W)",
+      "Éclat observé"
+    ],
+    "lignes": [
+      [
+        "3 V — au-dessous de la tension nominale",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "6 V — la tension nominale",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "9 V — au-dessus de la tension nominale",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "3 V — au-dessous de la tension nominale",
+        "**3,0 V**",
+        "**0,25 A**",
+        "**0,75 W**",
+        "**inférieure**",
+        "éclat faible et rougeâtre"
+      ],
+      [
+        "6 V — la tension nominale",
+        "**6,0 V**",
+        "**0,35 A**",
+        "**2,1 W**",
+        "**égale**",
+        "éclat normal et blanc"
+      ],
+      [
+        "9 V — au-dessus de la tension nominale",
+        "**9,0 V**",
+        "**0,42 A**",
+        "**3,8 W**",
+        "**supérieure**",
+        "éclat très vif, puis le **filament grille**"
+      ]
+    ]
+  },
+  "observation": "La même lampe 6 V – 2,1 W donne 0,75 W sous 3 V, 2,1 W sous 6 V, et 3,8 W sous 9 V — où son filament grille.",
+  "conclusion": "Les caractéristiques nominales fixent les conditions du fonctionnement normal : U_n, P_n et I_n, avec P_n = U_n · I_n. Les dépasser détruit l'appareil.",
+  "oheric": {
+    "observation": "Tout appareil électrique porte, collée sur son dos ou gravée sur son culot, une petite **plaque signalétique** : **220 V – 1200 W** sur un fer à repasser, **6 V – 2,1 W** sur une lampe de laboratoire, **5 V** sur un chargeur de téléphone. On sait maintenant que le second nombre est la **puissance**. Mais pourquoi le constructeur prend-il la peine d'écrire aussi le premier ? Que risque-t-on à ne pas en tenir compte ? Chacun a entendu l'histoire de l'appareil rapporté de l'étranger qui a **grillé** à la première prise.",
+    "hypothese": "**Si** les deux nombres de la plaque décrivent les conditions dans lesquelles le constructeur a prévu que l'appareil fonctionne, **alors** la puissance calculée par **P = U · I** ne vaudra le nombre inscrit **que** si l'appareil est alimenté sous la tension inscrite. Au-dessous, la puissance sera plus faible et l'appareil fonctionnera au ralenti ; au-dessus, elle sera plus forte et l'appareil s'usera vite, voire se détruira. Il suffit, pour trancher, de faire varier **la seule tension** et de refaire chaque fois la même mesure.",
+    "experience": "Alimenter une lampe marquée **6 V – 2,1 W** successivement sous **3 V**, **6 V** puis **9 V**, en relevant chaque fois la tension **U** à ses bornes, l'intensité **I** qui la traverse et l'aspect de son **éclat**, et en calculant le produit **U × I** pour le comparer à la puissance inscrite. Le réglage à 9 V se fait **une seule fois**, en démonstration, la classe à distance.",
+    "resultats": "Sous **3 V** : **I = 0,25 A**, donc **P = 3,0 × 0,25 = 0,75 W** — bien au-dessous des 2,1 W inscrits — et la lampe ne donne qu'un éclat faible et rougeâtre. Sous **6 V** : **I = 0,35 A**, donc **P = 6,0 × 0,35 = 2,1 W** — exactement la valeur inscrite — et la lampe brille normalement, d'un blanc franc. Sous **9 V** : **I = 0,42 A**, donc **P = 9,0 × 0,42 = 3,8 W** — bien au-dessus des 2,1 W — et la lampe brille très vivement quelques secondes avant que son **filament ne grille**. Le calcul **I = P / U = 2,1 / 6 = 0,35 A** redonne, lui aussi, l'intensité relevée sous 6 V.",
+    "interpretation": "L'hypothèse est **validée** dans ses trois branches. Les nombres de la plaque signalétique ne décrivent pas l'appareil « en général » : ils décrivent son **fonctionnement normal**, et ce sont les **caractéristiques nominales**. La **tension nominale U_n** est la tension qu'il faut appliquer aux bornes de l'appareil pour qu'il fonctionne normalement ; la **puissance nominale P_n** est la puissance qu'il consomme **alors**, et alors seulement ; l'**intensité nominale I_n** est l'intensité qui le traverse dans ces mêmes conditions, et elle se calcule par **I_n = P_n / U_n** lorsque la plaque ne la donne pas. Trois cas se présentent donc : en **sous-tension**, la puissance reçue est inférieure à la puissance nominale et l'effet produit est plus faible que prévu ; à la **tension nominale**, l'appareil est **adapté** et fonctionne normalement ; en **surtension**, la puissance reçue dépasse la puissance nominale, l'effet est plus fort mais l'appareil **s'use rapidement et se détériore**. On notera au passage que la puissance ne double pas quand la tension double — 0,75 W sous 3 V, mais 2,1 W sous 6 V : le filament d'une lampe **n'est pas un conducteur ohmique**, sa résistance augmente à mesure qu'il chauffe.",
+    "conclusion": "Les **caractéristiques nominales** d'un appareil électrique sont les indications portées par le constructeur sur sa **plaque signalétique** ; elles donnent les valeurs des grandeurs électriques **à respecter** pour que l'appareil fonctionne normalement. Ce sont la **tension nominale** (en V), la **puissance nominale** (en W) et l'**intensité nominale** (en A), liées entre elles par **P_n = U_n · I_n**. Un appareil alimenté **au-dessous** de sa tension nominale fonctionne au ralenti ; alimenté **au-dessus**, il se **détériore**. Un appareil ne consomme sa puissance nominale que sous sa tension nominale."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+
+
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ================================================================== */
+var PHYS = {
+  N_FIL: { v: 0.468, u: "", n: "exposant de la loi de filament",
+    s: "I = I_nom·(U/U_nom)^n, AJUSTÉ sur les trois relevés de la fiche. Tout n entre 0,457 et 0,478 les redonne : le résultat ne tient pas à un réglage fin. Le calcul par le rayonnement donnerait 0,6 ; l'exposant dépend du filament" },
+  T_NOM: { v: 2600, u: "K", n: "température du filament sous sa tension nominale",
+    s: "valeur tabulée pour un filament de tungstène de lampe basse tension (2500 à 2700 K). C'est le SEUL nombre de cette page qui ne se déduise ni de la fiche ni d'un calcul" },
+  T_AMB: { v: 293, u: "K", n: "température ambiante",
+    s: "20 °C : c'est là qu'est le filament tant que l'interrupteur est ouvert" },
+  EXPO_T: { v: 0.4, u: "", n: "exposant de la température",
+    s: "un filament qui rayonne dissipe σεAT⁴ et sa résistance croît comme T ; de P = U²/R il vient U ∝ T^2,5, donc T ∝ U^0,4. Ce n'est pas ajusté, c'est déduit" },
+  T_FUSION: { v: 3695, u: "K", n: "température de fusion du tungstène",
+    s: "le filament n'y arrive pas sous 9 V — il ne fond pas, il s'évapore, et c'est la durée de vie qui s'effondre" },
+  EXPO_VIE: { v: 12, u: "", n: "exposant de la loi de durée de vie",
+    s: "L = L_nom·(U_nom/U)^12, loi standard des lampes à incandescence. Doubler la tension divise la durée de vie par quatre mille" },
+  L_NOM: { v: 1000, u: "h", n: "durée de vie sous la tension nominale",
+    s: "mille heures, valeur usuelle d'une lampe à incandescence neuve" },
+  DIV_U: { v: 0.1, u: "V", n: "résolution du voltmètre",
+    s: "la fiche écrit 3,0 V, 6,0 V et 9,0 V : le dixième de volt" },
+  DIV_I: { v: 0.01, u: "A", n: "résolution de l'ampèremètre",
+    s: "la fiche écrit 0,25 A, 0,35 A et 0,42 A : le centième d'ampère" },
+  U_MAX: { v: 9, u: "V", n: "tension maximale admise par la sécurité",
+    s: "« Ne jamais dépasser 9 V : au-delà, le filament peut se rompre brutalement », dit la fiche" },
+  PAS_ANGLE: { v: 240, u: "°", n: "course du bouton du générateur",
+    s: "de −120° à +120° pour aller de 0 à 12 V : c'est l'angle du bouton qui donne la tension, et non l'inverse" }
+};
+
+/* La table des couleurs du corps noir. Ce n'est pas une palette
+   choisie : ce sont les couleurs que rayonne un corps porté à ces
+   températures-là, et c'est elle qui décide de ce que l'élève voit. */
+var CORPS_NOIR = [
+  { T: 1000, c: "#ff3800", nom: "rouge sombre" },
+  { T: 1500, c: "#ff6b00", nom: "rouge orangé" },
+  { T: 2000, c: "#ff8d2b", nom: "orangé" },
+  { T: 2400, c: "#ffab5e", nom: "jaune orangé" },
+  { T: 2600, c: "#ffbb77", nom: "blanc chaud" },
+  { T: 3000, c: "#ffd0a0", nom: "blanc" },
+  { T: 3300, c: "#ffdcb8", nom: "blanc éclatant" },
+  { T: 3700, c: "#ffe9d2", nom: "blanc bleuté" }
+];
+
+/* ==================================================================
+   2. CE QUE LA FICHE DIT (§0)
+   ================================================================== */
+function T(k) { return DONNEES[k] || ""; }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return TM().entetes || []; }
+function lignesFiche() { return TM().lignes || []; }
+function valeursFiche() { return TM().valeurs || []; }
+function nbRegl() { return lignesFiche().length; }
+function nomRegl(i) {
+  var l = lignesFiche()[i];
+  return l && l[0] ? String(l[0]) : String(i + 1);
+}
+function valFiche(i, c) {
+  var v = valeursFiche()[i];
+  return v ? depouille(String(v[c] || "")) : "";
+}
+/* La tension de chaque réglage est écrite dans le NOM de la ligne :
+   « 3 V — au-dessous de la tension nominale ». */
+function tensionRegl(i) {
+  var m = nomRegl(i).match(/(\d[\d,.]*)\s*V(?![A-Za-zÀ-ÿ])/);
+  return m ? parseFloat(m[1].replace(",", ".")) : NaN;
+}
+/* La plaque signalétique de la lampe : « 6 V – 2,1 W ». Le titre, le
+   matériel et l'objectif la portent tous les trois ; on la lit là où
+   elle est, sans l'écrire. */
+function plaque() {
+  var src = L("materiel").concat([T("objectif"), T("titre")]), i, m;
+  for (i = 0; i < src.length; i++) {
+    m = depouille(src[i]).match(/(\d[\d,.]*)\s*V\s*[–—-]\s*(\d[\d,.]*)\s*W/);
+    if (m) {
+      return { U: parseFloat(m[1].replace(",", ".")),
+               P: parseFloat(m[2].replace(",", ".")) };
+    }
+  }
+  return { U: 6, P: 2.1 };
+}
+function uNominale() { return plaque().U; }
+function pNominale() { return plaque().P; }
+/* L'intensité nominale — celle que le protocole demande de CALCULER. */
+function iNominale() { return pNominale() / uNominale(); }
+function secu(motif) {
+  var s = L("securite"), i, re = new RegExp(motif, "i");
+  for (i = 0; i < s.length; i++) if (re.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+/* La colonne « Comparaison à la puissance nominale » de la fiche :
+   inférieure / égale / supérieure. On lit ses mots, on ne les écrit
+   pas. */
+function motComparaison(quoi) {
+  var i, v;
+  for (i = 0; i < nbRegl(); i++) {
+    v = valFiche(i, 4);
+    if (!v) continue;
+    if (quoi === "bas" && /inf/i.test(v)) return v;
+    if (quoi === "egal" && /égal/i.test(v)) return v;
+    if (quoi === "haut" && /sup/i.test(v)) return v;
+  }
+  return quoi === "bas" ? "inférieure" : (quoi === "egal" ? "égale" : "supérieure");
+}
+
+/* ==================================================================
+   3. LE MODÈLE
+   ================================================================== */
+
+/* --- L'intensité. Loi de filament, ajustée sur la fiche. ---------- */
+function intensiteVraie(U) {
+  if (!(U > 0)) return 0;
+  return iNominale() * Math.pow(U / uNominale(), PHYS.N_FIL.v);
+}
+function intensiteLue(U) {
+  return Math.round(intensiteVraie(U) / PHYS.DIV_I.v) * PHYS.DIV_I.v;
+}
+function tensionLue(U) {
+  return Math.round(U / PHYS.DIV_U.v) * PHYS.DIV_U.v;
+}
+/* Le produit U × I, calculé sur ce que les DEUX appareils affichent. */
+function produit(U) { return tensionLue(U) * intensiteLue(U); }
+/* La résistance du filament — elle n'est PAS constante, et c'est le
+   point de l'interprétation de la fiche. */
+function resistance(U) {
+  var I = intensiteVraie(U);
+  return I > 0 ? U / I : NaN;
+}
+
+/* --- La température du filament. Déduite, pas ajustée. ------------ */
+function temperature(U) {
+  if (!(U > 0)) return PHYS.T_AMB.v;
+  return PHYS.T_NOM.v * Math.pow(U / uNominale(), PHYS.EXPO_T.v);
+}
+/* La couleur : interpolée dans la table du corps noir. */
+function couleurFilament(Temp) {
+  var i;
+  if (Temp <= CORPS_NOIR[0].T) return CORPS_NOIR[0].c;
+  for (i = 1; i < CORPS_NOIR.length; i++) {
+    if (Temp <= CORPS_NOIR[i].T) {
+      return melange(CORPS_NOIR[i - 1].c, CORPS_NOIR[i].c,
+        (Temp - CORPS_NOIR[i - 1].T) / (CORPS_NOIR[i].T - CORPS_NOIR[i - 1].T));
+    }
+  }
+  return CORPS_NOIR[CORPS_NOIR.length - 1].c;
+}
+function nomCouleur(Temp) {
+  var i, meilleur = CORPS_NOIR[0];
+  for (i = 0; i < CORPS_NOIR.length; i++) {
+    if (Math.abs(CORPS_NOIR[i].T - Temp) < Math.abs(meilleur.T - Temp)) {
+      meilleur = CORPS_NOIR[i];
+    }
+  }
+  return meilleur.nom;
+}
+/* L'éclat, rapporté au nominal. Le flux d'une lampe suit la tension
+   bien plus vite que la puissance : le filament chauffe, et la part
+   visible de son rayonnement grimpe. */
+function eclat(U) {
+  if (!(U > 0)) return 0;
+  return Math.pow(U / uNominale(), 3.4);
+}
+
+/* --- La durée de vie. Loi standard, non ajustée. ------------------ */
+function dureeVie(U) {
+  if (!(U > 0)) return Infinity;
+  return PHYS.L_NOM.v * Math.pow(uNominale() / U, PHYS.EXPO_VIE.v);
+}
+/* L'usure s'accumule : chaque seconde passée sous U consomme
+   1/L(U) de la vie de la lampe. */
+function tauxUsure(U) {
+  var L2 = dureeVie(U);
+  return isFinite(L2) && L2 > 0 ? 1 / (L2 * 3600) : 0;
+}
+
+/* ==================================================================
+   4. LES VERDICTS
+   ==================================================================
+   Aucun n'est écrit : chacun sort d'une comparaison chiffrée.        */
+
+/* Le diagnostic — au-dessous, à la tension nominale, au-dessus. Le
+   seuil est celui de l'instrument : une graduation de voltmètre. */
+function diagnostic(U) {
+  var Un = uNominale(), d = tensionLue(U) - Un;
+  if (Math.abs(d) < PHYS.DIV_U.v / 2) return "egal";
+  return d < 0 ? "bas" : "haut";
+}
+/* La puissance mesurée est-elle celle de la plaque ? La tolérance
+   vient de la résolution de l'ampèremètre. */
+function toleranceProduit(U) { return Math.max(U * PHYS.DIV_I.v, 0.05); }
+function accordNominal(U) {
+  return Math.abs(produit(U) - pNominale()) <= toleranceProduit(U) + 1e-9;
+}
+/* La puissance double-t-elle quand la tension double ? La réponse est
+   non, et c'est ce qu'il faut faire voir. */
+function facteurPuissance(U1, U2) {
+  var p1 = produit(U1);
+  return p1 > 0 ? produit(U2) / p1 : NaN;
+}
+
+/* ==================================================================
+   5. L'ÉTAT
+   ================================================================== */
+var svg = null, COUCHES = {};
+var ETAT = null;
+var NB_LAMPES = 3;                 // celle du montage et les deux de rechange
+
+function neufEtat() {
+  return {
+    lampe: null,                   // index de la lampe vissée dans la douille
+    amp: false,                    // ampèremètre en série
+    volt: false,                   // voltmètre en dérivation
+    ferme: false,                  // interrupteur
+    recul: false,                  // la classe s'est écartée (consigne 9 V)
+    plaques: false,                // les plaques signalétiques ont été lues
+    usures: [0, 0, 0],             // fraction de vie consommée, par lampe
+    grillees: [false, false, false],
+    lu: {},
+    conclu: false,
+    notes: []
+  };
+}
+function montePret() { return ETAT.lampe !== null && ETAT.amp && ETAT.volt; }
+function lampeVive() {
+  return ETAT.lampe !== null && !ETAT.grillees[ETAT.lampe];
+}
+function sousTension() { return montePret() && ETAT.ferme && lampeVive(); }
+function usureCourante() {
+  return ETAT.lampe === null ? 0 : ETAT.usures[ETAT.lampe];
+}
+
+/* ==================================================================
+   6. LA GÉOMÉTRIE
+   ==================================================================
+   ZONES INTERDITES, relevées sur capture :
+     · bandeau de consigne     x 224..896  y < 60
+     · journal d'observation   x < 278     y < 300
+     · plaque de sécurité      x < 276     y 316..452
+     · tableau des plaques     x < 276     y 466..614
+   Le circuit tient à droite du journal, entre y = 140 et y = 600.     */
+var W = 1120, H = 760, BANC = 628;
+var Y_BT1 = 660, Y_BT2 = 702;
+var CX0 = 336, CX1 = 752, CY0 = 178, CY1 = 452;
+var X_GEN = 544, X_INTER = 402, X_LAMPE = 544;
+var X_AMP = CX1, Y_AMP = 315;
+var Y_VOLT = 556;
+/* Le bouton vit DANS le boîtier du générateur : posé dessus, il se
+   plantait sur le fil qui sort du + et le masquait. Le boîtier va donc
+   de X_GEN−92 à X_GEN+132, et les fils partent de ses deux bords. */
+var GEN_G = X_GEN - 92, GEN_D = X_GEN + 132, GEN_H = 42;
+var X_BOUTON = X_GEN + 72, Y_BOUTON = CY0, R_BOUTON = 26;
+var X_RANGE = 908;
+var Y_R_L = [150, 258, 366];        // la lampe du montage et les deux rechanges
+var Y_R_AMP = 470, Y_R_VOLT = 580;
+var PLQ = { x: 20, y: 466, lg: 254, ht: 148 };
+
+/* ==================================================================
+   7. DÉFINITIONS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0,
+      y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("boitier", [[0, "#e9edf2"], [0.4, "#cdd5de"], [1, "#9aa5b2"]], true);
+  grad("ecran", [[0, "#2b3f33"], [1, "#16261d"]]);
+  grad("laiton", [[0, "#e8d9a0"], [0.5, "#c9a84c"], [1, "#8f7526"]], true);
+  grad("molette", [[0, "#f2f5f8"], [0.45, "#d4dbe3"], [1, "#93a0ae"]], true);
+  /* Le halo d'une lampe : sa COULEUR est celle du filament, calculée. */
+  g = el("radialGradient", { id: "halo" });
+  g.appendChild(el("stop", { id: "halo0", offset: 0, "stop-color": "#fff3c4",
+    "stop-opacity": 0.95 }));
+  g.appendChild(el("stop", { id: "halo1", offset: 0.45, "stop-color": "#ffd66b",
+    "stop-opacity": 0.5 }));
+  g.appendChild(el("stop", { id: "halo2", offset: 1, "stop-color": "#ffbe3d",
+    "stop-opacity": 0 }));
+  D.appendChild(g);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%",
+    height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .26 }));
+  D.appendChild(f);
+}
+function ajouterCouches() {
+  ["fond", "poste", "fils", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   8. LE DÉCOR
+   ================================================================== */
+function construireFond() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC,
+    fill: "url(#banc)" }));
+}
+function construireSecurite() {
+  var X = 20, Y = 316, LG = 254, HT = 136;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8,
+    "pointer-events": "none" }));
+  txt("poste", X + 11, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.3 });
+  /* On vise la ligne par ce qu'elle DIT (§12.14) : le danger propre à
+     cette séance est le réglage volontaire au-dessus du nominal. */
+  enrouler(secu("9 V.+grille|grille").replace(/^⚠️\s*/, "")
+    .replace(/\s*L'enseignant.*$/, ""), 34, 4)
+    .forEach(function (s, i) {
+      txt("poste", X + 11, Y + 42 + i * 14, s, { ancre: "start", taille: 10,
+          gras: true, couleur: ROUGE });
+    });
+  txt("poste", X + 11, Y + 104, "L'enseignant seul l'exécute,", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+  txt("poste", X + 11, Y + 118, "la classe se tenant à distance.", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+}
+/* Le tableau des plaques signalétiques : la première étape du
+   protocole, et le sens même de la leçon. Les appareils sont LUS dans
+   le matériel de la fiche. */
+function appareilsPlaques() {
+  var mat = L("materiel"), i, m;
+  for (i = 0; i < mat.length; i++) {
+    m = depouille(mat[i]).match(/plaques signalétiques[^:]*:\s*(.+)$/i);
+    if (m) return m[1].split(/\s*,\s*/).map(function (s) { return s.trim(); });
+  }
+  return ["lampe"];
+}
+/* Les valeurs portées sur chaque plaque. Celle de la lampe vient de la
+   fiche ; les autres sont les indications usuelles de ces appareils,
+   déclarées sous le capot. */
+var PLAQUES_USUELLES = {
+  "fer à repasser": "220 V – 1200 W", "chauffe-eau": "220 V – 2000 W",
+  "téléviseur": "220 V – 90 W", "chargeur de téléphone": "5 V – 10 W"
+};
+function textePlaque(nom) {
+  if (/lampe/i.test(nom)) return nb(uNominale(), 0) + " V – " + nb(pNominale(), 1) + " W";
+  return PLAQUES_USUELLES[nom] || "220 V";
+}
+function construirePlaques() {
+  var g = ajout("poste", el("g", { id: "plaques", "data-act": "plaques",
+    cursor: "pointer" })), a = appareilsPlaques().slice(0, 5), i;
+  g.appendChild(el("rect", { x: PLQ.x, y: PLQ.y, width: PLQ.lg, height: PLQ.ht,
+    rx: 9, fill: "#f4f7fa", stroke: "#c3ccd7", "stroke-width": 1.6 }));
+  txtIn(g, PLQ.x + 11, PLQ.y + 20, "PLAQUES SIGNALÉTIQUES", { ancre: "start",
+    taille: 9.5, gras: true, couleur: "#5d6874", esp: 1.1 });
+  for (i = 0; i < a.length; i++) {
+    txtIn(g, PLQ.x + 11, PLQ.y + 40 + i * 21, a[i], { ancre: "start",
+      taille: 10, couleur: "#5d6874" });
+    txtIn(g, PLQ.x + PLQ.lg - 11, PLQ.y + 40 + i * 21, textePlaque(a[i]),
+      { ancre: "end", taille: 10, gras: true, couleur: "#7a5a12" });
+  }
+  txtIn(g, PLQ.x + PLQ.lg / 2, PLQ.y + PLQ.ht - 8, "cliquer pour les lire",
+    { taille: 8.5, couleur: "#9aa5b2" });
+}
+
+/* ==================================================================
+   9. LE CIRCUIT
+   ================================================================== */
+function construireGenerateur() {
+  var g = ajout("objets", el("g", { id: "gen", "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: GEN_G, y: CY0 - GEN_H, width: GEN_D - GEN_G,
+    height: GEN_H * 2, rx: 6, fill: "url(#boitier)", stroke: "#6b7686",
+    "stroke-width": 1.5 }));
+  g.appendChild(el("rect", { x: GEN_G + 12, y: CY0 - 14, width: 80, height: 28,
+    rx: 3, fill: "url(#ecran)" }));
+  g.appendChild(el("text", { id: "genVal", x: GEN_G + 52, y: CY0 + 7,
+    "text-anchor": "middle", "font-size": 14, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "monospace" }, "0,0 V"));
+  txtIn(g, X_GEN + 10, CY0 + GEN_H + 30,
+    "générateur de tension continue réglable 0 – 12 V",
+    { taille: 9, couleur: "#5d6874" });
+  /* Le bouton se TOURNE : l'angle donne la tension, et c'est le seul
+     geste par lequel la tension change sur la paillasse. */
+  var b = ajout("objets", el("g", { id: "bouton", "data-act": "bouton",
+    cursor: "grab" }));
+  b.appendChild(el("circle", { cx: X_BOUTON, cy: Y_BOUTON, r: R_BOUTON + 8,
+    fill: "transparent" }));
+  var d = b.appendChild(el("g", { "pointer-events": "none" })), k, ang, xa, ya;
+  d.appendChild(el("circle", { cx: X_BOUTON, cy: Y_BOUTON, r: R_BOUTON,
+    fill: "url(#molette)", stroke: "#5d6874", "stroke-width": 1.6 }));
+  d.appendChild(el("circle", { cx: X_BOUTON, cy: Y_BOUTON, r: R_BOUTON - 9,
+    fill: "none", stroke: "#aeb9c6", "stroke-width": 1 }));
+  /* Les graduations du bouton : 0, 3, 6, 9, 12 V. */
+  for (k = 0; k <= 4; k++) {
+    ang = (-120 + k * 60) * Math.PI / 180;
+    xa = X_BOUTON + Math.sin(ang) * (R_BOUTON + 12);
+    ya = Y_BOUTON - Math.cos(ang) * (R_BOUTON + 12);
+    d.appendChild(el("line", {
+      x1: X_BOUTON + Math.sin(ang) * (R_BOUTON + 2),
+      y1: Y_BOUTON - Math.cos(ang) * (R_BOUTON + 2),
+      x2: X_BOUTON + Math.sin(ang) * (R_BOUTON + 7),
+      y2: Y_BOUTON - Math.cos(ang) * (R_BOUTON + 7),
+      stroke: k * 3 > PHYS.U_MAX.v ? ROUGE : "#8d97a3", "stroke-width": 1.6 }));
+    txtIn(d, xa, ya + 3.5, String(k * 3), { taille: 8.5,
+      couleur: k * 3 > PHYS.U_MAX.v ? ROUGE : "#8794a5" });
+  }
+  d.appendChild(el("line", { id: "boutonAig", x1: X_BOUTON, y1: Y_BOUTON,
+    x2: X_BOUTON, y2: Y_BOUTON - R_BOUTON + 5, stroke: ROUGE,
+    "stroke-width": 3, "stroke-linecap": "round" }));
+  txtIn(d, X_BOUTON, Y_BOUTON + GEN_H + 16, "tourner le bouton",
+    { taille: 8.5, gras: true, couleur: "#8a6a1e" });
+}
+function construireInterrupteur() {
+  var g = ajout("objets", el("g", { id: "inter", "data-act": "inter",
+    cursor: "pointer" }));
+  g.appendChild(el("rect", { x: X_INTER - 34, y: CY0 - 26, width: 68,
+    height: 52, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: X_INTER - 26, y: CY0 - 9, width: 52, height: 20,
+    rx: 4, fill: "#e6ebf1", stroke: "#8d97a3", "stroke-width": 1.2 }));
+  [-18, 18].forEach(function (dx) {
+    d.appendChild(el("circle", { cx: X_INTER + dx, cy: CY0, r: 3.6,
+      fill: "#3b4655" }));
+  });
+  d.appendChild(el("line", { id: "interLame", x1: X_INTER - 18, y1: CY0,
+    x2: X_INTER + 14, y2: CY0 - 15, stroke: "#3b4655", "stroke-width": 3.2,
+    "stroke-linecap": "round" }));
+  txtIn(g, X_INTER, CY0 + 30, "interrupteur", { taille: 9, couleur: "#5d6874" });
+}
+function construireDouille() {
+  var g = ajout("objets", el("g", { "data-zone": "douille",
+    "pointer-events": "none" })), i;
+  g.appendChild(el("rect", { x: X_LAMPE - 30, y: CY1 - 12, width: 60,
+    height: 30, rx: 4, fill: "#4a5361", stroke: "#333b47", "stroke-width": 1.3 }));
+  g.appendChild(el("rect", { x: X_LAMPE - 15, y: CY1 - 26, width: 30,
+    height: 16, rx: 2, fill: "url(#laiton)" }));
+  for (i = 0; i < 3; i++) {
+    g.appendChild(el("line", { x1: X_LAMPE - 15, y1: CY1 - 24 + i * 5,
+      x2: X_LAMPE + 15, y2: CY1 - 24 + i * 5, stroke: "#8f7526",
+      "stroke-width": 0.9 }));
+  }
+  txtIn(g, X_LAMPE, CY1 + 33, "douille", { taille: 9, couleur: "#5d6874" });
+}
+/* Une lampe. Son filament change de couleur ET peut se rompre : les
+   deux sont dessinés séparément pour qu'on puisse les distinguer. */
+function construireLampe(j, x, y) {
+  var id = "lampe" + j,
+      g = ajout("objets", el("g", { id: id, "data-act": id, cursor: "grab" }));
+  g.appendChild(el("rect", { x: x - 36, y: y - 48, width: 72, height: 96,
+    fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("circle", { id: id + "-halo", cx: x, cy: y - 12, r: 1,
+    fill: "url(#halo)", opacity: 0 }));
+  d.appendChild(el("circle", { cx: x, cy: y - 12, r: 23,
+    fill: "#eef5fa", "fill-opacity": .78, stroke: "#a9bccb",
+    "stroke-width": 1.3 }));
+  /* Le filament entier, et sa version rompue — un seul des deux est
+     visible à la fois, selon l'état de la lampe. */
+  d.appendChild(el("path", { id: id + "-fil",
+    d: "M " + pt(x - 8, y - 3) + " L " + pt(x - 5, y - 19) + " L " + pt(x, y - 8)
+       + " L " + pt(x + 5, y - 19) + " L " + pt(x + 8, y - 3),
+    fill: "none", stroke: "#8b8f96", "stroke-width": 2,
+    "stroke-linejoin": "round" }));
+  d.appendChild(el("path", { id: id + "-cass",
+    d: "M " + pt(x - 8, y - 3) + " L " + pt(x - 5, y - 19) + " L " + pt(x - 1.5, y - 10)
+       + " M " + pt(x + 1.5, y - 12) + " L " + pt(x + 5, y - 19) + " L " + pt(x + 8, y - 3),
+    fill: "none", stroke: "#5a5f66", "stroke-width": 2,
+    "stroke-linejoin": "round", opacity: 0 }));
+  d.appendChild(el("rect", { x: x - 11, y: y + 9, width: 22, height: 18, rx: 2,
+    fill: "url(#laiton)" }));
+  /* La plaque signalétique de la lampe, LUE dans la fiche. */
+  d.appendChild(el("rect", { x: x - 31, y: y + 28, width: 62, height: 15, rx: 3,
+    fill: "#fffbe9", stroke: GOLD, "stroke-width": 1 }));
+  txtIn(d, x, y + 38.5, textePlaque("lampe"), { taille: 9, gras: true,
+    couleur: "#7a5a12" });
+  txtIn(d, x, y - 40, j === 0 ? "lampe du montage" : "rechange " + j,
+    { taille: 8.5, couleur: "#5d6874" });
+  d.appendChild(el("text", { id: id + "-etat", x: x, y: y + 54,
+    "text-anchor": "middle", "font-size": 9, "font-weight": "bold",
+    fill: ROUGE, "pointer-events": "none" }, ""));
+  return g;
+}
+function construireMultimetre(id, mode, x, y) {
+  var g = ajout("objets", el("g", { id: id, "data-act": id, cursor: "grab" }));
+  g.appendChild(el("rect", { x: x - 44, y: y - 58, width: 88, height: 120,
+    fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: x - 37, y: y - 52, width: 74, height: 108,
+    rx: 8, fill: "url(#boitier)", stroke: "#6b7686", "stroke-width": 1.6 }));
+  d.appendChild(el("rect", { x: x - 29, y: y - 44, width: 58, height: 25, rx: 3,
+    fill: "url(#ecran)" }));
+  d.appendChild(el("text", { id: id + "-val", x: x, y: y - 26,
+    "text-anchor": "middle", "font-size": 11.5, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "monospace" }, "----"));
+  d.appendChild(el("circle", { cx: x, cy: y + 5, r: 16, fill: "#dde4ec",
+    stroke: "#6b7686", "stroke-width": 1.3 }));
+  d.appendChild(el("line", { x1: x, y1: y + 5, x2: x, y2: y - 8,
+    stroke: "#b8272b", "stroke-width": 2.3 }));
+  d.appendChild(el("text", { x: x, y: y + 38, "text-anchor": "middle",
+    "font-size": 10.5, "font-weight": "bold", fill: "#3b4655" }, mode));
+  [-15, 15].forEach(function (dx) {
+    d.appendChild(el("circle", { cx: x + dx, cy: y + 49, r: 4.2,
+      fill: "#3b4655" }));
+  });
+  return g;
+}
+function construireEmplacements() {
+  [{ z: "serie", x: X_AMP, y: Y_AMP, t: "en série" },
+   { z: "derivation", x: X_LAMPE, y: Y_VOLT, t: "en dérivation" }
+  ].forEach(function (e) {
+    var g = ajout("poste", el("g", { "data-zone": e.z, "pointer-events": "none" }));
+    g.appendChild(el("rect", { x: e.x - 40, y: e.y - 30, width: 80, height: 60,
+      rx: 7, fill: "#eef3f8", "fill-opacity": .75, stroke: "#b7c3d0",
+      "stroke-width": 1.4, "stroke-dasharray": "5 4" }));
+    txtIn(g, e.x, e.y + 4, e.t, { taille: 9.5, couleur: "#8794a5" });
+  });
+}
+function construireScene() {
+  vide(svg);
+  COUCHES = {};
+  ajouterDefs();
+  ajouterCouches();
+  construireFond();
+  construireSecurite();
+  construirePlaques();
+  construireEmplacements();
+  construireGenerateur();
+  construireInterrupteur();
+  construireDouille();
+  ajout("fils", el("g", { id: "gFils" }));
+  var j;
+  for (j = 0; j < NB_LAMPES; j++) construireLampe(j, X_RANGE, Y_R_L[j]);
+  construireMultimetre("amp", "A", X_RANGE, Y_R_AMP);
+  construireMultimetre("volt", "V", X_RANGE, Y_R_VOLT);
+  txt("ui", W / 2, 742, "schéma habillé — la couleur du filament est celle "
+    + "que rayonne un corps porté à la température calculée, et non un mot "
+    + "recopié", { taille: 9.5, couleur: "#8794a5" });
+  for (j = 0; j < NB_LAMPES; j++) replacer("lampe" + j);
+  replacer("amp");
+  replacer("volt");
+  construireBoutons();
+}
+
+/* ==================================================================
+   10. LES PLACES ET LES ZONES
+   ==================================================================
+   Zones rendues de la PLUS PETITE à la plus grande (§12.16).          */
+function placeDe(a) {
+  if (/^lampe/.test(a)) return { x: X_LAMPE, y: CY1 - 35 };
+  if (a === "amp") return { x: X_AMP, y: Y_AMP };
+  if (a === "volt") return { x: X_LAMPE, y: Y_VOLT };
+  return null;
+}
+function depart(a) {
+  if (/^lampe/.test(a)) return { x: X_RANGE, y: Y_R_L[numLampe(a)] };
+  if (a === "amp") return { x: X_RANGE, y: Y_R_AMP };
+  if (a === "volt") return { x: X_RANGE, y: Y_R_VOLT };
+  return null;
+}
+function numLampe(a) { return parseInt(a.replace("lampe", ""), 10); }
+
+function zones() {
+  return [
+    { n: "douille", x0: X_LAMPE - 40, x1: X_LAMPE + 40, y0: CY1 - 32,
+      y1: CY1 + 40 },
+    { n: "serie", x0: X_AMP - 46, x1: X_AMP + 46, y0: Y_AMP - 36,
+      y1: Y_AMP + 36 },
+    { n: "derivation", x0: X_LAMPE - 46, x1: X_LAMPE + 46, y0: Y_VOLT - 36,
+      y1: Y_VOLT + 36 }
+  ];
+}
+function zoneEn(x, y) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) {
+    if (x >= z[i].x0 && x <= z[i].x1 && y >= z[i].y0 && y <= z[i].y1) return z[i].n;
+  }
+  return null;
+}
+function accepte(zone, a) {
+  var estL = /^lampe/.test(a);
+  if (zone === "douille") {
+    if (estL) return { ok: true };
+    return { ok: false, pourquoi: "Une douille reçoit une lampe, pas un "
+      + "appareil de mesure." };
+  }
+  if (zone === "serie") {
+    if (a === "amp") return { ok: true };
+    if (a === "volt") {
+      return { ok: false, pourquoi: "Le voltmètre ne se met pas en série : "
+        + depouille(secu("voltmètre")) };
+    }
+    return { ok: false, pourquoi: "Cet emplacement attend un appareil de mesure." };
+  }
+  if (zone === "derivation") {
+    if (a === "volt") return { ok: true };
+    if (a === "amp") {
+      return { ok: false, grave: true, pourquoi: "L'ampèremètre en dérivation "
+        + "aux bornes de la lampe la court-circuite : tout le courant "
+        + "passerait par l'appareil. " + depouille(secu("ampèremètre")) };
+    }
+    return { ok: false, pourquoi: "Cet emplacement attend un appareil de mesure." };
+  }
+  return { ok: false, pourquoi: "" };
+}
+function estPose(a) {
+  if (/^lampe/.test(a)) return ETAT.lampe === numLampe(a);
+  if (a === "amp") return ETAT.amp;
+  if (a === "volt") return ETAT.volt;
+  return false;
+}
+
+/* ==================================================================
+   11. LE MOTEUR DE GLISSER-DÉPOSER
+   ==================================================================
+   Deux gestes distincts : on TRANSLATE un appareil, et on TOURNE le
+   bouton du générateur. Le second n'est pas un déplacement — c'est un
+   angle, et il se calcule autour du centre du bouton.                 */
+var DRAG = null, SEUIL = 5;
+
+function ptSvg(ev) {
+  var r = svg.getBoundingClientRect(), b = svg.viewBox.baseVal;
+  return { x: (ev.clientX - r.left) / r.width * b.width,
+           y: (ev.clientY - r.top) / r.height * b.height };
+}
+function cible(ev) {
+  var n = ev.target;
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) {
+      return n.getAttribute("data-act");
+    }
+    n = n.parentNode;
+  }
+  return null;
+}
+function noeud(a) { return $(a); }
+function decale(a, dx, dy) {
+  var n = noeud(a);
+  if (n) n.setAttribute("transform", "translate(" + dx.toFixed(1) + ","
+    + dy.toFixed(1) + ")");
+}
+function replacer(a) {
+  var n = noeud(a);
+  if (!n) return;
+  if (!estPose(a)) { n.removeAttribute("transform"); return; }
+  var p = placeDe(a), d = depart(a);
+  if (p && d) decale(a, p.x - d.x, p.y - d.y);
+}
+/* L'angle du bouton, mesuré depuis le haut, dans le sens horaire. */
+function angleDe(x, y) {
+  return Math.atan2(x - X_BOUTON, Y_BOUTON - y) * 180 / Math.PI;
+}
+function tensionDeAngle(a) {
+  var demi = PHYS.PAS_ANGLE.v / 2;
+  return borne((a + demi) / PHYS.PAS_ANGLE.v, 0, 1) * 12;
+}
+function angleDeTension(u) {
+  return (u / 12) * PHYS.PAS_ANGLE.v - PHYS.PAS_ANGLE.v / 2;
+}
+
+function surPointerDown(ev) {
+  var a = cible(ev), p;
+  if (!a) return;
+  if (a === "inter") { basculerInter(); return; }
+  if (a === "plaques") { lirePlaques(); return; }
+  p = ptSvg(ev);
+  if (a === "bouton") {
+    DRAG = { a: a, rot: true, x0: p.x, y0: p.y, bouge: false };
+    if (svg.setPointerCapture) {
+      try { svg.setPointerCapture(ev.pointerId); } catch (e) { /* rien */ }
+    }
+    ev.preventDefault();
+    return;
+  }
+  DRAG = { a: a, x0: p.x, y0: p.y, bouge: false, dx: 0, dy: 0,
+    base: { x: 0, y: 0 } };
+  var n = noeud(a), t = n ? n.getAttribute("transform") : null, m;
+  if (t) {
+    m = t.match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
+    if (m) DRAG.base = { x: parseFloat(m[1]), y: parseFloat(m[2]) };
+  }
+  if (n) COUCHES.drag.appendChild(n);
+  if (svg.setPointerCapture) {
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) { /* rien */ }
+  }
+  ev.preventDefault();
+}
+function surPointerMove(ev) {
+  if (!DRAG) return;
+  var p = ptSvg(ev), dx = p.x - DRAG.x0, dy = p.y - DRAG.y0;
+  if (!DRAG.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL) return;
+  DRAG.bouge = true;
+  if (DRAG.rot) {
+    reglerTension(tensionDeAngle(angleDe(p.x, p.y)));
+    ev.preventDefault();
+    return;
+  }
+  DRAG.dx = dx; DRAG.dy = dy;
+  decale(DRAG.a, DRAG.base.x + dx, DRAG.base.y + dy);
+  ev.preventDefault();
+}
+function surPointerUp(ev) {
+  if (!DRAG) return;
+  var d = DRAG, p = ptSvg(ev);
+  DRAG = null;
+  if (d.rot) {
+    if (!d.bouge) note("Le bouton se tourne : le saisir et le faire pivoter.");
+    redessiner();
+    return;
+  }
+  COUCHES.objets.appendChild(noeud(d.a));
+  if (!d.bouge) { cliqueSur(d.a); replacer(d.a); redessiner(); return; }
+  var dep = depart(d.a);
+  deposer(d.a, dep.x + d.base.x + d.dx, dep.y + d.base.y + d.dy);
+}
+function surPointerCancel() {
+  if (!DRAG) return;
+  var a = DRAG.a, rot = DRAG.rot;
+  DRAG = null;
+  if (!rot) { COUCHES.objets.appendChild(noeud(a)); replacer(a); }
+  redessiner();
+}
+
+/* ==================================================================
+   12. LES ACTIONS
+   ================================================================== */
+function note(s) {
+  if (!s) return;
+  ETAT.notes.push(s);
+  if (ETAT.notes.length > 3) ETAT.notes.shift();
+}
+function dernier() {
+  return ETAT.notes.length ? ETAT.notes[ETAT.notes.length - 1] : "";
+}
+function deposer(a, x, y) {
+  var z = zoneEn(x, y), r;
+  if (!z) { retirer(a); replacer(a); redessiner(); return; }
+  r = accepte(z, a);
+  if (!r.ok) {
+    note((r.grave ? "⚠️ " : "") + r.pourquoi);
+    replacer(a); redessiner(); return;
+  }
+  if (ETAT.ferme) {
+    note("On ne modifie pas un montage sous tension : "
+      + depouille(secu("Ouvrir l'interrupteur")));
+    replacer(a); redessiner(); return;
+  }
+  poser(a, z);
+  replacer(a);
+  redessiner();
+}
+function poser(a) {
+  if (/^lampe/.test(a)) {
+    var j = numLampe(a);
+    ETAT.lampe = j;
+    note(ETAT.grillees[j]
+      ? "Cette lampe-là a déjà grillé : son filament est rompu."
+      : "Lampe " + textePlaque("lampe") + " vissée dans la douille.");
+  } else if (a === "amp") {
+    ETAT.amp = true;
+    note("Ampèremètre en série : il mesure l'intensité qui traverse la lampe.");
+  } else if (a === "volt") {
+    ETAT.volt = true;
+    note("Voltmètre en dérivation : il donne la tension RÉELLEMENT appliquée "
+      + "aux bornes de la lampe, et non celle qu'annonce le bouton.");
+  }
+}
+function retirer(a) {
+  if (/^lampe/.test(a)) {
+    if (ETAT.lampe === numLampe(a)) ETAT.lampe = null;
+  } else if (a === "amp") { ETAT.amp = false; }
+  else if (a === "volt") { ETAT.volt = false; }
+}
+function cliqueSur(a) {
+  if (/^lampe/.test(a) && estPose(a) && ETAT.ferme) {
+    note("⚠️ " + depouille(secu("refroidir")));
+    return;
+  }
+  if (estPose(a)) { retirer(a); note("Reposé sur la paillasse."); }
+}
+function lirePlaques() {
+  ETAT.plaques = true;
+  note("Plaques lues. Sur chacune, un nombre en volts et un nombre en watts — "
+    + "et sur la lampe, " + textePlaque("lampe") + " : l'intensité nominale "
+    + "s'en déduit par I = P / U = " + nb(pNominale(), 1) + " / "
+    + nb(uNominale(), 0) + " = " + nb(iNominale(), 2) + " A.");
+  redessiner();
+}
+
+/* La tension : elle vient de l'ANGLE du bouton, ou du curseur. Elle est
+   la seule grandeur que l'on fasse varier, comme la fiche l'exige. */
+function reglerTension(u) {
+  REG.U = borne(Math.round(u / 0.5) * 0.5, 0, 12);
+  /* Changer la tension PÉRIME tout relevé pris sous une autre (§12.19)
+     — mais seulement s'il ne correspond plus à aucun réglage de la
+     fiche : les trois lignes se remplissent chacune à sa tension. */
+  if ($("rU")) $("rU").value = String(REG.U);
+  if ($("oU")) $("oU").textContent = nb(REG.U, 1) + " V";
+  redessiner();
+}
+
+function basculerInter() {
+  if (!ETAT.ferme) {
+    if (!montePret()) {
+      note("Le circuit n'est pas complet : il manque " + cequiManque() + ".");
+      redessiner(); return;
+    }
+    if (!lampeVive()) {
+      note("Le filament de cette lampe est rompu : il faut la remplacer par "
+        + "une lampe de rechange.");
+      redessiner(); return;
+    }
+    if (REG.U > PHYS.U_MAX.v + 1e-9) {
+      note("⚠️ " + depouille(secu("Ne jamais dépasser")));
+      redessiner(); return;
+    }
+    if (REG.U > uNominale() + PHYS.DIV_U.v / 2 && !ETAT.recul) {
+      note("⚠️ " + depouille(secu("distance")));
+      redessiner(); return;
+    }
+    ETAT.ferme = true;
+    note("Interrupteur fermé sous " + nb(tensionLue(REG.U), 1) + " V.");
+    lancerUsure();
+  } else {
+    ETAT.ferme = false;
+    ANIM_ON = false;
+    note("Interrupteur ouvert.");
+  }
+  redessiner();
+}
+function cequiManque() {
+  var m = [];
+  if (ETAT.lampe === null) m.push("la lampe");
+  if (!ETAT.amp) m.push("l'ampèremètre en série");
+  if (!ETAT.volt) m.push("le voltmètre en dérivation");
+  return m.join(", ");
+}
+function faireReculer() {
+  ETAT.recul = !ETAT.recul;
+  note(ETAT.recul
+    ? "La classe s'est écartée de la paillasse. Le réglage au-dessus de la "
+      + "tension nominale peut être exécuté, une seule fois."
+    : "La classe est revenue près de la paillasse.");
+  redessiner();
+}
+
+/* Relever : la ligne se remplit si la tension est CELLE d'un des trois
+   réglages de la fiche, et pas autrement. */
+function reglageCourant() {
+  var i;
+  for (i = 0; i < nbRegl(); i++) {
+    if (Math.abs(tensionLue(REG.U) - tensionRegl(i)) < PHYS.DIV_U.v / 2) return i;
+  }
+  return -1;
+}
+function relever() {
+  var i = reglageCourant(), U = REG.U;
+  if (!sousTension()) {
+    note("Rien à relever : la lampe n'est pas sous tension.");
+    redessiner(); return;
+  }
+  if (i < 0) {
+    note("Le bouton n'est sur aucun des trois réglages de la fiche — "
+      + nbRegl() + " réglages, et celui-ci n'en est pas un.");
+    redessiner(); return;
+  }
+  ETAT.lu[i] = {
+    U: tensionLue(U), I: intensiteLue(U), P: produit(U),
+    cmp: motComparaison(diagnostic(U)),
+    eclat: phraseEclat(U)
+  };
+  note("Relevé : U = " + nb(tensionLue(U), 1) + " V, I = " + nb(intensiteLue(U), 2)
+    + " A, donc U × I = " + nb(produit(U), 2) + " W, à comparer aux "
+    + nb(pNominale(), 1) + " W de la plaque.");
+  redessiner();
+}
+/* L'éclat décrit : intensité du rayonnement ET couleur, toutes deux
+   calculées. La fiche écrit « faible et rougeâtre », « normal et
+   blanc », « très vif » — la page les retrouve. */
+function phraseEclat(U) {
+  var e = eclat(U), c = nomCouleur(temperature(U)), force;
+  if (e <= 0) return "éteinte";
+  force = e < 0.6 ? "éclat faible" : (e < 1.6 ? "éclat normal" : "éclat très vif");
+  return force + " et " + c;
+}
+
+/* ==================================================================
+   13. L'USURE DU FILAMENT — animation, donc setTimeout (§13.5 bis)
+   ================================================================== */
+var ANIM_ON = false, ANIM_T = 0;
+
+function lancerUsure() {
+  ANIM_ON = true;
+  ANIM_T = Date.now();
+  setTimeout(pasUsure, 16);
+}
+function pasUsure() {
+  if (!ANIM_ON) return;
+  if (!sousTension()) { ANIM_ON = false; redessiner(); return; }
+  var t = Date.now(), dt = (t - ANIM_T) / 1000;
+  ANIM_T = t;
+  var j = ETAT.lampe;
+  ETAT.usures[j] = Math.min(1, ETAT.usures[j]
+    + tauxUsure(REG.U) * dt * acceleration());
+  if (ETAT.usures[j] >= 1) {
+    ETAT.grillees[j] = true;
+    ETAT.ferme = false;
+    ANIM_ON = false;
+    note("💥 Le filament a grillé. Sous " + nb(tensionLue(REG.U), 1)
+      + " V, la durée de vie de cette lampe n'était plus que de "
+      + dureeTexte(dureeVie(REG.U)) + ", contre "
+      + dureeTexte(PHYS.L_NOM.v) + " sous sa tension nominale.");
+    redessiner();
+    return;
+  }
+  redessiner();
+  setTimeout(pasUsure, 16);
+}
+function dureeTexte(h) {
+  if (!isFinite(h)) return "illimitée";
+  if (h >= 2e6) return nb(h / 1e6, 1) + " millions d'heures";
+  if (h >= 1e6) return nb(h / 1e6, 1) + " million d'heures";
+  if (h >= 1e4) return nb(h / 1000, 0) + " milliers d'heures";
+  if (h >= 100) return nb(h, 0) + " h";
+  if (h >= 1) return nb(h, 1) + " h";
+  return nb(h * 60, 0) + " min";
+}
+function rezero() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  ANIM_ON = false;
+  ETAT = neufEtat();
+  /* Remettre à zéro passe par reglerTension() et non par une
+     affectation directe : c'est elle qui remet AUSSI le curseur et son
+     étiquette d'accord avec l'état. Écrire REG.U = 0 à la main laissait
+     « 12,0 V » affiché sous une paillasse vide. */
+  reglerTension(0);
+  construireScene();
+  redessiner();
+}
+
+/* ==================================================================
+   14. LES RÉGLAGES
+   ================================================================== */
+var REG = { U: 0, accel: 3 };
+var ACCELS = [1, 60, 600, 5000, 20000, 100000];
+function acceleration() { return ACCELS[REG.accel] || 1; }
+function texteAccel() {
+  var a = acceleration();
+  if (a === 1) return "temps réel";
+  if (a < 3600) return "×" + a + " — " + nb(a / 60, 0) + " min par seconde";
+  return "×" + a + " — " + dureeTexte(a / 3600) + " par seconde";
+}
+function horsProtocole() { return reglageCourant() < 0 && REG.U > 0; }
+
+/* ==================================================================
+   15. LE RENDU DE LA PAILLASSE
+   ================================================================== */
+function fil(g, pts, o) {
+  o = o || {};
+  g.appendChild(el("polyline", { points: pts.map(function (p) {
+    return pt(p[0], p[1]); }).join(" "), fill: "none",
+    stroke: o.c || "#2b3240", "stroke-width": o.e || 3,
+    "stroke-linejoin": "round", "stroke-linecap": "round" }));
+}
+function dessinerFils() {
+  var g = $("gFils");
+  if (!g) return;
+  vide(g);
+  var passe = sousTension(), c = passe ? "#7a4a1a" : "#2b3240", e = 3;
+  fil(g, [[X_INTER + 18, CY0], [GEN_G, CY0]], { c: c, e: e });
+  fil(g, [[GEN_D, CY0], [CX1, CY0], [CX1, Y_AMP - 44]], { c: c, e: e });
+  if (ETAT.amp) {
+    fil(g, [[CX1, Y_AMP + 44], [CX1, CY1], [X_LAMPE + 30, CY1]], { c: c, e: e });
+  } else {
+    g.appendChild(el("circle", { cx: CX1, cy: Y_AMP - 44, r: 4, fill: "#8d97a3" }));
+    g.appendChild(el("circle", { cx: CX1, cy: Y_AMP + 44, r: 4, fill: "#8d97a3" }));
+    fil(g, [[CX1, Y_AMP + 44], [CX1, CY1], [X_LAMPE + 30, CY1]],
+      { c: "#b7c3d0", e: 2.4 });
+  }
+  fil(g, [[X_LAMPE - 30, CY1], [CX0, CY1], [CX0, CY0], [X_INTER - 18, CY0]],
+    { c: c, e: e });
+  if (ETAT.volt) {
+    fil(g, [[X_LAMPE - 30, CY1], [X_LAMPE - 58, CY1], [X_LAMPE - 58, Y_VOLT],
+      [X_LAMPE - 37, Y_VOLT]], { c: "#4a5a72", e: 2.2 });
+    fil(g, [[X_LAMPE + 30, CY1], [X_LAMPE + 58, CY1], [X_LAMPE + 58, Y_VOLT],
+      [X_LAMPE + 37, Y_VOLT]], { c: "#4a5a72", e: 2.2 });
+  }
+  if (passe) {
+    [[X_GEN + 10, CY0 - GEN_H - 12, 0], [CX1 + 15, CY0 + 70, 90],
+     [X_LAMPE, CY1 + 20, 180], [CX0 - 15, CY1 - 70, 270]]
+      .forEach(function (p) {
+        g.appendChild(el("path", { d: "M -7,-5 L 5,0 L -7,5 z", fill: ORANGE,
+          "pointer-events": "none", transform: "translate(" + p[0] + ","
+            + p[1] + ") rotate(" + p[2] + ")" }));
+      });
+  }
+}
+function rafraichirScene() {
+  var U = REG.U, passe = sousTension(), Temp = passe ? temperature(U) : PHYS.T_AMB.v,
+      coul = couleurFilament(Temp), j;
+  if ($("genVal")) $("genVal").textContent = nb(tensionLue(U), 1) + " V";
+  if ($("boutonAig")) {
+    $("boutonAig").setAttribute("transform", "rotate("
+      + angleDeTension(U).toFixed(1) + " " + X_BOUTON + " " + Y_BOUTON + ")");
+  }
+  if ($("interLame")) {
+    $("interLame").setAttribute("y2", ETAT.ferme ? CY0 : CY0 - 15);
+    $("interLame").setAttribute("x2", ETAT.ferme ? X_INTER + 18 : X_INTER + 14);
+  }
+  /* Le halo prend la COULEUR du filament : c'est la table du corps noir
+     qui la donne, à la température calculée. */
+  if ($("halo0")) {
+    $("halo0").setAttribute("stop-color", nuance(coul, 0.35));
+    $("halo1").setAttribute("stop-color", coul);
+    $("halo2").setAttribute("stop-color", coul);
+  }
+  for (j = 0; j < NB_LAMPES; j++) {
+    var id = "lampe" + j, h = $(id + "-halo"), f = $(id + "-fil"),
+        cs = $(id + "-cass"), et = $(id + "-etat"),
+        vif = passe && ETAT.lampe === j, e = vif ? eclat(U) : 0;
+    if (h) {
+      h.setAttribute("r", e > 0 ? (23 + 46 * Math.min(1.35, e) / 1.35).toFixed(1) : 1);
+      h.setAttribute("opacity", e > 0 ? Math.min(1, 0.3 + e * 0.55) : 0);
+    }
+    if (f) {
+      f.setAttribute("opacity", ETAT.grillees[j] ? 0 : 1);
+      f.setAttribute("stroke", vif ? coul : "#8b8f96");
+      f.setAttribute("stroke-width", vif ? 2.8 : 2);
+    }
+    if (cs) cs.setAttribute("opacity", ETAT.grillees[j] ? 1 : 0);
+    if (et) {
+      et.textContent = ETAT.grillees[j] ? "filament grillé"
+        : (ETAT.usures[j] > 0.02 ? "usée à " + nb(ETAT.usures[j] * 100, 0) + " %" : "");
+    }
+  }
+  if ($("amp-val")) {
+    $("amp-val").textContent = ETAT.amp
+      ? (passe ? nb(intensiteLue(U), 2) + " A" : "0,00 A") : "----";
+  }
+  if ($("volt-val")) {
+    $("volt-val").textContent = ETAT.volt
+      ? (passe ? nb(tensionLue(U), 1) + " V" : "0,0 V") : "----";
+  }
+  dessinerFils();
+}
+
+/* ==================================================================
+   16. LES PANNEAUX
+   ================================================================== */
+function laConsigne() {
+  if (!ETAT.plaques) {
+    return "Lire d'abord les plaques signalétiques : sur chacune, un nombre "
+      + "en volts et un nombre en watts.";
+  }
+  if (ETAT.lampe === null) {
+    return "Visser dans la douille la lampe marquée " + textePlaque("lampe") + ".";
+  }
+  if (!ETAT.amp) return "Insérer l'ampèremètre EN SÉRIE dans le circuit.";
+  if (!ETAT.volt) return "Brancher le voltmètre EN DÉRIVATION aux bornes de "
+    + "la lampe.";
+  var reste = -1, i;
+  for (i = 0; i < nbRegl(); i++) if (ETAT.lu[i] === undefined) { reste = i; break; }
+  if (reste < 0) return "Les trois réglages sont faits : comparer chaque "
+    + "puissance à celle de la plaque, puis conclure.";
+  if (!lampeVive()) return "Le filament est rompu. Visser une lampe de "
+    + "rechange pour continuer.";
+  var ur = tensionRegl(reste);
+  if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+    return "Tourner le bouton du générateur sur " + nb(ur, 0) + " V — "
+      + nomRegl(reste).replace(/^[^—]*—\s*/, "") + ".";
+  }
+  if (ur > uNominale() && !ETAT.recul) {
+    return "Avant ce réglage-là : faire reculer la classe. La lampe va "
+      + "griller.";
+  }
+  if (!ETAT.ferme) return "Fermer l'interrupteur et vérifier au voltmètre que "
+    + "la tension appliquée vaut bien " + nb(ur, 0) + " V.";
+  return "Relever I, calculer U × I, et le comparer aux "
+    + nb(pNominale(), 1) + " W de la plaque.";
+}
+
+function remplirTableau() {
+  var t = $("tab"), e = entetes(), i, c, tr, th, td, v;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  e.forEach(function (h) {
+    th = tr.appendChild(document.createElement("th"));
+    th.textContent = depouille(h);
+  });
+  for (i = 0; i < nbRegl(); i++) {
+    tr = t.appendChild(document.createElement("tr"));
+    if (reglageCourant() === i) tr.className = "en-cours";
+    for (c = 0; c < e.length; c++) {
+      td = tr.appendChild(document.createElement("td"));
+      if (c === 0) { td.textContent = nomRegl(i); td.className = "nom"; continue; }
+      v = ETAT.lu[i];
+      if (v === undefined) { td.innerHTML = '<span class="vide">—</span>'; continue; }
+      if (c === 1) td.textContent = nb(v.U, 1) + " V";
+      else if (c === 2) td.textContent = nb(v.I, 2) + " A";
+      else if (c === 3) td.textContent = nb(v.P, v.P < 1 ? 2 : 1) + " W";
+      else if (c === 4) td.textContent = v.cmp;
+      else td.textContent = v.eclat;
+      td.className = "rempli";
+    }
+  }
+}
+
+function remplirMesure() {
+  var U = REG.U, passe = sousTension(), cs = $("mesCases"), bl = $("mesBilan"),
+      d = diagnostic(U), lignes = [];
+  $("mesNom").textContent = ETAT.lampe === null ? "—"
+    : (ETAT.grillees[ETAT.lampe] ? "filament rompu" : textePlaque("lampe"));
+  vide(cs); vide(bl);
+  function cas(t, u, cl) {
+    var n = document.createElement("div");
+    n.innerHTML = '<div class="t">' + t + '</div><div class="u ' + (cl || "")
+      + '">' + u + "</div>";
+    cs.appendChild(n);
+  }
+  cas("U aux bornes de la lampe", passe ? nb(tensionLue(U), 1) + " V" : "0,0 V",
+    passe ? "" : "nul");
+  cas("I dans la lampe", passe ? nb(intensiteLue(U), 2) + " A" : "0,00 A",
+    passe ? "" : "nul");
+  cas("Produit U × I", passe ? nb(produit(U), 2) + " W" : "—", passe ? "" : "nul");
+  cas("Puissance nominale", nb(pNominale(), 1) + " W");
+  /* Le diagnostic est CALCULÉ, et il s'allume tout seul. */
+  ["Bas", "Egal", "Haut"].forEach(function (n, k) {
+    var q = ["bas", "egal", "haut"][k], on = passe && d === q;
+    $("diag" + n).className = on
+      ? "on " + (q === "egal" ? "ok" : (q === "haut" ? "mal" : "")) : "";
+  });
+  if (passe) {
+    lignes.push(["Écart à la puissance nominale",
+      (produit(U) >= pNominale() ? "+" : "−")
+        + nb(Math.abs(produit(U) - pNominale()), 2) + " W",
+      accordNominal(U) ? "ok" : (d === "haut" ? "mal" : "")]);
+    lignes.push(["Rapport U/I du filament", nb(resistance(U), 1) + " Ω", ""]);
+    lignes.push(["Température du filament", nb(temperature(U), 0) + " K", ""]);
+    lignes.push(["Couleur rayonnée", nomCouleur(temperature(U)), ""]);
+    lignes.push(["Durée de vie sous cette tension", dureeTexte(dureeVie(U)),
+      dureeVie(U) < PHYS.L_NOM.v ? "mal" : "ok"]);
+  } else {
+    lignes.push(["Intensité nominale I = P / U",
+      nb(pNominale(), 1) + " / " + nb(uNominale(), 0) + " = "
+      + nb(iNominale(), 2) + " A", ""]);
+  }
+  lignes.forEach(function (l) {
+    var a = document.createElement("div"), b = document.createElement("div");
+    a.className = "n"; a.textContent = l[0];
+    b.className = "v " + l[2]; b.textContent = l[1];
+    bl.appendChild(a); bl.appendChild(b);
+  });
+  var u = usureCourante();
+  $("usureTxt").textContent = ETAT.lampe === null ? "—"
+    : (ETAT.grillees[ETAT.lampe] ? "filament rompu" : nb(u * 100, 1) + " %");
+  $("usureJ").style.width = (u * 100).toFixed(1) + "%";
+  /* « s'use 1 fois plus vite » ne veut rien dire : à la tension
+     nominale, la lampe s'use à sa vitesse normale, et au-dessous elle
+     s'use MOINS vite. Trois phrases, pas une seule mal remplie. */
+  var f = dureeVie(U) > 0 ? PHYS.L_NOM.v / dureeVie(U) : NaN, phrase;
+  if (!passe) {
+    phrase = "Le compteur n'avance que sous tension.";
+  } else if (f >= 1.05) {
+    phrase = "Sous " + nb(tensionLue(U), 1) + " V, la lampe s'use "
+      + nb(f, f < 10 ? 1 : 0) + " fois plus vite que sous sa tension nominale.";
+  } else if (f > 0.95) {
+    phrase = "Sous sa tension nominale, la lampe s'use à sa vitesse normale : "
+      + dureeTexte(dureeVie(U)) + " de durée de vie.";
+  } else {
+    phrase = "Sous " + nb(tensionLue(U), 1) + " V, la lampe s'use "
+      + nb(1 / f, 0) + " fois MOINS vite que sous sa tension nominale.";
+  }
+  $("usurePhrase").textContent = phrase + " " + texteAccel() + ".";
+}
+
+/* La courbe P(U) : calculée point par point, jamais dessinée à la main. */
+function dessinerCourbe() {
+  var g = $("gCourbe"), Lg = 360, Ht = 240, x0 = 36, y0 = 190, x1 = 348, y1 = 26,
+      Umax = 12, Pmax, i, U, pts = [];
+  vide(g);
+  Pmax = Math.max(produit(Umax) * 1.1, pNominale() * 1.6);
+  function X(u) { return x0 + (x1 - x0) * u / Umax; }
+  function Y(p) { return y0 - (y0 - y1) * borne(p / Pmax, 0, 1); }
+  [0, 1, 2, 3, 4, 5, 6].forEach(function (p) {
+    if (p > Pmax) return;
+    g.appendChild(el("line", { x1: x0 - 4, y1: Y(p), x2: x1, y2: Y(p),
+      stroke: p ? "#eef1f5" : "#c3ccd7", "stroke-width": 1 }));
+    g.appendChild(el("text", { x: x0 - 8, y: Y(p) + 3.5, "text-anchor": "end",
+      "font-size": 9, fill: "#8794a5" }, nb(p, 0)));
+  });
+  [0, 3, 6, 9, 12].forEach(function (u) {
+    g.appendChild(el("text", { x: X(u), y: y0 + 14, "text-anchor": "middle",
+      "font-size": 9, fill: "#8794a5" }, nb(u, 0)));
+  });
+  g.appendChild(el("text", { x: 6, y: 16, "font-size": 9.5, fill: "#8794a5" },
+    "P (W)"));
+  g.appendChild(el("text", { x: x1, y: y0 + 27, "text-anchor": "end",
+    "font-size": 9.5, fill: "#8794a5" }, "U (V)"));
+  /* La puissance nominale, et la tension nominale qu'elle désigne. */
+  g.appendChild(el("line", { x1: x0, y1: Y(pNominale()), x2: x1,
+    y2: Y(pNominale()), stroke: VERT, "stroke-width": 1.6,
+    "stroke-dasharray": "5 4" }));
+  g.appendChild(el("text", { x: x0 + 4, y: Y(pNominale()) - 5, "font-size": 9,
+    fill: VERT }, "puissance nominale " + nb(pNominale(), 1) + " W"));
+  g.appendChild(el("line", { x1: X(uNominale()), y1: y0,
+    x2: X(uNominale()), y2: Y(pNominale()), stroke: VERT, "stroke-width": 1.2,
+    "stroke-dasharray": "3 3" }));
+  for (i = 0; i <= 60; i++) {
+    U = Umax * i / 60;
+    pts.push(pt(X(U), Y(tensionLue(U) * intensiteVraie(U))));
+  }
+  g.appendChild(el("polyline", { points: pts.join(" "), fill: "none",
+    stroke: "#4a5a72", "stroke-width": 2 }));
+  /* La zone interdite par la sécurité. */
+  g.appendChild(el("rect", { x: X(PHYS.U_MAX.v), y: y1,
+    width: X(Umax) - X(PHYS.U_MAX.v), height: y0 - y1, fill: "#b03030",
+    "fill-opacity": 0.07 }));
+  g.appendChild(el("text", { x: (X(PHYS.U_MAX.v) + X(Umax)) / 2, y: y1 + 12,
+    "text-anchor": "middle", "font-size": 8.5, fill: ROUGE }, "interdit"));
+  for (i = 0; i < nbRegl(); i++) {
+    if (ETAT.lu[i] === undefined) continue;
+    g.appendChild(el("circle", { cx: X(ETAT.lu[i].U), cy: Y(ETAT.lu[i].P), r: 4.6,
+      fill: couleurFilament(temperature(ETAT.lu[i].U)), stroke: INK,
+      "stroke-width": 1.4 }));
+    g.appendChild(el("text", { x: X(ETAT.lu[i].U),
+      y: Y(ETAT.lu[i].P) - 9, "text-anchor": "middle", "font-size": 9,
+      "font-weight": "bold", fill: INK }, nb(ETAT.lu[i].P, 2) + " W"));
+  }
+  if (REG.U > 0) {
+    g.appendChild(el("line", { x1: X(REG.U), y1: y0, x2: X(REG.U), y2: y1,
+      stroke: GOLD, "stroke-width": 1.2 }));
+  }
+  g.appendChild(el("line", { x1: x0, y1: y0, x2: x1, y2: y0,
+    stroke: "#c3ccd7", "stroke-width": 1.4 }));
+
+  var bl = $("courbeBilan"), faits = 0;
+  vide(bl);
+  for (i = 0; i < nbRegl(); i++) if (ETAT.lu[i] !== undefined) faits++;
+  function li(a, b, c) {
+    var p1 = document.createElement("div"), p2 = document.createElement("div");
+    p1.className = "n"; p1.textContent = a;
+    p2.className = "v " + (c || ""); p2.textContent = b;
+    bl.appendChild(p1); bl.appendChild(p2);
+  }
+  li("Réglages relevés", faits + " sur " + nbRegl(), "");
+  li("Intensité nominale I = P / U", nb(iNominale(), 2) + " A", "");
+  li("Intensité calculée sous " + nb(uNominale(), 0) + " V",
+    nb(intensiteLue(uNominale()), 2) + " A",
+    Math.abs(intensiteLue(uNominale()) - iNominale()) < 0.005 ? "ok" : "mal");
+  /* Le point de l'interprétation : la puissance ne double pas. */
+  var f = facteurPuissance(uNominale() / 2, uNominale());
+  li("En doublant la tension, la puissance est multipliée par",
+    nb(f, 2) + "  (et non par 2)", f > 2.4 ? "ok" : "mal");
+}
+
+function remplirConclusion() {
+  var i, tous = true;
+  for (i = 0; i < nbRegl(); i++) if (ETAT.lu[i] === undefined) tous = false;
+  ETAT.conclu = tous;
+  $("concl").className = "box" + (tous ? "" : " masque");
+  if (!tous) return;
+  $("conclTxt").innerHTML = md(T("conclusion"));
+  var b = $("bilan");
+  vide(b);
+  var lignes = [];
+  for (i = 0; i < nbRegl(); i++) {
+    lignes.push(["Sous " + nb(ETAT.lu[i].U, 1) + " V",
+      nb(ETAT.lu[i].P, 2) + " W — puissance " + ETAT.lu[i].cmp]);
+  }
+  lignes.push(["L'intensité nominale I = P / U",
+    nb(iNominale(), 2) + " A, retrouvée à la mesure sous "
+    + nb(uNominale(), 0) + " V"]);
+  lignes.push(["Le filament", ETAT.grillees.some(function (g) { return g; })
+    ? "a grillé au-dessus de la tension nominale" : "n'a pas encore cédé"]);
+  lignes.forEach(function (l) {
+    var d = document.createElement("div");
+    d.innerHTML = "<b>" + l[0] + "</b> · " + l[1];
+    b.appendChild(d);
+  });
+}
+
+/* ==================================================================
+   17. SOUS LE CAPOT
+   ================================================================== */
+function tableau(id, entete, lignes) {
+  var t = $(id), tr, c;
+  if (!t) return;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  entete.forEach(function (h) {
+    c = tr.appendChild(document.createElement("th"));
+    c.innerHTML = h;
+  });
+  lignes.forEach(function (l) {
+    tr = t.appendChild(document.createElement("tr"));
+    l.forEach(function (v) {
+      c = tr.appendChild(document.createElement("td"));
+      c.innerHTML = v;
+    });
+  });
+}
+function remplirCapot() {
+  var i, A = [], U;
+  for (i = 0; i < nbRegl(); i++) {
+    U = tensionRegl(i);
+    A.push([nb(U, 0) + " V", nb(intensiteVraie(U), 4) + " A",
+      nb(intensiteLue(U), 2) + " A", nb(produit(U), 3) + " W",
+      motComparaison(diagnostic(U)), phraseEclat(U)]);
+  }
+  tableau("capotLignes", ["réglage", "I calculée", "I affichée", "U × I",
+    "comparaison", "éclat"], A);
+  $("capotNominale").innerHTML = "L'intensité nominale ne figure pas sur la "
+    + "plaque : elle se calcule, <b>I = P/U = " + nb(pNominale(), 1) + " / "
+    + nb(uNominale(), 0) + " = " + nb(iNominale(), 2) + " A</b>, et c'est "
+    + "précisément ce que l'ampèremètre affiche sous "
+    + nb(uNominale(), 0) + " V. La page ne l'écrit nulle part : elle la divise.";
+
+  var F = [];
+  [uNominale() / 2, uNominale(), uNominale() * 1.5].forEach(function (u) {
+    F.push([nb(u, 1) + " V", nb(intensiteLue(u), 2) + " A",
+      nb(resistance(u), 2) + " Ω", nb(produit(u), 2) + " W",
+      nb(produit(u) / produit(uNominale() / 2), 2)]);
+  });
+  tableau("capotFil", ["tension", "I", "R = U/I", "P = U·I",
+    "P rapportée à celle de " + nb(uNominale() / 2, 1) + " V"], F);
+
+  $("capotLoiT").textContent = "T = T_nom · (U / U_nom)^"
+    + nb(PHYS.EXPO_T.v, 1);
+  var Tp = [];
+  [uNominale() / 2, uNominale(), uNominale() * 1.5].forEach(function (u) {
+    Tp.push([nb(u, 1) + " V", nb(temperature(u), 0) + " K",
+      '<span style="display:inline-block;width:34px;height:11px;border-radius:3px;'
+      + 'background:' + couleurFilament(temperature(u)) + '"></span>',
+      nomCouleur(temperature(u)), phraseEclat(u)]);
+  });
+  tableau("capotTemp", ["tension", "température", "couleur", "nom",
+    "éclat décrit"], Tp);
+
+  $("capotLoiL").textContent = "L = L_nom · (U_nom / U)^" + nb(PHYS.EXPO_VIE.v, 0)
+    + "   avec L_nom = " + nb(PHYS.L_NOM.v, 0) + " h";
+  var V = [];
+  [uNominale() / 2, uNominale(), uNominale() * 1.5].forEach(function (u) {
+    V.push([nb(u, 1) + " V", dureeTexte(dureeVie(u)),
+      nb(PHYS.L_NOM.v / dureeVie(u), dureeVie(u) > PHYS.L_NOM.v ? 5 : 1) + " ×",
+      dureeTexte(dureeVie(u) * 3600 / acceleration() / 3600)]);
+  });
+  tableau("capotVie", ["tension", "durée de vie", "usure rapportée au nominal",
+    "temps de page à l'accélération courante"], V);
+  $("capotEcart").innerHTML = "<b>Le seul artifice de cette page.</b> La fiche "
+    + "observe que le filament grille « en quelques secondes » sous "
+    + nb(uNominale() * 1.5, 0) + " V. La loi standard donne <b>"
+    + dureeTexte(dureeVie(uNominale() * 1.5)) + "</b> pour une lampe NEUVE. "
+    + "L'écart n'est pas une erreur : une lampe de laboratoire a déjà servi et "
+    + "son filament est déjà aminci. Plutôt que d'inventer une usure initiale "
+    + "pour tomber sur l'observation, la page garde la loi intacte et comprime "
+    + "le TEMPS — l'accélération est affichée en permanence sous le compteur "
+    + "d'usure. Ce que l'élève doit retenir n'est pas l'instant de la rupture, "
+    + "mais le rapport : sous " + nb(uNominale() * 1.5, 0) + " V la lampe s'use "
+    + nb(PHYS.L_NOM.v / dureeVie(uNominale() * 1.5), 0)
+    + " fois plus vite que sous sa tension nominale.";
+
+  var C = [];
+  for (i = 0; i < nbRegl(); i++) {
+    U = tensionRegl(i);
+    C.push([nomRegl(i).replace(/\s*—.*$/, ""),
+      valFiche(i, 2) + " · " + valFiche(i, 3),
+      nb(intensiteLue(U), 2) + " A · " + nb(produit(U), produit(U) < 1 ? 2 : 1) + " W",
+      valFiche(i, 4) + " · " + valFiche(i, 5),
+      motComparaison(diagnostic(U)) + " · " + phraseEclat(U)]);
+  }
+  tableau("capotAccord", ["réglage", "fiche : I et P", "page : I et P",
+    "fiche : comparaison et éclat", "page : comparaison et éclat"], C);
+
+  var G = [], k;
+  for (k in PHYS) {
+    G.push(["<b>" + k + "</b>", PHYS[k].n,
+      nb(PHYS[k].v, PHYS[k].v < 10 ? 3 : 0) + (PHYS[k].u ? " " + PHYS[k].u : ""),
+      PHYS[k].s]);
+  }
+  tableau("capotVals", ["symbole", "grandeur", "valeur", "d'où elle vient"], G);
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+}
+
+/* ==================================================================
+   18. LE RENDU
+   ================================================================== */
+function redessiner() {
+  rafraichirScene();
+  $("consigne").textContent = laConsigne();
+  $("obs").textContent = dernier() || "—";
+  remplirTableau();
+  remplirMesure();
+  dessinerCourbe();
+  remplirConclusion();
+  $("alerte").className = "alerte" + (horsProtocole() ? " on" : "");
+  majBoutons();
+  majSeance();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+}
+function majSeance() {
+  var d = Number(T("duree")) || 20, faits = 0, i;
+  for (i = 0; i < nbRegl(); i++) if (ETAT.lu[i] !== undefined) faits++;
+  var f = faits / nbRegl();
+  $("seanceT").textContent = mmss(f * d * 60);
+  $("seanceB").textContent = "durée prescrite " + d + " min";
+  $("seanceM").textContent = " · " + faits + " réglage" + (faits > 1 ? "s" : "")
+    + " sur " + nbRegl();
+  $("seanceJ").style.width = (f * 100).toFixed(0) + "%";
+}
+
+/* ==================================================================
+   19. LES BOUTONS
+   ================================================================== */
+var BOUTONS = [];
+function boutonSvg(id, x, y, lg, txte, act) {
+  var g = ajout("ui", el("g", { id: id, cursor: "pointer" }));
+  g.appendChild(el("rect", { x: x - lg / 2, y: y - 16, width: lg, height: 32,
+    rx: 9, fill: "#fff", stroke: "#c3ccd7", "stroke-width": 1.5 }));
+  g.appendChild(el("text", { x: x, y: y + 4.5, "text-anchor": "middle",
+    "font-size": 11.5, "font-weight": "bold", fill: INK,
+    "pointer-events": "none" }, txte));
+  g.addEventListener("click", act);
+  BOUTONS.push({ id: id, g: g });
+  return g;
+}
+function construireBoutons() {
+  BOUTONS = [];
+  boutonSvg("btInter", 250, Y_BT1, 230, "Fermer l'interrupteur", basculerInter);
+  boutonSvg("btRecul", 520, Y_BT1, 260, "Faire reculer la classe", faireReculer);
+  boutonSvg("btLire", 820, Y_BT1, 250, "Relever U et I", relever);
+  /* Les trois réglages de la fiche, accessibles directement — mais le
+     bouton du générateur reste le geste de référence. */
+  var i, n = nbRegl(), lg = 150;
+  for (i = 0; i < n; i++) {
+    (function (k) {
+      boutonSvg("btU" + k, 300 + k * (lg + 14), Y_BT2, lg,
+        "régler sur " + nb(tensionRegl(k), 0) + " V",
+        function () { reglerTension(tensionRegl(k)); });
+    }(i));
+  }
+}
+function majBoutons() {
+  function etat(id, actif, txte) {
+    var b = null, i;
+    for (i = 0; i < BOUTONS.length; i++) if (BOUTONS[i].id === id) b = BOUTONS[i].g;
+    if (!b) return;
+    b.setAttribute("opacity", actif ? 1 : 0.42);
+    b.setAttribute("cursor", actif ? "pointer" : "not-allowed");
+    if (txte) b.lastChild.textContent = txte;
+  }
+  etat("btInter", montePret() && lampeVive(),
+    ETAT.ferme ? "Ouvrir l'interrupteur" : "Fermer l'interrupteur");
+  etat("btRecul", true, ETAT.recul ? "La classe est à distance ✓"
+    : "Faire reculer la classe");
+  etat("btLire", sousTension() && reglageCourant() >= 0);
+  var i;
+  for (i = 0; i < nbRegl(); i++) {
+    etat("btU" + i, !ETAT.ferme,
+      "régler sur " + nb(tensionRegl(i), 0) + " V"
+        + (ETAT.lu[i] !== undefined ? " ✓" : ""));
+  }
+}
+
+/* ==================================================================
+   20. LE DÉMARRAGE
+   ================================================================== */
+function brancherCurseurs() {
+  $("rU").addEventListener("input", function () {
+    reglerTension(parseFloat($("rU").value));
+  });
+  $("rA").addEventListener("input", function () {
+    REG.accel = parseInt($("rA").value, 10);
+    $("oA").textContent = texteAccel();
+    remplirCapot();
+    redessiner();
+  });
+  $("oU").textContent = nb(REG.U, 1) + " V";
+  $("oA").textContent = texteAccel();
+}
+function remplirListes() {
+  ["materiel", "securite"].forEach(function (k) {
+    var u = $(k);
+    vide(u);
+    L(k).forEach(function (s) {
+      var li = document.createElement("li");
+      li.innerHTML = md(s);
+      u.appendChild(li);
+    });
+  });
+}
+/* ==================================================================
+   21. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideDefaire = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  /* Un surlignage qui n'ajoute pas de nœud — le contour posé sur un bouton
+     de la colonne — se défait par une fonction, pas par un removeChild. */
+  guideDefaire.forEach(function (f) { try { f(); } catch (e) { /* rien */ } });
+  guideDefaire = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = W / s.width, ky = H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* ⚠️ On vise par [data-act], jamais par #id : un dégradé de <defs> porte
+   parfois le même nom qu'un objet de la scène, et querySelector rendrait
+   le dégradé — dont la boîte est nulle. */
+function surlignerActe(a, m) {
+  return surlignerNoeud('[data-act="' + a + '"]', m);
+}
+/* Un élément de la PAGE — un bouton de commande, le tableau, un graphe :
+   il n'est pas dans le SVG, on ne peut donc pas lui poser de halo. On lui
+   pose un contour, et on le défait avec le reste du guidage. */
+function surlignerHtml(id) {
+  var b = $(id);
+  if (!b) return null;
+  var av = b.style.outline, ao = b.style.outlineOffset;
+  b.style.outline = "3px dashed " + GOLD;
+  b.style.outlineOffset = "3px";
+  guideDefaire.push(function () {
+    b.style.outline = av; b.style.outlineOffset = ao;
+  });
+  return b;
+}
+/* La ZONE où poser. Cette page-ci ne surligne pas ses zones pendant le
+   glissé : on dessine donc le rectangle nous-mêmes, aux cotes que
+   `zones()` donne — jamais à des cotes recopiées ici, sinon la cible et
+   la zone qui accepte divergeraient au premier changement de géométrie. */
+function montrerZoneGuide(nom) {
+  var z = zones(), i, r;
+  for (i = 0; i < z.length; i++) {
+    if (z[i].n !== nom) continue;
+    r = ajout("ui", el("rect", { "class": "cibleGuide",
+      x: z[i].x0, y: z[i].y0, width: z[i].x1 - z[i].x0,
+      height: z[i].y1 - z[i].y0, rx: 10, fill: GOLD, "fill-opacity": .10,
+      stroke: GOLD, "stroke-width": 2.4, "stroke-dasharray": "7 5",
+      "pointer-events": "none" }));
+    guideSurb.push(r);
+    return r;
+  }
+  return null;
+}
+/* §12.16 — la zone que l'objet cherche est celle que accepte() ACCEPTE,
+   jamais zones()[0] : sans quoi la cible du guide et le dépôt réel
+   divergeraient dès qu'il y a deux emplacements possibles. */
+function zoneVoulueGuide(a) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) if (accepte(z[i].n, a).ok) return z[i].n;
+  return null;
+}
+function montrerCiblesGuide(a) {
+  var n = zoneVoulueGuide(a);
+  return n ? montrerZoneGuide(n) : null;
+}
+
+/* Un bouton de scène : sa géométrie est lue sur le rectangle qu'il porte,
+   ce qui évite de toucher à boutonSvg(). */
+function surlignerBoutonSvg(id) {
+  var n = svg.querySelector("#" + id), r = n && n.querySelector("rect");
+  if (!r) return null;
+  return haloGuide(+r.getAttribute("x") - 7, +r.getAttribute("y") - 7,
+                   +r.getAttribute("width") + 14,
+                   +r.getAttribute("height") + 14, 13);
+}
+/* La lampe à visser : celle du montage si elle est vive, sinon la
+   première rechange intacte. */
+function lampeAVisser() {
+  var j;
+  for (j = 0; j < NB_LAMPES; j++) if (!ETAT.grillees[j]) return "lampe" + j;
+  return null;
+}
+function manquantPoste() {
+  if (ETAT.lampe === null || !lampeVive()) return lampeAVisser();
+  if (!ETAT.amp) return "amp";
+  if (!ETAT.volt) return "volt";
+  return null;
+}
+function montrerObjet(a) {
+  if (!a) return false;
+  surlignerActe(a);
+  montrerCiblesGuide(a);
+  return true;
+}
+function aGrille() {
+  var j;
+  for (j = 0; j < NB_LAMPES; j++) if (ETAT.grillees[j]) return true;
+  return false;
+}
+/* Le geste qui manque pour le réglage i : régler, faire reculer, fermer,
+   relever. C'est la cascade de laConsigne(), reprise pas à pas. */
+function montrerReglage(i) {
+  var ur = tensionRegl(i);
+  if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+    surlignerBoutonSvg("btU" + i);
+    surlignerHtml("rU");
+    return;
+  }
+  if (ur > uNominale() && !ETAT.recul) { surlignerBoutonSvg("btRecul"); return; }
+  if (!ETAT.ferme) { surlignerBoutonSvg("btInter"); return; }
+  surlignerBoutonSvg("btLire");
+}
+function aideReglage(i) {
+  var ur = tensionRegl(i);
+  if (ETAT.lampe === null || !lampeVive()) {
+    return "Le filament est rompu : visser d'abord une <b>lampe de "
+      + "rechange</b> dans la douille.";
+  }
+  if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+    return "Tourner le bouton du générateur sur <b>" + nb(ur, 0) + " V</b> — "
+      + nomRegl(i).replace(/^[^—]*—\s*/, "") + ".";
+  }
+  if (ur > uNominale() && !ETAT.recul) {
+    return "Avant ce réglage-là : presser « <b>Faire reculer la classe</b> ». "
+      + "La lampe va griller, et la fiche l'écrit dans sa sécurité.";
+  }
+  if (!ETAT.ferme) {
+    return "Fermer l'interrupteur, puis <b>vérifier au voltmètre</b> que la "
+      + "tension aux bornes de la lampe vaut bien " + nb(ur, 0) + " V.";
+  }
+  return "Relever <b>I</b> à l'ampèremètre et presser « Relever U et I » : "
+    + "le produit <b>U × I</b> et l'<b>éclat</b> s'inscrivent dans le tableau.";
+}
+
+/* Les huit étapes de la fiche. Les prédicats sortent de la cascade de
+   laConsigne() et de majBoutons() — ils ne sont pas inventés. */
+var GUIDE = [
+  { fait: function () { return ETAT.plaques; },
+    aide: "Cliquer sur le <b>tableau des plaques signalétiques</b>, en bas à "
+        + "gauche de la paillasse : la lampe, le fer à repasser et le chargeur "
+        + "y portent chacun un nombre en <b>volts</b> et un nombre en "
+        + "<b>watts</b>.",
+    montre: function () { surlignerActe("plaques"); } },
+
+  { fait: function () { return montePret(); },
+    aide: function () {
+      var a = manquantPoste();
+      if (a === null) return "Le circuit est complet.";
+      if (/^lampe/.test(a)) return "Visser dans la douille la lampe marquée "
+        + "<b>" + textePlaque("lampe") + "</b>.";
+      if (a === "amp") return "Insérer l'<b>ampèremètre en série</b> dans le "
+        + "circuit, à l'emplacement prévu sur le côté droit de la boucle.";
+      return "Brancher le <b>voltmètre en dérivation</b> aux bornes de la "
+        + "lampe : en série il ne mesurerait rien, en travers du générateur "
+        + "il mesurerait autre chose.";
+    },
+    montre: function () { montrerObjet(manquantPoste()); } },
+
+  { fait: function () { return ETAT.lu[0] !== undefined; },
+    aide: function () { return aideReglage(0); },
+    montre: function () { montrerReglage(0); } },
+
+  { fait: function () { return ETAT.lu[1] !== undefined; },
+    aide: function () {
+      if (ETAT.ferme && ETAT.lu[0] !== undefined
+          && Math.abs(tensionLue(REG.U) - tensionRegl(0)) < PHYS.DIV_U.v / 2) {
+        return "Ouvrir d'abord l'interrupteur : on ne change pas la tension "
+          + "sous tension. Puis régler sur <b>" + nb(tensionRegl(1), 0)
+          + " V</b>, la <b>tension nominale</b>, et refaire les trois relevés.";
+      }
+      return aideReglage(1);
+    },
+    montre: function () {
+      if (ETAT.ferme && Math.abs(tensionLue(REG.U) - tensionRegl(1))
+          > PHYS.DIV_U.v / 2) { surlignerBoutonSvg("btInter"); return; }
+      montrerReglage(1);
+    } },
+
+  { fait: function () { return ETAT.lu[1] !== undefined; },
+    aide: function () {
+      if (ETAT.lu[1] === undefined) {
+        return "Cette comparaison attend le relevé sous <b>"
+          + nb(tensionRegl(1), 0) + " V</b> : la faire ensuite.";
+      }
+      return "Comparer la puissance mesurée sous la tension nominale, "
+        + nb(ETAT.lu[1].P, 2) + " W, au nombre <b>" + nb(pNominale(), 1)
+        + " W</b> inscrit sur la lampe. La colonne « comparaison » du tableau "
+        + "porte le verdict.";
+    },
+    montre: function () {
+      surlignerHtml("tab");
+      surlignerActe("plaques");
+    } },
+
+  { fait: function () {
+      return ETAT.recul && (ETAT.lu[2] !== undefined || aGrille()); },
+    aide: function () {
+      if (ETAT.lu[1] === undefined) return "Faire d'abord les deux premiers "
+        + "réglages : celui-ci détruit la lampe.";
+      if (!ETAT.recul) return "Ouvrir l'interrupteur, régler le générateur sur "
+        + "<b>" + nb(tensionRegl(2), 0) + " V</b>, puis presser « <b>Faire "
+        + "reculer la classe</b> » — la fiche l'exige avant la rupture.";
+      return "Refermer <b>brièvement</b> et observer l'éclat jusqu'à la "
+        + "rupture du filament. Le temps peut être accéléré par le curseur "
+        + "« vitesse », à droite.";
+    },
+    montre: function () { montrerReglage(2); } },
+
+  { fait: function () { return ETAT.lu[2] !== undefined; },
+    aide: function () {
+      if (ETAT.ferme) return "Ouvrir <b>immédiatement</b> l'interrupteur.";
+      if (ETAT.lu[2] === undefined) return "La dernière ligne du tableau "
+        + "attend les valeurs relevées <b>avant</b> la rupture : presser "
+        + "« Relever U et I » pendant que la lampe est encore sous "
+        + nb(tensionRegl(2), 0) + " V.";
+      return "La dernière ligne est complète.";
+    },
+    montre: function () {
+      surlignerBoutonSvg("btInter");
+      surlignerHtml("tab");
+    } },
+
+  { fait: function () { return ETAT.conclu; },
+    aide: function () {
+      var n = 0, i;
+      for (i = 0; i < nbRegl(); i++) if (ETAT.lu[i] !== undefined) n++;
+      if (n < nbRegl()) return "Il reste " + (nbRegl() - n) + " ligne(s) à "
+        + "relever avant de conclure.";
+      return "Reprendre la plaque <b>" + textePlaque("lampe") + "</b> et "
+        + "calculer l'<b>intensité nominale</b> par I = P / U = "
+        + nb(pNominale(), 1) + " / " + nb(uNominale(), 0) + " = "
+        + nb(iNominale(), 2) + " A, puis la comparer à l'intensité mesurée "
+        + "sous " + nb(uNominale(), 0) + " V.";
+    },
+    montre: function () {
+      surlignerActe("plaques");
+      surlignerHtml("tab");
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : le rendu
+     de la page tourne avant que le panneau ne soit bâti. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape redevienne lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  /* la consigne de l'étape redevient lisible — c'est le SEUL
+     affichage touché, aucun état de l'expérience ne bouge */
+  $("consigne").textContent = laConsigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Cette page-ci tient son journal avec `note()` puis un rendu : elle n'a pas
+   de `noter()`. Le module en a besoin pour DIRE pourquoi un déroulé s'arrête
+   — on le lui donne, et il passe par les fonctions de la page. */
+function noter(s) { note(s); redessiner(); }
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* Cette paillasse n'a ni `ec("…")` ni bouton HTML de commande. Deux gestes
+     seulement, et ce sont ceux de l'élève :
+       · un POINTERDOWN sur un objet de la scène — c'est `surPointerDown` qui
+         le reçoit, et lui seul décide de ce qu'il en fait ;
+       · un CLIC sur un bouton SVG dessiné par `boutonSvg()`, dont l'écouteur
+         est l'action elle-même (`basculerInter`, `faireReculer`, `relever`).
+     Le glisser-déposer passe par `deposer()`, et sa cible est le CENTRE de la
+     zone que `zones()` déclare — jamais une coordonnée écrite en dur. */
+
+  /* 1. lire les plaques signalétiques */
+  function () {
+    var n = svg.querySelector('[data-act="plaques"]');
+    if (n) n.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    return 260;
+  },
+
+  /* 2. le circuit : la lampe, l'ampèremètre en série, le voltmètre en
+     dérivation. UN objet par pression — celui que `manquantPoste()` réclame,
+     dans l'ordre où la page le réclame. Le panneau reste sur l'étape 2 tant
+     que les trois ne sont pas posés, et le déroulé y repasse d'autant. */
+  function () {
+    var a = manquantPoste(), nom, z, i;
+    if (!a) return 0;
+    nom = /^lampe/.test(a) ? "douille" : (a === "amp" ? "serie" : "derivation");
+    z = zones();
+    for (i = 0; i < z.length; i++) {
+      if (z[i].n === nom) {
+        deposer(a, (z[i].x0 + z[i].x1) / 2, (z[i].y0 + z[i].y1) / 2);
+        return 380;
+      }
+    }
+    return 0;
+  },
+
+  /* 3. LE PREMIER RÉGLAGE — 3 V, au-dessous de la tension nominale.
+     La cascade est celle d'`aideReglage(i)`, reprise geste par geste :
+     régler, faire reculer s'il le faut, fermer, relever. Un geste par
+     pression, car c'est un geste par pression que l'élève fait — et parce
+     que `deposer()` comme `reglerTension()` sont refusés sous tension : on
+     ouvre alors l'interrupteur, ce qui LÈVE la condition au lieu de la
+     contourner. */
+  function () {
+    var i = 0, ur = tensionRegl(i), b;
+    if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+      b = ETAT.ferme ? "btInter" : "btU" + i;      /* pas de réglage sous tension */
+    } else if (ur > uNominale() && !ETAT.recul) { b = "btRecul"; }
+    else if (!ETAT.ferme) { b = "btInter"; }
+    else { b = "btLire"; }
+    if ($(b)) $(b).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return 340;
+  },
+
+  /* 4 et 5. LE DEUXIÈME RÉGLAGE — 6 V, la tension nominale. La comparaison
+     de l'étape 5 se lit dans la colonne « comparaison » que le relevé de
+     l'étape 4 remplit : les deux prédicats du GUIDE sont le même, et le
+     panneau saute donc de 4 à 6. Il DÉDUIT, il ne compte pas. */
+  function () {
+    var i = 1, ur = tensionRegl(i), b;
+    if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+      b = ETAT.ferme ? "btInter" : "btU" + i;
+    } else if (ur > uNominale() && !ETAT.recul) { b = "btRecul"; }
+    else if (!ETAT.ferme) { b = "btInter"; }
+    else { b = "btLire"; }
+    if ($(b)) $(b).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return 340;
+  },
+  function () {
+    var i = 1, ur = tensionRegl(i), b;
+    if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+      b = ETAT.ferme ? "btInter" : "btU" + i;
+    } else if (ur > uNominale() && !ETAT.recul) { b = "btRecul"; }
+    else if (!ETAT.ferme) { b = "btInter"; }
+    else { b = "btLire"; }
+    if ($(b)) $(b).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return 340;
+  },
+
+  /* 6 et 7. LE TROISIÈME RÉGLAGE — 9 V, au-dessus de la tension nominale.
+     La sécurité de la fiche s'y ajoute : `basculerInter()` REFUSE de fermer
+     au-dessus de la tension nominale tant que la classe n'a pas reculé. La
+     cascade presse donc « Faire reculer la classe » avant de fermer, comme
+     l'exige la consigne — et le relevé se prend PENDANT que la lampe brille,
+     avant que son filament ne cède : `relever()` ne rend rien d'une lampe
+     qui n'est plus sous tension. Le filament grille ensuite tout seul, et
+     c'est l'observation que la fiche attend.
+
+     Le réglage à 9 V et le recul de la classe partent ensemble : l'aide de
+     cette étape-là est la même phrase tant que la classe n'a pas reculé, si
+     bien qu'un réglage seul ne se voit nulle part — et la fiche les écrit
+     d'un même souffle, « régler le générateur sur 9 V, faire reculer la
+     classe ». Le déroulé aurait attendu douze secondes devant un geste qui
+     avait pourtant pris. */
+  function () {
+    var i = 2, ur = tensionRegl(i), b = null, aussi = null;
+    if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+      if (ETAT.ferme) { b = "btInter"; }         /* pas de réglage sous tension */
+      else {
+        b = "btU" + i;
+        if (ur > uNominale() && !ETAT.recul) aussi = "btRecul";
+      }
+    } else if (ur > uNominale() && !ETAT.recul) { b = "btRecul"; }
+    else if (!ETAT.ferme) { b = "btInter"; }
+    else { b = "btLire"; }
+    if ($(b)) $(b).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    if (aussi && $(aussi)) {
+      $(aussi).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+    return 400;
+  },
+  function () {
+    var i = 2, ur = tensionRegl(i), b = null, aussi = null;
+    if (Math.abs(tensionLue(REG.U) - ur) > PHYS.DIV_U.v / 2) {
+      if (ETAT.ferme) { b = "btInter"; }
+      else {
+        b = "btU" + i;
+        if (ur > uNominale() && !ETAT.recul) aussi = "btRecul";
+      }
+    } else if (ur > uNominale() && !ETAT.recul) { b = "btRecul"; }
+    else if (!ETAT.ferme) { b = "btInter"; }
+    else { b = "btLire"; }
+    if ($(b)) $(b).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    if (aussi && $(aussi)) {
+      $(aussi).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+    return 400;
+  },
+
+  /* 8. l'intensité nominale I = P / U, et la comparaison à celle qu'on a
+     mesurée sous 6 V. `remplirConclusion()` la calcule et pose `ETAT.conclu`
+     dès que les trois lignes sont relevées : le rendu suffit à démasquer la
+     conclusion, il n'y a rien de plus à presser. */
+  function () { redessiner(); return 240; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  ETAT = neufEtat();
+  construireProtocole();   /* AVANT le premier majProtocole() */
+  $("titre").textContent = depouille(T("titre"));
+  $("ref").textContent = "E3AC-20 · " + T("niveau") + " · " + T("lecon");
+  document.title = "Paillasse virtuelle — E3AC-20 · " + depouille(T("titre"));
+  $("objectif").innerHTML = md(T("objectif"));
+  $("observation").innerHTML = md(OH("observation"));
+  remplirListes();
+  svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Paillasse : une lampe 6 V – 2,1 W alimentée "
+    + "sous trois tensions différentes");
+  svg.style.width = "100%";
+  svg.style.height = "auto";
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  $("paillasse").appendChild(svg);
+  construireScene();
+  svg.addEventListener("pointerdown", surPointerDown);
+  svg.addEventListener("pointermove", surPointerMove);
+  svg.addEventListener("pointerup", surPointerUp);
+  svg.addEventListener("pointercancel", surPointerCancel);
+  $("rezero").addEventListener("click", rezero);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  brancherCurseurs();
+  remplirCapot();
+  redessiner();
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else { demarrer(); }
+
+})();
+</script>
+</body>
+</html>

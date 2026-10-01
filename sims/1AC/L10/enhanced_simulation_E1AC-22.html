@@ -1,0 +1,3070 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-22 · Le changement d'état modélisé</title>
+
+<!--
+  ===================================================================
+  E1AC-22 · 1AC · L10 — PAILLASSE VIRTUELLE
+  « Modélisation d'un changement d'état — que devient chaque particule ? »
+  ===================================================================
+
+  CE QUE CETTE PAGE EST
+  ---------------------
+  Une paillasse qu'on MANIPULE, dont les résultats sont CALCULÉS, et dont
+  chaque étape se voit se FAIRE.
+
+  · On manipule : les 60 billes sont 60 objets qu'on prend à la souris et
+    qu'on repose où l'on veut DANS la boîte. La règle graduée se traîne sur
+    une bille pour en mesurer le diamètre. Le couvercle se pose sur la boîte
+    avant l'agitation forte — la fiche l'exige, et la page refuse d'agiter
+    sans lui. Les boutons de scène ne servent qu'aux gestes que le protocole
+    fait d'un seul coup, et chacun DOUBLE un glisser qui reste possible.
+
+  · ON NE PEUT PAS PERDRE UNE BILLE, et c'est tout l'objet de la leçon.
+    Traîner une bille hors de la boîte est refusé, en citant la fiche. Rien
+    dans cette page ne crée ni ne détruit de bille : le compteur ne lit pas
+    un nombre écrit, il PARCOURT la liste des billes et les compte une à une,
+    à chaque étape. Si le modèle mentait, le compte le dirait.
+
+  · On calcule : aucun nombre du tableau n'est écrit.
+      – le NOMBRE de billes est compté sur les objets réellement présents ;
+      – le DIAMÈTRE est lu à la règle sur le dessin, converti par l'échelle
+        de la scène — c'est une mesure, pas une constante recopiée ;
+      – le RANGEMENT sort d'un paramètre d'ordre hexatique ψ₆ calculé sur les
+        positions : 1,00 pour le réseau rangé, 0,54 pour l'agitation douce,
+        0,16 pour l'agitation forte. Le seuil est à 0,80, et il laisse 25 %
+        de marge d'un côté, 33 % de l'autre (SKILL §12.3) ;
+      – les CARREAUX OCCUPÉS sont comptés sur l'EMPREINTE réelle : enveloppe
+        convexe des billes vues de dessus, divisée par l'aire d'un carreau.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau et conclusion viennent de
+    `valise/curriculum/experiences.yaml`, entrée E1AC-22. Ils ne sont PAS
+    recopiés : le bloc `DONNEES` est régénéré par `_sync_donnees.py`.
+  · Le nombre de billes (60), leur diamètre (16 mm) et le côté d'un carreau
+    (2 cm) sont LUS dans le matériel et le tableau de la fiche.
+  · Les deux compacités — hexagonale parfaite π/(2√3) = 0,9069 et rangement
+    quelconque 0,84 — sont des constantes sourcées, jamais ajustées.
+
+  LE SEUL PARAMÈTRE QUE LA FICHE NE DONNE PAS, ET IL EST DIT
+  ----------------------------------------------------------
+  La fiche ne dit pas sur combien d'ÉPAISSEURS les billes sont rangées. Or
+  soixante billes de 16 mm en une seule couche couvriraient 33 carreaux, pas
+  12 : le rangement de la fiche est forcément un EMPILEMENT. À trois couches
+  de vingt billes, le modèle rend 12,00 carreaux — exactement les 12 de la
+  fiche —, puis 12,46 au rangement quelconque (la fiche en compte 13) et 48
+  au gaz (la fiche en compte 48). C'est donc le seul paramètre calibré, il
+  l'est sur UNE seule ligne du relevé, et le curseur « couches empilées »
+  permet à la classe de vérifier ce que donnent les autres valeurs
+  (SKILL §12.31).
+
+  UNE LEÇON, DEUX POINTS DE VUE, ET C'EST DIT DANS LE DESSIN
+  ----------------------------------------------------------
+  Un empilement ne se lit pas de dessus : la vue de dessus montre le
+  quadrillage et l'empreinte, la coupe montre les couches. Les deux LISENT
+  les mêmes positions (SKILL §12.18, §12.20) et sont à la MÊME échelle.
+
+  CE QU'ELLE N'EST PAS
+  --------------------
+  · Elle est AUTONOME : ni `generer.py`, ni `moteur.js`, ni
+    `simulation.html.j2`, et elle ne s'ouvre pas depuis `index.html`. Elle
+    DOUBLE `simulation_E1AC-22.html`, elle ne la remplace pas.
+  · Elle n'a pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL : on
+    cherche qu'une bille se reconnaisse comme une bille qu'on saisit.
+  · Le dessin est un schéma habillé. Sont à l'échelle, et entre eux : le
+    diamètre des billes, le côté des carreaux, le plancher et la hauteur de
+    la boîte — c'est-à-dire tout ce dont le modèle dépend. Ne le sont pas :
+    l'épaisseur du verre de la boîte et la règle graduée.
+  · IL N'Y A PAS DE VITESSE DANS CE MODÈLE. Une modélisation n'a pas de
+    cinétique : rien ne s'intègre, et la page n'a donc pas de sélecteur de
+    vitesse. Le seul minuteur est celui de la SÉANCE, et il court en temps
+    réel.
+-->
+
+<script>
+/* L'écouteur d'erreurs est posé AVANT le script de la page, dans le <head> :
+   posé en fin de <body>, il ne voit AUCUNE erreur de démarrage — celles-ci ont
+   déjà eu lieu (SKILL §12.47, corollaire de méthode). Il n'écrit PAS dans la
+   console : un `console.error` serait compté comme une erreur par le pilote. */
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message || e));
+  var n = document.getElementById("errjs");
+  if (n) { n.textContent = "Erreur JS : " + window.__ERR.join(" · "); n.style.display = "block"; }
+});
+</script>
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+#errjs{display:none;background:#b03030;color:#fff;font-family:var(--mono);
+       font-size:12px;padding:6px 20px}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.hp output{color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.ko{color:var(--orange)}
+.lect .v.ok{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-22 · 1AC · L10</span>
+</div>
+<div id="errjs"></div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus renseigné : il consigne le résultat de
+        l'expérience prescrite, pas celui d'une variante. Le carnet de mesures,
+        lui, continue de compter — et c'est là qu'on voit ce que le réglage change.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ces billes-ci</b> donnent. Le nombre de billes est <b>compté</b> une
+        à une, le diamètre <b>mesuré</b> à la règle, le rangement <b>calculé</b>
+        et l'empreinte <b>mesurée</b> sur le dessin — jamais une valeur recopiée.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Le compte <span class="note" id="etatSysteme">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Billes dans la boîte</div><div class="v" id="lN">—</div></div>
+        <div><div class="k">Diamètre mesuré</div><div class="v off" id="lD">—</div></div>
+        <div><div class="k">Couches empilées</div><div class="v" id="lK">—</div></div>
+        <div><div class="k">Rangement — ψ₆</div><div class="v" id="lPsi">—</div></div>
+        <div><div class="k">Empreinte au sol</div><div class="v" id="lEmp">—</div></div>
+        <div><div class="k">Carreaux occupés</div><div class="v" id="lCar">—</div></div>
+        <div><div class="k">Ce qui se conserve</div><div class="v" id="lCons">—</div></div>
+        <div><div class="k">Ce qui ne se conserve pas</div><div class="v" id="lVar">—</div></div>
+      </div>
+      <div style="margin-top:11px"><span class="lbl">Ce qui change d'une étape à l'autre</span></div>
+      <svg id="gBarres" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src">Deux barres par étape : à gauche le nombre de billes,
+      à droite les carreaux occupés. La première ne bouge pas, la seconde si —
+      et c'est toute la leçon.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages <span class="note">le protocole, et ce qu'on peut en écarter</span></h2>
+      <div class="reg" id="regK">
+        <label for="rK">Couches empilées dans la boîte</label>
+        <output id="oK">3</output>
+        <input type="range" id="rK" min="1" max="5" step="1" value="3">
+        <div class="aide">La fiche ne dit pas sur combien d'épaisseurs les
+        billes sont rangées : c'est le seul nombre qu'elle laisse au montage.
+        À trois couches, le modèle retrouve ses 12 carreaux. Le gaz, lui,
+        n'a pas de couches — il occupe tout le récipient.</div>
+      </div>
+      <div class="reg" id="regD">
+        <label for="rD">Diamètre d'une bille</label>
+        <output id="oD">16 mm</output>
+        <input type="range" id="rD" min="10" max="22" step="1" value="16">
+        <div class="aide">Des billes plus grosses tiennent la même place en
+        nombre, pas en surface. Le rangement, lui, ne change pas.</div>
+      </div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle : des positions, et rien d'autre</h3>
+      <p>Chaque bille est un objet qui porte une position <b>(x, y, z)</b> dans
+      la boîte. Tout ce que la page affiche en sort :</p>
+      <div class="eq" id="eqModele"></div>
+      <h3>2 · Ce que devient la matière</h3>
+      <p>Rien. C'est le résultat. Aucune bille n'est créée ni détruite d'une
+      étape à l'autre : ce sont <b>les mêmes objets</b>, aux mêmes diamètres,
+      qui se replacent. La page ne peut pas tricher là-dessus — le compteur
+      parcourt la liste des billes, il ne lit aucun nombre écrit.</p>
+      <div class="eq" id="eqMatiere"></div>
+      <h3>3 · Le seul paramètre que la fiche ne donne pas</h3>
+      <p>Le nombre de <b>couches</b>. Soixante billes de 16 mm en une seule
+      épaisseur couvriraient 33 carreaux : le rangement de la fiche est
+      nécessairement un empilement. Il est calibré sur <b>une seule</b> ligne
+      du relevé — celle du solide — et les trois autres suivent toutes
+      seules.</p>
+      <div class="eq" id="eqCouches"></div>
+      <h3>4 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src">Aucune de ces valeurs n'a été retouchée pour faire tomber
+      le résultat de la fiche. Les deux compacités sont l'une géométrique et
+      exacte, l'autre mesurée et publiée ; le seuil de rangement, lui, est un
+      seuil de <b>lecture</b>, déclaré comme tel, et aucune valeur du tableau
+      n'en dépend d'un cheveu : ψ₆ vaut 1,00 au solide et 0,54 au liquide pour
+      un seuil à 0,80.</p>
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Il ne sait pas ce qu'est la chaleur.</b> On agite la boîte à la
+        main ; dans la matière, c'est la température qui agite les particules.
+        La page n'a ni thermomètre ni énergie : elle modélise le
+        <i>rangement</i>, pas ce qui le change.</li>
+        <li><b>Il n'a pas de vitesse.</b> Une modélisation n'a pas de
+        cinétique : les billes rejoignent leur position d'arrivée, calculée
+        avant que l'animation ne commence. Le temps qui passe à l'écran n'est
+        que le temps qu'il faut pour voir le geste.</li>
+        <li><b>Les billes ne s'attirent pas.</b> Dans un vrai solide, les
+        particules tiennent ensemble ; ici elles restent en place parce qu'on
+        les y a mises. C'est pourquoi le modèle explique bien le
+        <i>rangement</i> et pas du tout la <i>cohésion</i>.</li>
+        <li><b>Les couches sont empilées à l'aplomb les unes des autres.</b>
+        De vraies billes se logeraient dans les creux de la couche du dessous.
+        C'est la seule chose qu'une vue de dessus puisse montrer sans mentir,
+        et cela ne change ni le nombre de billes, ni leur diamètre, ni le
+        verdict de rangement.</li>
+        <li><b>Il compte une empreinte, pas un volume.</b> La fiche compte des
+        carreaux, donc une surface. C'est un bon modèle du volume tant que la
+        hauteur du tas ne change pas — ce qui est vrai du solide au liquide,
+        et faux au gaz, où le modèle change de nombre de couches et le dit.</li>
+        <li><b>Il range les billes toutes identiques</b>, et c'est la limite
+        que la fiche elle-même signale : chez la plupart des corps le rangement
+        ordonné occupe moins de place que le désordonné, mais <b>pas chez
+        l'eau</b>. Dans la glace, les particules se rangent selon un motif
+        ouvert et occupent <i>plus</i> de place — c'est pour cela que la
+        bouteille éclate, et aucune bille de ce modèle ne saura le montrer.</li>
+        <li><b>Il ne dit rien de la masse.</b> Il compte des billes. C'est la
+        balance de la leçon précédente qui pèse, et c'est le nombre de
+        particules — pas leur rangement — qui fait le lien entre les deux.</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-22.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-22",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L10",
+  "titre": "Modélisation d'un changement d'état — que devient chaque particule ?",
+  "axe": "Interpréter les changements d'état par le modèle particulaire",
+  "objectif": "Établir, en modélisant un changement d'état avec des billes, que les particules ne changent ni de nature, ni de nombre, ni de taille, et que seuls leur distance, leur rangement et leur agitation changent — d'où la conservation de la masse et la non-conservation du volume.",
+  "duree": 21,
+  "modalite": "groupes de 4 — 8 postes",
+  "materiel": [
+    "Boîte transparente à couvercle",
+    "60 billes identiques par poste",
+    "Plateau quadrillé à carreaux de 2 cm",
+    "Règle graduée ou pied à coulisse d'école",
+    "Récipients de formes différentes",
+    "Ressource numérique : simulation PhET « États de la matière »"
+  ],
+  "securite": [
+    "Garder la boîte fermée pendant l'agitation.",
+    "Ne pas laisser tomber les billes au sol : on glisse dessus.",
+    "Ne porter aucune bille à la bouche.",
+    "Compter les billes en début et en fin de séance : aucune ne doit manquer."
+  ],
+  "protocole": [
+    "Compter les billes du poste et noter leur nombre ; mesurer le diamètre d'une bille à la règle.",
+    "Disposer toutes les billes serrées et bien rangées sur le plateau quadrillé, sans en écarter aucune : c'est le modèle du **solide**. Compter les carreaux occupés.",
+    "Sans ajouter ni retirer aucune bille, agiter doucement pour qu'elles glissent les unes sur les autres en restant en contact : c'est le modèle du **liquide**. Recompter les billes, remesurer un diamètre, compter les carreaux occupés.",
+    "Fermer la boîte et l'agiter fortement dans tous les sens : c'est le modèle du **gaz**. Recompter les billes et compter les carreaux occupés.",
+    "Revenir au rangement serré et ordonné du début : c'est le modèle de la **solidification**. Recompter les billes et les carreaux.",
+    "Comparer, d'une étape à l'autre, le nombre de billes, leur diamètre et l'espace occupé, puis dire lesquelles de ces grandeurs se conservent."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Étape modélisée",
+      "Nombre de billes",
+      "Diamètre d'une bille (mm)",
+      "Rangement",
+      "Carreaux occupés"
+    ],
+    "lignes": [
+      [
+        "Solide — billes serrées et ordonnées",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Liquide — billes en contact, désordonnées",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Gaz — billes très espacées et agitées",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Retour au solide — solidification",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Solide — billes serrées et ordonnées",
+        "60",
+        "16",
+        "ordonné",
+        "12"
+      ],
+      [
+        "Liquide — billes en contact, désordonnées",
+        "60",
+        "16",
+        "désordonné",
+        "13"
+      ],
+      [
+        "Gaz — billes très espacées et agitées",
+        "60",
+        "16",
+        "désordonné",
+        "48"
+      ],
+      [
+        "Retour au solide — solidification",
+        "60",
+        "16",
+        "ordonné",
+        "12"
+      ]
+    ]
+  },
+  "observation": "Les mêmes 60 billes, simplement déplacées, reproduisent le solide, le liquide puis le gaz : le compte ne change pas, l'espace occupé, si.",
+  "conclusion": "Lors d'un changement d'état, les particules ne changent ni de nature, ni de nombre, ni de taille ; seuls leur distance, leur rangement et leur agitation changent. La masse se conserve, le volume ne se conserve pas.",
+  "oheric": {
+    "observation": "Une bouteille d'eau pleine et bouchée, oubliée au congélateur, éclate. Pourtant, à la leçon précédente, la balance a été formelle : **110,0 g** de glaçons donnent **110,0 g** d'eau après la fusion, alors que le volume, lui, avait bel et bien changé. Comment la masse peut-elle se conserver pendant qu'une bouteille se brise faute de place ?",
+    "hypothese": "Si, lors d'un changement d'état, les particules gardent leur **nature**, leur **nombre** et leur **taille**, et ne changent que de **distance**, de **rangement** et d'**agitation**, alors on doit pouvoir passer d'un état à l'autre en déplaçant les mêmes billes — sans en ajouter, sans en retirer, sans en changer aucune — et l'espace occupé doit changer alors que le nombre de billes reste le même.",
+    "experience": "Modéliser successivement le solide, le liquide, le gaz, puis le retour au solide, avec les mêmes billes sur un plateau quadrillé. À chaque étape, recompter les billes, remesurer le diamètre de l'une d'elles et compter les carreaux occupés.",
+    "resultats": "Aux quatre étapes, on compte toujours **60 billes**, et le diamètre d'une bille reste de **16 mm** : aucune bille n'a disparu, aucune n'a grossi ni rétréci. Le rangement, lui, passe d'ordonné (solide) à désordonné (liquide puis gaz). L'espace occupé passe de **12 carreaux** à **13**, puis à **48**. En revenant au rangement serré et ordonné, on retrouve exactement **60 billes** et **12 carreaux**.",
+    "interpretation": "Le nombre de billes et leur taille ne changent jamais : c'est le modèle de ce que montre la balance — le nombre de particules se conserve, donc la **masse se conserve**. L'espace occupé, lui, change à chaque étape : c'est le modèle de ce que montre l'éprouvette — la distance et le rangement des particules changent, donc le **volume ne se conserve pas**. Le retour au rangement de départ redonne les mêmes 12 carreaux : la transformation est **réversible**, et c'est bien un changement **physique**, non une nouvelle matière. L'hypothèse est validée. Le modèle a cependant une limite qu'il faut dire à la classe : avec des billes toutes identiques, le rangement ordonné occupe **moins** de place que le désordonné — c'est le cas de la plupart des corps, mais **pas de l'eau**. Dans la glace, les particules d'eau se rangent selon un motif **ouvert**, qui laisse entre elles plus de vide qu'à l'état liquide : la glace occupe donc **plus** de place que l'eau dont elle provient, et c'est exactement pour cela que la bouteille éclate.",
+    "conclusion": "Lors d'un changement d'état, les particules ne changent **ni de nature, ni de nombre, ni de taille**. Seuls leur **distance**, leur **rangement** et leur **agitation** changent. Il en résulte que la **masse se conserve** — le nombre de particules est le même — tandis que le **volume ne se conserve pas** — l'espace entre elles a changé."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline. Et
+   l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function sansAccent(s) {
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i")
+    .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+    .replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+}
+function du(nom) {
+  return (/^[haeiouyàâäéèêëîïôöùûü]/i.test(nom) ? "d'" : "de ") + nom;
+}
+function pluriel(n, s) { return n > 1 ? s : ""; }
+/* Un générateur pseudo-aléatoire DÉTERMINISTE. Le désordre d'un modèle doit
+   se rejouer à l'identique, sans quoi la manipulation à la main et le déroulé
+   ne donneraient pas le même carnet (SKILL §12bis.6). */
+function graine(s) {
+  /* ⚠ MINSTD, et PAS un congruentiel a gros multiplicateur : en JS, un
+     produit de 1103515245 par un entier de 31 bits dépasse 2^53 et le
+     résultat n'est plus exact. Le tirage divergeait alors du modèle validé
+     en Python, sans lever la moindre erreur. 16807 × 2147483646 tient
+     largement dans un double. */
+  var e = (s % 2147483646) + 1;
+  return function () { e = (e * 16807) % 2147483647; return e / 2147483647; };
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var TEXTE_PROTO = PROTOCOLE.join("\n");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var i;
+  for (i = 0; i < PROTOCOLE.length; i++) if (motif.test(PROTOCOLE[i])) return PROTOCOLE[i];
+  return "";
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+function citerSecu(motif) {
+  var t = secu(motif);
+  return t ? " « " + t + " »" : "";
+}
+/* Lire un NOMBRE suivi de son unité dans le protocole. Trois règles payées
+   sur E3AC-19 (SKILL §12.29) : le nombre commence par un chiffre, l'unité est
+   sensible à la casse, et elle n'est pas suivie d'une lettre. */
+function lireProto(unite, defaut, sensible) {
+  var re = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-zÀ-ÿ])",
+                      sensible === false ? "i" : "");
+  var m = re.exec(TEXTE_PROTO);
+  return m ? parseFloat(m[1].replace(",", ".")) : defaut;
+}
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20, trentaine: 30, dizaine: 10 };
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* ==================================================================
+   3 bis. LES DURÉES VIENNENT DE LA FICHE — jamais du code (SKILL §5)
+   ================================================================== */
+function secondesProto(motif, defaut) {
+  var i, m, t, n;
+  for (i = 0; i < PROTOCOLE.length; i++) {
+    if (!motif.test(PROTOCOLE[i])) continue;
+    t = PROTOCOLE[i].toLowerCase();
+    m = /(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trentaine|dizaine)\s+(secondes?|minutes?)/.exec(t);
+    if (!m) continue;
+    n = isNaN(+m[1]) ? MOTS_NB[m[1]] : +m[1];
+    if (!n) continue;
+    return m[2].indexOf("minute") === 0 ? n * 60 : n;
+  }
+  return defaut;
+}
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   MINUTERIES ET ANIMATION
+   ==================================================================
+   ⚠ `setTimeout` + `Date.now()`, JAMAIS `requestAnimationFrame` (SKILL
+   §13.5 bis) : sous le pilote, rAF n'est pas appelé, et toute l'animation —
+   avec le résultat qu'elle porte — disparaîtrait SANS lever d'erreur.
+
+   ⚠ ET L'ANIMATION NE DÉCIDE DE RIEN. Le solveur a déjà calculé l'état
+   d'arrivée quand elle commence ; elle ne fait que le rejoindre. Un résultat
+   qui dépendrait du nombre d'images serait un résultat faux (§12.37). */
+var MINUTEURS = [], HORLOGE = null, ANIM_ON = true;
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+/* `sur(u)` reçoit une avance u de 0 à 1, lissée. `fin()` est rappelée à
+   l'arrivée. Une animation coupée (« Recommencer », arrêt du déroulé) ne
+   laisse rien derrière elle : `purger()` efface ses minuteries. */
+function anim(ms, sur, fin) {
+  var PAS = 14, i;
+  for (i = 1; i <= PAS; i++) (function (k) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = k / PAS;
+      sur(t * t * (3 - 2 * t), t);
+      if (k === PAS && fin) fin();
+    }, Math.round(ms * k / PAS));
+  })(i);
+  if (!ms && fin) fin();
+}
+
+/* ==================================================================
+   LES COUCHES SVG — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE tout le reste
+     poste   le mobilier fixe : portoirs, balance, plaque, étagère
+     arriere l'intérieur de la verrerie, l'eau, et les zones de dépôt
+     objets  ce qui se manipule
+     avant   les parois de verre, les étiquettes, la vapeur
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout            */
+var svg = null, DEFS = null, COUCHES = {};
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+/* Les dégradés et filtres communs à toutes les paillasses du lot.
+   ⚠ AUCUN dégradé n'est jamais posé sur le CONTOUR d'un trait (SKILL §10.1) :
+   en `objectBoundingBox`, la boîte d'un segment horizontal ou vertical est
+   plate, le dégradé est dégénéré, et le navigateur NE PEINT RIEN — sans
+   erreur, et sans que le pilotage puisse le voir. Les traits fins sont donc
+   peints en couleur PLEINE. */
+function defsCommunes() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* la bande de bois CLAIRE du plateau : c'est la seule zone sombre-libre où
+     une étiquette se lit (SKILL §12.7) */
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e6d5b4" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9b189" }));
+  DEFS.appendChild(g);
+
+  /* l'eau — dégradé vertical, et la surface se dessine en ELLIPSE */
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+
+  /* le verre : voile de teinte + reflet net + arête sombre (SKILL §10.2) */
+  g = el("linearGradient", { id: "verre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c6d6e3", "stop-opacity": .55 }));
+  g.appendChild(el("stop", { offset: .17, "stop-color": "#ffffff", "stop-opacity": .78 }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#dce8f1", "stop-opacity": .28 }));
+  g.appendChild(el("stop", { offset: .88, "stop-color": "#a9b8c8", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7f93a6", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flouFin", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 1.6 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+  DEFS.appendChild(f);
+}
+/* Sans elle, tout flotte (SKILL §10.3). */
+function ombreAuSol(cx, y, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: y + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Un bécher : intérieur et liquide AVANT la paroi, bourrelet du bord,
+   bec verseur et graduations — c'est le bourrelet, plus que la paroi, qui
+   fait reconnaître un bécher (SKILL §10.2). */
+function paroiVerre(couche, x, y, w, h, r) {
+  var g = ajout(couche, el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "url(#verre)" }));
+  g.appendChild(el("rect", { x: x + w * .1, y: y + 8, width: Math.max(3, w * .07),
+    height: h - 20, rx: 2.5, fill: "#ffffff", opacity: .66 }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3 }));
+  g.appendChild(el("ellipse", { cx: x + w / 2, cy: y, rx: w / 2 + 2.5, ry: 4.5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3.2 }));
+  return g;
+}
+
+/* ==================================================================
+   LE MOTEUR DE GLISSER-DÉPOSER (SKILL §9)
+   ==================================================================
+   ⚠ Le pointeur est capturé sur le SVG, PAS sur l'objet : sans cela, un
+   mouvement rapide sort de l'objet et le glissement s'arrête net au milieu du
+   geste, sans erreur.
+
+   La page fournit `emplacements(o)`, `deposer(o, zone, depart)` et
+   `replacer(o)`. Les zones sont rendues de la plus PETITE à la plus GRANDE
+   (§12.16) : c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du
+   tableau.                                                                  */
+var prise = null, ptSVG = null, surbrillance = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function placer(o, x, y) {
+  o.x = x; o.y = y;
+  o.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ")");
+}
+/* L'objet PARCOURT son trajet : c'est la troisième exigence du §1.2 bis.
+   L'état, lui, est posé AVANT (SKILL §6.2) — l'animation ne décide de rien. */
+function volerVers(o, x1, y1, ms) {
+  var x0 = o.x, y0 = o.y;
+  anim(ms || 520, function (u) {
+    o.g.setAttribute("transform", "translate(" +
+      (x0 + (x1 - x0) * u).toFixed(1) + "," + (y0 + (y1 - y0) * u).toFixed(1) + ")");
+  });
+  o.x = x1; o.y = y1;
+}
+function montrerCibles(o) {
+  effacerCibles();
+  if (!o) return;
+  emplacements(o).forEach(function (z) {
+    if (z.discret) return;
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 10,
+      fill: GOLD, opacity: .18, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* ⚠ TOUT OBJET MANIPULABLE REÇOIT UNE PLAQUE DE PRÉHENSION transparente aux
+   cotes de sa silhouette, insérée EN PREMIER dans son groupe (SKILL §12.38) :
+   un objet fin n'offre au pointeur presque rien, et le glisser ne démarrerait
+   pas — sans erreur, sans refus, sans rien. */
+function prehension(g, x, y, w, h) {
+  var r = el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "#ffffff",
+                       "fill-opacity": 0.001 });
+  if (g.firstChild) g.insertBefore(r, g.firstChild); else g.appendChild(r);
+  return r;
+}
+function brancherObjet(o) {
+  o.g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                        /* verrou en PREMIÈRE ligne */
+    if (o.fige) return;
+    e.preventDefault();
+    var p = versSVG(e);
+    prise = { o: o, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+              x0: p.x, y0: p.y, bouge: false, depart: { x: o.x, y: o.y } };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    o.g.setAttribute("filter", "url(#ombrePrise)");
+    o.g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(o.g);
+    montrerCibles(o);
+  });
+}
+function brancherPrise() {
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    /* Le seuil de 5 px sépare le CLIC du GLISSEMENT (SKILL §9.3). */
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    placer(prise.o, p.x + prise.dx, p.y + prise.dy);
+    if (typeof pendantGlisser === "function") pendantGlisser(prise.o);
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var o = prise.o, bouge = prise.bouge, depart = prise.depart;
+    o.g.removeAttribute("filter");
+    o.g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(o.g);
+    effacerCibles();
+    prise = null;
+    if (!bouge) {
+      placer(o, depart.x, depart.y);
+      if (typeof cliquerObjet === "function") cliquerObjet(o);
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(o).forEach(function (z) {
+      var d = Math.hypot(o.x - z.x, o.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposer(o, best, depart);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);        /* ne PAS l'oublier */
+}
+/* La zone qu'`emplacements()` propose DANS L'ÉTAT COURANT — jamais une
+   position écrite en dur. Un bouton ne vise donc jamais `emplacements(o)[0]`
+   au hasard : il vise celle que `deposer` accepterait (SKILL §12.16). */
+function zoneVoulue(o, type) {
+  var z = emplacements(o) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+
+/* ==================================================================
+   LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                            */
+var BOUTONS = {}, ACTES = [];
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", "fill-opacity": 0.001 }));
+  var r = g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht, noeud: g,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function rangeeBoutons(W, y, libelles, actes) {
+  var n = actes.length, marge = 22, gap = 10;
+  var w = (W - 2 * marge - gap * (n - 1)) / n, i;
+  for (i = 0; i < n; i++) {
+    boutonScene(marge + w / 2 + i * (w + gap), y, w, 42,
+                libelles[i][0], libelles[i][1], actes[i]);
+  }
+}
+
+/* ==================================================================
+   CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  if (!c) return;
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  if (!o) return;
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+var N_CELL = 0;
+function compterCellules() {
+  var i, j, n = 0;
+  for (i = 0; i < N_LIG; i++) {
+    for (j = 0; j < (VAL[i] || []).length; j++) {
+      if (!(LIG[i] || [])[j] && (VAL[i] || [])[j]) n++;
+    }
+  }
+  return n;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t ? t.querySelectorAll("tr")[k + 1] : null;
+  var v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "mes";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerLigne(k) {
+  var j;
+  for (j = 0; j < (VAL[k] || []).length; j++) {
+    if (!(LIG[k] || [])[j]) revelerCellule(k, j);
+  }
+}
+function majCompteurCellules() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t ? t.querySelectorAll("tr") : [], i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  if ($("concl")) $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre, dans l'unité de la grandeur.           */
+function signalerDivergence(cle, texte) {
+  if (ETAT.horsProto) return;
+  if (ETAT.diverge.indexOf(cle) >= 0) return;
+  ETAT.diverge.push(cle);
+  var d = $("diverge");
+  d.innerHTML += (d.innerHTML ? "<br>" : "") + texte;
+  d.style.display = "block";
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.innerHTML = md(cells[i]);
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireEtapes(noms) {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < noms.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + noms[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+/* Les panneaux communs : titre, objectif, observation, conclusion, matériel,
+   sécurité, tableau de la fiche. Tout vient du YAML, rien n'est retapé.     */
+function construireHTMLBase(soustitre) {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · " + soustitre;
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  N_CELL = compterCellules();
+  majCompteurCellules();
+}
+/* Le tableau des constantes du capot se RÉGÉNÈRE depuis `PHYS` — il n'est
+   jamais retapé dans le HTML (SKILL §7.3). */
+function construireConstantes() {
+  var ct = $("capotConst"), c;
+  if (!ct) return;
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  for (c in PHYS) {
+    ct.appendChild(ligneTab([PHYS[c].n,
+      (typeof PHYS[c].v === "number"
+        ? (Math.abs(PHYS[c].v) < 0.01 ? sci(PHYS[c].v, 2)
+                                      : nb(PHYS[c].v, PHYS[c].d === undefined ? 2 : PHYS[c].d))
+        : PHYS[c].v) + " " + PHYS[c].u, PHYS[c].s]));
+  }
+}
+
+/* ==================================================================
+   L'HORLOGE DE LA SÉANCE — et elle seule court en temps RÉEL
+   ==================================================================
+   Elle mesure ce que la manipulation coûte à l'enseignant, pas ce que le
+   modèle simule : elle ne s'accélère JAMAIS, et elle SURVIT à
+   « Recommencer » — la séance ne se rembobine pas (SKILL §5.4, §11.6).      */
+var DERNIER = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tickSeance, 250);
+}
+function tickSeance() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  if (!n) return;
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance(complement) {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    (complement ? " · " + complement : "");
+  majSeance();
+}
+
+/* ==================================================================
+   LE PLEIN ÉCRAN — c'est par lui qu'on projette la scène au tableau
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Chaque nombre porte sa provenance, et le tableau du capot se RÉGÉNÈRE
+   depuis cet objet : il n'est jamais retapé dans le HTML (SKILL §7.3).      */
+var PHYS = {
+  ETA_HEX: { v: Math.PI / (2 * Math.sqrt(3)), u: "—", d: 4,
+             n: "compacité d'un rangement hexagonal parfait de disques",
+             s: "π/(2√3) — valeur géométrique EXACTE, pas une mesure : c'est " +
+                "le rangement le plus serré possible de disques identiques " +
+                "dans un plan (théorème de Thue, 1910)" },
+  ETA_ALEA: { v: 0.84, u: "—", d: 3,
+              n: "compacité d'un rangement quelconque de disques",
+              s: "empilement aléatoire compact de disques identiques en 2D ; " +
+                 "la littérature donne 0,82 à 0,89 selon le protocole de " +
+                 "remplissage. C'est ELLE, rapportée à la précédente, qui dit " +
+                 "de combien le tas s'étale quand le rangement se défait" },
+  SEUIL_ORDRE: { v: 0.80, u: "—", d: 2,
+                 n: "seuil de lecture du paramètre d'ordre ψ₆",
+                 s: "seuil d'ASPECT, déclaré comme tel (SKILL §4.B.5). Le " +
+                    "réseau rangé donne 1,000, l'agitation douce 0,216, " +
+                    "l'agitation forte 0,072 et le vrac 0,194 : le seuil est " +
+                    "25 % sous le premier et près de quatre fois au-dessus des " +
+                    "trois autres. Aucun NOMBRE du tableau n'en dépend — il ne " +
+                    "décide que du mot « ordonné » ou « désordonné »" },
+  GRAINE: { v: 15, u: "—", d: 0,
+            n: "graine du tirage du désordre",
+            s: "le désordre doit se rejouer à l'identique, sans quoi la " +
+               "manipulation à la main et le déroulé ne donneraient pas le " +
+               "même carnet (SKILL §12bis.6)" },
+  PASSES: { v: 260, u: "—", d: 0,
+            n: "passes de la relaxation à disques durs",
+            s: "on part de positions tirées au hasard et l'on sépare les " +
+               "billes qui se chevauchent, jusqu'à ce qu'aucune ne morde sur " +
+               "sa voisine. 260 passes suffisent : au-delà, l'empreinte ne " +
+               "bouge plus de 0,1 mm²" }
+};
+var ETA_HEX = PHYS.ETA_HEX.v, ETA_ALEA = PHYS.ETA_ALEA.v;
+var SEUIL_ORDRE = PHYS.SEUIL_ORDRE.v;
+
+/* ==================================================================
+   1 bis. CE QUE LA FICHE DONNE — lu, jamais retapé
+   ==================================================================
+   Le nombre de billes, leur diamètre et le côté d'un carreau sont dans le
+   matériel et dans le tableau. La page les LIT.                             */
+function colonne(motif, defaut) {
+  var i;
+  for (i = 0; i < ENTETES.length; i++) if (motif.test(depouille(ENTETES[i]))) return i;
+  return defaut;
+}
+var C_ETAPE = 0;
+var C_N = colonne(/nombre de billes/i, 1);
+var C_D = colonne(/diam/i, 2);
+var C_RANG = colonne(/rangement/i, 3);
+var C_CAR = colonne(/carreaux/i, 4);
+
+/* « 60 billes identiques par poste » */
+var N_BILLES = (function () {
+  var m = /(\d+)\s+billes/i.exec(materiel(/billes/i));
+  return m ? +m[1] : 60;
+})();
+/* « Diamètre d'une bille (mm) » : la première ligne du tableau porte 16 */
+var D_FICHE = (function () {
+  var v = parseFloat(String(cel(0, C_D)).replace(",", "."));
+  return isFinite(v) && v > 0 ? v : 16;
+})();
+/* « Plateau quadrillé à carreaux de 2 cm » — ramené en millimètres */
+var COTE_CARREAU = (function () {
+  var t = materiel(/carreaux?/i), m = /carreaux?\s+de\s+(\d+(?:[,.]\d+)?)\s*(cm|mm)/i.exec(t);
+  if (!m) return 20;
+  return parseFloat(m[1].replace(",", ".")) * (m[2].toLowerCase() === "cm" ? 10 : 1);
+})();
+var AIRE_CARREAU = COTE_CARREAU * COTE_CARREAU;
+/* ⚠ LA BOÎTE N'EST PAS COTÉE PAR LA FICHE — et il ne faut pas l'inventer.
+   Elle est LUE sur la ligne du gaz : un gaz occupe tout son récipient, donc
+   les carreaux relevés à l'agitation forte SONT le plancher de la boîte.
+   Corollaire, et il est dit au capot : cette ligne sert à COTER la boîte,
+   elle ne peut donc pas servir à la vérifier. */
+function ligneEtat(motif) {
+  var i;
+  for (i = 0; i < N_LIG; i++) if (motif.test(intitule(i, C_ETAPE))) return i;
+  return -1;
+}
+var L_SOLIDE = ligneEtat(/^solide/i), L_LIQUIDE = ligneEtat(/liquide/i);
+var L_GAZ = ligneEtat(/gaz/i), L_RESOLIDE = ligneEtat(/retour/i);
+var N_CARREAUX_BOITE = (function () {
+  var v = parseInt(cel(L_GAZ >= 0 ? L_GAZ : 2, C_CAR), 10);
+  return isFinite(v) && v > 0 ? v : 48;
+})();
+/* Le plancher, en carreaux : le couple de diviseurs le plus proche de 4 sur 3
+   — la forme d'une boîte de rangement d'école. */
+var BOITE = (function () {
+  var best = { nx: N_CARREAUX_BOITE, ny: 1, e: 1e9 }, i, j, e;
+  for (i = 1; i <= N_CARREAUX_BOITE; i++) {
+    if (N_CARREAUX_BOITE % i) continue;
+    j = N_CARREAUX_BOITE / i;
+    if (i < j) continue;
+    e = Math.abs(i / j - 4 / 3);
+    if (e < best.e) best = { nx: i, ny: j, e: e };
+  }
+  return best;
+})();
+var BX = BOITE.nx * COTE_CARREAU, BY = BOITE.ny * COTE_CARREAU;
+var K_MAX = 5;                       /* la boîte accepte cinq couches */
+var H_BOITE = K_MAX * D_FICHE;
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO : ce que le protocole prescrit. REG : ce qui court.
+   ==================================================================
+   ⚠ La valeur initiale d'un curseur DOIT tomber sur la grille des pas
+   (SKILL §12.12) : les attributs sont posés depuis PROTO, jamais à la main
+   dans le HTML.                                                             */
+var PROTO = { k: 3, d: D_FICHE };
+var REG = { k: 3, d: D_FICHE };
+function horsProtocole() { return REG.k !== PROTO.k || REG.d !== PROTO.d; }
+function revenirAuProtocole() { REG.k = PROTO.k; REG.d = PROTO.d; }
+
+/* ==================================================================
+   5. LE SOLVEUR — des positions, et tout ce qui s'en déduit
+   ==================================================================
+   Aucun nombre du tableau n'est écrit. Le nombre de billes est COMPTÉ sur
+   les objets présents, le diamètre MESURÉ à la règle, le rangement CALCULÉ
+   par un paramètre d'ordre, l'empreinte MESURÉE sur les positions.          */
+
+/* Le bloc rangé : des rangées hexagonales, aussi larges que hautes. */
+function blocRange(m, d) {
+  var dy = d * Math.sqrt(3) / 2;
+  var nc = Math.max(1, Math.ceil(Math.sqrt(m * d / dy)));
+  var nr = Math.ceil(m / nc);
+  return { nc: nc, nr: nr, dy: dy,
+           larg: (nc - 1) * d + (nr > 1 ? d / 2 : 0) + d,
+           haut: (nr - 1) * dy + d };
+}
+/* Les m positions d'une couche rangée, dans le repère de la boîte. */
+function couchRangee(m, d) {
+  var b = blocRange(m, d), r = d / 2, out = [], i = 0, c, l;
+  var x0 = (BX - b.larg) / 2, y0 = (BY - b.haut) / 2;
+  for (l = 0; l < b.nr; l++) {
+    for (c = 0; c < b.nc; c++) {
+      if (i >= m) break;
+      out.push({ x: x0 + r + c * d + (l % 2 ? r : 0), y: y0 + r + l * b.dy });
+      i++;
+    }
+  }
+  return out;
+}
+/* Le rangement QUELCONQUE : mêmes billes, même nombre de couches, mais elles
+   ont glissé les unes sur les autres. La compacité d'une couche tombe de
+   ETA_HEX à ETA_ALEA, donc son aire est multipliée par le rapport des deux et
+   ses côtés par la racine. On tire ensuite des positions au hasard DANS ce
+   cadre et l'on sépare les billes qui se chevauchent : c'est une relaxation à
+   disques durs, et elle ne laisse aucun recouvrement. */
+function relaxer(m, d, lx, ly, x0, y0, gr) {
+  var r = d / 2;
+  var al = graine(gr), p = [], i, j, k, dx, dy, dd, q;
+  for (i = 0; i < m; i++) p.push({ x: r + al() * (lx - d), y: r + al() * (ly - d) });
+  for (k = 0; k < PHYS.PASSES.v; k++) {
+    for (i = 0; i < m; i++) {
+      for (j = i + 1; j < m; j++) {
+        dx = p[j].x - p[i].x; dy = p[j].y - p[i].y;
+        dd = Math.sqrt(dx * dx + dy * dy);
+        if (dd < 1e-9) { dx = 0.3; dy = 0.1; dd = 0.32; }
+        if (dd >= d) continue;
+        q = (d - dd) / 2 / dd;
+        p[i].x -= dx * q; p[i].y -= dy * q;
+        p[j].x += dx * q; p[j].y += dy * q;
+      }
+    }
+    for (i = 0; i < m; i++) {
+      p[i].x = borne(p[i].x, r, lx - r);
+      p[i].y = borne(p[i].y, r, ly - r);
+    }
+  }
+  for (i = 0; i < m; i++) { p[i].x += x0; p[i].y += y0; }
+  return p;
+}
+function couchQuelconque(m, d) {
+  var b = blocRange(m, d);
+  var f = Math.sqrt(ETA_HEX / ETA_ALEA);
+  var lx = Math.min(b.larg * f, BX), ly = Math.min(b.haut * f, BY);
+  return relaxer(m, d, lx, ly, (BX - lx) / 2, (BY - ly) / 2, PHYS.GRAINE.v);
+}
+/* Le GAZ : il occupe tout le récipient — c'est la leçon même, pas un
+   réglage. Les billes se répartissent sur TOUT le plancher, sans ordre : le
+   même remplissage à disques durs, mais dans le plancher entier. */
+function couchGaz(m, d, gr) {
+  return relaxer(m, d, BX, BY, 0, 0, gr === undefined ? PHYS.GRAINE.v + 8 : gr);
+}
+/* La disposition complète : une liste de (x, y, couche) pour les N billes. */
+function disposition(etat) {
+  var d = REG.d, k = etat === "gaz" ? 1 : REG.k, i, c, n;
+  var m = Math.ceil(N_BILLES / k), out = [], reste = N_BILLES;
+  var motif = etat === "gaz" ? couchGaz(N_BILLES, d)
+            : (etat === "liquide" ? couchQuelconque(m, d) : couchRangee(m, d));
+  if (etat === "gaz") {
+    for (i = 0; i < N_BILLES; i++) out.push({ x: motif[i].x, y: motif[i].y, k: 0 });
+    return out;
+  }
+  /* ⚠ Les couches sont empilées À L'APLOMB : c'est la seule chose qu'une vue
+     de dessus puisse montrer sans mentir, et c'est dit au capot. L'empreinte
+     du tas est donc celle d'une couche. */
+  for (c = 0; c < k; c++) {
+    n = Math.min(m, reste); reste -= n;
+    for (i = 0; i < n; i++) out.push({ x: motif[i].x, y: motif[i].y, k: c });
+  }
+  return out;
+}
+/* L'EMPREINTE : l'enveloppe convexe des billes vues de dessus, disques
+   compris. C'est la surface que le tas couvre sur le plateau — celle dont on
+   compte les carreaux. */
+function enveloppe(pts, d) {
+  var r = d / 2, p = [], i, a, k;
+  for (i = 0; i < pts.length; i++) {
+    for (k = 0; k < 16; k++) {
+      a = 2 * Math.PI * k / 16;
+      p.push([pts[i].x + r * Math.cos(a), pts[i].y + r * Math.sin(a)]);
+    }
+  }
+  p.sort(function (u, v) { return u[0] - v[0] || u[1] - v[1]; });
+  function croix(o, u, v) {
+    return (u[0] - o[0]) * (v[1] - o[1]) - (u[1] - o[1]) * (v[0] - o[0]);
+  }
+  var bas = [], haut = [];
+  for (i = 0; i < p.length; i++) {
+    while (bas.length >= 2 && croix(bas[bas.length - 2], bas[bas.length - 1], p[i]) <= 0) bas.pop();
+    bas.push(p[i]);
+  }
+  for (i = p.length - 1; i >= 0; i--) {
+    while (haut.length >= 2 && croix(haut[haut.length - 2], haut[haut.length - 1], p[i]) <= 0) haut.pop();
+    haut.push(p[i]);
+  }
+  return bas.slice(0, -1).concat(haut.slice(0, -1));
+}
+function airePoly(poly) {
+  var s = 0, i, a, b;
+  for (i = 0; i < poly.length; i++) {
+    a = poly[i]; b = poly[(i + 1) % poly.length];
+    s += a[0] * b[1] - b[0] * a[1];
+  }
+  return Math.abs(s) / 2;
+}
+function aireEmpreinte(pts, d) {
+  return pts.length ? airePoly(enveloppe(pts, d)) : 0;
+}
+/* Combien de carreaux faut-il pour couvrir cette empreinte ? Un carreau
+   entamé est un carreau occupé — c'est ce que compte celui qui les compte. */
+function carreauxDe(aire) {
+  return Math.ceil(aire / AIRE_CARREAU - 1e-9);
+}
+/* Le paramètre d'ordre hexatique. Il DÉCIDE le mot « ordonné » ou
+   « désordonné » de la colonne « Rangement » — ce mot n'est pas écrit. */
+function psi6(pts) {
+  var sr = 0, si = 0, n = 0, i, j, dx, dy, dd, t, d = REG.d;
+  for (i = 0; i < pts.length; i++) {
+    for (j = i + 1; j < pts.length; j++) {
+      if (pts[j].k !== pts[i].k) continue;
+      dx = pts[j].x - pts[i].x; dy = pts[j].y - pts[i].y;
+      dd = Math.sqrt(dx * dx + dy * dy);
+      if (dd >= d * 1.45) continue;      /* voisins de contact seulement */
+      t = Math.atan2(dy, dx);
+      sr += Math.cos(6 * t); si += Math.sin(6 * t);
+      n++;
+    }
+  }
+  return n ? Math.sqrt(sr * sr + si * si) / n : 0;
+}
+function motRangement(p) { return p >= SEUIL_ORDRE ? "ordonné" : "désordonné"; }
+/* La hauteur d'une bille dans la boîte — c'est ce que la COUPE montre. */
+function hauteurDe(b, etat) {
+  if (etat === "vrac") return REG.d / 2;
+  if (etat !== "gaz") return b.k * REG.d + REG.d / 2;
+  var al = graine(PHYS.GRAINE.v + 21 + b.i);
+  al();
+  return REG.d / 2 + al() * Math.max(0, H_BOITE - REG.d);
+}
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   ⚠ TOUTE CLÉ LUE DANS LE CODE FIGURE ICI (SKILL §12.17) : une clé oubliée
+   rend une branche entière morte, sans lever la moindre erreur.             */
+var ETAT = {};
+function neufEtat() {
+  return {
+    tSeance: 0, horsProto: false, nCell: 0, diverge: [],
+    etat: "vrac",           /* vrac · solide · liquide · gaz */
+    billes: [],
+    mesure: null,           /* diamètre lu à la règle, en mm */
+    regleSurTas: false,
+    compteFait: false, compteInitial: false, nCompte: 0,
+    releve: [false, false, false, false],
+    carnet: [null, null, null, null],
+    ferme: false,           /* le couvercle est-il posé ? */
+    compare: false,
+    empreinte: null,        /* le polygone dessiné, en mm */
+    aireEmp: 0, carreaux: 0, psi: 0
+  };
+}
+
+/* ==================================================================
+   8. GÉOMÉTRIE — toutes les cotes de la scène, en constantes nommées
+   ==================================================================
+   Le cadre est ÉTROIT (SKILL §10.5) : chaque unité gagnée en largeur est une
+   unité perdue sur la taille apparente des objets.                          */
+var W = 1120, H = 760;
+var ECH = 2.9;                       /* pixels par millimètre — LES DEUX VUES */
+var PX0 = 34, PY0 = 196;             /* coin haut-gauche du plateau, vue de dessus */
+var PW = BX * ECH, PH = BY * ECH;
+var PX1 = PX0 + PW, PY1 = PY0 + PH;
+var KX0 = 606, KSOL = PY1;           /* la coupe : même échelle, même ligne de sol */
+var KW = BX * ECH, KH = H_BOITE * ECH;
+var KX1 = KX0 + KW, KTOIT = KSOL - KH;
+var BANC = 588, BOIS = 636, Y_BOUTONS = 716;
+/* ⚠ TOUTES LES HAUTEURS D'ÉTIQUETTE DANS UN SEUL OBJET (SKILL §12.7) :
+   dispersées dans le code, elles ne se comparent pas — et c'est la
+   comparaison, pas le calcul, qui montre la collision. */
+var Y_ETIQ = { titrePlateau: 180, titreCoupe: 292, sousVues: 570, legende: 152 };
+var REPOS = { regle: { x: 150, y: 610 }, couvercle: { x: 810, y: 610 } };
+var BILAN = { x: 40, y: 642, w: 1040, h: 44 };
+
+/* ==================================================================
+   9. LES DÉGRADÉS PROPRES À CETTE PAILLASSE
+   ==================================================================
+   Une bille est une BILLE : dégradé radial décentré, reflet spéculaire net,
+   arête sombre. Sans le reflet, ce n'est qu'un disque de couleur — et l'on
+   retombe sur le schéma plat que le §1.1 refuse.                            */
+function defsPage() {
+  var g;
+  g = el("radialGradient", { id: "bille", cx: "0.34", cy: "0.28", r: "0.80" });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#eaf6ff" }));
+  g.appendChild(el("stop", { offset: .34, "stop-color": "#7fc0e8" }));
+  g.appendChild(el("stop", { offset: .84, "stop-color": "#2f7fb5" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#1b5a86" }));
+  DEFS.appendChild(g);
+  g = el("radialGradient", { id: "billeBasse", cx: "0.34", cy: "0.28", r: "0.80" });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c9dfee" }));
+  g.appendChild(el("stop", { offset: .34, "stop-color": "#84a9c2" }));
+  g.appendChild(el("stop", { offset: .84, "stop-color": "#4c748f" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#3a5b71" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "regleBois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#f6e6bd" }));
+  g.appendChild(el("stop", { offset: .5, "stop-color": "#e5cd93" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c8ab6d" }));
+  DEFS.appendChild(g);
+}
+
+/* ==================================================================
+   11. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: BOIS - BANC,
+                             fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: BOIS, width: W, height: H - BOIS,
+                             fill: "url(#banc)" }));
+  txt("fond", W - 30, Y_ETIQ.legende,
+      "schéma habillé — les deux vues sont à la MÊME échelle",
+      { ancre: "end", taille: 10.5, couleur: "#8391a1" });
+}
+
+/* ==================================================================
+   12. LES DEUX VUES DE LA MÊME BOÎTE
+   ==================================================================
+   ⚠ Un empilement ne se lit pas de dessus. La scène a donc DEUX points de
+   vue, et elle le DIT dans le dessin (SKILL §12.20) — à la même échelle, et
+   lisant les mêmes positions (SKILL §12.18).                                */
+var gGrille = null, gEmpreinte = null, gCouvTop = null, gCouvCote = null;
+function construireVues() {
+  var i, x, y;
+  ombreAuSol(PX0 + PW / 2, PY1 + 12, PW / 2, .22);
+  ombreAuSol(KX0 + KW / 2, KSOL + 12, KW / 2, .22);
+
+  /* --- vue de dessus : le plateau quadrillé, au fond de la boîte --- */
+  ajout("poste", el("rect", { x: PX0 - 9, y: PY0 - 9, width: PW + 18, height: PH + 18,
+    rx: 8, fill: "#dde5ee", stroke: "#8fa2b4", "stroke-width": 2 }));
+  ajout("poste", el("rect", { x: PX0, y: PY0, width: PW, height: PH,
+    fill: "#fbfdff" }));
+  gGrille = ajout("poste", el("g", { "pointer-events": "none" }));
+  for (i = 0; i <= BOITE.nx; i++) {
+    x = PX0 + i * COTE_CARREAU * ECH;
+    gGrille.appendChild(el("line", { x1: x, y1: PY0, x2: x, y2: PY1,
+      stroke: "#bcccdb", "stroke-width": i % BOITE.nx ? 1 : 2 }));
+  }
+  for (i = 0; i <= BOITE.ny; i++) {
+    y = PY0 + i * COTE_CARREAU * ECH;
+    gGrille.appendChild(el("line", { x1: PX0, y1: y, x2: PX1, y2: y,
+      stroke: "#bcccdb", "stroke-width": i % BOITE.ny ? 1 : 2 }));
+  }
+  /* l'empreinte : c'est ELLE qu'on couvre de carreaux */
+  gEmpreinte = ajout("arriere", el("polygon", { points: "", fill: GOLD,
+    opacity: 0, stroke: GOLD, "stroke-width": 2.4, "pointer-events": "none" }));
+  /* la paroi de verre, PAR-DESSUS l'intérieur (SKILL §8) */
+  ajout("avant", el("rect", { x: PX0 - 9, y: PY0 - 9, width: PW + 18, height: PH + 18,
+    rx: 8, fill: "none", stroke: "#7f93a6", "stroke-width": 3,
+    "pointer-events": "none" }));
+  txt("avant", PX0 + PW / 2, Y_ETIQ.titrePlateau,
+      "la boîte, VUE DE DESSUS — plateau quadrillé, carreaux de " +
+      nb(COTE_CARREAU / 10, 0) + " cm", { taille: 13, gras: true, halo: true });
+  txt("avant", PX0 + PW / 2, Y_ETIQ.sousVues,
+      "on y compte les carreaux occupés", { taille: 11, couleur: GRIS, halo: true });
+
+  /* --- coupe : la même boîte, vue de côté --- */
+  ajout("poste", el("rect", { x: KX0, y: KTOIT, width: KW, height: KH,
+    fill: "#f4f8fc" }));
+  ajout("poste", el("rect", { x: KX0 - 9, y: KSOL, width: KW + 18, height: 9,
+    fill: "#dde5ee", stroke: "#8fa2b4", "stroke-width": 2 }));
+  for (i = 0; i <= BOITE.nx; i++) {
+    x = KX0 + i * COTE_CARREAU * ECH;
+    ajout("poste", el("line", { x1: x, y1: KSOL, x2: x, y2: KSOL + 9,
+      stroke: "#bcccdb", "stroke-width": 1 }));
+  }
+  gCouvTop = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  gCouvTop.appendChild(el("rect", { x: PX0 - 9, y: PY0 - 9, width: PW + 18,
+    height: PH + 18, rx: 8, fill: "#cfe0ee", opacity: .30 }));
+  gCouvTop.appendChild(el("rect", { x: PX0 - 9, y: PY0 - 9, width: PW + 18,
+    height: PH + 18, rx: 8, fill: "none", stroke: "#5f7d95", "stroke-width": 4 }));
+  gCouvTop.appendChild(el("rect", { x: PX0 + 22, y: PY0 + 6, width: 26, height: PH - 12,
+    rx: 4, fill: "#ffffff", opacity: .5 }));
+  gCouvTop.appendChild(el("text", { x: PX1 - 12, y: PY1 - 12, "text-anchor": "end",
+    "font-size": 12, "font-weight": "bold", fill: "#41586b",
+    "font-family": "Arial, Helvetica, sans-serif", "paint-order": "stroke",
+    stroke: "#eaf1f7", "stroke-width": 3.4 }, "couvercle posé"));
+  gCouvCote = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  gCouvCote.appendChild(el("rect", { x: KX0 - 12, y: KTOIT - 13, width: KW + 24,
+    height: 13, rx: 3, fill: "#cfdae6", stroke: "#7f93a6", "stroke-width": 2.4 }));
+  ajout("avant", el("path", { d: "M" + pt(KX0, KTOIT) + " L" + pt(KX0, KSOL) +
+    " L" + pt(KX1, KSOL) + " L" + pt(KX1, KTOIT),
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3, "pointer-events": "none" }));
+  txt("avant", KX0 + KW / 2, Y_ETIQ.titreCoupe,
+      "la MÊME boîte, VUE DE CÔTÉ — même échelle",
+      { taille: 13, gras: true, halo: true });
+  txt("avant", KX0 + KW / 2, Y_ETIQ.sousVues,
+      "on y voit les couches empilées", { taille: 11, couleur: GRIS, halo: true });
+}
+
+/* ==================================================================
+   13. LES BILLES — les MÊMES objets d'un bout à l'autre de la séance
+   ==================================================================
+   Elles ne sont ni créées ni détruites entre deux étapes : `ETAT.billes` est
+   monté une fois par « Recommencer », et le compteur PARCOURT cette liste.  */
+function pxX(mm) { return PX0 + mm * ECH; }
+function pxY(mm) { return PY0 + mm * ECH; }
+
+function creerBille(i) {
+  var r = REG.d / 2 * ECH;
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "bille-" + i }));
+  prehension(g, -r - 3, -r - 3, 2 * r + 6, 2 * r + 6);
+  var c = g.appendChild(el("circle", { cx: 0, cy: 0, r: r, fill: "url(#bille)",
+    stroke: "#1b5a86", "stroke-width": 1.2 }));
+  var l = g.appendChild(el("ellipse", { cx: -r * .3, cy: -r * .34, rx: r * .27,
+    ry: r * .18, fill: "#ffffff", opacity: .82, "pointer-events": "none",
+    transform: "rotate(-24," + pt(-r * .3, -r * .34) + ")" }));
+  var gc = ajout("arriere", el("g", { "pointer-events": "none" }));
+  var cc = gc.appendChild(el("circle", { cx: 0, cy: 0, r: r, fill: "url(#bille)",
+    stroke: "#1b5a86", "stroke-width": 1.2 }));
+  gc.appendChild(el("ellipse", { cx: -r * .3, cy: -r * .34, rx: r * .27,
+    ry: r * .18, fill: "#ffffff", opacity: .82 }));
+  var b = { type: "bille", i: i, g: g, gc: gc, cercle: c, cercleC: cc, reflet: l,
+            x: 0, y: 0, k: 0, z: 0, fige: false };
+  brancherObjet(b);
+  return b;
+}
+function tailleBilles() {
+  var r = REG.d / 2 * ECH;
+  ETAT.billes.forEach(function (b) {
+    b.cercle.setAttribute("r", r); b.cercleC.setAttribute("r", r);
+  });
+}
+/* La position d'une bille en millimètres, LUE sur le dessin — jamais gardée
+   à côté (SKILL §12.18). */
+function bx(b) { return (b.x - PX0) / ECH; }
+function by(b) { return (b.y - PY0) / ECH; }
+function pointsBilles() {
+  return ETAT.billes.map(function (b) { return { x: bx(b), y: by(b), k: b.k, i: b.i }; });
+}
+
+/* ==================================================================
+   14. LA RÈGLE GRADUÉE ET LE COUVERCLE
+   ================================================================== */
+var REGLE = null, COUVERCLE = null;
+function construireRegle() {
+  var L = 70 * ECH, ht = 26;
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "regle" }));
+  prehension(g, -L / 2 - 4, -ht / 2 - 4, L + 8, ht + 8);
+  g.appendChild(el("rect", { x: -L / 2, y: -ht / 2, width: L, height: ht, rx: 3,
+    fill: "url(#regleBois)", stroke: "#9d824c", "stroke-width": 1.6 }));
+  for (var i = 0; i <= 70; i += 5) {
+    var x = -L / 2 + i * ECH, gr = (i % 10 === 0);
+    g.appendChild(el("line", { x1: x, y1: -ht / 2, x2: x, y2: -ht / 2 + (gr ? 11 : 6),
+      stroke: "#5d4a22", "stroke-width": gr ? 1.6 : 1, "pointer-events": "none" }));
+  }
+  g.appendChild(el("text", { x: 0, y: ht / 2 - 5, "text-anchor": "middle",
+    "font-size": 10.5, fill: "#5d4a22", "font-family": "Arial, Helvetica, sans-serif",
+    "pointer-events": "none" }, "règle graduée — mm"));
+  REGLE = { type: "regle", g: g, x: REPOS.regle.x, y: REPOS.regle.y, fige: false,
+            L: L, h: ht };
+  brancherObjet(REGLE);
+  placer(REGLE, REPOS.regle.x, REPOS.regle.y);
+}
+function construireCouvercle() {
+  var w = PW + 26, ht = 34;
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "couvercle" }));
+  prehension(g, -w / 2 - 4, -ht / 2 - 4, w + 8, ht + 8);
+  g.appendChild(el("rect", { x: -w / 2, y: -ht / 2, width: w, height: ht, rx: 6,
+    fill: "#dbe5ee", opacity: .92, stroke: "#7f93a6", "stroke-width": 2.6 }));
+  g.appendChild(el("rect", { x: -w / 2 + 10, y: -ht / 2 + 5, width: 26, height: ht - 10,
+    rx: 3, fill: "#ffffff", opacity: .6, "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -26, y: -ht / 2 - 8, width: 52, height: 10, rx: 5,
+    fill: "#b8c6d4", stroke: "#7f93a6", "stroke-width": 1.6, "pointer-events": "none" }));
+  g.appendChild(el("text", { x: 0, y: 5, "text-anchor": "middle", "font-size": 11.5,
+    "font-weight": "bold", fill: "#4c6070",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+    "couvercle"));
+  COUVERCLE = { type: "couvercle", g: g, x: REPOS.couvercle.x, y: REPOS.couvercle.y,
+                fige: false, w: w, h: ht };
+  brancherObjet(COUVERCLE);
+  placer(COUVERCLE, REPOS.couvercle.x, REPOS.couvercle.y);
+}
+/* Le couvercle posé se dessine SUR la boîte, dans les deux vues. */
+/* Le couvercle posé N'EST PLUS un objet posé SUR le dessin : il DEVIENT le
+   voile de verre qui ferme la boîte, dans les deux vues. Un objet qui a servi
+   disparaît de la scène (SKILL §12.51, corollaire) — le laisser en double
+   cacherait justement ce qu'il est censé montrer. */
+function poserCouvercle(v) {
+  ETAT.ferme = v;
+  gCouvCote.setAttribute("opacity", v ? .95 : 0);
+  gCouvTop.setAttribute("opacity", v ? 1 : 0);
+  COUVERCLE.g.setAttribute("opacity", v ? 0 : 1);
+  COUVERCLE.fige = v;
+}
+
+/* ==================================================================
+   15. LE COMPTEUR ET L'EMPREINTE — les deux mesures de la page
+   ================================================================== */
+var anneau = null, gBilan = null, casesBilan = [];
+function construireOutilsScene() {
+  anneau = ajout("avant", el("circle", { cx: -100, cy: -100, r: 1, fill: "none",
+    stroke: GOLD, "stroke-width": 4, opacity: 0, "pointer-events": "none" }));
+  gBilan = ajout("ui", el("g", {}));
+  gBilan.appendChild(el("rect", { x: BILAN.x, y: BILAN.y, width: BILAN.w,
+    height: BILAN.h, rx: 8, fill: "#ffffff", opacity: .12,
+    stroke: "#8fa2b4", "stroke-width": 1.4, "stroke-dasharray": "5 5" }));
+  var n = N_LIG, w = (BILAN.w - 10 * (n + 1)) / n, i;
+  for (i = 0; i < n; i++) {
+    (function (i) {
+      var g = gBilan.appendChild(el("g", { opacity: 0 }));
+      var x = BILAN.x + 10 + i * (w + 10);
+      g.appendChild(el("rect", { x: x, y: BILAN.y + 5, width: w, height: BILAN.h - 10,
+        rx: 6, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.4 }));
+      var t1 = g.appendChild(el("text", { x: x + w / 2, y: BILAN.y + 19,
+        "text-anchor": "middle", "font-size": 11, "font-weight": "bold", fill: INK,
+        "font-family": "Arial, Helvetica, sans-serif" }, ""));
+      var t2 = g.appendChild(el("text", { x: x + w / 2, y: BILAN.y + 33,
+        "text-anchor": "middle", "font-size": 11.5, fill: GRIS,
+        "font-family": "Arial, Helvetica, sans-serif" }, ""));
+      casesBilan.push({ g: g, t1: t1, t2: t2 });
+    })(i);
+  }
+}
+
+/* ==================================================================
+   16. LES BOUTONS DE SCÈNE
+   ==================================================================
+   Chacun ne fait qu'un geste que LE PROTOCOLE fait d'un seul coup, et chacun
+   DOUBLE un glisser qui reste possible (SKILL §4.A, §12.13).                */
+function construireBoutons() {
+  ACTES = ["compter", "relever", "ranger", "doux", "fort", "comparer"];
+  rangeeBoutons(W, Y_BOUTONS, [
+    ["Compter", "les billes"],
+    ["Compter les carreaux", "et reporter"],
+    ["Disposer serrées", "et rangées"],
+    ["Agiter", "doucement"],
+    ["Agiter", "fortement"],
+    ["Comparer", "les " + N_LIG + " étapes"]
+  ], ACTES);
+  ACTES.forEach(function (a) {
+    BOUTONS[a].noeud.addEventListener("click", function () { agir(a); });
+  });
+}
+
+/* ==================================================================
+   17. LES ZONES DE DÉPÔT ET CE QUI SE PASSE QUAND ON DÉPOSE
+   ==================================================================
+   Les zones sont rendues de la plus PETITE à la plus GRANDE (SKILL §12.16) :
+   c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du tableau. */
+function zoneBoite(quoi) {
+  return { type: "boite", x: PX0 + PW / 2, y: PY0 + PH / 2,
+           r: Math.max(PW, PH), hw: PW / 2 + 9, hh: PH / 2 + 9, quoi: quoi };
+}
+function centreTas() {
+  var p = pointsBilles(), sx = 0, sy = 0, i;
+  if (!p.length) return { x: PX0 + PW / 2, y: PY0 + PH / 2 };
+  for (i = 0; i < p.length; i++) { sx += p[i].x; sy += p[i].y; }
+  return { x: pxX(sx / p.length), y: pxY(sy / p.length) };
+}
+function emplacements(o) {
+  var z = [], c;
+  if (o.type === "bille") {
+    z.push(zoneBoite("la bille dans la boîte — elle n'en sort pas"));
+  } else if (o.type === "regle") {
+    c = centreTas();
+    z.push({ type: "mesure", x: c.x, y: c.y, r: Math.max(PW, PH) / 2 + 60,
+             hw: REGLE.L / 2, hh: REGLE.h / 2 + 6,
+             quoi: "la règle en travers d'une bille, pour en mesurer le diamètre" });
+  } else if (o.type === "couvercle") {
+    z.push({ type: "couvrir", x: PX0 + PW / 2, y: PY0 + PH / 2, r: 300,
+             hw: PW / 2 + 14, hh: PH / 2 + 14, quoi: "le couvercle sur la boîte" });
+  }
+  z.sort(function (a, b) { return a.r - b.r; });
+  return z;
+}
+/* Un refus n'est jamais muet : il dit la raison, et il CITE la fiche. */
+function deposer(o, z, depart) {
+  if (o.type === "bille") {
+    if (!z) {
+      volerVers(o, depart.x, depart.y, 420);
+      signaler("Une bille ne sort pas de la boîte, et c'est tout l'objet de " +
+               "l'expérience :" + citerSecu(/aucune ne doit manquer|compter les billes/i));
+      return;
+    }
+    /* elle reste où on l'a lâchée, ramenée dans la boîte */
+    var r = REG.d / 2;
+    placer(o, pxX(borne(bx(o), r, BX - r)), pxY(borne(by(o), r, BY - r)));
+    ETAT.compteFait = false;      /* le rangement a changé : on recompte */
+    noter("Bille n° " + (o.i + 1) + " déplacée à la main. Le rangement a " +
+          "changé — il faudra recompter.", null);
+    succes(); mesurer(); armer(); avancer();
+    return;
+  }
+  if (o.type === "regle") {
+    if (!z) {
+      volerVers(o, REPOS.regle.x, REPOS.regle.y, 420);
+      signaler("Poser la règle EN TRAVERS d'une bille : c'est ainsi qu'on " +
+               "mesure un diamètre.");
+      return;
+    }
+    var c = centreTas();
+    volerVers(o, c.x, c.y, 480);
+    ETAT.regleSurTas = true;
+    ETAT.mesure = lireDiametre();
+    noter("Diamètre lu à la règle : " + nb(ETAT.mesure, 0) + " mm. Il ne " +
+          "changera plus d'une étape à l'autre — c'est déjà un résultat.", true);
+    succes(); armer(); avancer();
+    return;
+  }
+  if (o.type === "couvercle") {
+    if (!z) {
+      volerVers(o, REPOS.couvercle.x, REPOS.couvercle.y, 420);
+      signaler("Le couvercle se pose SUR la boîte :" +
+               citerSecu(/couvercle|bo[iî]te ferm/i));
+      return;
+    }
+    volerVers(o, PX0 + PW / 2, PY0 + PH / 2, 520);
+    tard(function () { poserCouvercle(true); armer(); avancer(); }, 520);
+    noter("Couvercle posé. La boîte est fermée : on peut agiter fort sans " +
+          "rien perdre.", true);
+    succes();
+    return;
+  }
+}
+/* Cliquer une bille : l'IDENTIFIER. Ce que le journal écrit sort du modèle. */
+function cliquerObjet(o) {
+  if (o.type !== "bille") return;
+  noter("Bille n° " + (o.i + 1) + " sur " + ETAT.billes.length + " — couche " +
+        (o.k + 1) + ", diamètre " + nb(REG.d, 0) + " mm. C'est la même à " +
+        "chaque étape : elle n'est ni créée ni détruite.", null);
+  succes(); avancer();
+}
+/* La règle MESURE : elle lit le rayon dessiné et le ramène en millimètres par
+   l'échelle de la scène. Ce n'est pas la constante qu'on recopie, c'est le
+   dessin qu'on interroge (SKILL §12.18). */
+function lireDiametre() {
+  var b = ETAT.billes[0];
+  if (!b) return null;
+  return 2 * (+b.cercle.getAttribute("r")) / ECH;
+}
+function mesurer() {
+  if (ETAT.regleSurTas) ETAT.mesure = lireDiametre();
+}
+
+/* ==================================================================
+   18. LE CALCUL — ce que la scène courante donne
+   ================================================================== */
+function etatCourant() {
+  var p = pointsBilles();
+  var aire = ETAT.etat === "gaz" ? BX * BY : aireEmpreinte(p, REG.d);
+  return { n: p.length, psi: psi6(p), aire: aire, car: carreauxDe(aire), pts: p };
+}
+function majLectures() {
+  var e = etatCourant();
+  ETAT.psi = e.psi; ETAT.aireEmp = e.aire; ETAT.carreaux = e.car;
+  $("lN").textContent = ETAT.compteFait ? ETAT.nCompte + " billes"
+                                        : "à compter";
+  $("lN").className = "v" + (ETAT.compteFait ? "" : " off");
+  $("lD").textContent = ETAT.mesure === null ? "à mesurer" : nb(ETAT.mesure, 0) + " mm";
+  $("lD").className = "v" + (ETAT.mesure === null ? " off" : "");
+  $("lK").textContent = (ETAT.etat === "gaz" || ETAT.etat === "vrac")
+    ? "aucune — tout le fond" : REG.k + " × " +
+      Math.ceil(N_BILLES / REG.k) + " billes";
+  $("lPsi").textContent = nb(e.psi, 2) + " · " + motRangement(e.psi);
+  $("lPsi").className = "v " + (e.psi >= SEUIL_ORDRE ? "ok" : "ko");
+  $("lEmp").textContent = nb(e.aire, 0) + " mm²";
+  $("lCar").textContent = nb(e.aire / AIRE_CARREAU, 2) + " → " + e.car + " carreaux";
+  var faits = ETAT.carnet.filter(function (x) { return !!x; });
+  var memeN = faits.length > 1 && faits.every(function (x) { return x.n === faits[0].n; });
+  var memeD = faits.length > 1 && faits.every(function (x) { return x.d === faits[0].d; });
+  var varCar = faits.length > 1 && !faits.every(function (x) { return x.car === faits[0].car; });
+  $("lCons").textContent = faits.length < 2 ? "—"
+    : ((memeN ? "le nombre" : "") + (memeN && memeD ? " et " : "") +
+       (memeD ? "le diamètre" : "") || "rien");
+  $("lCons").className = "v" + (faits.length < 2 ? " off" : " ok");
+  $("lVar").textContent = faits.length < 2 ? "—"
+    : (varCar ? "l'espace occupé" : "rien encore");
+  $("lVar").className = "v" + (faits.length < 2 ? " off" : " ko");
+  $("etatSysteme").textContent = ETAT.etat === "vrac"
+    ? "billes versées en vrac" : "modèle du " + ETAT.etat;
+}
+
+/* ==================================================================
+   19. LE RENDU
+   ================================================================== */
+function dessiner() {
+  ETAT.billes.forEach(function (b) {
+    if (!prise || prise.o !== b) placer(b, b.x, b.y);
+    b.gc.setAttribute("transform", "translate(" +
+      (KX0 + bx(b) * ECH).toFixed(1) + "," + (KSOL - b.z * ECH).toFixed(1) + ")");
+    var bas = b.k < (ETAT.etat === "gaz" ? 0 : REG.k - 1);
+    b.cercle.setAttribute("fill", bas ? "url(#billeBasse)" : "url(#bille)");
+    b.cercleC.setAttribute("fill", bas ? "url(#billeBasse)" : "url(#bille)");
+  });
+  /* les couches basses se peignent EN PREMIER : de dessus, on ne voit que la
+     couche du dessus, et c'est la vérité du point de vue. */
+  var l = ETAT.billes.slice().sort(function (a, b) { return a.k - b.k; });
+  l.forEach(function (b) { COUCHES.objets.appendChild(b.g); });
+  if (REGLE) COUCHES.objets.appendChild(REGLE.g);
+  if (COUVERCLE) COUCHES.objets.appendChild(COUVERCLE.g);
+}
+function polyEmpreinte(u) {
+  var p = pointsBilles();
+  if (!p.length) { gEmpreinte.setAttribute("points", ""); return; }
+  var poly = ETAT.etat === "gaz"
+    ? [[0, 0], [BX, 0], [BX, BY], [0, BY]]
+    : enveloppe(p, REG.d);
+  var cx = 0, cy = 0, i;
+  for (i = 0; i < poly.length; i++) { cx += poly[i][0]; cy += poly[i][1]; }
+  cx /= poly.length; cy /= poly.length;
+  var s = [];
+  for (i = 0; i < poly.length; i++) {
+    s.push(pt(pxX(cx + (poly[i][0] - cx) * u), pxY(cy + (poly[i][1] - cy) * u)));
+  }
+  gEmpreinte.setAttribute("points", s.join(" "));
+}
+
+/* ==================================================================
+   20. LES GESTES — chacun DOUBLE un glisser, et chacun s'ANIME
+   ==================================================================
+   ⚠ L'ANIMATION NE DÉCIDE DE RIEN : l'état d'arrivée est calculé AVANT
+   qu'elle ne commence, et posé tout de suite (SKILL §1.2 bis, §6.2).        */
+function appliquerDisposition(etat, ms) {
+  var pts = disposition(etat), i, b, x0 = [], y0 = [];
+  ETAT.etat = etat;
+  ETAT.compteFait = false;
+  ETAT.billes.forEach(function (b, i) { x0.push(b.x); y0.push(b.y); });
+  for (i = 0; i < ETAT.billes.length; i++) {
+    b = ETAT.billes[i];
+    b.k = pts[i].k;
+    b.x = pxX(pts[i].x); b.y = pxY(pts[i].y);
+    b.z = hauteurDe({ k: b.k, i: b.i }, etat);
+  }
+  var cible = ETAT.billes.map(function (b) { return { x: b.x, y: b.y, z: b.z }; });
+  anim(ms, function (u) {
+    for (var j = 0; j < ETAT.billes.length; j++) {
+      var q = ETAT.billes[j];
+      q.g.setAttribute("transform", "translate(" +
+        (x0[j] + (cible[j].x - x0[j]) * u).toFixed(1) + "," +
+        (y0[j] + (cible[j].y - y0[j]) * u).toFixed(1) + ")");
+      q.gc.setAttribute("transform", "translate(" +
+        (KX0 + ((x0[j] + (cible[j].x - x0[j]) * u) - PX0)).toFixed(1) + "," +
+        (KSOL - cible[j].z * ECH * u - (1 - u) * 6).toFixed(1) + ")");
+    }
+  }, function () { dessiner(); mesurer(); armer(); avancer(); });
+  gEmpreinte.setAttribute("opacity", 0);
+}
+function compterBilles() {
+  var n = ETAT.billes.length;
+  anneau.setAttribute("opacity", .95);
+  anneau.setAttribute("r", REG.d / 2 * ECH + 8);
+  anim(900, function (u) {
+    var i = Math.min(n - 1, Math.floor(u * n));
+    var b = ETAT.billes[i];
+    anneau.setAttribute("cx", b.x.toFixed(1));
+    anneau.setAttribute("cy", b.y.toFixed(1));
+  }, function () {
+    anneau.setAttribute("opacity", 0);
+    armer(); avancer();
+  });
+  ETAT.nCompte = n;                    /* l'état est posé TOUT DE SUITE */
+  ETAT.compteFait = true;
+  /* ⚠ Le premier comptage ne se DÉFAIT jamais : le rangement change à chaque
+     étape et il faut recompter, mais l'étape 1 de la fiche — « compter les
+     billes du poste et noter leur nombre » — reste faite. Sans ce drapeau, le
+     panneau reculait à l'étape 1 après chaque agitation (SKILL §12bis.1 : il
+     doit reculer quand on DÉFAIT un geste, pas quand on en fait un autre). */
+  ETAT.compteInitial = true;
+  mesurer();
+  noter("Comptées une à une : " + n + " billes. C'est le même compte qu'à " +
+        "l'étape précédente — aucune n'a disparu.", true);
+}
+/* La ligne attendue : à quel instant, et par quel geste, la fiche la
+   renseigne-t-elle ? (SKILL §12.40) */
+function ligneAttendue() {
+  if (ETAT.etat === "solide" && !ETAT.releve[L_SOLIDE]) return L_SOLIDE;
+  if (ETAT.etat === "liquide" && ETAT.releve[L_SOLIDE] && !ETAT.releve[L_LIQUIDE])
+    return L_LIQUIDE;
+  if (ETAT.etat === "gaz" && ETAT.releve[L_LIQUIDE] && !ETAT.releve[L_GAZ])
+    return L_GAZ;
+  if (ETAT.etat === "solide" && ETAT.releve[L_GAZ] && !ETAT.releve[L_RESOLIDE])
+    return L_RESOLIDE;
+  return -1;
+}
+function relever() {
+  var k = ligneAttendue();
+  if (k < 0) {
+    signaler(ETAT.releve[L_RESOLIDE]
+      ? "Les " + N_LIG + " étapes sont relevées. Il reste à les comparer."
+      : "Cette étape n'est pas celle qu'attend le protocole : " +
+        prochainRangement() + ".");
+    return;
+  }
+  if (!ETAT.compteFait) {
+    signaler("Compter d'abord les billes :" +
+             citerProto(/recompter|compter les billes/i));
+    return;
+  }
+  if (ETAT.mesure === null) {
+    signaler("Mesurer d'abord le diamètre d'une bille : poser la règle en " +
+             "travers du tas.");
+    return;
+  }
+  var e = etatCourant();
+  ETAT.carnet[k] = { n: ETAT.nCompte, d: ETAT.mesure, psi: e.psi,
+                     rang: motRangement(e.psi), aire: e.aire, car: e.car };
+  ETAT.releve[k] = true;
+  /* l'empreinte se DÉPLIE sous les billes : on voit ce qu'on couvre */
+  gEmpreinte.setAttribute("opacity", .3);
+  anim(800, function (u) { polyEmpreinte(u); }, function () {
+    tard(function () { gEmpreinte.setAttribute("opacity", .16); }, 200);
+    armer(); avancer();
+  });
+  revelerCellule(k, C_N); revelerCellule(k, C_D);
+  revelerCellule(k, C_RANG); revelerCellule(k, C_CAR);
+  verifierContreFiche(k);
+  majCarnet();
+  noter(ETAT.nCompte + " billes, diamètre " + nb(ETAT.mesure, 0) + " mm, " +
+        "rangement " + motRangement(e.psi) + ", empreinte " + nb(e.aire, 0) +
+        " mm² soit " + e.car + " carreaux.", true);
+}
+function prochainRangement() {
+  if (!ETAT.releve[L_SOLIDE]) return "disposer les billes serrées et rangées";
+  if (!ETAT.releve[L_LIQUIDE]) return "agiter doucement";
+  if (!ETAT.releve[L_GAZ]) return "fermer la boîte et agiter fortement";
+  if (!ETAT.releve[L_RESOLIDE]) return "revenir au rangement du début";
+  return "comparer les " + N_LIG + " étapes";
+}
+/* Quand le modèle et la fiche divergent, on le DIT (SKILL §11.5). L'écart se
+   chiffre EN CARREAUX : c'est la seule unité où il veuille dire quelque chose. */
+function verifierContreFiche(k) {
+  var c = ETAT.carnet[k], f;
+  if (!c || ETAT.horsProto) return;
+  f = parseInt(cel(k, C_N), 10);
+  if (isFinite(f) && f !== c.n) {
+    signalerDivergence("n" + k, "<b>Ligne " + (k + 1) + ".</b> Le modèle compte " +
+      c.n + " billes, la fiche en écrit " + f + ".");
+  }
+  f = parseFloat(String(cel(k, C_D)).replace(",", "."));
+  if (isFinite(f) && Math.abs(f - c.d) > 0.5) {
+    signalerDivergence("d" + k, "<b>Ligne " + (k + 1) + ".</b> Le modèle mesure " +
+      nb(c.d, 1) + " mm, la fiche écrit " + nb(f, 0) + " mm.");
+  }
+  f = parseInt(cel(k, C_CAR), 10);
+  if (isFinite(f) && f !== c.car) {
+    signalerDivergence("c" + k, "<b>Ligne " + (k + 1) + ".</b> Le modèle couvre " +
+      nb(c.aire / AIRE_CARREAU, 2) + " carreaux, soit " + c.car +
+      " ; la fiche en relève " + f + ". Écart : " + Math.abs(f - c.car) +
+      " carreau" + pluriel(Math.abs(f - c.car), "x") + " sur " + f + ".");
+  }
+}
+function comparer() {
+  var i;
+  ETAT.compare = true;
+  for (i = 0; i < casesBilan.length; i++) {
+    (function (i) {
+      var c = ETAT.carnet[i];
+      casesBilan[i].t1.textContent = intitule(i, C_ETAPE).split("—")[0].trim();
+      casesBilan[i].t2.textContent = c
+        ? c.n + " billes · " + c.car + " carreau" + pluriel(c.car, "x")
+        : "non relevé";
+    })(i);
+  }
+  anim(900, function (u) {
+    for (var i = 0; i < casesBilan.length; i++) {
+      casesBilan[i].g.setAttribute("opacity",
+        borne(u * casesBilan.length - i, 0, 1).toFixed(2));
+    }
+  }, function () { armer(); avancer(); });
+  var f = ETAT.carnet.filter(function (x) { return !!x; });
+  var memeN = f.length > 1 && f.every(function (x) { return x.n === f[0].n; });
+  var memeD = f.length > 1 && f.every(function (x) { return Math.abs(x.d - f[0].d) < .5; });
+  var mini = Math.min.apply(null, f.map(function (x) { return x.car; }));
+  var maxi = Math.max.apply(null, f.map(function (x) { return x.car; }));
+  noter((memeN ? "Le nombre de billes n'a pas changé (" + f[0].n + ") " : "") +
+        (memeD ? "et leur diamètre non plus (" + nb(f[0].d, 0) + " mm). " : ". ") +
+        "L'espace occupé, lui, est passé de " + mini + " à " + maxi +
+        " carreaux : il ne se conserve pas.", true);
+  if (!$("concl").classList.contains("masque")) return;
+  if (ETAT.releve.every(function (x) { return x; })) $("concl").classList.remove("masque");
+}
+/* Le chemin COMMUN au bouton et au glisser (SKILL §12.13). */
+function agir(a) {
+  if (a === "compter") {
+    compterBilles();
+    return;
+  }
+  if (a === "relever") { relever(); return; }
+  if (a === "ranger") {
+    appliquerDisposition("solide", 900);
+    noter(ETAT.releve[L_GAZ]
+      ? "Retour au rangement serré et ordonné du début : c'est le modèle de " +
+        "la solidification."
+      : "Billes disposées serrées et bien rangées : c'est le modèle du solide.",
+      true);
+    succes(); return;
+  }
+  if (a === "doux") {
+    if (ETAT.etat !== "solide") {
+      signaler("On agite doucement le rangement du SOLIDE :" +
+               citerProto(/agiter doucement/i));
+      return;
+    }
+    appliquerDisposition("liquide", 900);
+    noter("Agitation douce : les billes glissent les unes sur les autres en " +
+          "restant en contact. C'est le modèle du liquide.", true);
+    succes(); return;
+  }
+  if (a === "fort") {
+    if (!ETAT.ferme) {
+      signaler("Fermer la boîte d'abord — la fiche l'exige :" +
+               citerSecu(/couvercle|ferm/i));
+      return;
+    }
+    appliquerDisposition("gaz", 900);
+    noter("Agitation forte : les billes occupent TOUT le récipient, en une " +
+          "seule couche. C'est le modèle du gaz.", true);
+    succes(); return;
+  }
+  if (a === "comparer") {
+    if (!ETAT.releve.every(function (x) { return x; })) {
+      signaler("Il reste des étapes à relever : " + prochainRangement() + ".");
+      return;
+    }
+    comparer(); return;
+  }
+}
+
+/* ==================================================================
+   21. CONSIGNE, PARCOURS D'ÉTAPES, ARMEMENT
+   ==================================================================
+   La consigne est une cascade de `if` sur ETAT — une SEULE vérité — et elle
+   décrit TOUJOURS un geste que la page accepte (SKILL §11.2).               */
+function consigne() {
+  if (!ETAT.compteFait && !ETAT.releve[L_SOLIDE] && ETAT.mesure === null)
+    return "Compter les billes du poste, puis poser la règle en travers du " +
+           "tas pour mesurer le diamètre d'une bille.";
+  if (ETAT.mesure === null) return "Poser la règle en travers du tas : il " +
+    "faut le diamètre d'une bille avant de reporter quoi que ce soit.";
+  if (!ETAT.compteFait) return "Recompter les billes : presser « Compter les " +
+    "billes ».";
+  if (ligneAttendue() >= 0) return "Compter les carreaux occupés et reporter " +
+    "la ligne « " + intitule(ligneAttendue(), C_ETAPE) + " ».";
+  if (!ETAT.releve[L_LIQUIDE]) return "Agiter doucement pour que les billes " +
+    "glissent les unes sur les autres : c'est le modèle du liquide.";
+  if (!ETAT.releve[L_GAZ]) return ETAT.ferme
+    ? "Agiter fortement dans tous les sens : c'est le modèle du gaz."
+    : "Poser le couvercle sur la boîte, puis agiter fortement.";
+  if (!ETAT.releve[L_RESOLIDE]) return "Revenir au rangement serré et ordonné " +
+    "du début : c'est le modèle de la solidification.";
+  if (!ETAT.compare) return "Comparer les " + N_LIG + " étapes : qu'est-ce qui " +
+    "n'a pas changé, qu'est-ce qui a changé ?";
+  return "Les billes ne changent ni de nombre ni de taille ; leur rangement " +
+         "et l'espace qu'elles occupent, si.";
+}
+var ETAPES = ["Compter et mesurer", "Modèle du solide", "Relever le solide",
+              "Modèle du liquide", "Fermer et agiter fort", "Modèle du gaz",
+              "Solidification", "Comparer les étapes"];
+function faits() {
+  return [ETAT.mesure !== null && ETAT.compteInitial,
+          ETAT.etat === "solide" || ETAT.releve[L_SOLIDE],
+          ETAT.releve[L_SOLIDE],
+          ETAT.releve[L_LIQUIDE],
+          ETAT.ferme,
+          ETAT.releve[L_GAZ],
+          ETAT.releve[L_RESOLIDE],
+          ETAT.compare];
+}
+function armer() {
+  BOUTONS.compter.armer(!ETAT.compteFait);
+  BOUTONS.relever.armer(ligneAttendue() >= 0 && ETAT.compteFait && ETAT.mesure !== null);
+  BOUTONS.ranger.armer(ETAT.etat !== "solide" &&
+    (!ETAT.releve[L_SOLIDE] || ETAT.releve[L_GAZ]));
+  BOUTONS.doux.armer(ETAT.etat === "solide" && ETAT.releve[L_SOLIDE] &&
+    !ETAT.releve[L_LIQUIDE]);
+  BOUTONS.fort.armer(ETAT.releve[L_LIQUIDE] && !ETAT.releve[L_GAZ] && ETAT.ferme);
+  BOUTONS.comparer.armer(!ETAT.compare &&
+    ETAT.releve.every(function (x) { return x; }));
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majLectures();
+  majProtocole();
+  majGraphe();
+  dessiner();
+  if (ETAT.compare && ETAT.releve.every(function (x) { return x; })) {
+    $("concl").classList.remove("masque");
+  }
+}
+
+/* ==================================================================
+   22. LES PANNEAUX HTML
+   ================================================================== */
+function majCarnet() {
+  var t = $("carnet"), i, c;
+  vide(t);
+  t.appendChild(ligneTab(["Étape modélisée", "Billes comptées", "Diamètre",
+                          "ψ₆ · rangement", "Empreinte", "Carreaux"], true));
+  for (i = 0; i < N_LIG; i++) {
+    c = ETAT.carnet[i];
+    t.appendChild(ligneTab([intitule(i, C_ETAPE),
+      c ? c.n + "" : "—",
+      c ? nb(c.d, 0) + " mm" : "—",
+      c ? nb(c.psi, 2) + " · " + c.rang : "—",
+      c ? nb(c.aire, 0) + " mm²" : "—",
+      c ? nb(c.aire / AIRE_CARREAU, 2) + " → " + c.car : "—"]));
+  }
+}
+var gBar = null;
+function construireGraphe() {
+  gBar = $("gBarres");
+}
+function majGraphe() {
+  if (!gBar) return;
+  vide(gBar);
+  var Wg = 360, x0 = 34, y0 = 146, hMax = 92;
+  var maxN = Math.max(1, N_BILLES), maxC = Math.max(1, BOITE.nx * BOITE.ny);
+  gBar.appendChild(el("line", { x1: x0 - 6, y1: y0, x2: Wg - 8, y2: y0,
+    stroke: LIGNE, "stroke-width": 1.4 }));
+  var w = (Wg - x0 - 14) / N_LIG, i;
+  for (i = 0; i < N_LIG; i++) {
+    (function (i) {
+      var c = ETAT.carnet[i], bx0 = x0 + i * w;
+      var hn = c ? hMax * c.n / maxN : 0, hc = c ? hMax * c.car / maxC : 0;
+      gBar.appendChild(el("rect", { x: bx0 + 4, y: y0 - hn, width: w / 2 - 7,
+        height: Math.max(0, hn), fill: "#2f7fb5", rx: 2 }));
+      gBar.appendChild(el("rect", { x: bx0 + w / 2 + 1, y: y0 - hc, width: w / 2 - 7,
+        height: Math.max(0, hc), fill: GOLD, rx: 2 }));
+      if (c) {
+        gBar.appendChild(el("text", { x: bx0 + 4 + (w / 2 - 7) / 2, y: y0 - hn - 4,
+          "text-anchor": "middle", "font-size": 9.5, fill: "#2f7fb5" }, c.n + ""));
+        gBar.appendChild(el("text", { x: bx0 + w / 2 + 1 + (w / 2 - 7) / 2,
+          y: y0 - hc - 4, "text-anchor": "middle", "font-size": 9.5,
+          fill: ORANGE }, c.car + ""));
+      }
+      gBar.appendChild(el("text", { x: bx0 + w / 2, y: y0 + 13, "text-anchor": "middle",
+        "font-size": 9.5, fill: GRIS },
+        intitule(i, C_ETAPE).split("—")[0].trim().slice(0, 12)));
+    })(i);
+  }
+  gBar.appendChild(el("text", { x: x0 - 8, y: 12, "text-anchor": "start",
+    "font-size": 10, fill: GRIS }, "billes (bleu) · carreaux (or)"));
+  gBar.appendChild(el("text", { x: Wg - 8, y: 12, "text-anchor": "end",
+    "font-size": 10, fill: GRIS }, "le bleu ne bouge pas, l'or si"));
+}
+function construireCapot() {
+  var b = blocRange(Math.ceil(N_BILLES / PROTO.k), PROTO.d);
+  $("eqModele").textContent =
+    "nombre de billes . COMPTÉ en parcourant la liste des objets\n" +
+    "diamètre ........ MESURÉ à la règle sur le dessin, ramené en mm par\n" +
+    "                  l'échelle de la scène (" + nb(ECH, 2) + " px/mm)\n" +
+    "rangement ....... ψ₆ = |⟨ e^(6iθ) ⟩| moyenné sur les voisins de contact\n" +
+    "                  ordonné si ψ₆ ≥ " + nb(SEUIL_ORDRE, 2) + "\n" +
+    "empreinte ....... enveloppe convexe des billes, disques compris\n" +
+    "carreaux ........ ⌈ empreinte / (" + nb(COTE_CARREAU, 0) + " mm)² ⌉";
+  $("eqMatiere").textContent =
+    "billes en boîte ......... " + N_BILLES + "\n" +
+    "créées par la page ...... 0\n" +
+    "détruites par la page ... 0\n" +
+    "sorties de la boîte ..... 0  (le geste est refusé, et la fiche est citée)";
+  $("eqCouches").textContent =
+    "une seule couche ... " + N_BILLES + " billes, empreinte " +
+      nb(aireEmpreinte(couchRangee(N_BILLES, PROTO.d).map(function (p) {
+        return { x: p.x, y: p.y, k: 0 }; }), PROTO.d), 0) + " mm² = " +
+      carreauxDe(aireEmpreinte(couchRangee(N_BILLES, PROTO.d).map(function (p) {
+        return { x: p.x, y: p.y, k: 0 }; }), PROTO.d)) + " carreaux\n" +
+    PROTO.k + " couches de " + Math.ceil(N_BILLES / PROTO.k) + " ... rangées " +
+      b.nc + " × " + b.nr + ", empreinte " +
+      nb(aireEmpreinte(couchRangee(Math.ceil(N_BILLES / PROTO.k), PROTO.d)
+         .map(function (p) { return { x: p.x, y: p.y, k: 0 }; }), PROTO.d), 0) +
+      " mm² = " + carreauxDe(aireEmpreinte(couchRangee(Math.ceil(N_BILLES / PROTO.k),
+         PROTO.d).map(function (p) { return { x: p.x, y: p.y, k: 0 }; }), PROTO.d)) +
+      " carreaux · la fiche en relève " + cel(L_SOLIDE, C_CAR) + "\n" +
+    "le rangement quelconque étale la même couche du rapport des compacités :\n" +
+    "  √(" + nb(ETA_HEX, 4) + " / " + nb(ETA_ALEA, 2) + ") = " +
+      nb(Math.sqrt(ETA_HEX / ETA_ALEA), 4) + " sur chaque côté\n" +
+    "le gaz, lui, n'a pas de couches : il occupe le récipient entier,\n" +
+    "  " + BOITE.nx + " × " + BOITE.ny + " = " + (BOITE.nx * BOITE.ny) +
+      " carreaux — et cette ligne du relevé sert à COTER la boîte,\n" +
+    "  elle ne peut donc pas servir à la vérifier. C'est dit.";
+  construireConstantes();
+}
+
+/* ==================================================================
+   23. LES CURSEURS
+   ==================================================================
+   ⚠ Un curseur qui ne fait rien est pire qu'un curseur absent (§12.5) : les
+   deux changent un nombre affiché, et on peut le vérifier d'un bout à
+   l'autre de leur course.                                                   */
+function brancherCurseurs() {
+  var rk = $("rK"), rd = $("rD");
+  rk.min = 1; rk.max = K_MAX; rk.step = 1; rk.value = PROTO.k;
+  rd.min = Math.max(6, Math.round(PROTO.d) - 6); rd.max = Math.round(PROTO.d) + 6;
+  rd.step = 1; rd.value = Math.round(PROTO.d);
+  function lire() {
+    REG.k = +rk.value;
+    REG.d = +rd.value;
+    $("oK").textContent = REG.k + (REG.k > 1 ? " couches" : " couche");
+    $("oD").textContent = nb(REG.d, 0) + " mm";
+    $("regK").className = "reg" + (REG.k !== PROTO.k ? " hp" : "");
+    $("regD").className = "reg" + (REG.d !== PROTO.d ? " hp" : "");
+    ETAT.horsProto = horsProtocole();
+    $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  }
+  function changer() {
+    lire();
+    perimer();
+  }
+  rk.addEventListener("input", changer);
+  rd.addEventListener("input", changer);
+  $("bProto").addEventListener("click", function () {
+    revenirAuProtocole();
+    rk.value = PROTO.k; rd.value = Math.round(PROTO.d);
+    changer();
+    noter("Réglages du protocole rétablis : " + PROTO.k + " couches, billes " +
+          "de " + nb(PROTO.d, 0) + " mm.", true);
+  });
+  lire();
+}
+/* Un réglage périme le montage : les positions changent, et laisser le
+   relevé à l'écran afficherait des nombres qui ne correspondent plus au
+   dessin (SKILL §12.19). Le minuteur de séance, lui, survit.               */
+function perimer() {
+  var avait = ETAT.nCell > 0 || ETAT.compare;
+  remettre(true);
+  if (avait) {
+    noter("Un réglage a changé : le montage est défait et le tableau redevient " +
+          "vierge. Le carnet, lui, continue de compter.", false);
+  }
+}
+
+/* ==================================================================
+   26. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages : on refait la même
+   modélisation dans les mêmes conditions. Le minuteur de séance SURVIT
+   (SKILL §11.6).                                                            */
+function remettre(silencieux) {
+  var seance = ETAT.tSeance || 0, i, b;
+  succes();
+  purger();
+  ANIM_ON = true;
+  effacerCibles();
+  effacerGuide();
+  prise = null;
+  (ETAT.billes || []).forEach(function (b) {
+    if (b.g.parentNode) b.g.parentNode.removeChild(b.g);
+    if (b.gc.parentNode) b.gc.parentNode.removeChild(b.gc);
+  });
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  ETAT.horsProto = horsProtocole();
+  for (i = 0; i < N_BILLES; i++) ETAT.billes.push(creerBille(i));
+  /* les billes sont VERSÉES en vrac dans la boîte : le rangement est le
+     premier geste du protocole, il ne doit pas être déjà fait. */
+  var pts = couchGaz(N_BILLES, REG.d, PHYS.GRAINE.v + 40);
+  for (i = 0; i < N_BILLES; i++) {
+    b = ETAT.billes[i];
+    b.k = 0;
+    b.x = pxX(pts[i].x); b.y = pxY(pts[i].y);
+    b.z = hauteurDe({ k: 0, i: i }, "vrac");
+    placer(b, b.x, b.y);
+  }
+  ETAT.etat = "vrac";
+  tailleBilles();
+  poserCouvercle(false);
+  placer(REGLE, REPOS.regle.x, REPOS.regle.y);
+  placer(COUVERCLE, REPOS.couvercle.x, REPOS.couvercle.y);
+  COUVERCLE.g.setAttribute("opacity", 1);
+  COUVERCLE.fige = false;
+  gEmpreinte.setAttribute("opacity", 0);
+  gEmpreinte.setAttribute("points", "");
+  anneau.setAttribute("opacity", 0);
+  casesBilan.forEach(function (c) { c.g.setAttribute("opacity", 0); });
+  ACTES.forEach(function (a) { BOUTONS[a].neuf(); });
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  majCarnet();
+  majSeance();
+  if (!silencieux) {
+    noter("Poste remis en état : les " + N_BILLES + " billes sont versées en " +
+          "vrac dans la boîte, le couvercle est à côté, la règle aussi.", false);
+  }
+  armer(); avancer();
+}
+function recommencer() {
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  remettre(false);
+}
+
+/* ==================================================================
+   27. LE GUIDE — une entrée par étape du protocole
+   ==================================================================
+   L'ordre suit le protocole ; les prédicats, eux, LISENT l'état — les deux
+   ne se recopient pas. ⚠ Une étape NON FAITE doit toujours montrer quelque
+   chose (SKILL §12bis.4).                                                   */
+var GUIDE = [
+  /* 1 — compter les billes et mesurer le diamètre d'une bille à la règle */
+  { fait: function () { return ETAT.compteInitial && ETAT.mesure !== null; },
+    aide: function () {
+      if (!ETAT.compteFait) return "Presser <b>« Compter les billes »</b> : la " +
+        "page les parcourt une à une, elle ne lit aucun nombre écrit.";
+      return "Faire glisser la <b>règle graduée</b> en travers du tas pour " +
+        "mesurer le diamètre d'une bille.";
+    },
+    montre: function () {
+      if (!ETAT.compteFait) { surlignerBouton("compter"); return; }
+      surlignerObjet(REGLE, 6); surlignerZone(zoneVoulue(REGLE, "mesure"));
+    } },
+  /* 2 — disposer serrées et rangées : le solide ; compter les carreaux */
+  { fait: function () { return ETAT.releve[L_SOLIDE]; },
+    aide: function () {
+      if (ETAT.etat !== "solide") return "Presser <b>« Disposer serrées et " +
+        "rangées »</b> — ou déplacer les billes à la main : c'est le modèle du " +
+        "<b>solide</b>.";
+      if (!ETAT.compteFait) return "Recompter les billes : le rangement a changé.";
+      return "Presser <b>« Compter les carreaux et reporter »</b> : la ligne " +
+        "« " + intitule(L_SOLIDE, C_ETAPE) + " ».";
+    },
+    montre: function () {
+      if (ETAT.etat !== "solide") { surlignerBouton("ranger"); return; }
+      if (!ETAT.compteFait) { surlignerBouton("compter"); return; }
+      surlignerBouton("relever"); surlignerZone(zoneBoite(""));
+    } },
+  /* 3 — agiter doucement : le liquide ; recompter, remesurer, compter */
+  { fait: function () { return ETAT.releve[L_LIQUIDE]; },
+    aide: function () {
+      if (ETAT.etat !== "liquide") return "Presser <b>« Agiter doucement »</b> : " +
+        "les billes glissent les unes sur les autres <b>en restant en " +
+        "contact</b>. C'est le modèle du <b>liquide</b>.";
+      if (!ETAT.compteFait) return "Recompter les billes et remesurer un diamètre.";
+      return "Presser <b>« Compter les carreaux et reporter »</b> : la ligne " +
+        "« " + intitule(L_LIQUIDE, C_ETAPE) + " ».";
+    },
+    montre: function () {
+      if (ETAT.etat !== "liquide") { surlignerBouton("doux"); return; }
+      if (!ETAT.compteFait) { surlignerBouton("compter"); return; }
+      surlignerBouton("relever"); surlignerZone(zoneBoite(""));
+    } },
+  /* 4 — fermer la boîte et l'agiter fortement : le gaz */
+  { fait: function () { return ETAT.releve[L_GAZ]; },
+    aide: function () {
+      if (!ETAT.ferme) return "Faire glisser le <b>couvercle</b> sur la boîte : " +
+        "la fiche l'exige avant d'agiter, et la page refuse sans lui.";
+      if (ETAT.etat !== "gaz") return "Presser <b>« Agiter fortement »</b> : les " +
+        "billes vont occuper <b>tout</b> le récipient.";
+      if (!ETAT.compteFait) return "Recompter les billes — il n'en manque aucune.";
+      return "Presser <b>« Compter les carreaux et reporter »</b> : la ligne " +
+        "« " + intitule(L_GAZ, C_ETAPE) + " ».";
+    },
+    montre: function () {
+      if (!ETAT.ferme) {
+        surlignerObjet(COUVERCLE, 6); surlignerZone(zoneVoulue(COUVERCLE, "couvrir"));
+        return;
+      }
+      if (ETAT.etat !== "gaz") { surlignerBouton("fort"); return; }
+      if (!ETAT.compteFait) { surlignerBouton("compter"); return; }
+      surlignerBouton("relever"); surlignerZone(zoneBoite(""));
+    } },
+  /* 5 — revenir au rangement du début : la solidification */
+  { fait: function () { return ETAT.releve[L_RESOLIDE]; },
+    aide: function () {
+      if (ETAT.etat !== "solide") return "Presser <b>« Disposer serrées et " +
+        "rangées »</b> : on revient au rangement du début, c'est le modèle de " +
+        "la <b>solidification</b>.";
+      if (!ETAT.compteFait) return "Recompter les billes et les carreaux.";
+      return "Presser <b>« Compter les carreaux et reporter »</b> : la ligne " +
+        "« " + intitule(L_RESOLIDE, C_ETAPE) + " ».";
+    },
+    montre: function () {
+      if (ETAT.etat !== "solide") { surlignerBouton("ranger"); return; }
+      if (!ETAT.compteFait) { surlignerBouton("compter"); return; }
+      surlignerBouton("relever"); surlignerZone(zoneBoite(""));
+    } },
+  /* 6 — comparer d'une étape à l'autre, et dire ce qui se conserve */
+  { fait: function () { return ETAT.compare; },
+    aide: "Presser <b>« Comparer les " + N_LIG + " étapes »</b> : le nombre de " +
+          "billes et leur diamètre d'un côté, l'espace occupé de l'autre.",
+    montre: function () { surlignerBouton("comparer"); } }
+];
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire. C'est le §1.1 : un bouton qui rejoue le YAML est le refus
+      explicite de l'enseignant.                                              */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+/* ⚠ On vise par `data-act`, jamais par un `id` : un `id` de `<defs>` volerait
+   le sélecteur et rendrait un dégradé, qui n'a pas de boîte (§12bis.3-4). */
+function surlignerActe(act, marge) {
+  var n = svg.querySelector('[data-act="' + act + '"]'), b = boiteSVG(n), m = marge || 8;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return false;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+  return true;
+}
+function surlignerZone(z, m) {
+  if (!z) return false;
+  m = m === undefined ? 8 : m;
+  halo(z.x - z.hw - m, z.y - z.hh - m, 2 * (z.hw + m), 2 * (z.hh + m), 14);
+  return true;
+}
+function surlignerObjet(o, m) {
+  if (!o) return false;
+  var b = boiteSVG(o.g);
+  m = m === undefined ? 8 : m;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. compter les billes du poste, puis mesurer le diamètre d'une bille à la
+     règle. Deux gestes pour une étape : c'est la fiche qui les réunit.
+     `compterBilles()` PARCOURT la liste des objets — il ne lit aucun nombre
+     écrit — et la règle passe par `deposer()`, celui du glisser-déposer. */
+  function () {
+    if (!ETAT.compteFait) { presserBouton("compter"); return 950; }
+    deposer(REGLE, zoneVoulue(REGLE, "mesure"));
+    return 560;
+  },
+
+  /* 2. disposer les billes serrées et bien rangées : le modèle du SOLIDE,
+     puis recompter et compter les carreaux occupés. Le bouton double le
+     glisser des billes, et passe par la même `appliquerDisposition()`. */
+  function () {
+    if (ETAT.etat !== "solide") { presserBouton("ranger"); return 950; }
+    if (!ETAT.compteFait) { presserBouton("compter"); return 950; }
+    presserBouton("relever");
+    return 900;
+  },
+
+  /* 3. agiter doucement : les billes glissent les unes sur les autres en
+     restant en contact — le modèle du LIQUIDE. Recompter, remesurer, compter
+     les carreaux. */
+  function () {
+    if (ETAT.etat !== "liquide") { presserBouton("doux"); return 950; }
+    if (!ETAT.compteFait) { presserBouton("compter"); return 950; }
+    presserBouton("relever");
+    return 900;
+  },
+
+  /* 4. fermer la boîte, PUIS l'agiter fortement : le modèle du GAZ. La page
+     refuse d'agiter fort sans couvercle, et cite la fiche — le couvercle se
+     pose donc d'abord, par le même `deposer()` que la main de l'élève. */
+  function () {
+    if (!ETAT.ferme) { deposer(COUVERCLE, zoneVoulue(COUVERCLE, "couvrir")); return 620; }
+    if (ETAT.etat !== "gaz") { presserBouton("fort"); return 950; }
+    if (!ETAT.compteFait) { presserBouton("compter"); return 950; }
+    presserBouton("relever");
+    return 900;
+  },
+
+  /* 5. revenir au rangement serré et ordonné du début : la SOLIDIFICATION.
+     C'est le même bouton qu'à l'étape 2 — et c'est justement le résultat :
+     le même geste redonne exactement le même compte. */
+  function () {
+    if (ETAT.etat !== "solide") { presserBouton("ranger"); return 950; }
+    if (!ETAT.compteFait) { presserBouton("compter"); return 950; }
+    presserBouton("relever");
+    return 900;
+  },
+
+  /* 6. comparer les quatre étapes : ce qui se conserve, ce qui ne se conserve
+     pas. C'est le geste qui démasque la conclusion. */
+  function () { presserBouton("comparer"); return 950; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+/* Les écouteurs du guide et du cadre. Ils sont posés une fois, au démarrage. */
+function brancherGuide() {
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("rezero").addEventListener("click", recommencer);
+}
+
+/* ==================================================================
+   28. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  defsCommunes();
+  defsPage();
+  ajouterCouches();
+  ETAT = neufEtat();
+
+  construireDecor();
+  construireVues();
+  construireOutilsScene();
+  construireRegle();
+  construireCouvercle();
+  construireBoutons();
+  brancherPrise();
+
+  construireHTMLBase("comptes, mesures et empreinte calculés");
+  construireEtapes(ETAPES);
+  construireProtocole();
+  construireSeance("aucun instant de relevé dans la fiche : une modélisation " +
+                   "n'attend rien");
+  construireGraphe();
+  construireCapot();
+  brancherCurseurs();
+  brancherGuide();
+  remettre(false);
+  demarrerHorloge();
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

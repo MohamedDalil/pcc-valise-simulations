@@ -1,0 +1,3112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-07 · La masse d'un solide</title>
+
+<!--
+  ===================================================================
+  E1AC-07 · 1AC · L04 — PAILLASSE VIRTUELLE
+  « Mesure de la masse d'un solide »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Trois choses, et la première est la plus instructive :
+
+      1. LA DÉCOMPOSITION EN MASSES MARQUÉES est OBTENUE, pas recopiée.
+         La boîte est la série décimale 1-2-2-5 du laboratoire, et le
+         geste que la fiche prescrit — « par ordre décroissant jusqu'à
+         rétablir l'équilibre » — est un algorithme glouton. Lancé sur
+         les cinq corps, il redonne EXACTEMENT les quatre décompositions
+         que la fiche consigne :
+             336 g -> 200 + 100 + 20 + 10 + 5 + 1
+              27 g -> 20 + 5 + 2
+             7,5 g -> 5 + 2 + 0,5
+              45 g -> 20 + 20 + 5
+         Rien n'a été ajusté pour cela : la boîte est standard, et le
+         geste est celui de la fiche.
+
+      2. LA LECTURE D'UN INSTRUMENT :
+             affichée = arrondi( (m + résidu) / division ) x division,
+             bornée par la PORTÉE — au-delà, l'appareil ne lit plus.
+         Les deux curseurs déplacent la division et la portée : à 1 g de
+         division la bille lit 8 g et non 7,5 ; à 200 g de portée le
+         caillou passe en surcharge. C'est cela, « la masse lue sort de
+         la portée et de la précision de la balance ».
+
+      3. LA CONSERVATION SOUS LA DÉFORMATION n'est pas une phrase :
+         la pâte est UN SEUL objet, de volume V = m / rho. L'aplatir
+         change son rayon et sa hauteur à volume constant ; sa masse
+         n'est même pas recalculée, parce qu'il n'y a rien à recalculer.
+
+  LE ZÉRO EST UN GESTE, ET L'OUBLIER SE PAIE
+  -------------------------------------------
+  La fiche fournit « pinceau et chiffon pour nettoyer les plateaux », et
+  son protocole dit « vérifier qu'elle affiche zéro ». La page prend les
+  deux au sérieux : à la mise en marche, le plateau porte un résidu de
+  manipulation, l'afficheur ne montre pas zéro, et toute pesée faite
+  sans nettoyer ni remettre à zéro est décalée d'autant. La colonne du
+  tableau de la fiche ne se remplit pas, et le journal dit pourquoi.
+
+  CE QUE LA PAGE NE CALCULE PAS, ET QUI EST UNE DONNÉE
+  ----------------------------------------------------
+  La masse vraie de chaque corps. Ce n'est pas un résultat de physique
+  mais une propriété de l'échantillon : la fiche la relève, la page la
+  prend telle quelle et en TIRE les trois lignes du tableau. Le volume
+  dessiné, lui, en découle par V = m / rho avec des rho sourcés — c'est
+  ce qui met les cinq corps à l'échelle les uns des autres.
+
+  CE QUE CETTE PAGE N'EST PAS
+  ---------------------------
+  * Elle est AUTONOME : ni generer.py, ni moteur.js, ni icones.js, et
+    elle ne s'ouvre pas depuis index.html. Elle DOUBLE
+    simulation_E1AC-07.html, elle ne la remplace pas.
+  * Elle n'a pas de vue 3D.
+  * Elle s'écarte volontairement du §5 du SKILL principal (fond blanc,
+    aplats, aucun dégradé) : on cherche ici qu'un objet se reconnaisse
+    comme un objet et donne envie d'y porter la main.
+  * Le dessin est un SCHÉMA HABILLÉ. Sont à l'échelle : la taille des
+    cinq corps (elle suit leur volume), la course du fléau, la hauteur
+    des plateaux. Ne le sont pas : l'épaisseur de la verrerie, la
+    grosseur des masses marquées, le boîtier de la balance.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E1AC-07.
+-->
+
+<script>
+/* L'écouteur d'erreurs est posé AVANT le script de la page, dans le <head> :
+   posé en fin de <body>, il ne voit AUCUNE erreur de démarrage — celles-ci ont
+   déjà eu lieu (SKILL §12.47, corollaire de méthode). Il n'écrit PAS dans la
+   console : un `console.error` serait compté comme une erreur par le pilote. */
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message || e));
+  var n = document.getElementById("errjs");
+  if (n) { n.textContent = "Erreur JS : " + window.__ERR.join(" · "); n.style.display = "block"; }
+});
+</script>
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+#errjs{display:none;background:#b03030;color:#fff;font-family:var(--mono);
+       font-size:12px;padding:6px 20px}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.hp output{color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.ko{color:var(--orange)}
+.lect .v.ok{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-07 · 1AC · L04</span>
+</div>
+<div id="errjs"></div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> La division ou la portée de la balance électronique ne sont plus celles
+qu'exige le relevé de la fiche. Le tableau de référence cesse de se remplir —
+mais le carnet, lui, continue, et il montre exactement ce que devient la
+lecture.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">Tout ce tableau est <b>calculé</b> sous les réglages courants : la
+décomposition sort du glouton « par ordre décroissant », la lecture Roberval
+est la somme des masses posées, la lecture électronique est l'arrondi à la
+division près, bornée par la portée.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>L'instrument <span class="note">ce qu'il sait lire</span></h2>
+      <div class="lect" id="instr"></div>
+      <p class="src" style="margin-top:9px">Le nombre de décimales n'est pas
+        un choix de mise en forme : il <b>dit la précision</b>, et il suit la
+        division de l'appareil.</p>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rDiv">Division de la balance électronique</label>
+        <output id="oDiv"></output>
+        <input type="range" id="rDiv" min="0" max="4" step="1" value="1">
+        <div class="aide">0,01 · 0,1 · 0,5 · 1 · 5 g. À 1 g, la bille lit 8 g
+          et non 7,5 : c'est la précision de l'appareil qui décide de ce qu'on
+          a le droit d'écrire.</div>
+      </div>
+      <div class="reg">
+        <label for="rPortee">Portée de la balance électronique</label>
+        <output id="oPortee"></output>
+        <input type="range" id="rPortee" min="0" max="3" step="1" value="1">
+        <div class="aide">200 · 500 · 1000 · 2000 g. Sous 500 g, le caillou
+          dépasse la portée et l'afficheur écrit « Err » — c'est exactement ce
+          que la consigne de sécurité interdit.</div>
+      </div>
+      <div class="cmd">
+        <button id="bProto" type="button" class="sec">Revenir au protocole</button>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Les trois calculs</h3>
+      <div class="eq">glouton   :  poser la plus lourde masse marquée qui ne fasse
+                pas basculer, et recommencer
+Roberval  :  m lue = somme des masses marquées posées
+électronique : m lue = arrondi( (m + résidu − tare) / division ) × division,
+                bornée par la portée
+pâte      :  V = m / ρ constant  →  la galette a la masse de la boule</div>
+
+      <h3>2 · Le glouton redonne-t-il la fiche ?</h3>
+      <table id="capotGlouton"></table>
+      <p class="src">La boîte est la série décimale 1-2-2-5 du laboratoire ;
+        le geste est celui de la fiche, mot pour mot. Rien n'a été ajusté pour
+        que les quatre décompositions tombent juste.</p>
+
+      <h3>3 · Ce que la page retrouve, comparé à la fiche</h3>
+      <table id="capotAccord"></table>
+
+      <h3>4 · La conservation, chiffrée</h3>
+      <table id="capotPate"></table>
+
+      <h3>5 · Les constantes et leur provenance</h3>
+      <table id="capotConst"></table>
+
+      <h3>6 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>La masse vraie de chaque corps n'est pas calculée.</b> C'est une
+        propriété de l'échantillon, que la fiche relève ; la page en tire les
+        trois lignes du tableau, elle ne la produit pas. Ce qui est
+        <i>obtenu</i>, c'est la décomposition, l'équilibre et les deux lectures.</li>
+        <li><b>La poussée d'Archimède de l'air est négligée.</b> Sur le caillou
+        elle vaut 0,15 g — plus d'une division ! Une Roberval n'en souffre pas
+        (les deux plateaux la subissent), une balance électronique si : c'est un
+        biais réel, que le collège ignore à raison mais qui existe.</li>
+        <li><b>Le fléau est parfaitement symétrique</b> et son axe sans
+        frottement. Un vrai fléau a un défaut de bras, et c'est justement ce que
+        « vérifier l'équilibre à vide » attrape en partie.</li>
+        <li><b>Les masses marquées sont exactes.</b> Un jeu de laboratoire de
+        classe M2 est garanti à 1 % près, soit 2 g sur la masse de 200 g — du
+        même ordre que ce que la page fait voir avec la division.</li>
+        <li><b>La pâte à modeler ne perd rien en s'aplatissant.</b> En vraie
+        classe, un peu reste sur les doigts et sur la table : la masse baisse
+        de quelques dixièmes de gramme, et l'expérience se lit mal. C'est la
+        raison pratique de la manipuler le moins possible.</li>
+        <li><b>L'oscillation du fléau est comprimée</b> : deux périodes en
+        1,3 s au lieu de 3,8 s. Le temps est comprimé, la physique ne l'est
+        pas — l'état d'arrivée est calculé avant que l'animation ne commence.</li>
+        <li><b>Le résidu du plateau vaut 0,4 g, et cette valeur est un choix.</b>
+        La fiche fournit le pinceau et demande de vérifier le zéro, mais elle ne
+        chiffre pas la saleté. On a retenu quelques divisions : assez pour se
+        voir, trop peu pour être évident.</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-07.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-07",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L04",
+  "titre": "Mesure de la masse d'un solide",
+  "axe": "La mesure de la masse d'un solide",
+  "objectif": "Mesurer la masse d'un solide à la balance Roberval et à la balance électronique, et montrer que la masse d'un corps ne change pas lorsqu'on le déforme.",
+  "duree": 15,
+  "modalite": "groupes de 4 — 8 postes",
+  "materiel": [
+    "Balance Roberval et sa boîte de masses marquées",
+    "Balance électronique",
+    "Caillou, écrou métallique, bille de verre",
+    "Pâte à modeler",
+    "Pinceau et chiffon pour nettoyer les plateaux"
+  ],
+  "securite": [
+    "Manipuler les masses marquées avec la pince, jamais avec les doigts gras.",
+    "Ne jamais poser un corps mouillé ou sale directement sur le plateau.",
+    "Ne pas dépasser la portée maximale inscrite sur la balance.",
+    "Ranger les masses marquées dans leur logement à la fin de la pesée."
+  ],
+  "protocole": [
+    "S'assurer que la balance Roberval est en équilibre à vide, les deux plateaux étant vides.",
+    "Placer le caillou sur le plateau de gauche.",
+    "Ajouter sur le plateau de droite les masses marquées, par ordre décroissant, jusqu'à rétablir l'équilibre.",
+    "Additionner les masses marquées utilisées : la somme est la masse du caillou.",
+    "Mettre la balance électronique en marche, vérifier qu'elle affiche zéro, y poser le caillou et lire la masse affichée.",
+    "Peser une boule de pâte à modeler, l'aplatir en galette puis la peser de nouveau."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Corps pesé",
+      "Caillou",
+      "Écrou",
+      "Bille",
+      "Pâte en boule",
+      "Pâte aplatie"
+    ],
+    "lignes": [
+      [
+        "Masses marquées utilisées (Roberval)",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Masse à la balance Roberval (g)",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Masse à la balance électronique (g)",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Masses marquées utilisées (Roberval)",
+        "200 + 100 + 20 + 10 + 5 + 1",
+        "20 + 5 + 2",
+        "5 + 2 + 0,5",
+        "20 + 20 + 5",
+        "20 + 20 + 5"
+      ],
+      [
+        "Masse à la balance Roberval (g)",
+        "336",
+        "27",
+        "7,5",
+        "45",
+        "45"
+      ],
+      [
+        "Masse à la balance électronique (g)",
+        "336",
+        "27",
+        "7,5",
+        "45",
+        "45"
+      ]
+    ]
+  },
+  "observation": "La balance Roberval s'équilibre avec 336 g de masses marquées et la balance électronique affiche 336 g pour le même caillou ; la pâte à modeler pèse 45 g en boule comme aplatie en galette.",
+  "conclusion": "La masse d'un solide se mesure avec une balance. À la Roberval, elle vaut la somme des masses marquées qui rétablissent l'équilibre ; à la balance électronique, elle se lit directement. L'unité internationale est le kilogramme (kg), l'unité pratique le gramme (g). La masse d'un corps ne change pas lorsqu'on le déforme.",
+  "oheric": {
+    "observation": "Au souk, le marchand pose les fruits sur un plateau et de petites masses métalliques sur l'autre jusqu'à ce que le fléau soit horizontal ; à l'épicerie voisine, un simple afficheur donne directement un nombre. Comment ces deux instruments donnent-ils la même grandeur ?",
+    "hypothese": "Si l'équilibre des deux plateaux traduit l'égalité des quantités de matière, alors la somme des masses marquées doit donner exactement la même valeur que le nombre affiché par la balance électronique.",
+    "experience": "Peser le même caillou d'abord à la balance Roberval, en ajoutant les masses marquées par ordre décroissant jusqu'à l'équilibre, puis à la balance électronique. Peser ensuite une boule de pâte à modeler, l'aplatir et la peser de nouveau.",
+    "resultats": "L'équilibre de la Roberval est obtenu avec 200 g + 100 g + 20 g + 10 g + 5 g + 1 g, soit 336 g. La balance électronique affiche 336 g pour le même caillou. La boule de pâte à modeler pèse 45 g, et la même pâte aplatie en galette pèse encore 45 g.",
+    "interpretation": "Les deux instruments donnent la même valeur : ils mesurent bien la même grandeur, la **masse**, qui dépend de la quantité de matière contenue dans le corps. L'hypothèse est validée. La pâte à modeler a changé de forme sans que sa quantité de matière change : sa masse est donc restée la même.",
+    "conclusion": "La masse d'un solide se mesure avec une **balance**. À la Roberval, elle vaut la **somme des masses marquées** qui rétablissent l'équilibre ; à la balance électronique, elle se lit directement. L'unité internationale est le **kilogramme (kg)**, l'unité pratique le **gramme (g)**. La masse d'un corps **ne change pas lorsqu'on le déforme**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline. Et
+   l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function sansAccent(s) {
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i")
+    .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+    .replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+}
+function du(nom) {
+  return (/^[haeiouyàâäéèêëîïôöùûü]/i.test(nom) ? "d'" : "de ") + nom;
+}
+function pluriel(n, s) { return n > 1 ? s : ""; }
+/* Un générateur pseudo-aléatoire DÉTERMINISTE. Le désordre d'un modèle doit
+   se rejouer à l'identique, sans quoi la manipulation à la main et le déroulé
+   ne donneraient pas le même carnet (SKILL §12bis.6). */
+function graine(s) {
+  var e = s;
+  return function () { e = (1103515245 * e + 12345) % 2147483648; return e / 2147483648; };
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var TEXTE_PROTO = PROTOCOLE.join("\n");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var i;
+  for (i = 0; i < PROTOCOLE.length; i++) if (motif.test(PROTOCOLE[i])) return PROTOCOLE[i];
+  return "";
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+function citerSecu(motif) {
+  var t = secu(motif);
+  return t ? " « " + t + " »" : "";
+}
+/* Lire un NOMBRE suivi de son unité dans le protocole. Trois règles payées
+   sur E3AC-19 (SKILL §12.29) : le nombre commence par un chiffre, l'unité est
+   sensible à la casse, et elle n'est pas suivie d'une lettre. */
+function lireProto(unite, defaut, sensible) {
+  var re = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-zÀ-ÿ])",
+                      sensible === false ? "i" : "");
+  var m = re.exec(TEXTE_PROTO);
+  return m ? parseFloat(m[1].replace(",", ".")) : defaut;
+}
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20, trentaine: 30, dizaine: 10 };
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* ==================================================================
+   3 bis. LES DURÉES VIENNENT DE LA FICHE — jamais du code (SKILL §5)
+   ================================================================== */
+function secondesProto(motif, defaut) {
+  var i, m, t, n;
+  for (i = 0; i < PROTOCOLE.length; i++) {
+    if (!motif.test(PROTOCOLE[i])) continue;
+    t = PROTOCOLE[i].toLowerCase();
+    m = /(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trentaine|dizaine)\s+(secondes?|minutes?)/.exec(t);
+    if (!m) continue;
+    n = isNaN(+m[1]) ? MOTS_NB[m[1]] : +m[1];
+    if (!n) continue;
+    return m[2].indexOf("minute") === 0 ? n * 60 : n;
+  }
+  return defaut;
+}
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   MINUTERIES ET ANIMATION
+   ==================================================================
+   ⚠ `setTimeout` + `Date.now()`, JAMAIS `requestAnimationFrame` (SKILL
+   §13.5 bis) : sous le pilote, rAF n'est pas appelé, et toute l'animation —
+   avec le résultat qu'elle porte — disparaîtrait SANS lever d'erreur.
+
+   ⚠ ET L'ANIMATION NE DÉCIDE DE RIEN. Le solveur a déjà calculé l'état
+   d'arrivée quand elle commence ; elle ne fait que le rejoindre. Un résultat
+   qui dépendrait du nombre d'images serait un résultat faux (§12.37). */
+var MINUTEURS = [], HORLOGE = null, ANIM_ON = true;
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+/* `sur(u)` reçoit une avance u de 0 à 1, lissée. `fin()` est rappelée à
+   l'arrivée. Une animation coupée (« Recommencer », arrêt du déroulé) ne
+   laisse rien derrière elle : `purger()` efface ses minuteries. */
+function anim(ms, sur, fin) {
+  var PAS = 14, i;
+  for (i = 1; i <= PAS; i++) (function (k) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = k / PAS;
+      sur(t * t * (3 - 2 * t), t);
+      if (k === PAS && fin) fin();
+    }, Math.round(ms * k / PAS));
+  })(i);
+  if (!ms && fin) fin();
+}
+
+/* ==================================================================
+   LES COUCHES SVG — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE tout le reste
+     poste   le mobilier fixe : portoirs, balance, plaque, étagère
+     arriere l'intérieur de la verrerie, l'eau, et les zones de dépôt
+     objets  ce qui se manipule
+     avant   les parois de verre, les étiquettes, la vapeur
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout            */
+var svg = null, DEFS = null, COUCHES = {};
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+/* Les dégradés et filtres communs à toutes les paillasses du lot.
+   ⚠ AUCUN dégradé n'est jamais posé sur le CONTOUR d'un trait (SKILL §10.1) :
+   en `objectBoundingBox`, la boîte d'un segment horizontal ou vertical est
+   plate, le dégradé est dégénéré, et le navigateur NE PEINT RIEN — sans
+   erreur, et sans que le pilotage puisse le voir. Les traits fins sont donc
+   peints en couleur PLEINE. */
+function defsCommunes() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* la bande de bois CLAIRE du plateau : c'est la seule zone sombre-libre où
+     une étiquette se lit (SKILL §12.7) */
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e6d5b4" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9b189" }));
+  DEFS.appendChild(g);
+
+  /* l'eau — dégradé vertical, et la surface se dessine en ELLIPSE */
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+
+  /* le verre : voile de teinte + reflet net + arête sombre (SKILL §10.2) */
+  g = el("linearGradient", { id: "verre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c6d6e3", "stop-opacity": .55 }));
+  g.appendChild(el("stop", { offset: .17, "stop-color": "#ffffff", "stop-opacity": .78 }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#dce8f1", "stop-opacity": .28 }));
+  g.appendChild(el("stop", { offset: .88, "stop-color": "#a9b8c8", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7f93a6", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flouFin", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 1.6 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+  DEFS.appendChild(f);
+}
+/* Sans elle, tout flotte (SKILL §10.3). */
+function ombreAuSol(cx, y, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: y + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Un bécher : intérieur et liquide AVANT la paroi, bourrelet du bord,
+   bec verseur et graduations — c'est le bourrelet, plus que la paroi, qui
+   fait reconnaître un bécher (SKILL §10.2). */
+function paroiVerre(couche, x, y, w, h, r) {
+  var g = ajout(couche, el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "url(#verre)" }));
+  g.appendChild(el("rect", { x: x + w * .1, y: y + 8, width: Math.max(3, w * .07),
+    height: h - 20, rx: 2.5, fill: "#ffffff", opacity: .66 }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3 }));
+  g.appendChild(el("ellipse", { cx: x + w / 2, cy: y, rx: w / 2 + 2.5, ry: 4.5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3.2 }));
+  return g;
+}
+
+/* ==================================================================
+   LE MOTEUR DE GLISSER-DÉPOSER (SKILL §9)
+   ==================================================================
+   ⚠ Le pointeur est capturé sur le SVG, PAS sur l'objet : sans cela, un
+   mouvement rapide sort de l'objet et le glissement s'arrête net au milieu du
+   geste, sans erreur.
+
+   La page fournit `emplacements(o)`, `deposer(o, zone, depart)` et
+   `replacer(o)`. Les zones sont rendues de la plus PETITE à la plus GRANDE
+   (§12.16) : c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du
+   tableau.                                                                  */
+var prise = null, ptSVG = null, surbrillance = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function placer(o, x, y) {
+  o.x = x; o.y = y;
+  o.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ")");
+}
+/* L'objet PARCOURT son trajet : c'est la troisième exigence du §1.2 bis.
+   L'état, lui, est posé AVANT (SKILL §6.2) — l'animation ne décide de rien. */
+function volerVers(o, x1, y1, ms) {
+  var x0 = o.x, y0 = o.y;
+  anim(ms || 520, function (u) {
+    o.g.setAttribute("transform", "translate(" +
+      (x0 + (x1 - x0) * u).toFixed(1) + "," + (y0 + (y1 - y0) * u).toFixed(1) + ")");
+  });
+  o.x = x1; o.y = y1;
+}
+function montrerCibles(o) {
+  effacerCibles();
+  if (!o) return;
+  emplacements(o).forEach(function (z) {
+    if (z.discret) return;
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 10,
+      fill: GOLD, opacity: .18, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* ⚠ TOUT OBJET MANIPULABLE REÇOIT UNE PLAQUE DE PRÉHENSION transparente aux
+   cotes de sa silhouette, insérée EN PREMIER dans son groupe (SKILL §12.38) :
+   un objet fin n'offre au pointeur presque rien, et le glisser ne démarrerait
+   pas — sans erreur, sans refus, sans rien. */
+function prehension(g, x, y, w, h) {
+  var r = el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "#ffffff",
+                       "fill-opacity": 0.001 });
+  if (g.firstChild) g.insertBefore(r, g.firstChild); else g.appendChild(r);
+  return r;
+}
+function brancherObjet(o) {
+  o.g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                        /* verrou en PREMIÈRE ligne */
+    if (o.fige) return;
+    e.preventDefault();
+    var p = versSVG(e);
+    prise = { o: o, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+              x0: p.x, y0: p.y, bouge: false, depart: { x: o.x, y: o.y } };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    o.g.setAttribute("filter", "url(#ombrePrise)");
+    o.g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(o.g);
+    montrerCibles(o);
+  });
+}
+function brancherPrise() {
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    /* Le seuil de 5 px sépare le CLIC du GLISSEMENT (SKILL §9.3). */
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    placer(prise.o, p.x + prise.dx, p.y + prise.dy);
+    if (typeof pendantGlisser === "function") pendantGlisser(prise.o);
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var o = prise.o, bouge = prise.bouge, depart = prise.depart;
+    o.g.removeAttribute("filter");
+    o.g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(o.g);
+    effacerCibles();
+    prise = null;
+    if (!bouge) {
+      placer(o, depart.x, depart.y);
+      if (typeof cliquerObjet === "function") cliquerObjet(o);
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(o).forEach(function (z) {
+      var d = Math.hypot(o.x - z.x, o.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposer(o, best, depart);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);        /* ne PAS l'oublier */
+}
+/* La zone qu'`emplacements()` propose DANS L'ÉTAT COURANT — jamais une
+   position écrite en dur. Un bouton ne vise donc jamais `emplacements(o)[0]`
+   au hasard : il vise celle que `deposer` accepterait (SKILL §12.16). */
+function zoneVoulue(o, type) {
+  var z = emplacements(o) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+
+/* ==================================================================
+   LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                            */
+var BOUTONS = {}, ACTES = [];
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", "fill-opacity": 0.001 }));
+  var r = g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht, noeud: g,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function rangeeBoutons(W, y, libelles, actes) {
+  var n = actes.length, marge = 22, gap = 10;
+  var w = (W - 2 * marge - gap * (n - 1)) / n, i;
+  for (i = 0; i < n; i++) {
+    boutonScene(marge + w / 2 + i * (w + gap), y, w, 42,
+                libelles[i][0], libelles[i][1], actes[i]);
+  }
+}
+
+/* ==================================================================
+   CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  if (!c) return;
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  if (!o) return;
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+var N_CELL = 0;
+function compterCellules() {
+  var i, j, n = 0;
+  for (i = 0; i < N_LIG; i++) {
+    for (j = 0; j < (VAL[i] || []).length; j++) {
+      if (!(LIG[i] || [])[j] && (VAL[i] || [])[j]) n++;
+    }
+  }
+  return n;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t ? t.querySelectorAll("tr")[k + 1] : null;
+  var v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "mes";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerLigne(k) {
+  var j;
+  for (j = 0; j < (VAL[k] || []).length; j++) {
+    if (!(LIG[k] || [])[j]) revelerCellule(k, j);
+  }
+}
+function majCompteurCellules() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t ? t.querySelectorAll("tr") : [], i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  if ($("concl")) $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre, dans l'unité de la grandeur.           */
+function signalerDivergence(cle, texte) {
+  if (ETAT.horsProto) return;
+  if (ETAT.diverge.indexOf(cle) >= 0) return;
+  ETAT.diverge.push(cle);
+  var d = $("diverge");
+  d.innerHTML += (d.innerHTML ? "<br>" : "") + texte;
+  d.style.display = "block";
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.innerHTML = md(cells[i]);
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireEtapes(noms) {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < noms.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + noms[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+/* Les panneaux communs : titre, objectif, observation, conclusion, matériel,
+   sécurité, tableau de la fiche. Tout vient du YAML, rien n'est retapé.     */
+function construireHTMLBase(soustitre) {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · " + soustitre;
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  N_CELL = compterCellules();
+  majCompteurCellules();
+}
+/* Le tableau des constantes du capot se RÉGÉNÈRE depuis `PHYS` — il n'est
+   jamais retapé dans le HTML (SKILL §7.3). */
+function construireConstantes() {
+  var ct = $("capotConst"), c;
+  if (!ct) return;
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  for (c in PHYS) {
+    ct.appendChild(ligneTab([PHYS[c].n,
+      (typeof PHYS[c].v === "number"
+        ? (Math.abs(PHYS[c].v) < 0.01 ? sci(PHYS[c].v, 2)
+                                      : nb(PHYS[c].v, PHYS[c].d === undefined ? 2 : PHYS[c].d))
+        : PHYS[c].v) + " " + PHYS[c].u, PHYS[c].s]));
+  }
+}
+
+/* ==================================================================
+   L'HORLOGE DE LA SÉANCE — et elle seule court en temps RÉEL
+   ==================================================================
+   Elle mesure ce que la manipulation coûte à l'enseignant, pas ce que le
+   modèle simule : elle ne s'accélère JAMAIS, et elle SURVIT à
+   « Recommencer » — la séance ne se rembobine pas (SKILL §5.4, §11.6).      */
+var DERNIER = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tickSeance, 250);
+}
+function tickSeance() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  if (!n) return;
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance(complement) {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    (complement ? " · " + complement : "");
+  majSeance();
+}
+
+/* ==================================================================
+   LE PLEIN ÉCRAN — c'est par lui qu'on projette la scène au tableau
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ================================================================== */
+var PHYS = {
+  DIV_ROB: { v: 0.1, u: "g", d: 1, n: "division effective de la Roberval",
+    s: "c'est la PLUS PETITE masse marquée de la boîte : une Roberval ne sait pas rendre plus fin que ce qu'on peut poser sur son plateau" },
+  DIV_ELEC: { v: 0.1, u: "g", d: 2, n: "division de la balance électronique",
+    s: "CHOISIE PAR LE RELEVÉ DE LA FICHE : elle écrit « 7,5 g » pour la bille, donc l'appareil lit au moins le dixième de gramme ; et elle n'écrit jamais de centième" },
+  PORTEE_ELEC: { v: 500, u: "g", d: 0, n: "portée de la balance électronique",
+    s: "exigée par le relevé : le caillou pèse 336 g, et la sécurité de la fiche dit de ne pas dépasser la portée inscrite. 500 g est la portée courante d'une balance de collège" },
+  RESIDU: { v: 0.4, u: "g", d: 1, n: "résidu de manipulation sur le plateau",
+    s: "poussière et traces de doigts. La fiche fournit « pinceau et chiffon pour nettoyer les plateaux » et demande de vérifier le zéro : c'est POUR CELA. L'ordre de grandeur est de quelques divisions — assez pour se voir, trop peu pour être évident" },
+  SENSI: { v: 0.05, u: "g", d: 2, n: "sensibilité du fléau",
+    s: "écart de masse en deçà duquel l'aiguille est tenue pour sur le zéro. Repère de LECTURE, une demi-division : un fléau de collège fait mieux, mais on ne lit pas mieux" },
+  RHO_GRANITE: { v: 2.65, u: "g/cm³", d: 2, n: "masse volumique du granite",
+    s: "2,60 à 2,70 g/cm³ ; sert à donner au caillou son VOLUME, donc sa taille à l'écran" },
+  RHO_ACIER: { v: 7.85, u: "g/cm³", d: 2, n: "masse volumique de l'acier",
+    s: "acier doux ; donne son volume à l'écrou" },
+  RHO_VERRE: { v: 2.515, u: "g/cm³", d: 3, n: "masse volumique du verre sodocalcique",
+    s: "2,50 à 2,53 g/cm³ ; donne son volume à la bille" },
+  RHO_PATE: { v: 1.40, u: "g/cm³", d: 2, n: "masse volumique de la pâte à modeler",
+    s: "1,3 à 1,5 g/cm³ ; c'est elle qui tient la CONSERVATION : la boule et la galette ont le même volume, donc la même masse" },
+  T_OSCIL: { v: 1.9, u: "s", d: 1, n: "période d'oscillation du fléau",
+    s: "un fléau de Roberval de collège oscille en 1,8 à 2,0 s ; il faut l'attendre, et c'est ce que la page fait voir" }
+};
+
+/* La boîte de masses marquées : la SÉRIE DÉCIMALE 1-2-2-5, celle de toutes
+   les boîtes de laboratoire. Elle n'est pas déduite de la fiche — c'est un
+   objet standard — mais c'est elle qui, sous le geste que la fiche prescrit,
+   redonne les quatre décompositions consignées. */
+var BOITE = [200, 100, 50, 20, 20, 10, 5, 2, 2, 1, 0.5, 0.2, 0.1];
+
+/* ==================================================================
+   4. LES RÉGLAGES — PROTO est prescrit, REG est courant (SKILL §11.3)
+   ================================================================== */
+var DIVISIONS = [0.01, 0.1, 0.5, 1, 5];
+var PORTEES = [200, 500, 1000, 2000];
+var PROTO = { iDiv: 1, iPortee: 1 };
+var REG = { iDiv: 1, iPortee: 1 };
+function division() { return DIVISIONS[REG.iDiv]; }
+function portee() { return PORTEES[REG.iPortee]; }
+function horsProtocole() {
+  return REG.iDiv !== PROTO.iDiv || REG.iPortee !== PROTO.iPortee;
+}
+/* Le nombre de décimales DIT la précision : il suit la division, il ne se
+   choisit pas (SKILL §12.21). 0,1 -> 1 ; 1 -> 0 ; 0,01 -> 2. */
+function decDe(div) {
+  return Math.max(0, Math.ceil(-Math.log(div) / Math.LN10 - 1e-9));
+}
+
+/* ==================================================================
+   5. LE SOLVEUR
+   ==================================================================
+   Ce que le modèle NE calcule PAS : la masse vraie de chaque corps. C'est
+   une propriété de l'échantillon, que la fiche relève. Ce qu'il calcule, à
+   partir d'elle : la décomposition en masses marquées, l'équilibre du
+   fléau, et ce que CHAQUE instrument sait en lire.                      */
+
+/* Les cinq corps : leur nom vient des en-têtes du tableau, leur masse de la
+   ligne « Masse à la balance électronique », leur matière de leur nom. */
+function ligneNommee(motif) {
+  var i;
+  for (i = 0; i < N_LIG; i++) if (motif.test(intitule(i, 0))) return i;
+  return -1;
+}
+var L_MARQ = ligneNommee(/[Mm]asses marqu/);
+var L_ROB = ligneNommee(/Roberval \(/);
+var L_ELEC = ligneNommee(/électronique/);
+
+function matiereDe(nom) {
+  var n = sansAccent(nom);
+  if (n.indexOf("caillou") >= 0) return { r: PHYS.RHO_GRANITE.v, t: "granite" };
+  if (n.indexOf("ecrou") >= 0) return { r: PHYS.RHO_ACIER.v, t: "acier" };
+  if (n.indexOf("bille") >= 0) return { r: PHYS.RHO_VERRE.v, t: "verre" };
+  return { r: PHYS.RHO_PATE.v, t: "pâte à modeler" };
+}
+var CORPS = ENTETES.slice(1).map(function (nom, j) {
+  var m = parseFloat(cel(L_ELEC, j + 1).replace(",", "."));
+  var mat = matiereDe(nom);
+  return { nom: depouille(nom), m: m, rho: mat.r, matiere: mat.t,
+           V: m / mat.r, aplati: /aplat|galette/i.test(sansAccent(nom)) };
+});
+var N_CORPS = CORPS.length;
+/* La boule et la galette sont LE MÊME objet : la seconde colonne se remplit
+   en déformant la première, jamais en pesant un second morceau. */
+var J_BOULE = -1, J_GALETTE = -1;
+CORPS.forEach(function (c, j) {
+  if (/pate/.test(sansAccent(c.nom))) { if (c.aplati) J_GALETTE = j; else J_BOULE = j; }
+});
+
+/* --- LE GESTE DE LA FICHE, ÉCRIT COMME UN ALGORITHME ---------------
+   « Ajouter sur le plateau de droite les masses marquées, PAR ORDRE
+   DÉCROISSANT, jusqu'à rétablir l'équilibre. » On prend la plus lourde qui
+   ne fasse pas basculer, et on recommence. C'est un glouton, et il redonne
+   les quatre décompositions de la fiche sans qu'on ait rien réglé.      */
+function prochaineMarquee(reste, dejaPosees) {
+  var i, pris = dejaPosees.slice();
+  for (i = 0; i < BOITE.length; i++) {
+    if (pris.indexOf(i) >= 0) continue;
+    if (BOITE[i] <= reste + 1e-9) return i;
+  }
+  return -1;
+}
+function sommeIndices(idx) {
+  var s = 0, i;
+  for (i = 0; i < idx.length; i++) s += BOITE[idx[i]];
+  return Math.round(s * 1000) / 1000;
+}
+function ecrireMasses(idx) {
+  return idx.map(function (i) { return nb(BOITE[i], BOITE[i] < 1 ? 1 : 0); })
+            .join(" + ");
+}
+/* La décomposition complète d'une masse — le glouton mené à son terme. */
+function decomposer(m) {
+  var idx = [], reste = m, i;
+  for (;;) {
+    i = prochaineMarquee(reste, idx);
+    if (i < 0) break;
+    idx.push(i);
+    reste = Math.round((reste - BOITE[i]) * 1000) / 1000;
+    if (reste < PHYS.DIV_ROB.v / 2) break;
+  }
+  return idx;
+}
+function equilibre(m, idx) {
+  return Math.abs(m - sommeIndices(idx)) < PHYS.SENSI.v;
+}
+/* Le fléau : son inclinaison suit l'écart de masse, saturée. Le dessin la
+   relit, il ne la recopie pas (SKILL §12.18). */
+function penteFleau(dm) {
+  var a = Math.atan(dm / 8) / (Math.PI / 2);       // 8 g -> presque à fond
+  return borne(a, -1, 1) * 11;                      // en degrés
+}
+
+/* --- CE QU'UN INSTRUMENT SAIT LIRE --------------------------------- */
+function lireElec(m) {
+  var d = division();
+  if (m > portee() + 1e-9) return null;             // surcharge
+  return Math.round(m / d) * d;
+}
+function afficheElec() {
+  if (!ETAT.enMarche) return "";
+  var m = ETAT.surPlateau >= 0 ? CORPS[ETAT.surPlateau].m : 0;
+  var lu = lireElec(m + ETAT.residu - ETAT.tare);
+  if (lu === null) return "Err";
+  return nb(lu, decDe(division())) + " g";
+}
+function zeroFait() { return Math.abs(ETAT.residu - ETAT.tare) < division() / 2; }
+
+/* Contrôle interne : aux réglages du protocole, les trois lignes calculées
+   doivent redonner celles de la fiche — décomposition comprise.          */
+function accordAvecLaFiche() {
+  var faux = [], j, idx, s, e, att;
+  var sauve = { d: REG.iDiv, p: REG.iPortee };
+  REG.iDiv = PROTO.iDiv; REG.iPortee = PROTO.iPortee;
+  for (j = 0; j < N_CORPS; j++) {
+    idx = decomposer(CORPS[j].m);
+    att = cel(L_MARQ, j + 1).replace(/\s/g, "");
+    if (att && ecrireMasses(idx).replace(/\s/g, "") !== att) {
+      faux.push(CORPS[j].nom + "/décomposition " + ecrireMasses(idx) + " ≠ " + att);
+    }
+    s = sommeIndices(idx);
+    att = cel(L_ROB, j + 1).replace(",", ".");
+    if (att && Math.abs(s - parseFloat(att)) > 0.05) {
+      faux.push(CORPS[j].nom + "/Roberval " + nb(s, 1) + " ≠ " + att);
+    }
+    e = lireElec(CORPS[j].m);
+    att = cel(L_ELEC, j + 1).replace(",", ".");
+    if (att && Math.abs(e - parseFloat(att)) > 0.05) {
+      faux.push(CORPS[j].nom + "/électronique " + nb(e, 1) + " ≠ " + att);
+    }
+  }
+  REG.iDiv = sauve.d; REG.iPortee = sauve.p;
+  return faux;
+}
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   ⚠ TOUTE clé lue dans le code figure ici (SKILL §12.17) : une clé oubliée
+   rend une branche entière morte, sans lever la moindre erreur.          */
+var ETAT = null;
+function neufEtat() {
+  return {
+    vide: false,          // l'équilibre à vide a été vérifié
+    corps: 0,             // le corps que l'on traite
+    surFleau: -1,         // le corps posé sur le plateau GAUCHE
+    posees: [],           // les indices des masses marquées sur le plateau droit
+    rob: {},              // les colonnes lues à la Roberval
+    elec: {},             // les colonnes lues à la balance électronique
+    enMarche: false,      // la balance électronique est allumée
+    residu: PHYS.RESIDU.v,// ce que le plateau porte en trop
+    tare: 0,              // ce que la remise à zéro a retranché
+    surPlateau: -1,       // le corps posé sur la balance électronique
+    aplatie: false,       // la pâte a été aplatie en galette
+    aplat: 0,             // 0 = boule, 1 = galette : l'ÉTAT du dessin
+    fleau: 0,             // l'inclinaison courante, en degrés (animée)
+    nettoye: false,
+    horsProto: false,
+    diverge: [],
+    nCell: 0,
+    tSeance: 0
+  };
+}
+
+/* ==================================================================
+   8. LA GÉOMÉTRIE — toutes les cotes de la scène, en constantes nommées
+   ==================================================================
+   ZONES INTERDITES, mesurées sur capture à 1900 x 900 :
+     · bandeau de consigne   x 224..896   y < 96   (deux lignes)
+     · journal d'observation x  14..300   y < 214
+     · boutons du cadre      x > 990      y < 96
+   Budget vertical, écrit ici pour ne plus s'y perdre :
+     pivot du fléau  300 · cadran 306..352 · plateaux 372..386
+     étagère haute   466 · plan de travail 566 · boutons 664 et 712        */
+var W = 1120, H = 760, BANC = 628, PAILL_Y = 566;
+var Y_BT1 = 664, Y_BT2 = 712;
+var X_ROB = 250, Y_PIVOT = 300, BRAS = 118, SUSP = 72;
+var X_BOITE = 415, Y_BOITE = 484;
+var X_BAL = 760, Y_PLAT_BAL = 486;
+var X_RANG = [935, 1048], Y_RANG = [466, 566];
+var X_PINCEAU = 372, Y_PINCEAU = 540;
+/* ⚠ TOUTES les hauteurs d'étiquette dans UN SEUL objet : dispersées dans le
+   code, elles ne se comparent pas — et c'est la comparaison, pas le calcul,
+   qui montre la collision (SKILL §12.7). */
+var Y_ETIQ = { roberval: 596, boite: 596, balance: 596, rangement: 404,
+               pinceau: 520, legende: 616, corpsHaut: 492, corpsBas: 590 };
+/* ⚠ La plaque de sécurité était posée à gauche, sur le mur — et elle tombait
+   PILE sur le fléau et le plateau de gauche. Mesuré à la capture, pas deviné
+   (SKILL §12.7). Elle passe à droite, au-dessus de l'étagère, dans la seule
+   bande que rien n'occupe. */
+var X_SECU = 886, Y_SECU = 238;
+/* Le facteur d'échelle des corps : 1 cm de l'objet vaut K unités de dessin.
+   Les cinq corps sont donc À L'ÉCHELLE LES UNS DES AUTRES, parce que leur
+   taille porte leur volume — et le volume porte la conservation.          */
+var K = 10;
+function rayonCm(V) { return Math.pow(3 * V / (4 * Math.PI), 1 / 3); }
+
+/* ==================================================================
+   9. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC, fill: "url(#banc)" }));
+  ajout("poste", el("rect", { x: 40, y: PAILL_Y, width: W - 80, height: 14, rx: 3,
+    fill: "url(#bois)", stroke: "#8a6128", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: 54, y: PAILL_Y + 14, width: W - 108, height: 12,
+    fill: "#a3855c", opacity: .9, "pointer-events": "none" }));
+  /* l'étagère du rangement */
+  ajout("poste", el("rect", { x: 892, y: Y_RANG[0], width: 224, height: 11, rx: 3,
+    fill: "url(#bois)", stroke: "#8a6128", "stroke-width": 1.2,
+    "pointer-events": "none" }));
+  txt("poste", 1004, Y_ETIQ.rangement, "les corps à peser", { taille: 11,
+      couleur: "#8794a5", halo: true });
+}
+function construireSecurite() {
+  var X = X_SECU, Y = Y_SECU, LG = 228, HT = 96;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8, "pointer-events": "none" }));
+  txt("poste", X + 12, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE });
+  /* On vise la ligne par ce qu'elle DIT, pas par le premier mot qui matche
+     (SKILL §12.14). */
+  enrouler(secu(/portée maximale/), 31, 3).forEach(function (s, i) {
+    txt("poste", X + 12, Y + 41 + i * 15, s, { ancre: "start", taille: 10.5,
+        couleur: "#8a5252" });
+  });
+  txt("poste", X + 12, Y + HT - 10, depouille((DONNEES.securite || [])[0] || "")
+      .slice(0, 38) + "…", { ancre: "start", taille: 9.5, couleur: "#a06a6a" });
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   10. LA BALANCE ROBERVAL
+   ==================================================================
+   L'équilibre est un ALIGNEMENT : l'aiguille devant son cadran, et le trait
+   central qui porte le 0. Le fléau, ses deux plateaux et l'aiguille lisent
+   TOUS la même inclinaison — celle que le solveur calcule (SKILL §12.18).  */
+var gFleau = null, gAiguille = null, gPlatG = null, gPlatD = null;
+function construireRoberval() {
+  var g = ajout("poste", el("g", { id: "roberval", "data-act": "roberval", "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: X_ROB - 96, y: PAILL_Y - 20, width: 192, height: 20,
+    rx: 4, fill: "#6b7686", stroke: "#48525e", "stroke-width": 1.5 }));
+  g.appendChild(el("rect", { x: X_ROB - 11, y: Y_PIVOT, width: 22,
+    height: PAILL_Y - 20 - Y_PIVOT, fill: "#9aa5b2", stroke: "#5d6874",
+    "stroke-width": 1.3 }));
+  /* le cadran : c'est lui qui fait lire l'équilibre */
+  g.appendChild(el("path", { d: "M " + pt(X_ROB - 34, Y_PIVOT + 44) + " A 44,44 0 0 0 "
+    + pt(X_ROB + 34, Y_PIVOT + 44), fill: "none", stroke: "#7c848f",
+    "stroke-width": 2 }));
+  [-30, -20, -10, 0, 10, 20, 30].forEach(function (a) {
+    var r = (a * Math.PI) / 180;
+    g.appendChild(el("line", { x1: X_ROB + 34 * Math.sin(r), y1: Y_PIVOT + 34 * Math.cos(r),
+      x2: X_ROB + 41 * Math.sin(r), y2: Y_PIVOT + 41 * Math.cos(r),
+      stroke: a === 0 ? INK : "#8a94a4", "stroke-width": a === 0 ? 2.4 : 1.2 }));
+  });
+  txtIn(g, X_ROB, Y_PIVOT + 58, "0", { taille: 11, gras: true, couleur: INK });
+  gAiguille = g.appendChild(el("g", {}));
+  gAiguille.appendChild(el("path", { d: "M " + pt(X_ROB, Y_PIVOT) + " L "
+    + pt(X_ROB - 3, Y_PIVOT + 30) + " L " + pt(X_ROB, Y_PIVOT + 38) + " L "
+    + pt(X_ROB + 3, Y_PIVOT + 30) + " Z", fill: ROUGE }));
+  /* le fléau et ses deux suspensions */
+  gFleau = g.appendChild(el("g", {}));
+  gFleau.appendChild(el("rect", { x: X_ROB - BRAS - 8, y: Y_PIVOT - 6,
+    width: 2 * BRAS + 16, height: 11, rx: 4, fill: "#c6ced8", stroke: "#5d6874",
+    "stroke-width": 1.3 }));
+  g.appendChild(el("circle", { cx: X_ROB, cy: Y_PIVOT, r: 7, fill: "#8d97a5",
+    stroke: "#48525e", "stroke-width": 1.4 }));
+  gPlatG = ajout("poste", el("g", { "pointer-events": "none" }));
+  gPlatD = ajout("poste", el("g", { "pointer-events": "none" }));
+  [gPlatG, gPlatD].forEach(function (p) {
+    p.appendChild(el("path", { d: "M -46,0 L 0,-" + SUSP + " L 46,0", fill: "none",
+      stroke: "#9aa5b2", "stroke-width": 1.6 }));
+    p.appendChild(el("ellipse", { cx: 0, cy: 4, rx: 52, ry: 8, fill: "#dfe5ec",
+      stroke: "#7c848f", "stroke-width": 1.6 }));
+    p.appendChild(el("path", { d: "M -52,4 L -46,13 L 46,13 L 52,4",
+      fill: "#c6ced8", stroke: "#7c848f", "stroke-width": 1.4 }));
+  });
+  txt("poste", X_ROB, Y_ETIQ.roberval, "balance Roberval — division " +
+      nb(PHYS.DIV_ROB.v, 1) + " g", { taille: 11, couleur: "#8794a5", halo: true });
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none" }, s));
+}
+
+/* ==================================================================
+   11. LA BOÎTE DE MASSES MARQUÉES
+   ================================================================== */
+var OBJ = {}, LISTE = [];
+function neufObjet(id, couche, x, y) {
+  var g = ajout(couche || "objets", el("g", { cursor: "grab", "data-act": id }));
+  var o = { id: id, g: g, x: x, y: y, base: { x: x, y: y }, fige: false };
+  OBJ[id] = o; LISTE.push(o);
+  placer(o, x, y);
+  return o;
+}
+function construireBoite() {
+  ajout("poste", el("rect", { x: X_BOITE - 12, y: Y_BOITE - 16, width: 250,
+    height: 98, rx: 8, fill: "#8a6a3c", stroke: "#5f4522", "stroke-width": 2,
+    "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: X_BOITE - 5, y: Y_BOITE - 9, width: 236,
+    height: 84, rx: 5, fill: "#f0e6d2", stroke: "#c8b08a", "stroke-width": 1.2,
+    "pointer-events": "none" }));
+  BOITE.forEach(function (m, i) {
+    var p = placeBoite(i), o = neufObjet("m" + i, "objets", p.x, p.y), d;
+    o.type = "marquee"; o.i = i;
+    prehension(o.g, -15, -21, 30, 30);
+    d = o.g.appendChild(el("g", { "pointer-events": "none" }));
+    var l = m >= 100 ? 13 : (m >= 10 ? 10.5 : (m >= 1 ? 8.5 : 7));
+    var ht = m >= 100 ? 17 : (m >= 10 ? 14 : (m >= 1 ? 11 : 9));
+    d.appendChild(el("path", { d: "M 0,-" + (ht + 9) + " a 4,4 0 1 1 0.1,0",
+      stroke: "#8d97a5", "stroke-width": 1.8, fill: "none" }));
+    d.appendChild(el("path", { d: "M " + pt(-l, 0) + " L " + pt(-l + 2, -ht)
+      + " L " + pt(l - 2, -ht) + " L " + pt(l, 0) + " Z", fill: "#b6bec7",
+      stroke: "#4d545c", "stroke-width": 1.1 }));
+    txtIn(d, 0, 12, nb(m, m < 1 ? 1 : 0), { taille: 8.5, couleur: "#5f4522" });
+  });
+  txt("poste", X_BOITE + 113, Y_ETIQ.boite, "boîte de masses marquées — "
+      + "série 1-2-2-5", { taille: 11, couleur: "#8794a5", halo: true });
+  /* Le pinceau : la fiche le fournit POUR nettoyer les plateaux. */
+  var o = neufObjet("pinceau", "objets", X_PINCEAU, Y_PINCEAU), d;
+  o.type = "pinceau";
+  prehension(o.g, -10, -46, 20, 56);
+  d = o.g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -3.5, y: -44, width: 7, height: 34, rx: 3,
+    fill: "#b8862f", stroke: "#7d5713", "stroke-width": 1 }));
+  d.appendChild(el("rect", { x: -5, y: -12, width: 10, height: 7, rx: 2,
+    fill: "#9aa5b2", stroke: "#5d6874", "stroke-width": 1 }));
+  d.appendChild(el("path", { d: "M -5,-5 L 5,-5 L 3,9 L -3,9 Z", fill: "#2f3a4d" }));
+  txt("poste", X_PINCEAU, Y_ETIQ.pinceau, "pinceau", { taille: 10,
+      couleur: "#8794a5", halo: true });
+}
+function placeBoite(i) {
+  var r = i < 7 ? 0 : 1, c = i < 7 ? i : i - 7;
+  return { x: X_BOITE + 18 + c * 34, y: Y_BOITE + 26 + r * 40 };
+}
+
+/* ==================================================================
+   12. LA BALANCE ÉLECTRONIQUE
+   ==================================================================
+   Celle de la figure de la fiche : corps clair, plateau, afficheur, et DEUX
+   boutons ronds — « On » et « Tare ». Ils sont cliquables ; sans cela la
+   tare resterait un mot du panneau de droite.                             */
+var gEcran = null, gTexteEcran = null, gPlateauBal = null;
+function construireElectronique() {
+  var g = ajout("poste", el("g", { id: "electro", "pointer-events": "none" }));
+  gPlateauBal = g.appendChild(el("g", {}));
+  gPlateauBal.appendChild(el("rect", { x: X_BAL - 62, y: Y_PLAT_BAL, width: 124,
+    height: 9, rx: 3, fill: "#c6ced8", stroke: "#7c848f", "stroke-width": 1.3 }));
+  gPlateauBal.appendChild(el("rect", { x: X_BAL - 8, y: Y_PLAT_BAL + 9, width: 16,
+    height: 12, fill: "#aab4c0" }));
+  g.appendChild(el("rect", { x: X_BAL - 74, y: Y_PLAT_BAL + 21, width: 148,
+    height: 59, rx: 7, fill: "#e7ecf1", stroke: "#7c848f", "stroke-width": 1.6 }));
+  gEcran = g.appendChild(el("rect", { x: X_BAL - 62, y: Y_PLAT_BAL + 30,
+    width: 88, height: 26, rx: 3, fill: "#3a3320", opacity: 1 }));
+  gTexteEcran = g.appendChild(el("text", { x: X_BAL - 18, y: Y_PLAT_BAL + 48,
+    "text-anchor": "end", "font-size": 15, "font-weight": "bold",
+    fill: "#ffd45e", "font-family": "monospace", opacity: 0 }, ""));
+  boutonRond(X_BAL + 44, Y_PLAT_BAL + 34, "On", "bt-on");
+  boutonRond(X_BAL + 44, Y_PLAT_BAL + 66, "0/T", "bt-zero");
+  txt("poste", X_BAL, Y_ETIQ.balance, "balance électronique", { taille: 11,
+      couleur: "#8794a5", halo: true });
+}
+function boutonRond(cx, cy, l, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("circle", { cx: cx, cy: cy, r: 15, fill: "#fff",
+    "fill-opacity": 0.001 }));
+  var c = g.appendChild(el("circle", { cx: cx, cy: cy, r: 11, fill: "#cfd6de",
+    stroke: "#7c848f", "stroke-width": 1.4 }));
+  var t = g.appendChild(el("text", { x: cx, y: cy + 3.4, "text-anchor": "middle",
+    "font-size": 8.5, "font-weight": "bold", fill: "#48525e",
+    "pointer-events": "none" }, l));
+  BOUTONS[act] = { cx: cx, cy: cy, w: 30, h: 30, noeud: g,
+    armer: function (v) { c.setAttribute("stroke", v ? GOLD : "#7c848f");
+                          c.setAttribute("stroke-width", v ? 2.6 : 1.4); },
+    fait: function () { c.setAttribute("fill", "#d7e8c8");
+                        t.setAttribute("fill", VERT); },
+    neuf: function () { c.setAttribute("fill", "#cfd6de");
+                        t.setAttribute("fill", "#48525e"); } };
+}
+
+/* ==================================================================
+   13. LES CINQ CORPS — leur TAILLE suit leur VOLUME
+   ==================================================================
+   V = m / rho, et rho est sourcée. La boule de pâte et la galette sont le
+   MÊME objet : on ne dessine pas deux morceaux, on en déforme un.         */
+function construireCorps() {
+  CORPS.forEach(function (c, j) {
+    if (j === J_GALETTE) return;                 /* pas de second morceau */
+    var p = placeRang(j), o = neufObjet("c" + j, "objets", p.x, p.y), d, r;
+    o.type = "corps"; o.j = j;
+    r = rayonCm(c.V) * K;
+    o.r = r;
+    prehension(o.g, -Math.max(22, r + 6), -Math.max(30, 2 * r + 8),
+               2 * Math.max(22, r + 6), Math.max(34, 2 * r + 10));
+    d = o.g.appendChild(el("g", { "pointer-events": "none" }));
+    o.dessin = d;
+    dessinerCorps(o, 0);
+    txt("avant", p.x, j < 2 ? Y_ETIQ.corpsHaut : Y_ETIQ.corpsBas,
+        c.nom.split(" ")[0], { taille: 10, couleur: "#8794a5", halo: true });
+  });
+}
+function placeRang(j) {
+  return { x: X_RANG[j % 2], y: Y_RANG[j < 2 ? 0 : 1] };
+}
+/* ⚠ UN SEUL OBJET, DEUX COLONNES. La boule et la galette sont le même morceau
+   de pâte : l'objet porte le rang de la BOULE, mais dès qu'il est aplati
+   c'est la colonne de la GALETTE qu'il renseigne. Sans cette bascule, la
+   dernière colonne du tableau resterait vide pour toujours et la conclusion
+   ne se démasquerait jamais — la panne du §12.40, en plus discret. */
+function colonne(o) {
+  return (o.j === J_BOULE && ETAT.aplatie) ? J_GALETTE : o.j;
+}
+function objetDe(j) {
+  return OBJ["c" + (j === J_GALETTE ? J_BOULE : j)];
+}
+/* `aplat` va de 0 (boule) à 1 (galette) : à VOLUME CONSTANT, le rayon croît
+   comme la hauteur décroît. Et il est BORNÉ (SKILL §12.50) — un rayon qui
+   passerait sous zéro ne peindrait plus rien du tout.                     */
+function dessinerCorps(o, aplat) {
+  var c = CORPS[o.j], r = o.r, d = o.dessin, ry, rx, i;
+  vide(d);
+  if (/caillou/.test(sansAccent(c.nom))) {
+    d.appendChild(el("path", { d: "M " + pt(-r * 1.25, 0) + " C "
+      + pt(-r * 1.3, -r * 1.1) + " " + pt(-r * .4, -r * 1.5) + " " + pt(r * .3, -r * 1.25)
+      + " C " + pt(r * 1.2, -r * 1.05) + " " + pt(r * 1.35, -r * .3) + " "
+      + pt(r * 1.15, 0) + " Z", fill: "#8d8577", stroke: "#5d574c",
+      "stroke-width": 1.6 }));
+    for (i = 0; i < 5; i++) {
+      d.appendChild(el("ellipse", { cx: -r * .6 + i * r * .32, cy: -r * (.5 + .18 * (i % 3)),
+        rx: r * .1, ry: r * .07, fill: "#b3aa99", opacity: .8 }));
+    }
+  } else if (/ecrou/.test(sansAccent(c.nom))) {
+    var R = r * 1.5, pts = [];
+    for (i = 0; i < 6; i++) {
+      pts.push(pt(R * Math.cos(i * Math.PI / 3), -R * .55 + R * Math.sin(i * Math.PI / 3) * .55));
+    }
+    d.appendChild(el("polygon", { points: pts.join(" "), fill: "#8f98a3",
+      stroke: "#4d545c", "stroke-width": 1.5 }));
+    d.appendChild(el("ellipse", { cx: 0, cy: -R * .55, rx: R * .42, ry: R * .24,
+      fill: "#5b636d" }));
+  } else if (/bille/.test(sansAccent(c.nom))) {
+    d.appendChild(el("circle", { cx: 0, cy: -r, r: r, fill: "#7fb6d4",
+      stroke: "#3f6f8a", "stroke-width": 1.4, opacity: .92 }));
+    d.appendChild(el("ellipse", { cx: -r * .35, cy: -r * 1.35, rx: r * .3,
+      ry: r * .2, fill: "#ffffff", opacity: .8 }));
+  } else {
+    /* la pâte : à volume constant, rx et ry se répondent */
+    ry = Math.max(3, r * (1 - 0.72 * borne(aplat, 0, 1)));
+    rx = Math.sqrt(Math.max(1e-6, r * r * r / ry));
+    d.appendChild(el("ellipse", { cx: 0, cy: -ry, rx: rx, ry: ry,
+      fill: "#c85a3c", stroke: "#8d3a24", "stroke-width": 1.5 }));
+    d.appendChild(el("ellipse", { cx: -rx * .3, cy: -ry * 1.35, rx: rx * .26,
+      ry: ry * .2, fill: "#e08a70", opacity: .7 }));
+  }
+}
+
+/* ==================================================================
+   14. LES BOUTONS DE SCÈNE
+   ================================================================== */
+function construireBoutonsScene() {
+  rangeeBoutons(W, Y_BT1,
+    [["Vérifier l'équilibre", "à vide"], ["Poser le corps", "sur le fléau"],
+     ["Masse marquée", "suivante"], ["Lire la", "Roberval"],
+     ["Corps", "suivant"]],
+    ["bt-vide", "bt-poser", "bt-marquee", "bt-somme", "bt-suivant"]);
+  rangeeBoutons(W, Y_BT2,
+    [["Peser à la", "balance électronique"], ["Aplatir la pâte", "en galette"],
+     ["Reposer le corps", "sur l'étagère"]],
+    ["bt-electro", "bt-aplatir", "bt-ranger"]);
+  txt("fond", W / 2, Y_ETIQ.legende, "schéma habillé — la TAILLE des cinq corps "
+    + "est à l'échelle de leur volume ; l'oscillation du fléau est jouée "
+    + "comprimée, 1,3 s pour deux périodes de " + nb(PHYS.T_OSCIL.v, 1) + " s",
+    { taille: 9.5, couleur: "#8794a5" });
+}
+
+/* ==================================================================
+   15. LES ZONES ET LES DÉPÔTS (SKILL §9, §12.16)
+   ==================================================================
+   ⚠ De la plus PETITE à la plus GRANDE : c'est `deposer` qui dit laquelle
+   est la bonne, jamais l'ordre du tableau.                                */
+function posPlateau(cote) {
+  var a = ETAT.fleau * Math.PI / 180, dx = cote * BRAS;
+  return { x: X_ROB + dx * Math.cos(a), y: Y_PIVOT + dx * Math.sin(a) + SUSP };
+}
+function zoneFleau() {
+  var p = posPlateau(-1);
+  return { type: "fleau", x: p.x, y: p.y - 16, hw: 56, hh: 34, r: 66 };
+}
+function zoneMasses() {
+  var p = posPlateau(1);
+  return { type: "masses", x: p.x, y: p.y - 16, hw: 56, hh: 34, r: 66 };
+}
+function zoneBalance() {
+  return { type: "balance", x: X_BAL, y: Y_PLAT_BAL - 18, hw: 62, hh: 30, r: 68 };
+}
+function zoneRang(o) {
+  return { type: "rang", x: o.base.x, y: o.base.y - 14, hw: 44, hh: 34, r: 58 };
+}
+function emplacements(o) {
+  if (o.type === "corps") return [zoneFleau(), zoneBalance(), zoneRang(o)];
+  if (o.type === "marquee") return [zoneMasses(), zoneRang(o)];
+  if (o.type === "pinceau") return [zoneBalance(), zoneRang(o)];
+  return [];
+}
+function replacer(o) { volerVers(o, o.base.x, o.base.y, 420); }
+
+function deposer(o, z, depart) {
+  if (!z) {
+    signaler("Rien à cet endroit : reposer l'objet sur son étagère, sur un "
+      + "plateau de la Roberval, ou sur la balance électronique.");
+    replacer2(o, depart);
+    return;
+  }
+  if (o.type === "pinceau") { deposerPinceau(o, z, depart); return; }
+  if (o.type === "marquee") { deposerMarquee(o, z, depart); return; }
+  deposerCorps(o, z, depart);
+}
+function replacer2(o, depart) {
+  o.x = depart.x; o.y = depart.y;
+  volerVers(o, o.base.x, o.base.y, 420);
+}
+
+function deposerCorps(o, z, depart) {
+  var jc = colonne(o), c = CORPS[jc];
+  if (z.type === "fleau") {
+    if (!ETAT.vide) {
+      signaler("Vérifier D'ABORD l'équilibre à vide : c'est la première étape "
+        + "du protocole, et une balance déréglée ferait mentir toutes les pesées.");
+      replacer2(o, depart); return;
+    }
+    if (ETAT.surFleau === jc) { signaler("Ce corps est déjà sur le fléau."); return; }
+    if (ETAT.surFleau >= 0) {
+      signaler("Le plateau de gauche porte déjà " + CORPS[ETAT.surFleau].nom
+        + " : on ne pèse qu'un corps à la fois.");
+      replacer2(o, depart); return;
+    }
+    ETAT.surFleau = jc;                           /* l'état AVANT l'image */
+    ETAT.corps = jc;
+    noter("« " + c.nom + " » posé sur le plateau de gauche. Le fléau bascule : "
+      + "il faudra des masses marquées de l'autre côté pour le ramener au zéro.", true);
+    succes();
+    volerVers(o, zoneFleau().x, zoneFleau().y + 14, 560);
+    basculerFleau(620);
+    return;
+  }
+  if (z.type === "balance") {
+    if (!ETAT.enMarche) {
+      signaler("La balance électronique est éteinte : la mettre en marche "
+        + "d'abord — le protocole le dit.");
+      replacer2(o, depart); return;
+    }
+    if (ETAT.surPlateau >= 0 && ETAT.surPlateau !== jc) {
+      var a = objetDe(ETAT.surPlateau);
+      noter("« " + CORPS[ETAT.surPlateau].nom + " » retourne sur l'étagère : "
+        + "on ne pèse qu'un corps à la fois.", false);
+      ETAT.surPlateau = -1;
+      volerVers(a, a.base.x, a.base.y, 460);
+    }
+    if (ETAT.surFleau === jc) ETAT.surFleau = -1;
+    ETAT.surPlateau = jc;
+    ETAT.corps = jc;
+    lireBalance(jc);
+    volerVers(o, X_BAL, Y_PLAT_BAL - 2, 520);
+    enfoncerPlateau();
+    return;
+  }
+  /* le rangement */
+  if (ETAT.surFleau === jc) ETAT.surFleau = -1;
+  if (ETAT.surPlateau === jc) ETAT.surPlateau = -1;
+  succes();
+  volerVers(o, o.base.x, o.base.y, 480);
+  basculerFleau(560);
+}
+
+function deposerMarquee(o, z, depart) {
+  if (z.type !== "masses") {
+    if (ETAT.posees.indexOf(o.i) >= 0) {
+      ETAT.posees.splice(ETAT.posees.indexOf(o.i), 1);
+      noter("Masse marquée de " + nb(BOITE[o.i], BOITE[o.i] < 1 ? 1 : 0)
+        + " g remise dans sa boîte.", false);
+      volerVers(o, o.base.x, o.base.y, 440);
+      basculerFleau(520);
+      return;
+    }
+    replacer2(o, depart);
+    return;
+  }
+  if (ETAT.surFleau < 0) {
+    signaler("Le plateau de gauche est vide : poser d'abord le corps à peser.");
+    replacer2(o, depart); return;
+  }
+  if (ETAT.posees.indexOf(o.i) >= 0) { signaler("Cette masse est déjà posée."); return; }
+  var m = CORPS[ETAT.surFleau].m, reste = m - sommeIndices(ETAT.posees);
+  if (BOITE[o.i] > reste + PHYS.SENSI.v) {
+    signaler("Trop lourde : avec " + nb(BOITE[o.i], BOITE[o.i] < 1 ? 1 : 0)
+      + " g de plus, le plateau des masses descend et l'aiguille dépasse le zéro. "
+      + "La fiche dit « par ordre décroissant » : prendre la plus lourde qui "
+      + "NE FASSE PAS basculer, soit " + prochaineEcrite(reste) + ".");
+    replacer2(o, depart);
+    basculerFleau(700, sommeIndices(ETAT.posees) + BOITE[o.i] - m);
+    return;
+  }
+  ETAT.posees.push(o.i);
+  succes();
+  volerVers(o, zoneMasses().x + (ETAT.posees.length % 5 - 2) * 15,
+            zoneMasses().y + 10 - Math.floor(ETAT.posees.length / 5) * 12, 520);
+  basculerFleau(620);
+  var d = m - sommeIndices(ETAT.posees);
+  if (equilibre(m, ETAT.posees)) {
+    noter("Le fléau revient à l'horizontale et l'aiguille se pose sur le zéro : "
+      + "l'équilibre est atteint avec " + ecrireMasses(ETAT.posees)
+      + ". Il reste " + nb(Math.abs(d), 2) + " g d'écart, moins que la "
+      + "sensibilité du fléau — l'appareil ne sait pas le voir.", true);
+  } else {
+    noter("Masse de " + nb(BOITE[o.i], BOITE[o.i] < 1 ? 1 : 0) + " g posée. "
+      + "Le fléau penche encore : il manque " + nb(d, 1) + " g.", false);
+  }
+}
+function prochaineEcrite(reste) {
+  var i = prochaineMarquee(reste, ETAT.posees);
+  return i < 0 ? "aucune" : nb(BOITE[i], BOITE[i] < 1 ? 1 : 0) + " g";
+}
+
+function deposerPinceau(o, z, depart) {
+  if (z.type !== "balance") { replacer2(o, depart); return; }
+  nettoyerPlateau();
+  volerVers(o, o.base.x, o.base.y, 480);
+}
+
+/* ==================================================================
+   16. CE QUI SE PASSE — les gestes qui produisent un nombre
+   ================================================================== */
+function verifierVide() {
+  if (ETAT.vide) { signaler("L'équilibre à vide est déjà vérifié."); return; }
+  if (ETAT.surFleau >= 0 || ETAT.posees.length) {
+    signaler("Les deux plateaux doivent être VIDES : c'est ce que « à vide » "
+      + "veut dire.");
+    return;
+  }
+  ETAT.vide = true;
+  succes();
+  noter("Les deux plateaux sont vides et l'aiguille oscille autour du zéro "
+    + "avant de s'y poser : la balance est en équilibre. On peut peser.", true);
+  basculerFleau(1300, 0.9);
+}
+function lireRoberval() {
+  var j = ETAT.surFleau;
+  if (j < 0) { signaler("Aucun corps sur le plateau de gauche."); return; }
+  if (!equilibre(CORPS[j].m, ETAT.posees)) {
+    signaler("Le fléau n'est pas revenu au zéro : il manque "
+      + nb(CORPS[j].m - sommeIndices(ETAT.posees), 1) + " g. On n'additionne "
+      + "des masses marquées que lorsqu'elles ÉQUILIBRENT le corps.");
+    return;
+  }
+  ETAT.rob[j] = sommeIndices(ETAT.posees);
+  ETAT.robDecomp = ETAT.robDecomp || {};
+  ETAT.robDecomp[j] = ETAT.posees.slice();
+  if (!ETAT.horsProto) {
+    revelerCellule(L_MARQ, j + 1);
+    revelerCellule(L_ROB, j + 1);
+  }
+  succes();
+  noter("On additionne les masses marquées : " + ecrireMasses(ETAT.posees)
+    + " = " + nb(ETAT.rob[j], 1) + " g. C'est la masse de « " + CORPS[j].nom
+    + " » — une SOMME, pas une lecture. Les plateaux se libèrent.", true);
+  verifierAccord(j);
+  /* Le relevé fait, on rend les plateaux : c'est le geste réel, et le fléau
+     doit revenir à l'horizontale avant la pesée suivante. */
+  libererPlateaux();
+}
+function libererPlateaux() {
+  var j = ETAT.surFleau, o;
+  if (j < 0) return;
+  o = objetDe(j);
+  ETAT.surFleau = -1;
+  ETAT.posees.forEach(function (i) {
+    volerVers(OBJ["m" + i], OBJ["m" + i].base.x, OBJ["m" + i].base.y, 460);
+  });
+  ETAT.posees = [];
+  volerVers(o, o.base.x, o.base.y, 520);
+  basculerFleau(640);
+}
+function corpsSuivant() {
+  var j = ETAT.surFleau, o;
+  if (j < 0) { signaler("Aucun corps sur le fléau."); return; }
+  if (ETAT.rob[j] === undefined) {
+    signaler("Lire d'abord la Roberval : la somme des masses marquées EST la "
+      + "masse du corps.");
+    return;
+  }
+  o = objetDe(j);
+  ETAT.surFleau = -1;
+  ETAT.posees.forEach(function (i) { volerVers(OBJ["m" + i], OBJ["m" + i].base.x,
+                                               OBJ["m" + i].base.y, 460); });
+  ETAT.posees = [];
+  succes();
+  noter("Corps et masses marquées remis à leur place. Les plateaux sont de "
+    + "nouveau vides.", false);
+  volerVers(o, o.base.x, o.base.y, 520);
+  basculerFleau(600);
+}
+function allumerBalance() {
+  if (ETAT.enMarche) { signaler("La balance est déjà en marche."); return; }
+  ETAT.enMarche = true;
+  succes();
+  noter("Balance en marche. L'afficheur ne montre pas zéro : le plateau porte "
+    + nb(ETAT.residu, 1) + " g de poussière et de traces. La fiche fournit un "
+    + "pinceau et demande de vérifier le zéro — c'est pour cela.", false);
+  allumerEcran();
+}
+function nettoyerPlateau() {
+  if (!ETAT.enMarche) {
+    signaler("Mettre la balance en marche avant de régler son zéro.");
+    return;
+  }
+  ETAT.nettoye = true;
+  ETAT.tare = ETAT.residu + (ETAT.surPlateau >= 0 ? CORPS[ETAT.surPlateau].m : 0);
+  succes();
+  noter("Plateau nettoyé au pinceau, puis remise à zéro : l'afficheur revient "
+    + "à " + nb(0, decDe(division())) + " g. Tout ce qu'on posera maintenant "
+    + "sera compté à partir de là.", true);
+  balayerPinceau();
+}
+function lireBalance(j) {
+  var lu = lireElec(CORPS[j].m + ETAT.residu - ETAT.tare);
+  if (lu === null) {
+    noter("L'afficheur écrit « Err » : " + nb(CORPS[j].m, 1) + " g dépasse la "
+      + "portée de " + nb(portee(), 0) + " g. " + secu(/portée maximale/), false);
+    succes();
+    return;
+  }
+  if (!zeroFait()) {
+    noter("Lecture : " + nb(lu, decDe(division())) + " g — mais le zéro n'a pas "
+      + "été fait, et le plateau porte " + nb(ETAT.residu - ETAT.tare, 1)
+      + " g en trop. La lecture est décalée d'autant, et la colonne du tableau "
+      + "de la fiche reste vide.", false);
+    succes();
+    return;
+  }
+  ETAT.elec[j] = lu;
+  if (!ETAT.horsProto) revelerCellule(L_ELEC, j + 1);
+  succes();
+  noter("« " + CORPS[j].nom + " » sur le plateau : l'afficheur donne "
+    + nb(lu, decDe(division())) + " g" + (ETAT.rob[j] !== undefined
+      ? ", exactement la somme des masses marquées de la Roberval. Les deux "
+        + "instruments mesurent bien la MÊME grandeur."
+      : ". Il reste à la comparer à la Roberval.") + "", true);
+  verifierAccord(j);
+}
+function aplatirPate() {
+  if (J_BOULE < 0 || J_GALETTE < 0) { signaler("Cette fiche n'a pas de pâte."); return; }
+  if (ETAT.aplatie) { signaler("La pâte est déjà aplatie en galette."); return; }
+  if (ETAT.rob[J_BOULE] === undefined && ETAT.elec[J_BOULE] === undefined) {
+    signaler("Peser d'abord la pâte EN BOULE : sans la première pesée, "
+      + "l'aplatir ne prouve rien.");
+    return;
+  }
+  var o = objetDe(J_BOULE);
+  if (ETAT.surFleau === J_BOULE) ETAT.surFleau = -1;
+  if (ETAT.surPlateau === J_BOULE) ETAT.surPlateau = -1;
+  ETAT.aplatie = true;
+  succes();
+  noter("La boule est aplatie en galette. Son volume n'a pas changé — le rayon "
+    + "grandit exactement de ce que la hauteur perd —, sa matière non plus : "
+    + "sa masse ne peut donc pas avoir changé. Reste à le VÉRIFIER.", true);
+  /* l'écrasement se voit se faire : le rayon croît pendant que la hauteur
+     tombe, à volume constant (SKILL §1.2 bis) */
+  anim(760, function (u) { ETAT.aplat = u; dessinerCorps(o, u); });
+}
+function verifierAccord(j) {
+  var r = ETAT.rob[j], e = ETAT.elec[j];
+  if (r === undefined || e === undefined) return;
+  if (Math.abs(r - e) > division()) {
+    signalerDivergence("c" + j, "<b>Écart entre les deux instruments</b> sur « "
+      + CORPS[j].nom + " » : " + nb(r, 1) + " g à la Roberval contre "
+      + nb(e, decDe(division())) + " g à l'électronique, soit "
+      + nb(Math.abs(r - e), 2) + " g — plus d'une division.");
+  }
+}
+
+/* ==================================================================
+   17. LES ANIMATIONS — setTimeout et Date.now(), jamais rAF (§13.5 bis)
+   ==================================================================
+   L'animation ne DÉCIDE de rien : le solveur a déjà l'état d'arrivée quand
+   elle commence, elle ne fait que le rejoindre.                            */
+function ecartFleau() {
+  var m = ETAT.surFleau >= 0 ? CORPS[ETAT.surFleau].m : 0;
+  return m - sommeIndices(ETAT.posees);
+}
+function basculerFleau(ms, forceEcart) {
+  var but = penteFleau(forceEcart === undefined ? ecartFleau() : forceEcart);
+  var d0 = ETAT.fleau, PAS = 26, i;
+  ETAT.fleau = but;                                /* l'état d'arrivée d'abord */
+  for (i = 1; i <= PAS; i++) (function (k) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var u = k / PAS;
+      /* oscillation amortie : deux pseudo-périodes, comprimées dans la durée
+         du geste. L'amplitude décroît, elle ne décide de rien. */
+      var a = but + (d0 - but) * Math.exp(-3.4 * u) * Math.cos(4 * Math.PI * u);
+      dessinerFleau(k === PAS ? but : a);
+      if (k === PAS) rangerRetardataires();
+    }, Math.round(ms * k / PAS));
+  })(i);
+}
+/* ⚠ LE DESSIN RELIT L'ÉTAT — mais À L'ARRIVÉE, pas pendant. Une masse ôtée du
+   plateau restait peinte dessus si son vol avait été coupé, et le fléau
+   penchait alors sans rien porter. On range donc les retardataires QUAND LE
+   FLÉAU S'EST POSÉ : replacer à chaque image écraserait le vol lui-même, et
+   c'est justement le geste qu'on veut montrer (SKILL §1.2 bis, §12.18). */
+function rangerRetardataires() {
+  BOITE.forEach(function (m, i) {
+    var ob = OBJ["m" + i];
+    if (ob && !prise && ETAT.posees.indexOf(i) < 0) {
+      placer(ob, ob.base.x, ob.base.y);
+    }
+  });
+}
+function dessinerFleau(a) {
+  var r = a * Math.PI / 180, i, o;
+  gFleau.setAttribute("transform", "rotate(" + a.toFixed(2) + " " + X_ROB
+    + " " + Y_PIVOT + ")");
+  gAiguille.setAttribute("transform", "rotate(" + (-a * 2.2).toFixed(2) + " "
+    + X_ROB + " " + Y_PIVOT + ")");
+  var g = { x: X_ROB - BRAS * Math.cos(r), y: Y_PIVOT - BRAS * Math.sin(r) + SUSP };
+  var d = { x: X_ROB + BRAS * Math.cos(r), y: Y_PIVOT + BRAS * Math.sin(r) + SUSP };
+  gPlatG.setAttribute("transform", "translate(" + pt(g.x, g.y) + ")");
+  gPlatD.setAttribute("transform", "translate(" + pt(d.x, d.y) + ")");
+  /* ce qui repose sur un plateau SUIT le plateau : le dessin relit la même
+     géométrie que la pose (SKILL §12.49) */
+  if (ETAT.surFleau >= 0 && !prise) {
+    o = objetDe(ETAT.surFleau);
+    if (o) placer(o, g.x, g.y - 2);
+  }
+  ETAT.posees.forEach(function (i, k) {
+    var o2 = OBJ["m" + i];
+    if (o2 && !prise) {
+      placer(o2, d.x + (k % 5 - 2) * 15, d.y - 4 - Math.floor(k / 5) * 12);
+    }
+  });
+}
+function allumerEcran() {
+  anim(520, function (u) {
+    gTexteEcran.setAttribute("opacity", u.toFixed(2));
+    gEcran.setAttribute("opacity", (0.45 + 0.55 * u).toFixed(2));
+  });
+}
+function enfoncerPlateau() {
+  anim(480, function (u) {
+    var d = 3.2 * Math.sin(Math.PI * u) + 1.4 * u;
+    gPlateauBal.setAttribute("transform", "translate(0," + d.toFixed(2) + ")");
+  });
+}
+function balayerPinceau() {
+  var o = OBJ.pinceau, x0 = X_BAL - 56;
+  anim(760, function (u) {
+    placer(o, x0 + 112 * u, Y_PLAT_BAL - 6 + 5 * Math.sin(6 * Math.PI * u));
+  }, function () { placer(o, o.base.x, o.base.y); });
+}
+
+/* ==================================================================
+   18. LE RENDU
+   ================================================================== */
+function redessiner() {
+  dessinerFleau(ETAT.fleau);
+  gTexteEcran.textContent = afficheElec();
+  gTexteEcran.setAttribute("opacity", ETAT.enMarche ? 1 : 0);
+  gEcran.setAttribute("opacity", ETAT.enMarche ? 1 : 0.45);
+  majBoutonsScene();
+  majCarnet();
+  majInstrument();
+  majEtapes();
+  majProtocole();
+  dire(consigne(), toutFini());
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+function majBoutonsScene() {
+  function e(a, arme, fait) {
+    var b = BOUTONS[a];
+    if (!b) return;
+    if (fait) b.fait(); else { b.neuf(); b.armer(arme); }
+  }
+  var j = ETAT.surFleau;
+  e("bt-vide", !ETAT.vide, ETAT.vide);
+  e("bt-poser", ETAT.vide && j < 0 && prochainRoberval() >= 0, false);
+  e("bt-marquee", j >= 0 && !equilibre(CORPS[j].m, ETAT.posees), false);
+  e("bt-somme", j >= 0 && equilibre(CORPS[j].m, ETAT.posees)
+    && ETAT.rob[j] === undefined, false);
+  e("bt-suivant", j >= 0 && ETAT.rob[j] !== undefined, false);
+  e("bt-on", !ETAT.enMarche, ETAT.enMarche);
+  e("bt-zero", ETAT.enMarche && !zeroFait(), ETAT.enMarche && zeroFait());
+  e("bt-electro", ETAT.enMarche && zeroFait(), false);
+  e("bt-aplatir", !ETAT.aplatie && ETAT.rob[J_BOULE] !== undefined, ETAT.aplatie);
+  e("bt-ranger", ETAT.surPlateau >= 0, false);
+}
+function colonnesUtiles() {
+  var out = [], j;
+  for (j = 0; j < N_CORPS; j++) if (j !== J_GALETTE) out.push(j);
+  return out;
+}
+function toutPese() {
+  return colonnesUtiles().every(function (j) {
+    return ETAT.rob[j] !== undefined && ETAT.elec[j] !== undefined;
+  });
+}
+function toutFini() {
+  return toutPese() && ETAT.rob[J_GALETTE] !== undefined
+    && ETAT.elec[J_GALETTE] !== undefined;
+}
+
+/* ==================================================================
+   19. LE CARNET DE MESURES — recalculé en continu
+   ================================================================== */
+function majCarnet() {
+  var t = $("carnet"), j, c, idx, e;
+  vide(t);
+  t.appendChild(ligneTab(["Corps", "masse marquées", "Roberval", "électronique",
+                          "écart"], true));
+  for (j = 0; j < N_CORPS; j++) {
+    c = CORPS[j];
+    idx = (ETAT.robDecomp || {})[j];
+    e = ETAT.elec[j];
+    t.appendChild(ligneTab([
+      c.nom,
+      idx ? ecrireMasses(idx) + " g" : "—",
+      ETAT.rob[j] === undefined ? "—" : nb(ETAT.rob[j], 1) + " g",
+      e === undefined ? "—" : nb(e, decDe(division())) + " g",
+      (idx && e !== undefined) ? nb(Math.abs(ETAT.rob[j] - e), 2) + " g" : "—"
+    ]));
+  }
+  if (toutFini() && !ETAT.horsProto) $("concl").classList.remove("masque");
+}
+function majInstrument() {
+  var g = $("instr"), c = ETAT.surPlateau >= 0 ? CORPS[ETAT.surPlateau] : null;
+  vide(g);
+  function C(k, v, cls) {
+    var d = document.createElement("div");
+    d.innerHTML = '<div class="k">' + k + '</div><div class="v' + (cls || "")
+      + '">' + v + "</div>";
+    g.appendChild(d);
+  }
+  C("division", nb(division(), decDe(division())) + " g",
+    REG.iDiv === PROTO.iDiv ? " ok" : " ko");
+  C("portée", nb(portee(), 0) + " g", REG.iPortee === PROTO.iPortee ? " ok" : " ko");
+  C("décimales justifiées", String(decDe(division())));
+  C("marge avant surcharge", c ? nb(portee() - c.m, 1) + " g"
+    : nb(portee(), 0) + " g");
+  C("sur le plateau", c ? c.nom : "rien", c ? "" : " off");
+  C("zéro", ETAT.enMarche ? (zeroFait() ? "fait" : "décalé de "
+      + nb(ETAT.residu - ETAT.tare, 1) + " g") : "balance éteinte",
+    ETAT.enMarche ? (zeroFait() ? " ok" : " ko") : " off");
+}
+
+/* ==================================================================
+   20. LA CONSIGNE — une cascade, donc UNE SEULE vérité (SKILL §11.2)
+   ================================================================== */
+function consigne() {
+  var j = ETAT.surFleau;
+  if (!ETAT.vide) return "Vérifier l'équilibre à vide de la balance Roberval : "
+    + "les deux plateaux vides, l'aiguille sur le zéro.";
+  if (j < 0 && prochainRoberval() >= 0) {
+    return "Prendre « " + CORPS[prochainRoberval()].nom + " » sur l'étagère et "
+      + "le poser sur le plateau de GAUCHE.";
+  }
+  if (j >= 0 && !equilibre(CORPS[j].m, ETAT.posees)) {
+    return "Ajouter les masses marquées par ordre décroissant, en commençant "
+      + "par " + prochaineEcrite(CORPS[j].m - sommeIndices(ETAT.posees)) + ".";
+  }
+  if (j >= 0 && ETAT.rob[j] === undefined) {
+    return "L'aiguille est au zéro : additionner les masses marquées posées.";
+  }
+  if (j >= 0) return "Reposer le corps et les masses, puis passer au suivant.";
+  if (!ETAT.enMarche) return "Mettre la balance électronique en marche.";
+  if (!zeroFait()) return "L'afficheur ne montre pas zéro : nettoyer le plateau "
+    + "au pinceau et remettre à zéro avant toute pesée.";
+  if (prochainElec() >= 0) return "Poser « " + CORPS[prochainElec()].nom
+    + " » sur la balance électronique et lire la masse affichée.";
+  if (!ETAT.aplatie) return "Aplatir la boule de pâte à modeler en galette, "
+    + "puis la peser de nouveau.";
+  if (!toutFini()) return "Peser la galette aux deux balances : sa masse "
+    + "a-t-elle changé ?";
+  return "Les deux instruments donnent la même valeur, et la pâte a gardé sa "
+    + "masse en changeant de forme. La conclusion est démasquée.";
+}
+/* ⚠ DEUX FILES, PAS UNE. Un seul « corps suivant » se serait arrêté sur le
+   caillou tant que sa pesée électronique manquait — et le protocole demande
+   de faire TOUTE la Roberval avant de passer à l'autre instrument. Les deux
+   files se lisent séparément, et la galette n'entre dans la file qu'une fois
+   la pâte aplatie. */
+function prochainRoberval() {
+  var j;
+  for (j = 0; j < N_CORPS; j++) {
+    if (j === J_GALETTE && !ETAT.aplatie) continue;
+    if (ETAT.rob[j] === undefined) return j;
+  }
+  return -1;
+}
+function prochainElec() {
+  var j;
+  for (j = 0; j < N_CORPS; j++) {
+    if (j === J_GALETTE && !ETAT.aplatie) continue;
+    if (ETAT.elec[j] === undefined) return j;
+  }
+  return -1;
+}
+function prochainCorps() {
+  var j = prochainRoberval();
+  return j >= 0 ? j : Math.max(0, prochainElec());
+}
+function faits() {
+  var j = J_BOULE;
+  return [ETAT.vide, ETAT.surFleau >= 0 || Object.keys(ETAT.rob).length > 0,
+          Object.keys(ETAT.rob).length > 0,
+          colonnesUtiles().every(function (k) { return ETAT.rob[k] !== undefined; }),
+          ETAT.enMarche, zeroFait() && ETAT.enMarche,
+          colonnesUtiles().every(function (k) { return ETAT.elec[k] !== undefined; }),
+          toutFini()];
+}
+
+/* ==================================================================
+   21. LES CURSEURS
+   ==================================================================
+   ⚠ Chaque `value` tombe sur la grille des pas à partir de `min` — sinon le
+   navigateur la ramène ailleurs, `horsProtocole()` rend `true` dès le
+   chargement, et le tableau de la fiche ne se remplit JAMAIS (SKILL §12.12).
+   Ici min = 0, step = 1, value entière : la grille est exacte.            */
+function brancherCurseurs() {
+  function lier(id, cle) {
+    var r = $(id);
+    function maj() {
+      REG[cle] = parseInt(r.value, 10);
+      ETAT.horsProto = horsProtocole();
+      /* un curseur périme les LECTURES prises sous une autre division : les
+         garder à l'écran afficherait des nombres qui ne correspondent plus
+         à l'appareil dessiné (SKILL §12.19) */
+      ETAT.elec = {};
+      ETAT.surPlateau = -1;
+      majSorties();
+      if (svg) redessiner();
+    }
+    r.addEventListener("input", maj);
+    maj();
+  }
+  lier("rDiv", "iDiv");
+  lier("rPortee", "iPortee");
+}
+function majSorties() {
+  $("oDiv").textContent = nb(division(), decDe(division())) + " g"
+    + (REG.iDiv === PROTO.iDiv ? " (protocole)" : "");
+  $("oPortee").textContent = nb(portee(), 0) + " g"
+    + (REG.iPortee === PROTO.iPortee ? " (protocole)" : "");
+  $("rDiv").parentNode.className = "reg" + (REG.iDiv === PROTO.iDiv ? "" : " hp");
+  $("rPortee").parentNode.className = "reg"
+    + (REG.iPortee === PROTO.iPortee ? "" : " hp");
+}
+function revenirAuProtocole() {
+  $("rDiv").value = PROTO.iDiv;
+  $("rPortee").value = PROTO.iPortee;
+  REG.iDiv = PROTO.iDiv; REG.iPortee = PROTO.iPortee;
+  ETAT.horsProto = false;
+  ETAT.elec = {};
+  ETAT.surPlateau = -1;
+  majSorties();
+  redessiner();
+}
+
+/* ==================================================================
+   22. LE GUIDE — les six étapes de la fiche
+   ==================================================================
+   Les prédicats ne sont pas inventés : ils sortent de la cascade de
+   `consigne()` et de l'état des boutons de scène. Une étape qui demande
+   PLUSIEURS gestes — quatre corps à peser — reste courante entre-temps, et
+   c'est son AIDE qui porte le compte (SKILL §12bis.6).                    */
+var GUIDE = [
+  { fait: function () { return ETAT.vide; },
+    aide: "Presser « <b>Vérifier l'équilibre à vide</b> » sous la paillasse, "
+        + "les deux plateaux étant vides. L'aiguille doit osciller puis se "
+        + "poser exactement sur le <b>0</b> du cadran.",
+    montre: function () { surlignerBouton("bt-vide"); surlignerActe("roberval", 4); } },
+
+  { fait: function () {
+      return ETAT.surFleau >= 0 || Object.keys(ETAT.rob).length > 0; },
+    aide: function () {
+      var j = Math.max(0, prochainRoberval());
+      return "Glisser « <b>" + CORPS[j].nom + "</b> » depuis l'étagère de "
+        + "droite jusqu'au <b>plateau de gauche</b>. Le fléau bascule "
+        + "aussitôt : c'est le corps qui l'emporte.";
+    },
+    montre: function () {
+      surlignerActe(objetDe(Math.max(0, prochainRoberval())).id);
+      surlignerZone(zoneFleau());
+    } },
+
+  { fait: function () {
+      return ETAT.surFleau >= 0
+        ? equilibre(CORPS[ETAT.surFleau].m, ETAT.posees)
+        : Object.keys(ETAT.rob).length > 0; },
+    aide: function () {
+      var j = ETAT.surFleau;
+      if (j < 0) return "Poser d'abord un corps sur le plateau de gauche.";
+      var reste = CORPS[j].m - sommeIndices(ETAT.posees);
+      return "Prendre dans la boîte la plus lourde masse qui NE FASSE PAS "
+        + "basculer — ici <b>" + prochaineEcrite(reste) + "</b> — et la poser "
+        + "sur le plateau de droite. Il manque " + nb(reste, 1) + " g.";
+    },
+    montre: function () {
+      var j = ETAT.surFleau, i;
+      if (j < 0) { surlignerZone(zoneFleau()); return; }
+      i = prochaineMarquee(CORPS[j].m - sommeIndices(ETAT.posees), ETAT.posees);
+      if (i >= 0) surlignerActe("m" + i);
+      surlignerZone(zoneMasses());
+    } },
+
+  { fait: function () {
+      return colonnesUtiles().every(function (k) { return ETAT.rob[k] !== undefined; }); },
+    aide: function () {
+      var n = colonnesUtiles().filter(function (k) { return ETAT.rob[k] === undefined; });
+      if (!n.length) return "Les quatre corps sont pesés à la Roberval.";
+      return "Additionner les masses marquées : la somme EST la masse du corps. "
+        + "Il reste <b>" + n.length + "</b> corps à peser à la Roberval.";
+    },
+    montre: function () { surlignerBouton("bt-somme"); } },
+
+  { fait: function () {
+      return ETAT.enMarche && zeroFait()
+        && colonnesUtiles().every(function (k) { return ETAT.elec[k] !== undefined; }); },
+    aide: function () {
+      if (!ETAT.enMarche) return "Presser « <b>On</b> » sur la balance "
+        + "électronique, à droite du boîtier.";
+      if (!zeroFait()) return "L'afficheur ne montre pas zéro : il porte "
+        + nb(ETAT.residu - ETAT.tare, 1) + " g de résidu. <b>Nettoyer le "
+        + "plateau au pinceau</b> puis presser « 0/T ». Sans cela, toutes les "
+        + "lectures seront décalées d'autant.";
+      var n = colonnesUtiles().filter(function (k) { return ETAT.elec[k] === undefined; });
+      return "Poser chaque corps sur le plateau et lire la masse affichée. Il "
+        + "en reste <b>" + n.length + "</b>.";
+    },
+    montre: function () {
+      if (!ETAT.enMarche) { surlignerBouton("bt-on"); return; }
+      if (!zeroFait()) { surlignerActe("pinceau"); surlignerBouton("bt-zero"); return; }
+      surlignerActe(objetDe(Math.max(0, prochainElec())).id);
+      surlignerZone(zoneBalance());
+    } },
+
+  { fait: function () { return toutFini(); },
+    aide: function () {
+      if (ETAT.rob[J_BOULE] === undefined) return "Peser d'abord la pâte "
+        + "<b>en boule</b> : sans cette première pesée, l'aplatir ne prouve rien.";
+      if (!ETAT.aplatie) return "Presser « <b>Aplatir la pâte en galette</b> » : "
+        + "le volume ne change pas, la matière non plus.";
+      return "Peser la galette aux <b>deux</b> balances et comparer à la boule.";
+    },
+    montre: function () {
+      if (!ETAT.aplatie) { surlignerBouton("bt-aplatir"); return; }
+      surlignerActe(objetDe(J_BOULE).id);
+      surlignerZone(ETAT.rob[J_GALETTE] === undefined ? zoneFleau() : zoneBalance());
+    } }
+];
+
+/* ==================================================================
+   23. LES BOUTONS DE SCÈNE — un seul écouteur, et le MÊME chemin que le
+       glisser (SKILL §12.13) : chaque bouton appelle `deposer` sur la zone
+       qu'`emplacements()` propose DANS L'ÉTAT COURANT, jamais une position
+       écrite en dur.
+   ================================================================== */
+var ACTIONS = {
+  "bt-vide": verifierVide,
+  "bt-poser": function () {
+    var j = prochainRoberval(), o;
+    if (j < 0) { signaler("Les corps sont tous pesés à la Roberval."); return; }
+    o = objetDe(j);
+    if (ETAT.surFleau >= 0) { signaler("Le plateau de gauche est déjà occupé."); return; }
+    deposer(o, zoneVoulue(o, "fleau"), { x: o.x, y: o.y });
+  },
+  "bt-marquee": function () {
+    var j = ETAT.surFleau, i;
+    if (j < 0) { signaler("Poser d'abord un corps sur le plateau de gauche."); return; }
+    i = prochaineMarquee(CORPS[j].m - sommeIndices(ETAT.posees), ETAT.posees);
+    if (i < 0) { signaler("L'équilibre est atteint : plus rien à ajouter."); return; }
+    deposer(OBJ["m" + i], zoneVoulue(OBJ["m" + i], "masses"),
+            { x: OBJ["m" + i].x, y: OBJ["m" + i].y });
+  },
+  "bt-somme": lireRoberval,
+  "bt-suivant": corpsSuivant,
+  "bt-on": allumerBalance,
+  "bt-zero": nettoyerPlateau,
+  "bt-electro": function () {
+    var j = prochainElec(), o;
+    if (j < 0) { signaler("Les corps sont tous pesés à la balance électronique."); return; }
+    o = objetDe(j);
+    if (ETAT.surFleau === colonne(o)) {
+      signaler("Retirer d'abord le corps du fléau : on ne pèse pas deux fois "
+        + "le même objet au même instant.");
+      return;
+    }
+    deposer(o, zoneVoulue(o, "balance"), { x: o.x, y: o.y });
+  },
+  "bt-aplatir": aplatirPate,
+  "bt-ranger": function () {
+    var j = ETAT.surPlateau, o;
+    if (j < 0) { signaler("Le plateau de la balance est vide."); return; }
+    o = objetDe(j);
+    deposer(o, zoneRang(o), { x: o.x, y: o.y });
+  }
+};
+function brancherBoutonsScene() {
+  svg.addEventListener("click", function (ev) {
+    var n = ev.target, a = null;
+    while (n && n !== svg) {
+      a = n.getAttribute && n.getAttribute("data-act");
+      if (a && ACTIONS[a]) break;
+      a = null;
+      n = n.parentNode;
+    }
+    if (!a) return;
+    ACTIONS[a]();
+    redessiner();
+  });
+}
+/* Un clic SANS déplacement sélectionne : il dit ce que l'objet est. */
+function cliquerObjet(o) {
+  if (o.type === "marquee") {
+    noter("Masse marquée de " + nb(BOITE[o.i], BOITE[o.i] < 1 ? 1 : 0) + " g. "
+      + secu(/pince/), false);
+    return;
+  }
+  if (o.type === "corps") {
+    noter("« " + CORPS[o.j].nom + " » — " + CORPS[o.j].matiere + ", de masse "
+      + "volumique " + nb(CORPS[o.j].rho, 2) + " g/cm³ : son volume vaut "
+      + nb(CORPS[o.j].V, 1) + " cm³, et c'est lui qui fixe sa TAILLE à "
+      + "l'écran.", false);
+  }
+  redessiner();
+}
+
+/* ==================================================================
+   24. LES TABLEAUX DU CAPOT
+   ================================================================== */
+function construireCapot() {
+  var t = $("capotGlouton"), j, idx;
+  vide(t);
+  t.appendChild(ligneTab(["Corps", "masse", "ce que le glouton pose",
+                          "ce que la fiche consigne", "accord"], true));
+  for (j = 0; j < N_CORPS; j++) {
+    idx = decomposer(CORPS[j].m);
+    t.appendChild(ligneTab([CORPS[j].nom, nb(CORPS[j].m, 1) + " g",
+      ecrireMasses(idx), cel(L_MARQ, j + 1),
+      ecrireMasses(idx).replace(/\s/g, "") === cel(L_MARQ, j + 1).replace(/\s/g, "")
+        ? "oui" : "NON"]));
+  }
+  t = $("capotAccord");
+  vide(t);
+  t.appendChild(ligneTab([""].concat(CORPS.map(function (c) { return c.nom; })), true));
+  var sauve = { d: REG.iDiv, p: REG.iPortee };
+  REG.iDiv = PROTO.iDiv; REG.iPortee = PROTO.iPortee;
+  [["Roberval calculée", function (j) { return nb(sommeIndices(decomposer(CORPS[j].m)), 1); }],
+   ["Roberval, fiche", function (j) { return cel(L_ROB, j + 1); }],
+   ["électronique calculée", function (j) { return nb(lireElec(CORPS[j].m), 1); }],
+   ["électronique, fiche", function (j) { return cel(L_ELEC, j + 1); }]
+  ].forEach(function (r) {
+    var l = [r[0]], j;
+    for (j = 0; j < N_CORPS; j++) l.push(r[1](j));
+    t.appendChild(ligneTab(l));
+  });
+  REG.iDiv = sauve.d; REG.iPortee = sauve.p;
+
+  t = $("capotPate");
+  vide(t);
+  t.appendChild(ligneTab(["Grandeur", "boule", "galette", "ce qu'elle dit"], true));
+  if (J_BOULE >= 0 && J_GALETTE >= 0) {
+    var b = CORPS[J_BOULE], gl = CORPS[J_GALETTE];
+    t.appendChild(ligneTab(["volume", nb(b.V, 1) + " cm³", nb(gl.V, 1) + " cm³",
+      "le même : on n'a rien ôté ni ajouté"]));
+    t.appendChild(ligneTab(["masse volumique", nb(b.rho, 2), nb(gl.rho, 2),
+      "la même : c'est la même matière"]));
+    t.appendChild(ligneTab(["masse", nb(b.m, 1) + " g", nb(gl.m, 1) + " g",
+      "la même, et il n'y avait rien à recalculer"]));
+    t.appendChild(ligneTab(["rayon dessiné", nb(rayonCm(b.V), 2) + " cm",
+      nb(Math.sqrt(Math.pow(rayonCm(b.V), 3) / (rayonCm(b.V) * 0.28)), 2) + " cm",
+      "le dessin relit le volume, il ne le recopie pas"]));
+  }
+  construireConstantes();
+}
+
+/* ==================================================================
+   25. RECOMMENCER, ET LE DÉMARRAGE
+   ==================================================================
+   « Recommencer » remet l'expérience à zéro SANS toucher aux réglages : on
+   refait la même manipulation dans les mêmes conditions. Le minuteur de
+   séance, lui, SURVIT — la séance ne se rembobine pas (SKILL §11.6).       */
+function recommencer() {
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  purger();
+  ANIM_ON = true;
+  var t = ETAT ? ETAT.tSeance : 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = t;
+  ETAT.horsProto = horsProtocole();
+  retenue = 0;
+  $("diverge").innerHTML = "";
+  $("diverge").style.display = "none";
+  LISTE.forEach(function (o) { placer(o, o.base.x, o.base.y); });
+  CORPS.forEach(function (c, j) {
+    if (OBJ["c" + j]) dessinerCorps(OBJ["c" + j], 0);
+  });
+  viderTableau();
+  noter("—", false);
+  redessiner();
+}
+
+function demarrer() {
+  var cadre = $("paillasse");
+  ETAT = neufEtat();
+  construireProtocole();                 /* AVANT le premier majProtocole() */
+  svg = cadre.appendChild(el("svg", { viewBox: "0 0 " + W + " " + H,
+    width: "100%", role: "img",
+    "aria-label": "Paillasse virtuelle : une balance Roberval, sa boîte de "
+      + "masses marquées, une balance électronique et cinq corps à peser" }));
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  defsCommunes();
+  ajouterCouches();
+  construireDecor();
+  construireSecurite();
+  construireRoberval();
+  construireBoite();
+  construireElectronique();
+  construireCorps();
+  construireBoutonsScene();
+  LISTE.forEach(brancherObjet);
+  brancherPrise();
+  brancherBoutonsScene();
+  construireHTMLBase("résultats calculés");
+  construireEtapes(["équilibre à vide", "corps sur le fléau",
+                    "masses marquées", "somme = masse", "balance en marche",
+                    "zéro vérifié", "pesée électronique", "pâte aplatie"]);
+  construireSeance();
+  construireCapot();
+  brancherCurseurs();
+  brancherGuide();
+  $("bProto").addEventListener("click", revenirAuProtocole);
+  demarrerHorloge();
+  redessiner();
+  var faux = accordAvecLaFiche();
+  if (faux.length) {
+    signalerDivergence("modele", "<b>Le modèle ne redonne plus la fiche :</b> "
+      + faux.join(" · "));
+  }
+}
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire. C'est le §1.1 : un bouton qui rejoue le YAML est le refus
+      explicite de l'enseignant.                                              */
+var guideSurb = [], guideDefaire = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  /* ⚠ Un surlignage qui n'ajoute PAS de nœud — le contour posé sur un élément
+     de la colonne de droite — ne se défait pas par un removeChild : il faut
+     une fermeture d'annulation (SKILL §12bis.3-7). */
+  guideDefaire.forEach(function (f) { try { f(); } catch (e) { /* rien */ } });
+  guideDefaire = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un élément de la PAGE — le tableau, un graphe, un bouton de la colonne — ne
+   vit pas dans le SVG : on ne peut pas lui poser de halo. On lui pose un
+   contour en style en ligne, et on le défait avec le reste du guidage. */
+function surlignerHtml(id) {
+  var b = document.getElementById(id), av, ao;
+  if (!b) return false;
+  av = b.style.outline; ao = b.style.outlineOffset;
+  b.style.outline = "3px dashed " + GOLD;
+  b.style.outlineOffset = "3px";
+  guideDefaire.push(function () {
+    b.style.outline = av; b.style.outlineOffset = ao;
+  });
+  return true;
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+/* ⚠ On vise par `data-act`, jamais par un `id` : un `id` de `<defs>` volerait
+   le sélecteur et rendrait un dégradé, qui n'a pas de boîte (§12bis.3-4). */
+function surlignerActe(act, marge) {
+  var n = svg.querySelector('[data-act="' + act + '"]'), b = boiteSVG(n), m = marge || 8;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return false;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+  return true;
+}
+function surlignerZone(z, m) {
+  if (!z) return false;
+  m = m === undefined ? 8 : m;
+  halo(z.x - z.hw - m, z.y - z.hh - m, 2 * (z.hw + m), 2 * (z.hh + m), 14);
+  return true;
+}
+function surlignerObjet(o, m) {
+  if (!o) return false;
+  var b = boiteSVG(o.g);
+  m = m === undefined ? 8 : m;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. l'équilibre à vide. Le bouton de scène passe par `verifierVide()`,
+     qui est aussi ce que l'élève déclenche : même chemin, même état
+     (SKILL §12.13). L'aiguille oscille 1,3 s avant de se poser. */
+  function () { presserBouton("bt-vide"); return 1400; },
+
+  /* 2. le premier corps sur le plateau de GAUCHE. Le bouton appelle
+     `deposer(o, zoneVoulue(o, "fleau"))` : la zone est celle que la page
+     propose dans l'état courant, jamais une position en dur. */
+  function () { presserBouton("bt-poser"); return 700; },
+
+  /* 3. les masses marquées, UNE À LA FOIS et par ordre décroissant. Le
+     glouton choisit la plus lourde qui ne fasse pas basculer — c'est le
+     geste de la fiche, pas un raccourci. */
+  function () { presserBouton("bt-marquee"); return 660; },
+
+  /* 4. les quatre corps à la Roberval. L'étape reste courante tant que la
+     file n'est pas vide : on cherche à chaque pression le premier geste qui
+     RESTE à faire — poser, équilibrer, lire, ranger. */
+  function () {
+    if (ETAT.surFleau < 0) {
+      if (prochainRoberval() < 0) return 0;
+      presserBouton("bt-poser");
+      return 700;
+    }
+    if (!equilibre(CORPS[ETAT.surFleau].m, ETAT.posees)) {
+      presserBouton("bt-marquee");
+      return 660;
+    }
+    presserBouton("bt-somme");
+    return 460;
+  },
+
+  /* 5. la balance électronique. Mettre en marche, PUIS nettoyer et remettre
+     à zéro — l'oublier décale toutes les lectures, et la page le refuse en
+     le disant. Ensuite un corps après l'autre. */
+  function () {
+    if (!ETAT.enMarche) { presserBouton("bt-on"); return 620; }
+    if (!zeroFait()) { presserBouton("bt-zero"); return 860; }
+    if (prochainElec() < 0) return 0;
+    /* la balance ÉCHANGE : le corps déjà posé repart tout seul à sa place */
+    presserBouton("bt-electro");
+    return 700;
+  },
+
+  /* 6. la pâte. On l'aplatit — le rayon grandit exactement de ce que la
+     hauteur perd, à volume constant — puis on la repèse aux DEUX balances.
+     C'est la dernière colonne du tableau, et c'est elle qui démasque la
+     conclusion. */
+  function () {
+    if (!ETAT.aplatie) {
+      if (ETAT.rob[J_BOULE] === undefined) return 0;
+      if (ETAT.surPlateau >= 0) { presserBouton("bt-ranger"); return 560; }
+      presserBouton("bt-aplatir");
+      return 900;
+    }
+    if (ETAT.rob[J_GALETTE] === undefined) {
+      if (ETAT.surPlateau >= 0) { presserBouton("bt-ranger"); return 560; }
+      if (ETAT.surFleau < 0) { presserBouton("bt-poser"); return 700; }
+      if (!equilibre(CORPS[J_GALETTE].m, ETAT.posees)) {
+        presserBouton("bt-marquee");
+        return 660;
+      }
+      presserBouton("bt-somme");
+      return 560;
+    }
+    presserBouton("bt-electro");
+    return 700;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+/* Les écouteurs du guide et du cadre. Ils sont posés une fois, au démarrage. */
+function brancherGuide() {
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("rezero").addEventListener("click", recommencer);
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

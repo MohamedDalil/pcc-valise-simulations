@@ -1,0 +1,3070 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-28 · Que voit-on à l'oscilloscope : une pile, puis un générateur alternatif ?</title>
+<!-- L'ECOUTEUR D'ERREURS EST ICI, ET PAS EN FIN DE BODY (SKILL §12.47) :
+     pose apres le script de la page, il ne verrait aucune erreur de
+     demarrage — celles-ci ont deja eu lieu. -->
+<script>
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message) + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<!--
+  ===================================================================
+  E2AC-28 · 2AC · U3 · L16 — PAILLASSE VIRTUELLE
+  « Que voit-on à l'oscilloscope : une pile, puis un générateur alternatif ? »
+  ===================================================================
+
+  LA FAMILLE, AVANT LA PAGE
+  -------------------------
+  Les TROIS expériences de cette leçon se conduisent sur le MÊME dispositif —
+  le curriculum l'écrit — et les trois paillasses partagent donc UN SEUL
+  modèle, le bloc « LE SOCLE COMMUN » en tête du script :
+
+    · une source u(t), continue ou alternative sinusoïdale ;
+    · un oscilloscope qui ÉCHANTILLONNE u(t) et le porte à l'écran, en
+      divisions, à travers ses deux sensibilités ;
+    · un voltmètre qui INTÈGRE u(t)², jamais qui divise par racine de deux.
+
+  E2AC-28 s'en sert pour la FORME de la courbe, E2AC-29 pour la LIRE,
+  E2AC-30 pour comparer ce qu'elle donne à ce qu'affiche un voltmètre.
+
+  CE QUE CETTE PAGE CALCULE PLUTÔT QUE DE LE REJOUER
+  --------------------------------------------------
+  Les dix cellules du tableau ne sont écrites nulle part dans le code : les
+  cinq lignes sont CINQ VERDICTS PRIS SUR LE TRACÉ ÉCHANTILLONNÉ.
+
+   · L'oscillogramme est le graphe de u(t), point par point : neuf cents
+     échantillons sur un balayage complet, chacun divisé par la sensibilité
+     verticale pour donner une hauteur en divisions. La « droite
+     horizontale » et la « sinusoïde » ne sont pas dessinées : elles sont
+     ce que la source produit.
+   · « Le spot, balayage arrêté » sort de l'ÉTENDUE du tracé sur une
+     période : nulle pour la pile — un point —, égale à 2·Umax/Sv pour
+     l'alternatif — un trait vertical. C'est la même grandeur qui décide de
+     « la tension varie-t-elle ? ».
+   · « Signe de la tension » sort du produit des extrêmes : positif, le
+     signe ne change pas ; négatif, il change.
+   · « Nature de la tension » découle des deux précédents, et de rien
+     d'autre.
+   · Le nombre de TRAVERSÉES de l'axe du temps distingue une sinusoïde
+     d'une courbe quelconque : deux par période, et la page les compte.
+
+  ÉCART AU TABLEAU DE LA FICHE : les DIX verdicts sont retrouvés
+  exactement, mot pour mot. Le modèle Python de contrôle
+  (`modele_L16.py`) les compare un par un et sort en erreur au premier
+  désaccord.
+
+  ⚠ LA SÉCURITÉ EST UNE CONDITION D'EXÉCUTION, PAS UN ENCADRÉ. La fiche
+  interdit de brancher l'oscilloscope sur une prise du secteur. La scène
+  porte donc une VRAIE prise murale, et la page REFUSE d'y enfoncer une
+  fiche — en citant la ligne de sécurité qui l'interdit, et en chiffrant ce
+  que le refus évite : 220 V efficaces, soit 311 V de crête, sur une entrée
+  prévue pour quelques volts.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau, durée, modalité et conclusion
+    viennent de `experiences.yaml`, entrée E2AC-28, par `_sync_donnees.py`.
+  · La tension de la pile (4,5 V), la plage du générateur (6 – 12 V), la
+    sensibilité verticale (5 V/div) et la durée de balayage (5 ms/div) sont
+    LUES dans la fiche à l'exécution.
+  · Deux grandeurs ne sont PAS dans cette fiche, et la page le dit :
+    la FRÉQUENCE du générateur (50 Hz, celle du réseau — le curriculum la
+    donne pour la leçon, quatre sources concordantes) et la position du
+    générateur entre ses deux repères. La seconde est un curseur.
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome : ni `generer.py`, ni `moteur.js`, ni `simulation.html.j2`.
+    Elle DOUBLE `simulation_E2AC-28.html`, elle ne la remplace pas.
+  · Pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL.
+  · LA SCÈNE SE REGARDE DE FACE : un oscilloscope se lit de face, et les
+    appareils sont posés sur la paillasse, vus de face eux aussi. C'est le
+    seul point de vue où l'écran quadrillé est un écran quadrillé.
+  · Le dessin est un SCHÉMA HABILLÉ. Est à l'échelle ce qui compte pour le
+    modèle : l'écran quadrillé — dix divisions sur huit, cinq
+    sous-graduations —, et la position du tracé dans ce quadrillage. Ne le
+    sont pas : la taille relative des appareils, le diamètre des fils, et la
+    hauteur de la paillasse.
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §6.2   aucun état ne dépend de la fin d'une animation ; horloge en
+         `setInterval` lisant `Date.now()`.
+  §8     la couche `fils` est SOUS les appareils : peints par-dessus, les
+         cordons se lisent comme un plat de spaghettis posé sur eux.
+  §12.2  `points` passe par `pt()`, jamais par `nb()`.
+  §12.5  chaque curseur bouge un nombre affiché sur TOUTE sa course.
+  §12.12 chaque `value` de curseur est un multiple du `step` depuis `min`.
+  §12.15 toute décoration porte `pointer-events:none`.
+  §12.18 le tracé dessiné est celui du solveur, division par division.
+  §12.21 les lectures d'écran s'écrivent à la résolution de l'instrument :
+         un dixième de division, et pas un chiffre de plus.
+  §12.29 les nombres lus dans la fiche commencent par un chiffre.
+  §12.38 chaque fiche banane porte une plaque de préhension.
+  §12.46 les intitulés qui croisent un cordon portent un liseré de fond.
+  §12.47 l'écouteur d'erreurs est dans le `<head>`, AVANT le script.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --rouge:#b03030;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #00000077;
+          pointer-events:none;max-width:52%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(244px,22%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #00000055}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0006}
+.rezero:hover{filter:brightness(1.09)}
+
+/* ---- LE BANDEAU DE SÉCURITÉ ----
+   Il porte en permanence la ligne de `securite` qui motive le geste en
+   cours, et passe au rouge franc quand la page REFUSE un geste. */
+.secubande{margin-top:10px;border-radius:9px;padding:10px 14px;
+           border-left:6px solid var(--rouge);background:var(--redbg);
+           display:flex;gap:12px;align-items:flex-start}
+.secubande .pic{font-size:22px;line-height:1.1}
+.secubande .co{flex:1;min-width:0}
+.secubande .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+              font-weight:700;color:var(--rouge);display:block;margin-bottom:2px}
+.secubande .t{font-size:13.5px;color:#4a1f1f;line-height:1.45}
+.secubande.refus{background:#f7d9d9;border-left-color:#8c1c1c}
+.secubande.refus .k{color:#8c1c1c}
+.secubande.ok{background:var(--greenbg);border-left-color:var(--green)}
+.secubande.ok .k{color:var(--green)}
+.secubande.ok .t{color:#22380f}
+
+.checks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.checks div{flex:1 1 calc(33% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted);
+            position:relative;min-width:120px}
+.checks div .n{font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+               font-weight:700;color:#c0a0a0;display:block}
+.checks div.non{border-color:#e6b9b9;background:#fdf4f4}
+.checks div.non .n{color:var(--rouge)}
+.checks div.oui{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.checks div.oui .n{color:var(--green)}
+.checks div.oui::after{content:"✓";position:absolute;right:7px;top:5px;
+                       font-weight:700;color:var(--green)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:92px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect div.ajout{background:#f4f0fa}
+.lect div.ajout .k{color:#6b4b9a}
+.lect div.large{grid-column:1/3}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:var(--rouge);background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.box.secu li{margin-bottom:4px}
+.box.secu li.actif{background:#f7d9d9;border-radius:4px;padding:2px 4px;
+                   margin-left:-4px;font-weight:600}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on lui impose donc une BOÎTE explicite, en
+   `!important` — c'est exactement le cas pour lequel ce mot existe : le SVG
+   porte un style EN LIGNE qui bat tout sélecteur, et sans cela la scène
+   projetée est rognée en haut et en bas. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:flex-start;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de onze
+   étapes fait 550 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit en clair. Passée par un échappement CSS, la séquence du
+   caractère se fait avaler par le chiffre qui la suit et sort en « ¹3 ». */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--serif);font-size:16px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-28</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <!-- LA SÉCURITÉ, EN PREMIER — la consigne du geste en cours, lue dans le YAML -->
+    <div class="secubande" id="secuBande">
+      <span class="pic" id="secuPic">⚠</span>
+      <span class="co">
+        <span class="k" id="secuTitre">Consigne de sécurité du geste en cours</span>
+        <span class="t" id="secuTexte">…</span>
+      </span>
+    </div>
+    <div class="checks" id="checks"></div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeSeuils"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:var(--rouge)">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <!-- Le protocole de la fiche, MOT POUR MOT, en tête de colonne : posé
+         sous la scène il commencerait à y ≈ 950 px, donc invisible sans
+         dérouler. L'étape courante s'y déduit de l'état, jamais d'un
+         compteur : le panneau avance de lui-même dès que le geste est fait,
+         et il recule si on le défait. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>L'oscillogramme <span class="note">le tracé, agrandi</span></h2>
+      <svg id="gOsc" viewBox="0 0 360 200" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Le même tracé que sur l'écran de l'appareil, en plus grand — et
+        obtenu de la même façon : <b>u(t) divisé par la sensibilité
+        verticale</b>, neuf cents fois sur un balayage. Rien n'y est dessiné
+        à la main.
+      </div>
+      <div class="lect" style="margin-top:10px">
+        <div><div class="k">Ce qui est branché</div><div class="v" id="lSrc">—</div></div>
+        <div><div class="k">Balayage</div><div class="v" id="lBal">—</div></div>
+        <div><div class="k">Étendue du tracé</div><div class="v" id="lEt">—</div></div>
+        <div><div class="k">Traversées de l'axe</div><div class="v" id="lTr">—</div></div>
+        <div class="large"><div class="k">Ce que le modèle en conclut</div>
+          <div class="v" id="lNature">—</div></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>u(t) <span class="note">la tension, en volts</span></h2>
+      <svg id="gUt" viewBox="0 0 360 168" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        La même fonction, tracée en <b>volts</b> et en <b>millisecondes</b>
+        au lieu de divisions : c'est ce que l'oscilloscope montre, débarrassé
+        de ses deux sensibilités. Une tension continue y est une droite ; une
+        tension alternative y passe alternativement <b>au-dessus et
+        au-dessous</b> de l'axe du temps.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg"><label for="rSv">Sensibilité verticale S<sub>v</sub></label><output id="oSv"></output>
+        <input type="range" id="rSv" min="0" max="7" step="1" value="5">
+        <div class="aide" id="aideSv"></div></div>
+      <div class="reg"><label for="rSh">Durée de balayage S<sub>h</sub></label><output id="oSh"></output>
+        <input type="range" id="rSh" min="0" max="6" step="1" value="3">
+        <div class="aide" id="aideSh"></div></div>
+      <div class="reg"><label for="rGen">Position du générateur alternatif</label><output id="oGen"></output>
+        <input type="range" id="rGen" min="6" max="12" step="0.1" value="10.6">
+        <div class="aide" id="aideGen"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="eqModele"></div>
+      <p>Rien n'est « affiché parce que la fiche le dit ». Les cinq lignes du
+      tableau sont cinq verdicts pris sur le tracé : l'<b>étendue</b> décide
+      du spot et de « varie-t-elle ? », le <b>produit des extrêmes</b> décide
+      du signe, le <b>nombre de traversées</b> distingue une sinusoïde d'une
+      courbe quelconque.</p>
+      <h3>2 · Ce que devient l'énergie</h3>
+      <div class="eq" id="eqBilan"></div>
+      <p>L'oscilloscope ne consomme presque rien : son entrée vaut un
+      mégohm, et le courant qu'il prélève est de l'ordre du microampère.
+      C'est pourquoi il se branche <b>en dérivation</b>, comme un voltmètre,
+      et c'est pourquoi il mesure une <b>tension</b> et non un courant — la
+      phrase la plus importante de cette fiche, et la plus vite oubliée.</p>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Il ne modélise pas le tube cathodique.</b> Pas de canon à
+        électrons, pas de plaques de déviation, pas de persistance : le
+        « trait vertical » du balayage arrêté est ici l'enveloppe calculée
+        du spot sur une période, pas le résultat d'une rémanence. En vrai,
+        c'est la persistance de l'écran ET celle de l'œil qui le font.</li>
+        <li><b>Il n'y a pas de synchronisation.</b> Un vrai oscilloscope
+        n'affiche une courbe stable que si son balayage est déclenché en
+        phase avec le signal ; mal réglé, l'oscillogramme défile. La page
+        montre toujours une courbe calée, ce qui est plus facile qu'en
+        salle — et la fiche a raison d'écrire « nets et stables ».</li>
+        <li><b>Le générateur est parfait.</b> Sa tension ne dépend ni de la
+        charge, ni de la température, et sa forme est une sinusoïde exacte.
+        Un générateur de valise donne plutôt une sinusoïde écrêtée, et sa
+        fréquence n'est pas de 50,000 Hz.</li>
+        <li><b>La pile ne se décharge pas</b> et sa résistance interne n'est
+        pas modélisée. Une pile plate de 4,5 V affiche 4,5 V à vide et
+        moins en charge ; ici elle affiche 4,5 V pour toujours.</li>
+        <li><b>Aucun défaut de branchement n'est simulé</b> autre que ceux
+        que la page refuse : ni masse commune, ni cordon coupé, ni faux
+        contact. Or le faux contact est, en salle, la première cause d'un
+        écran vide.</li>
+        <li><b>La sécurité simulée n'est pas la sécurité.</b> La page refuse
+        le secteur et le dit ; elle ne peut ni électriser, ni brûler, ni
+        faire disjoncter. Les sept lignes de la fiche restent des règles de
+        salle, que la page affiche mais ne démontre pas.</li>
+      </ul>
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-28.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-28",
+  "niveau": "2AC",
+  "unite": "U3",
+  "lecon": "L16",
+  "titre": "Que voit-on à l'oscilloscope : une pile, puis un générateur alternatif ?",
+  "axe": "Tension continue et tension alternative sinusoïdale",
+  "objectif": "Faire apparaître, sur l'écran d'un oscilloscope, la **différence de forme** entre la tension d'une pile et celle d'un générateur alternatif : une **droite horizontale** dans un cas, une **sinusoïde** dans l'autre. La pile joue le rôle de **témoin** : c'est par contraste avec elle que le mot « alternatif » prend un sens.",
+  "duree": 18,
+  "modalite": "travail par postes de 4 apprenants, sous la conduite de l'enseignant",
+  "materiel": [
+    "Un **oscilloscope** à une voie, avec ses cordons",
+    "Une **pile plate de 4,5 V** (ou une pile de 9 V)",
+    "Un **générateur alternatif basse tension réglable 6 – 12 V~**, ou un **GBF**",
+    "Des **fils de connexion** rouge et noir, avec fiches bananes",
+    "Un **interrupteur**",
+    "Un support de pile"
+  ],
+  "securite": [
+    "⚠️ **On ne branche jamais l'oscilloscope sur une prise du secteur 220 V.** Toutes les sources employées ici sont des sources **basse tension** : une pile, ou la sortie basse tension du générateur alternatif.",
+    "N'utiliser que les **sorties basse tension** du générateur, jamais son entrée secteur.",
+    "**Vérifier tous les branchements avant de fermer le circuit**, et les faire contrôler par l'enseignant.",
+    "Manipuler les fils **avec les mains sèches**, et ne jamais toucher une partie métallique dénudée.",
+    "Signaler **immédiatement** à l'enseignant toute anomalie : échauffement, odeur, fumée, bruit inhabituel.",
+    "Ne jamais tenter de refaire cette expérience **à la maison**, et surtout pas sur une prise de courant.",
+    "Rendre le matériel au complet et ranger les cordons sans les tordre."
+  ],
+  "protocole": [
+    "Repérer sur la face avant de l'oscilloscope : l'**écran quadrillé**, la **borne d'entrée Y**, la **borne de masse**, le **sélecteur DC / AC**, le bouton de **sensibilité verticale Sv** et le bouton de **balayage Sh**.",
+    "Placer le sélecteur sur **DC**, régler **Sv = 5 V/div**, et mettre d'abord le balayage sur **OFF**.",
+    "Relier le pôle **+** de la pile à la **borne Y** et le pôle **−** à la **masse**, puis fermer l'interrupteur. Observer le **spot** sur l'écran.",
+    "Mettre le balayage en marche, sur **Sh = 5 ms/div**, et observer la **courbe** obtenue.",
+    "Ouvrir l'interrupteur, débrancher la pile, et placer le sélecteur sur **AC**.",
+    "Relier une borne du **générateur alternatif** à la borne Y et l'autre à la masse, balayage sur **OFF**. Observer de nouveau le spot.",
+    "Remettre le balayage sur **Sh = 5 ms/div** et observer la courbe obtenue.",
+    "Reproduire les deux courbes sur le quadrillage de la fiche, puis compléter le tableau."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Ce que l'on examine",
+      "La pile",
+      "Le générateur alternatif"
+    ],
+    "lignes": [
+      [
+        "Le spot, balayage arrêté",
+        "",
+        ""
+      ],
+      [
+        "La courbe, balayage en marche",
+        "",
+        ""
+      ],
+      [
+        "Signe de la tension",
+        "",
+        ""
+      ],
+      [
+        "La tension varie-t-elle ?",
+        "",
+        ""
+      ],
+      [
+        "Nature de la tension",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Le spot, balayage arrêté",
+        "un **point immobile**",
+        "un **trait vertical**"
+      ],
+      [
+        "La courbe, balayage en marche",
+        "une **droite horizontale**",
+        "une **sinusoïde**"
+      ],
+      [
+        "Signe de la tension",
+        "toujours **le même**",
+        "**positif puis négatif**"
+      ],
+      [
+        "La tension varie-t-elle ?",
+        "**non**, elle est constante",
+        "**oui**, périodiquement"
+      ],
+      [
+        "Nature de la tension",
+        "tension **continue**",
+        "tension **alternative sinusoïdale**"
+      ]
+    ]
+  },
+  "observation": "Branchée à l'oscilloscope, une pile donne une droite horizontale ; un générateur alternatif donne une sinusoïde symétrique de l'axe du temps.",
+  "conclusion": "L'oscilloscope visualise la tension u = f(t) ; la courbe obtenue est un oscillogramme. Tension continue → droite horizontale ; tension alternative sinusoïdale → sinusoïde.",
+  "oheric": {
+    "observation": "La dynamo du vélo, l'alternateur de la voiture et la prise de courant de la maison ne délivrent pas la même chose qu'une pile : sur une pile, on lit **4,5 V** et deux repères **+** et **−** ; sur une prise, on lit **220 V** et **aucun** des deux trous n'est marqué **+**. Le voltmètre de la première année ne fait pourtant qu'afficher un nombre : il ne dit rien de ce qui se passe **entre deux instants**. Comment voir ce que devient une tension **au cours du temps** ?",
+    "hypothese": "Si un appareil peut tracer la courbe de la tension en fonction du temps — **u = f(t)** —, alors la tension d'une pile, qui garde la même valeur, donnera une **droite horizontale**. Et si la tension d'un générateur alternatif change vraiment de sens, alors sa courbe devra passer **au-dessus puis au-dessous** de l'axe du temps.",
+    "experience": "Brancher l'oscilloscope **en dérivation** aux bornes d'une pile, sélecteur sur **DC** et sensibilité verticale **Sv = 5 V/div**, d'abord **sans balayage** puis avec le balayage réglé sur **Sh = 5 ms/div**. Recommencer ensuite, sélecteur sur **AC**, avec un **générateur alternatif basse tension** à la place de la pile, et comparer les deux courbes.",
+    "resultats": "Balayage arrêté, la pile donne un **point immobile**, décalé au-dessus du centre de l'écran ; le générateur alternatif donne un **trait vertical**, le spot montant et descendant trop vite pour qu'on le suive. Balayage en marche, la pile donne une **droite horizontale** située au-dessus de l'axe du temps, toujours à la même hauteur ; le générateur alternatif donne une **sinusoïde** régulière, **symétrique par rapport à l'axe du temps**, qui passe alternativement au-dessus et au-dessous de lui et qui **se reproduit identique à elle-même**.",
+    "interpretation": "L'oscilloscope trace la courbe **u = f(t)** : l'axe **horizontal** est celui du **temps**, l'axe **vertical** celui de la **tension**. La courbe qu'il affiche porte un nom : c'est un **oscillogramme**. ⚠️ Il faut le dire tout de suite et sans détour : **l'oscilloscope visualise la TENSION, pas le courant** — il se branche exactement comme un voltmètre, en dérivation aux bornes du dipôle. La **pile est le témoin** de cette expérience : sa droite horizontale montre ce qu'est une tension **constante**, et c'est par contraste avec elle que la sinusoïde devient lisible. La tension de la pile garde le **même signe** et la **même valeur** : elle est **continue**. Celle du générateur **varie** au cours du temps ; elle prend **alternativement** des valeurs positives et négatives, elle est donc **alternative** ; elle se reproduit identique à elle-même à intervalles de temps égaux, elle est donc **périodique** ; et la forme de sa courbe est celle d'une vague, elle est donc **sinusoïdale**. L'hypothèse est validée. Le trait vertical obtenu sans balayage n'est d'ailleurs pas un défaut : il montre que la tension monte et descend même quand on ne déroule pas le temps.",
+    "conclusion": "L'**oscilloscope** permet de **visualiser une tension** en fonction du temps ; la courbe obtenue s'appelle un **oscillogramme**, et il se branche **en dérivation**, comme un voltmètre. Une **tension continue** garde le même signe et la même valeur : son oscillogramme est une **droite horizontale**. Une **tension alternative sinusoïdale** varie au cours du temps, prend alternativement des valeurs **positives** et **négatives**, se reproduit **périodiquement**, et son oscillogramme est une **sinusoïde**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.47 : `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0 — le
+   garde-fou d'origine laissait donc passer `null`, et `null.toFixed` levait
+   PENDANT le démarrage, sur une page qui avait l'air de charger. Le TYPE se
+   teste avant la finitude. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+function nbAuto(x) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  var a = Math.abs(x);
+  return nb(x, a >= 100 ? 0 : (a >= 10 ? 1 : (a >= 1 ? 2 : (a >= 0.01 ? 3 : 4))));
+}
+function expo(e) {
+  var s = "" + e, o = "", i, T = { "0": "⁰", "1": "¹", "2": "²", "3": "³",
+    "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  for (i = 0; i < s.length; i++) o += T[s.charAt(i)] || s.charAt(i);
+  return o;
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x) || x === 0) return nb(x, d);
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10);
+  if (e >= -2 && e <= 3) return nbAuto(x);
+  return nb(x / Math.pow(10, e), d === undefined ? 1 : d) + "·10" + expo(e);
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+/* Le mini-markdown du YAML. Le gras se dépouille AVANT l'italique : le motif
+   de l'italique ne doit jamais voir une paire d'astérisques doubles.
+   §12.48 : on décrit le motif en mots, on ne le recopie pas dans un
+   commentaire de bloc — l'échappement de l'étoile refermerait ce commentaire. */
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* §12.2 : `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de nb(). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+/* Couper un texte long en lignes d'au plus n caractères, sans casser un mot. */
+function lignes(txt, n) {
+  var mots = String(txt || "").split(/\s+/), out = [], cur = "";
+  mots.forEach(function (m) {
+    if (!cur.length) { cur = m; return; }
+    if ((cur + " " + m).length <= n) { cur += " " + m; }
+    else { out.push(cur); cur = m; }
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+function degres(r) { return r * 180 / Math.PI; }
+function rads(d) { return d * Math.PI / 180; }
+
+/* ==================================================================
+   3. LE YAML — lecture du tableau, de la sécurité, du matériel
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var NL = LIG.length, NC = ENTETES.length;
+var SECU = (DONNEES.securite || []).map(depouille);
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k) { return depouille((LIG[k] || [])[0]); }
+/* Une ligne de sécurité se vise par ce qu'elle DIT, jamais par le premier
+   mot qui matche (§12.14). */
+function secuOu(motif, repli) {
+  var i, re = new RegExp(motif, "i");
+  for (i = 0; i < SECU.length; i++) if (re.test(SECU[i])) return SECU[i];
+  return repli || (SECU[0] || "");
+}
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, re = new RegExp(motif, "i");
+  for (i = 0; i < m.length; i++) if (re.test(depouille(m[i]))) return depouille(m[i]);
+  return "";
+}
+/* §12.29 : un nombre lu dans la fiche doit COMMENCER par un chiffre, l'unité
+   est sensible à la casse, et elle ne doit pas être suivie d'une lettre —
+   sans quoi le point d'une fin de phrase se lit « NaN » et traverse toute la
+   page en silence. */
+function lireNombre(texte, unite) {
+  var re = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-zÀ-ÿ])");
+  var m = re.exec(String(texte || ""));
+  if (!m) return null;
+  var v = parseFloat(m[1].replace(",", "."));
+  return isFinite(v) ? v : null;
+}
+function lireDansFiche(champ, unite, defaut) {
+  var t = (DONNEES[champ] || []);
+  if (!t.join) t = [t];
+  var v = lireNombre(t.join(" · "), unite);
+  return v === null ? defaut : v;
+}
+
+/* ==================================================================
+   3 bis. LES DURÉES — elles viennent de la fiche, jamais du code (§5)
+   ================================================================== */
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+var MODALITE = depouille(DONNEES.modalite || "");
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   ⚠ §12.17 : toute clé lue dans le code figure dans `neufEtat()`. Une clé
+   oubliée rend une branche entière morte, sans la moindre erreur JS.       */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0, svg = null;
+var COUCHES = {}, ANIM_ON = true;
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+/* ==================================================================
+   10. LES COUCHES — l'ordre est la moitié du dessin (§8)
+   ==================================================================
+     fond    le mur, la table, le meuble
+     fils    les câbles, les ombres portées, les halos — DERRIÈRE les appareils
+     poste   le mobilier fixe et les intitulés
+     arriere l'intérieur de la verrerie, les faisceaux, les zones de dépôt
+     objets  ce qui se manipule
+     avant   les parois de verre, les étiquettes, les reflets
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout             */
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 };
+  /* §12.46 : un liseré de la couleur du fond rend l'étiquette lisible
+     par-dessus n'importe quel trait, et le restera. */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo; a["stroke-width"] = o.epHalo || 3;
+    a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function titrePoste(x, y, s, ancre) {
+  return txt("poste", x, y, s, { ancre: ancre || "start", taille: 11.5, gras: true,
+                                 couleur: ORANGE, esp: 1.1, halo: "#f3ead8" });
+}
+/* §12.38 : un objet fin n'offre au pointeur presque rien. Toute cible
+   manipulable reçoit une PLAQUE DE PRÉHENSION transparente aux cotes de sa
+   silhouette, insérée EN PREMIER dans son groupe — et le harnais vise cette
+   plaque, jamais le centre de la boîte englobante. */
+function plaquePrise(g, x, y, w, h) {
+  var r = el("rect", { x: x, y: y, width: w, height: h, rx: 6,
+                       fill: "#ffffff", "fill-opacity": 0.001 });
+  if (g.firstChild) g.insertBefore(r, g.firstChild); else g.appendChild(r);
+  return r;
+}
+
+/* ==================================================================
+   15. LES BOUTONS DE SCÈNE
+   ================================================================== */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  /* ⚠ DEUX LIGNES DE TEXTE, TOUJOURS — même quand le libellé de départ tient
+     sur une seule. Les boutons changent de libellé en cours de séance :
+     n'ayant créé qu'un nœud, la page perdait la seconde ligne. */
+  var t = [0, 1].map(function () {
+    return g.appendChild(el("text", { x: cx, y: cy,
+      "text-anchor": "middle", "font-size": 11.5, "font-weight": "bold",
+      fill: GRIS, "font-family": "Arial, Helvetica, sans-serif",
+      "pointer-events": "none" }, ""));
+  });
+  function poserLibelle(s) {
+    var q = lignes(s, 19);
+    if (q.length < 2) {
+      t[0].textContent = q[0] || ""; t[0].setAttribute("y", cy + 5);
+      t[1].textContent = "";
+    } else {
+      t[0].textContent = q[0]; t[0].setAttribute("y", cy - 2);
+      t[1].textContent = q.slice(1).join(" "); t[1].setAttribute("y", cy + 12);
+    }
+  }
+  poserLibelle(l1);
+  function peindre(fond, trait, encre, ep) {
+    r.setAttribute("fill", fond); r.setAttribute("stroke", trait);
+    r.setAttribute("stroke-width", ep);
+    t.forEach(function (n) { n.setAttribute("fill", encre); });
+  }
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    libelle: poserLibelle,
+    armer: function (v) {
+      if (r.getAttribute("data-fait") === "1") return;
+      peindre("#ffffff", v ? GOLD : LIGNE, v ? INK : GRIS, v ? 2.6 : 1.8);
+    },
+    fait: function () { r.setAttribute("data-fait", "1"); peindre("#eef6e6", VERT, VERT, 2); },
+    neuf: function () { r.removeAttribute("data-fait"); peindre("#ffffff", LIGNE, GRIS, 1.8); }
+  };
+  return BOUTONS[act];
+}
+function construireBoutons() {
+  var n = BOUTONS_DEF.length, wB = Math.min(170, (W - 130) / n - 10);
+  var dxB = n > 1 ? (W - 2 * (wB / 2 + 34)) / (n - 1) : 0;
+  BOUTONS_DEF.forEach(function (b, i) {
+    boutonScene(wB / 2 + 34 + i * dxB, Y_BOUTONS, wB, 46, b.lib, b.act);
+  });
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (e) {
+    var n = e.target, a = null;
+    while (n && n !== svg) {
+      if (n.getAttribute && n.getAttribute("data-act")) { a = n.getAttribute("data-act"); break; }
+      n = n.parentNode;
+    }
+    if (!a || /^obj-/.test(a)) return;
+    agir(a);
+  });
+}
+
+/* ==================================================================
+   16. PRENDRE ET DÉPOSER
+   ==================================================================
+   §9.1 : le pointeur est capturé sur le SVG lui-même, jamais sur l'objet.
+   Sans cela, un mouvement rapide sort de l'objet et le glissement s'arrête
+   net au milieu du geste, sans lever la moindre erreur.                    */
+var prise = null, ptSVG = null, cibles = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function replacer(q) {
+  var m = maison(q), n = noeudDe(q);
+  if (!n || !m) return;
+  n.setAttribute("transform", "translate(" + m.x.toFixed(1) + "," + m.y.toFixed(1) +
+    ")" + (m.rot ? " rotate(" + m.rot.toFixed(1) + ")" : ""));
+  if (typeof apresReplacer === "function") apresReplacer(q, m);
+}
+function montrerCibles(q) {
+  effacerCibles();
+  (emplacements(q) || []).forEach(function (c) {
+    var n = ajout("arriere", el("circle", { cx: c.x, cy: c.y, r: c.rv || 30,
+      fill: "none", stroke: GOLD, "stroke-width": 3, "stroke-dasharray": "9 6",
+      "pointer-events": "none" }));
+    n.appendChild(el("animate", { attributeName: "opacity", values: "1;.35;1",
+      dur: "1.2s", repeatCount: "indefinite" }));
+    cibles.push(n);
+  });
+}
+function effacerCibles() {
+  cibles.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  cibles = [];
+}
+function cibleLaPlusProche(q, p) {
+  var z = emplacements(q) || [], i, d, best = null, bd = 1e9;
+  for (i = 0; i < z.length; i++) {
+    d = Math.sqrt(Math.pow(p.x - z[i].x, 2) + Math.pow(p.y - z[i].y, 2));
+    if (d <= z[i].r && d < bd) { bd = d; best = z[i]; }
+  }
+  return best;
+}
+/* §12.16 : le bouton équivalent ne vise pas `emplacements(q)[0]`, il vise la
+   zone que `accepte()` accepterait — sans quoi bouton et glisser divergent
+   pour une raison purement interne. */
+function zoneVoulue(q, type) {
+  var z = emplacements(q) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function saisir(q, e) {
+  if (prise) return;                                   /* verrou en 1re ligne */
+  e.preventDefault();
+  if (typeof refuserPrise === "function" && refuserPrise(q)) return;
+  var m = maison(q), p = versSVG(e), g = noeudDe(q);
+  if (!g || !m) return;
+  prise = { quoi: q, id: e.pointerId, dx: m.x - p.x, dy: m.y - p.y,
+            x0: p.x, y0: p.y, bouge: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  g.setAttribute("filter", "url(#ombrePrise)");
+  COUCHES.drag.appendChild(g);
+  g.setAttribute("cursor", "grabbing");
+  montrerCibles(q);
+  if (typeof secuGeste === "function") secuGeste(q);
+}
+function brancherPrise() {
+  OBJETS.forEach(function (q) {
+    var n = noeudDe(q);
+    if (n) n.addEventListener("pointerdown", function (e) { saisir(q, e); });
+  });
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    var p = versSVG(e), g = noeudDe(prise.quoi);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    if (typeof glisserSpecial === "function" && glisserSpecial(prise.quoi, p)) return;
+    if (g) {
+      g.setAttribute("transform", "translate(" + (p.x + prise.dx).toFixed(1) + "," +
+        (p.y + prise.dy).toFixed(1) + ")");
+    }
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var p = versSVG(e), d = prise, g = noeudDe(prise.quoi), cible;
+    prise = null;
+    effacerCibles();
+    if (g) { g.removeAttribute("filter"); g.setAttribute("cursor", "grab");
+             COUCHES.objets.appendChild(g); }
+    /* §9.3 : le seuil de 5 px distingue le CLIC du GLISSEMENT. Sans lui, on
+       ne peut plus désigner un objet sans le déplacer. */
+    if (!d.bouge) { replacer(d.quoi); signaler(ouPoser(d.quoi)); return; }
+    cible = cibleLaPlusProche(d.quoi, p);
+    /* Un dépôt hors zone n'est pas une faute : c'est une question sans
+       réponse. On remet l'objet en place et l'on DIT où il va. */
+    if (!cible) { replacer(d.quoi); signaler(ouPoser(d.quoi)); return; }
+    deposer(d.quoi, cible);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);      /* ne PAS l'oublier */
+}
+
+/* ==================================================================
+   L16 — LE SOCLE COMMUN AUX TROIS PAILLASSES DE L'OSCILLOSCOPE
+   ==================================================================
+   Les trois expériences de cette leçon se conduisent sur LE MÊME dispositif
+   — c'est écrit dans le curriculum — et elles partagent donc UN SEUL modèle :
+
+     · une source, u(t), continue ou alternative sinusoïdale ;
+     · un oscilloscope qui ÉCHANTILLONNE u(t) et le porte à l'écran, en
+       divisions, à travers deux sensibilités ;
+     · un voltmètre qui INTÈGRE u(t)² — jamais qui divise par racine de deux.
+
+   C'est cette intégrale, et elle seule, qui fait sortir le 1,41 de la fiche
+   d'E2AC-30 ; c'est cet échantillonnage, et lui seul, qui décide qu'un
+   oscillogramme est « une droite horizontale » ou « une sinusoïde ».        */
+
+/* -- 1. LES CONSTANTES DE L'INSTRUMENT, sourcées -- */
+var OSC = {
+  DIVX: 10, DIVY: 8,          /* un écran d'oscilloscope scolaire */
+  SOUS: 5,                    /* sous-graduations par division */
+  RES: 0.1,                   /* résolution de lecture : une DEMI
+                                 sous-graduation — ce qu'un lecteur exercé
+                                 interpole à la règle transparente */
+  SV: [0.1, 0.2, 0.5, 1, 2, 5, 10, 20],       /* V/div, gamme 1-2-5 */
+  SH: [0.5, 1, 2, 5, 10, 20, 50]              /* ms/div */
+};
+/* Les calibres d'un multimètre 3 chiffres et demi (type DT-830), avec leur
+   résolution d'affichage : c'est elle qui rend « partir du plus grand
+   calibre » obligatoire, et non prudent. */
+var CALIBRES = [{ v: 750, pas: 1 }, { v: 200, pas: 0.1 },
+                { v: 20, pas: 0.01 }, { v: 2, pas: 0.001 }];
+
+/* -- 2. LA SOURCE : u(t) -- */
+function uSource(t, src) {
+  if (!src || src.mode === "rien") return 0;
+  if (src.mode === "continu") return src.e;
+  var ph = 2 * Math.PI * src.f * t, um = src.ueff * facteurCrete(src.forme);
+  if (src.forme === "carre") return um * (Math.sin(ph) >= 0 ? 1 : -1);
+  if (src.forme === "triangle") {
+    var x = (ph / (2 * Math.PI)) % 1;
+    return um * (x < 0.25 ? 4 * x : (x < 0.75 ? 2 - 4 * x : 4 * x - 4));
+  }
+  return um * Math.sin(ph);
+}
+/* POUR MÉMOIRE SEULEMENT : le modèle ne s'en sert pas pour mesurer, il
+   intègre. Il ne s'en sert que pour construire la source à partir de la
+   valeur efficace que le constructeur a écrite sur le générateur. */
+function facteurCrete(forme) {
+  return forme === "carre" ? 1 : (forme === "triangle" ? Math.sqrt(3) : Math.SQRT2);
+}
+/* -- 3. LE VOLTMÈTRE : il INTÈGRE u², il ne divise pas par racine de deux -- */
+function ueffVraie(src, n) {
+  if (!src || src.mode === "rien") return 0;
+  if (src.mode === "continu") return Math.abs(src.e);
+  n = n || 2000;
+  var T = 1 / src.f, s = 0, i, v;
+  for (i = 0; i < n; i++) {
+    v = uSource((i + 0.5) * T / n, src);
+    s += v * v;
+  }
+  return Math.sqrt(s / n);
+}
+function afficheVoltmetre(v, cal) {
+  if (v > cal.v) return null;                    /* dépassement de calibre */
+  var d = Math.max(0, Math.round(-Math.log(cal.pas) / Math.LN10 - 1e-9));
+  return { v: Math.round(v / cal.pas) * cal.pas, dec: d };
+}
+/* -- 4. L'OSCILLOSCOPE : le tracé porté à l'écran, en DIVISIONS -- */
+function traceOsc(src, sv, sh, balayage, n, couplage) {
+  n = n || 900;
+  var duree = OSC.DIVX * sh * 1e-3, p = [], i, t;
+  /* ⚠ LE COUPLAGE N'EST PAS UN DÉTAIL. En position AC, l'entrée de
+     l'oscilloscope est en série avec un condensateur : la COMPOSANTE
+     CONTINUE ne passe pas. Une pile branchée en AC donne donc un spot au
+     centre, et pas au-dessus — c'est pourquoi la fiche prescrit DC pour la
+     pile et AC pour le générateur, et la page le fait sortir du calcul. */
+  var moy = 0;
+  if (couplage === "AC") {
+    var m = 0, T = (src && src.mode === "alternatif") ? 1 / src.f : duree;
+    for (i = 0; i < 400; i++) m += uSource((i + 0.5) * T / 400, src);
+    moy = m / 400;
+  }
+  for (i = 0; i <= n; i++) {
+    t = i * duree / n;
+    p.push({ x: balayage ? (i / n) * OSC.DIVX - OSC.DIVX / 2 : 0,
+             y: (uSource(t, src) - moy) / sv });
+  }
+  return p;
+}
+/* Une lecture à l'écran ne vaut que ce que la graduation permet (§12.21). */
+function lireDiv(x) { return Math.round(x / OSC.RES) * OSC.RES; }
+function lireY(src, sv) {
+  var p = traceOsc(src, sv, 5, true), m = 0, i;
+  for (i = 0; i < p.length; i++) m = Math.max(m, Math.abs(p[i].y));
+  return lireDiv(m);
+}
+function lireX(src, sh) {
+  if (!src || src.mode !== "alternatif") return null;
+  return lireDiv((1 / src.f) * 1e3 / sh);
+}
+/* -- 5. LES VERDICTS D'E2AC-28 : pris sur le TRACÉ, jamais écrits -- */
+function verdictsOsc(src, sv, sh, couplage) {
+  var p = traceOsc(src, sv, sh, true, 900, couplage), i;
+  var ymin = 1e9, ymax = -1e9, trav = 0;
+  for (i = 0; i < p.length; i++) {
+    ymin = Math.min(ymin, p[i].y); ymax = Math.max(ymax, p[i].y);
+    if (i && p[i - 1].y * p[i].y < 0) trav++;
+  }
+  var et = ymax - ymin, plat = et < 0.05;
+  return {
+    etendue: et, traversees: trav, ymin: ymin, ymax: ymax,
+    spot: plat ? "un point immobile" : "un trait vertical",
+    courbe: plat ? "une droite horizontale"
+                 : (trav >= 2 ? "une sinusoïde" : "une courbe"),
+    signe: (plat || ymin * ymax > 0) ? "toujours le même"
+                                     : "positif puis négatif",
+    varie: plat ? "non, elle est constante" : "oui, périodiquement",
+    nature: plat ? "tension continue" : "tension alternative sinusoïdale"
+  };
+}
+
+/* ==================================================================
+   L16 — LA SCÈNE COMMUNE : l'oscilloscope, ses bornes, ses boutons
+   ==================================================================
+   Le dessin RELIT le modèle (§12.18) : le tracé porté à l'écran est celui
+   que `traceOsc` a calculé, division par division. Aucun sinus décoratif.  */
+var ECRAN_X0 = 268, ECRAN_Y0 = 176, DIVPX = 30;
+var ECRAN_W = OSC.DIVX * DIVPX, ECRAN_H = OSC.DIVY * DIVPX;
+var CORPS_X = 238, CORPS_Y = 138, CORPS_W = 402, CORPS_H = 400;
+var BORNE_Y = { x: CORPS_X + CORPS_W - 34, y: 470 };
+var BORNE_M = { x: CORPS_X + CORPS_W - 34, y: 512 };
+var gEcranOsc, gTrace, gBoutonsOsc, gSpot;
+
+function xDiv(d) { return ECRAN_X0 + (d + OSC.DIVX / 2) * DIVPX; }
+function yDiv(d) { return ECRAN_Y0 + ECRAN_H / 2 - d * DIVPX; }
+
+function construireOscillo() {
+  var g = ajout("poste", el("g"));
+  g.appendChild(el("rect", { x: CORPS_X, y: CORPS_Y, width: CORPS_W,
+    height: CORPS_H, rx: 14, fill: "url(#boitier)", stroke: "#4a535e",
+    "stroke-width": 2.4, filter: "url(#ombreDouce)" }));
+  g.appendChild(el("rect", { x: ECRAN_X0 - 10, y: ECRAN_Y0 - 10,
+    width: ECRAN_W + 20, height: ECRAN_H + 20, rx: 8, fill: "#0d1a12",
+    stroke: "#2b3540", "stroke-width": 3 }));
+  gEcranOsc = ajout("poste", el("g", { "pointer-events": "none" }));
+  /* le quadrillage : dix divisions sur huit, cinq sous-graduations */
+  var i;
+  gEcranOsc.appendChild(el("rect", { x: ECRAN_X0, y: ECRAN_Y0, width: ECRAN_W,
+    height: ECRAN_H, fill: "#0f2417" }));
+  for (i = 0; i <= OSC.DIVX; i++) {
+    gEcranOsc.appendChild(el("line", { x1: xDiv(i - OSC.DIVX / 2), y1: ECRAN_Y0,
+      x2: xDiv(i - OSC.DIVX / 2), y2: ECRAN_Y0 + ECRAN_H, stroke: "#2f6b45",
+      "stroke-width": i === OSC.DIVX / 2 ? 1.8 : 0.9 }));
+  }
+  for (i = 0; i <= OSC.DIVY; i++) {
+    gEcranOsc.appendChild(el("line", { x1: ECRAN_X0, y1: yDiv(OSC.DIVY / 2 - i),
+      x2: ECRAN_X0 + ECRAN_W, y2: yDiv(OSC.DIVY / 2 - i), stroke: "#2f6b45",
+      "stroke-width": i === OSC.DIVY / 2 ? 1.8 : 0.9 }));
+  }
+  /* les sous-graduations, sur les deux axes du milieu */
+  for (i = 0; i <= OSC.DIVX * OSC.SOUS; i++) {
+    gEcranOsc.appendChild(el("line", { x1: ECRAN_X0 + i * DIVPX / OSC.SOUS,
+      y1: yDiv(0) - 4, x2: ECRAN_X0 + i * DIVPX / OSC.SOUS, y2: yDiv(0) + 4,
+      stroke: "#2f6b45", "stroke-width": 0.8 }));
+  }
+  for (i = 0; i <= OSC.DIVY * OSC.SOUS; i++) {
+    gEcranOsc.appendChild(el("line", { x1: xDiv(0) - 4,
+      y1: ECRAN_Y0 + i * DIVPX / OSC.SOUS, x2: xDiv(0) + 4,
+      y2: ECRAN_Y0 + i * DIVPX / OSC.SOUS, stroke: "#2f6b45",
+      "stroke-width": 0.8 }));
+  }
+  gTrace = ajout("poste", el("g", { "pointer-events": "none" }));
+  gSpot = ajout("poste", el("g", { "pointer-events": "none" }));
+  /* les deux bornes : entrée Y et masse — c'est par elles que tout passe */
+  [[BORNE_Y, "Y", "#b03030"], [BORNE_M, "masse", "#2f3a4d"]].forEach(function (b) {
+    var n = ajout("poste", el("g"));
+    n.appendChild(el("circle", { cx: b[0].x, cy: b[0].y, r: 13,
+      fill: "url(#laiton)", stroke: "#5d4a20", "stroke-width": 1.6 }));
+    n.appendChild(el("circle", { cx: b[0].x, cy: b[0].y, r: 5.4, fill: "#2b2416" }));
+    txt("poste", b[0].x - 20, b[0].y + 4, b[1],
+      { ancre: "end", taille: 11, gras: true, couleur: b[2], halo: "#c3ccd6" });
+  });
+  return g;
+}
+
+/* Le tracé : c'est `traceOsc` qui le donne, point par point. */
+function dessinerTrace(src, sv, sh, balayage, allume, couplage) {
+  vide(gTrace); vide(gSpot);
+  if (!allume) return;
+  if (!src || src.mode === "rien") {
+    /* pas de source : le spot reste au centre, l'appareil est allumé */
+    if (!balayage) {
+      gSpot.appendChild(el("circle", { cx: xDiv(0), cy: yDiv(0), r: 4,
+        fill: "#7dffb0", filter: "url(#lueur)" }));
+    } else {
+      gTrace.appendChild(el("line", { x1: ECRAN_X0, y1: yDiv(0),
+        x2: ECRAN_X0 + ECRAN_W, y2: yDiv(0), stroke: "#7dffb0",
+        "stroke-width": 2.4, filter: "url(#lueur)" }));
+    }
+    return;
+  }
+  var p = traceOsc(src, sv, sh, balayage, 900, couplage), i, pts = [], y;
+  if (!balayage) {
+    /* BALAYAGE ARRÊTÉ : le spot ne se déplace qu'en hauteur. La persistance
+       fait un POINT si la tension ne bouge pas, un TRAIT VERTICAL si elle
+       monte et descend — et ce n'est pas un défaut, c'est l'information. */
+    var ymin = 1e9, ymax = -1e9;
+    for (i = 0; i < p.length; i++) {
+      ymin = Math.min(ymin, p[i].y); ymax = Math.max(ymax, p[i].y);
+    }
+    ymin = borne(ymin, -OSC.DIVY / 2, OSC.DIVY / 2);
+    ymax = borne(ymax, -OSC.DIVY / 2, OSC.DIVY / 2);
+    if (ymax - ymin < 0.05) {
+      gSpot.appendChild(el("circle", { cx: xDiv(0), cy: yDiv(ymax), r: 4.4,
+        fill: "#7dffb0", filter: "url(#lueur)" }));
+    } else {
+      gSpot.appendChild(el("line", { x1: xDiv(0), y1: yDiv(ymin), x2: xDiv(0),
+        y2: yDiv(ymax), stroke: "#7dffb0", "stroke-width": 3.4,
+        "stroke-linecap": "round", filter: "url(#lueur)" }));
+    }
+    return;
+  }
+  for (i = 0; i < p.length; i++) {
+    y = borne(p[i].y, -OSC.DIVY / 2 - 0.6, OSC.DIVY / 2 + 0.6);
+    pts.push(pt(xDiv(p[i].x), yDiv(y)));
+  }
+  gTrace.appendChild(el("polyline", { points: pts.join(" "), fill: "none",
+    stroke: "#7dffb0", "stroke-width": 2.6, "stroke-linejoin": "round",
+    filter: "url(#lueur)" }));
+}
+
+/* Les défs communes aux trois pages. */
+function defsOscillo(d) {
+  function lg(id, arrets, h) {
+    var g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: h ? 1 : 0,
+      y2: h ? 0 : 1 });
+    arrets.forEach(function (a) {
+      g.appendChild(el("stop", { offset: a[0], "stop-color": a[1] }));
+    });
+    d.appendChild(g);
+  }
+  lg("mur", [[0, "#f2f5f9"], [1, "#dde4ec"]]);
+  lg("bois", [[0, "#e8d5b0"], [0.5, "#dcc296"], [1, "#c9a973"]]);
+  lg("meuble", [[0, "#7d8794"], [1, "#5d6773"]]);
+  lg("boitier", [[0, "#dfe4ea"], [0.22, "#c3ccd6"], [0.6, "#aeb8c4"],
+                 [1, "#8d97a3"]]);
+  lg("laiton", [[0, "#6d5416"], [0.3, "#c8a33c"], [0.5, "#f0dc9a"],
+                [0.75, "#b8912f"], [1, "#6d5416"]], true);
+  lg("pile", [[0, "#2b3540"], [0.3, "#4a535e"], [0.55, "#6b7686"],
+              [1, "#2b3540"]], true);
+  lg("gene", [[0, "#e6e9ee"], [0.3, "#c9d1da"], [1, "#9aa5b2"]]);
+  var f = d.appendChild(el("filter", { id: "ombreDouce", x: "-40%", y: "-40%",
+    width: "180%", height: "180%" }));
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 2, stdDeviation: 2.6,
+    "flood-color": "#12203a", "flood-opacity": 0.28 }));
+  f = d.appendChild(el("filter", { id: "ombrePrise", x: "-60%", y: "-60%",
+    width: "220%", height: "220%" }));
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 7, stdDeviation: 6,
+    "flood-color": "#12203a", "flood-opacity": 0.42 }));
+  f = d.appendChild(el("filter", { id: "lueur", x: "-40%", y: "-40%",
+    width: "180%", height: "180%" }));
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 0, stdDeviation: 3.4,
+    "flood-color": "#7dffb0", "flood-opacity": 0.85 }));
+}
+
+/* Un bouton rotatif à crans : cliquer, c'est le tourner d'un cran. C'est le
+   geste réel — un sélecteur d'oscilloscope n'est pas un curseur. */
+function molette(cx, cy, r, act, titre) {
+  var g = ajout("poste", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("circle", { cx: cx, cy: cy, r: r + 7, fill: "#8d97a3",
+    stroke: "#5d6773", "stroke-width": 1.4 }));
+  g.appendChild(el("circle", { cx: cx, cy: cy, r: r, fill: "url(#boitier)",
+    stroke: "#4a535e", "stroke-width": 1.8 }));
+  var ind = g.appendChild(el("line", { x1: cx, y1: cy, x2: cx, y2: cy - r + 4,
+    stroke: "#b03030", "stroke-width": 3.2, "stroke-linecap": "round",
+    "pointer-events": "none" }));
+  txt("poste", cx, cy - r - 12, titre,
+    { taille: 10, gras: true, couleur: "#2f3a4d", halo: "#c3ccd6" });
+  var lect = txt("poste", cx, cy + r + 17, "",
+    { taille: 10.5, gras: true, couleur: INK, halo: "#c3ccd6" });
+  return {
+    cx: cx, cy: cy, r: r,
+    poser: function (i, n, texte) {
+      var a = -140 + 280 * (n > 1 ? i / (n - 1) : 0.5);
+      ind.setAttribute("transform", "rotate(" + a.toFixed(1) + "," + cx + "," + cy + ")");
+      lect.textContent = texte;
+    }
+  };
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — lues dans la fiche, ou sourcées
+   ================================================================== */
+function ligneProto(motif) {
+  var p = DONNEES.protocole || [], i, re = new RegExp(motif, "i");
+  for (i = 0; i < p.length; i++) if (re.test(depouille(p[i]))) return depouille(p[i]);
+  return "";
+}
+var E_PILE = (function () {
+  var v = lireNombre(materiel("pile plate"), "V");
+  return v === null ? 4.5 : v;
+}());
+var GEN_MIN = (function () {
+  var m = /(\d[\d,.]*)\s*[–-]\s*(\d[\d,.]*)\s*V/.exec(materiel("générateur alternatif"));
+  return m ? parseFloat(m[1].replace(",", ".")) : 6;
+}());
+var GEN_MAX = (function () {
+  var m = /(\d[\d,.]*)\s*[–-]\s*(\d[\d,.]*)\s*V/.exec(materiel("générateur alternatif"));
+  return m ? parseFloat(m[2].replace(",", ".")) : 12;
+}());
+var SV_FICHE = (function () {
+  var v = lireNombre(ligneProto("Sv = "), "V/div");
+  return v === null ? 5 : v;
+}());
+var SH_FICHE = (function () {
+  var v = lireNombre(ligneProto("Sh = 5|balayage sur"), "ms/div");
+  return v === null ? 5 : v;
+}());
+
+var PHYS = {
+  E_PILE: { v: E_PILE, u: "V", n: "tension de la pile plate",
+    s: "LUE dans la fiche (matériel) : « une pile plate de 4,5 V »" },
+  GEN: { v: GEN_MAX, u: "V", n: "borne haute du générateur alternatif",
+    s: "LUE dans la fiche : « générateur alternatif basse tension réglable 6 – 12 V~ »" },
+  F: { v: 50, u: "Hz", n: "fréquence du générateur",
+    s: "AJOUT — la fiche ne la donne pas ; c'est celle du réseau, que le curriculum fixe à 50 Hz pour toute la leçon (quatre sources concordantes)" },
+  SV: { v: SV_FICHE, u: "V/div", n: "sensibilité verticale prescrite",
+    s: "LUE dans le protocole : « régler Sv = 5 V/div »" },
+  SH: { v: SH_FICHE, u: "ms/div", n: "durée de balayage prescrite",
+    s: "LUE dans le protocole : « balayage sur Sh = 5 ms/div »" },
+  RES: { v: OSC.RES, u: "division", n: "résolution de lecture de l'écran",
+    s: "une demi sous-graduation : l'écran porte 5 sous-graduations par division, et un lecteur exercé interpole à la moitié" },
+  U_SECTEUR: { v: 220, u: "V", n: "tension efficace du secteur",
+    s: "réseau marocain ; c'est elle que la page REFUSE de brancher sur l'entrée Y" },
+  R_ENTREE: { v: 1e6, u: "Ω", n: "résistance d'entrée de l'oscilloscope",
+    s: "1 MΩ, valeur normalisée — c'est elle qui permet le branchement en dérivation" }
+};
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO porte les valeurs prescrites, REG les courantes
+   ==================================================================
+   ⚠ LE BALAYAGE N'EST PAS UN RÉGLAGE HORS PROTOCOLE : le protocole le met
+   lui-même sur OFF puis en marche, et c'est LA manipulation. La position du
+   générateur non plus : cette fiche ne la fixe pas.                        */
+var PROTO = { sv: PHYS.SV.v, sh: PHYS.SH.v };
+var REG = { sv: PHYS.SV.v, sh: PHYS.SH.v, gen: 10.6 };
+function horsProtocole() {
+  return Math.abs(REG.sv - PROTO.sv) > 1e-9 || Math.abs(REG.sh - PROTO.sh) > 1e-9;
+}
+function iSv() { var i = OSC.SV.indexOf(REG.sv); return i < 0 ? 5 : i; }
+function iSh() { var i = OSC.SH.indexOf(REG.sh); return i < 0 ? 3 : i; }
+
+/* ==================================================================
+   5. LA SOURCE VUE PAR L'APPAREIL — elle sort du BRANCHEMENT
+   ==================================================================
+   Rien n'est « choisi » : c'est l'état des deux fiches et de l'interrupteur
+   qui décide de ce que l'entrée Y reçoit. Débrancher, c'est éteindre la
+   courbe — et c'est exactement ce que fait l'étape 5 de la fiche.          */
+function sourceBranchee() {
+  var r = ETAT.fRouge, n = ETAT.fNoir;
+  if (r === "pilePlus" && n === "pileMoins" && ETAT.inter) {
+    return { mode: "continu", e: PHYS.E_PILE.v };
+  }
+  if ((r === "genA" && n === "genB") || (r === "genB" && n === "genA")) {
+    return { mode: "alternatif", ueff: REG.gen, f: PHYS.F.v, forme: "sinus" };
+  }
+  return { mode: "rien" };
+}
+var FIG = null;
+function integrer() {
+  latcher();
+  var src = sourceBranchee();
+  var v = verdictsOsc(src, REG.sv, REG.sh, ETAT.couplage);
+  FIG = {
+    src: src, v: v,
+    branche: src.mode !== "rien",
+    /* le sélecteur que la fiche prescrit pour CETTE source */
+    couplageAttendu: src.mode === "continu" ? "DC"
+                   : (src.mode === "alternatif" ? "AC" : null),
+    umax: src.mode === "alternatif" ? src.ueff * Math.SQRT2 : PHYS.E_PILE.v,
+    debordeY: Math.abs(v.ymax) > OSC.DIVY / 2 + 1e-9 ||
+              Math.abs(v.ymin) > OSC.DIVY / 2 + 1e-9
+  };
+}
+function div(x) { return nb(x, 1); }
+
+/* ==================================================================
+   7. L'ÉTAT — §12.17 : toute clé lue dans le code figure ici
+   ================================================================== */
+function neufEtat() {
+  return {
+    organes: false, couplage: "DC", balayage: true,
+    fRouge: "repos", fNoir: "repos", inter: false,
+    regle1: false, debranche: false, conclu: false,
+    releves: [false, false, false, false],
+    tSeance: 0, retenue: 0, horsProto: false, mesure: null
+  };
+}
+var CHECKS = [
+  { k: "pasSecteur", n: "Rien n'est branché sur le secteur",
+    faire: "garder les fiches loin de la prise murale",
+    quand: function () { return true; } },
+  { k: "verifie", n: "Branchements vérifiés avant la mise sous tension",
+    faire: "faire contrôler le montage",
+    quand: function () { return true; } },
+  { k: "range", n: "Cordons rendus sans être tordus",
+    faire: "ranger les cordons", quand: function () { return ETAT.conclu; } }
+];
+function valCheckPage(k) {
+  if (k === "pasSecteur") return ETAT.fRouge !== "secteur" && ETAT.fNoir !== "secteur";
+  if (k === "verifie") return ETAT.organes;
+  if (k === "range") return !!ETAT.conclu;
+  return undefined;
+}
+var SECU_DEPART = secuOu("jamais l'oscilloscope sur une prise|prise du secteur 220");
+var S_SECTEUR = secuOu("jamais l'oscilloscope sur une prise|prise du secteur 220");
+var S_VERIF = secuOu("Vérifier tous les branchements");
+var S_MAINS = secuOu("mains sèches");
+var S_MAISON = secuOu("à la maison");
+var MOT_REZERO = "Poste remis en état : fiches au repos, interrupteur ouvert, " +
+  "balayage arrêté. On recommence la même manipulation.";
+function secuGeste() { secuDire(S_MAINS, ""); }
+
+/* ==================================================================
+   8. GÉOMÉTRIE — vue de FACE, et TOUTES les hauteurs d'étiquette ici
+   ================================================================== */
+var W = 1120, H = 760, Y_BOUTONS = 690;
+var BOIS_Y = 545, MEUBLE_Y = 612;
+var GEN = { x: 690, y: 232, w: 214, h: 128 };
+var PILE = { x: 700, y: 420, w: 168, h: 84 };
+var PRISE = { x: 960, y: 140, w: 122, h: 104 };
+var INTER = { x: 934, y: 452 };
+var B_GEN_A = { x: GEN.x + 34, y: GEN.y + GEN.h - 12 };
+var B_GEN_B = { x: GEN.x + GEN.w - 34, y: GEN.y + GEN.h - 12 };
+var B_PILE_P = { x: PILE.x + 22, y: PILE.y + 12 };
+var B_PILE_M = { x: PILE.x + PILE.w - 22, y: PILE.y + 12 };
+var REPOS_R = { x: 700, y: 528 }, REPOS_N = { x: 790, y: 528 };
+var Y_ETIQ = {
+  osc: 128,            /* « oscilloscope », au-dessus du boîtier */
+  gen: 222,            /* « générateur alternatif », au-dessus */
+  prise: 130,          /* « prise du secteur », au-dessus */
+  pile: 410,           /* « pile plate », au-dessus */
+  inter: 434,          /* « interrupteur » */
+  fiches: 556,         /* les deux fiches au repos, sur le bois */
+  legende1: 574, legende2: 590
+};
+
+/* ==================================================================
+   9. DÉFS ET DÉCOR
+   ================================================================== */
+function ajouterDefs() { defsOscillo(svg.appendChild(el("defs"))); }
+
+var gFils, gPrise, gInter, gRouge, gNoir, gOrganes, gGenAig;
+var HOME = {};
+
+function construireScene() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BOIS_Y, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BOIS_Y, width: W, height: MEUBLE_Y - BOIS_Y,
+    fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: MEUBLE_Y, width: W, height: H - MEUBLE_Y,
+    fill: "url(#meuble)" }));
+  ajout("fond", el("rect", { x: 0, y: MEUBLE_Y, width: W, height: 3, fill: "#4a535e" }));
+
+  gFils = ajout("fils", el("g", { "pointer-events": "none" }));
+  construireOscillo();
+  txt("poste", CORPS_X + CORPS_W / 2, Y_ETIQ.osc, "oscilloscope",
+    { taille: 12, gras: true, couleur: ORANGE, esp: 1.1, halo: "#eef1f5" });
+
+  /* les commandes de l'appareil : des molettes à crans, et deux
+     inverseurs — c'est le geste réel, un sélecteur n'est pas un curseur */
+  /* ⚠ LES COMMANDES SE COUPENT BIEN AVANT DE SE TOUCHER (§12.7). Premier
+     placement : les deux molettes à 316 et 400, les inverseurs à 486 — et
+     l'intitulé « écran quadrillé » posé sous l'écran barrait « Sv (V/div) »
+     pendant que le report « en marche » touchait la borne de masse. Mesuré
+     à la capture, pas deviné. */
+  MOL_SV = molette(300, 470, 24, "mSv", "Sv (V/div)");
+  MOL_SH = molette(384, 470, 24, "mSh", "Sh (ms/div)");
+  construireInverseur(470, 446, "dcac", "DC / AC");
+  construireInverseur(470, 506, "bal", "balayage");
+
+  construireGenerateur();
+  construirePile();
+  construirePriseSecteur();
+  construireInterrupteur();
+
+  gOrganes = ajout("avant", el("g", { "pointer-events": "none" }));
+
+  HOME = { fRouge: [REPOS_R.x, REPOS_R.y], fNoir: [REPOS_N.x, REPOS_N.y] };
+  construireFiche("rouge"); construireFiche("noir");
+
+  txt("poste", 24, Y_ETIQ.legende1,
+    "paillasse vue de FACE — un oscilloscope se lit de face",
+    { ancre: "start", taille: 11, couleur: "#6b7686", halo: "#e2cfa8" });
+  txt("poste", 24, Y_ETIQ.legende2,
+    "schéma habillé : l'écran quadrillé est à l'échelle (10 × 8 divisions, " +
+    "5 sous-graduations) ; les appareils ne le sont pas",
+    { ancre: "start", taille: 10.5, couleur: "#8a94a4", halo: "#e2cfa8" });
+}
+var MOL_SV, MOL_SH, INV = {};
+
+function construireInverseur(cx, cy, act, titre) {
+  var g = ajout("poste", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - 34, y: cy - 15, width: 68, height: 30, rx: 15,
+    fill: "#8d97a3", stroke: "#5d6773", "stroke-width": 1.6 }));
+  var b = g.appendChild(el("circle", { cx: cx - 16, cy: cy, r: 11.5,
+    fill: "url(#boitier)", stroke: "#4a535e", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  txt("poste", cx, cy - 22, titre,
+    { taille: 10, gras: true, couleur: "#2f3a4d", halo: "#c3ccd6" });
+  var lect = txt("poste", cx, cy + 27, "",
+    { taille: 10.5, gras: true, couleur: INK, halo: "#c3ccd6" });
+  INV[act] = { poser: function (droite, texte) {
+    b.setAttribute("cx", cx + (droite ? 16 : -16));
+    b.setAttribute("fill", droite ? "#c8912a" : "url(#boitier)");
+    lect.textContent = texte;
+  } };
+}
+
+function construireGenerateur() {
+  var g = ajout("poste", el("g"));
+  g.appendChild(el("rect", { x: GEN.x, y: GEN.y, width: GEN.w, height: GEN.h,
+    rx: 10, fill: "url(#gene)", stroke: "#5d6773", "stroke-width": 2.2,
+    filter: "url(#ombreDouce)" }));
+  g.appendChild(el("rect", { x: GEN.x + 16, y: GEN.y + 16, width: GEN.w - 32,
+    height: 40, rx: 5, fill: "#22303f", stroke: "#4a535e", "stroke-width": 1.4 }));
+  gGenAig = ajout("poste", el("text", { x: GEN.x + GEN.w / 2, y: GEN.y + 44,
+    "text-anchor": "middle", "font-size": 20, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "ui-monospace, monospace",
+    "pointer-events": "none" }, ""));
+  g.appendChild(el("text", { x: GEN.x + GEN.w / 2, y: GEN.y + 78,
+    "text-anchor": "middle", "font-size": 10.5, fill: "#2f3a4d",
+    "pointer-events": "none" }, "sortie basse tension ~"));
+  [[B_GEN_A, "A"], [B_GEN_B, "B"]].forEach(function (b) {
+    g.appendChild(el("circle", { cx: b[0].x, cy: b[0].y, r: 12, fill: "url(#laiton)",
+      stroke: "#5d4a20", "stroke-width": 1.5, "pointer-events": "none" }));
+    g.appendChild(el("circle", { cx: b[0].x, cy: b[0].y, r: 5, fill: "#2b2416",
+      "pointer-events": "none" }));
+    txt("poste", b[0].x, b[0].y - 20, b[1],
+      { taille: 12, gras: true, couleur: INK, halo: "#c9d1da" });
+  });
+  txt("poste", GEN.x + GEN.w / 2, Y_ETIQ.gen,
+    "générateur alternatif basse tension",
+    { taille: 11.5, gras: true, couleur: ORANGE, esp: 0.9, halo: "#eef1f5" });
+}
+
+function construirePile() {
+  var g = ajout("poste", el("g"));
+  g.appendChild(el("rect", { x: PILE.x, y: PILE.y, width: PILE.w, height: PILE.h,
+    rx: 7, fill: "url(#pile)", stroke: "#1b2430", "stroke-width": 2,
+    filter: "url(#ombreDouce)" }));
+  g.appendChild(el("text", { x: PILE.x + PILE.w / 2, y: PILE.y + 58,
+    "text-anchor": "middle", "font-size": 15, "font-weight": "bold",
+    fill: "#e8dfc8", "pointer-events": "none" }, nb(PHYS.E_PILE.v, 1) + " V"));
+  /* les deux lames : la longue est le +, la courte le − */
+  [[B_PILE_P, "+", 34], [B_PILE_M, "−", 20]].forEach(function (b) {
+    g.appendChild(el("path", { d: "M " + pt(b[0].x - 4, PILE.y + 6) + " L " +
+      pt(b[0].x - 4, PILE.y - b[2]) + " L " + pt(b[0].x + 4, PILE.y - b[2] - 6) +
+      " L " + pt(b[0].x + 4, PILE.y + 6) + " Z", fill: "url(#laiton)",
+      stroke: "#5d4a20", "stroke-width": 1.2, "pointer-events": "none" }));
+    txt("poste", b[0].x + 16, PILE.y - b[2] + 2, b[1],
+      { taille: 15, gras: true, couleur: b[1] === "+" ? "#b03030" : INK,
+        halo: "#eef1f5" });
+  });
+  txt("poste", PILE.x + PILE.w / 2, Y_ETIQ.pile, "pile plate " +
+    nb(PHYS.E_PILE.v, 1) + " V",
+    { taille: 11.5, gras: true, couleur: ORANGE, esp: 0.9, halo: "#eef1f5" });
+}
+
+/* ⚠ LA PRISE DU SECTEUR EST DANS LA SCÈNE, ET C'EST VOULU. Une interdiction
+   qu'on ne peut pas transgresser ne s'apprend pas : l'élève doit pouvoir
+   approcher la fiche, et la page doit REFUSER, en disant pourquoi et en
+   chiffrant ce que le refus évite. */
+function construirePriseSecteur() {
+  gPrise = ajout("poste", el("g"));
+  gPrise.appendChild(el("rect", { x: PRISE.x, y: PRISE.y, width: PRISE.w,
+    height: PRISE.h, rx: 12, fill: "#f2f2ee", stroke: "#b9b9b0",
+    "stroke-width": 2, filter: "url(#ombreDouce)" }));
+  gPrise.appendChild(el("circle", { cx: PRISE.x + PRISE.w / 2,
+    cy: PRISE.y + PRISE.h / 2, r: 38, fill: "#e6e6df", stroke: "#c9c9c0",
+    "stroke-width": 1.6 }));
+  [-16, 16].forEach(function (dx) {
+    gPrise.appendChild(el("circle", { cx: PRISE.x + PRISE.w / 2 + dx,
+      cy: PRISE.y + PRISE.h / 2 + 6, r: 7, fill: "#2b2b28" }));
+  });
+  gPrise.appendChild(el("rect", { x: PRISE.x + PRISE.w / 2 - 3.5,
+    y: PRISE.y + PRISE.h / 2 - 30, width: 7, height: 17, rx: 2,
+    fill: "#8d97a3", stroke: "#5d6773", "stroke-width": 1 }));
+  txt("poste", PRISE.x + PRISE.w / 2, Y_ETIQ.prise,
+    "prise du secteur — INTERDITE",
+    { taille: 11.5, gras: true, couleur: ROUGE, esp: 0.9, halo: "#eef1f5" });
+  txt("poste", PRISE.x + PRISE.w / 2, PRISE.y + PRISE.h + 18,
+    nb(PHYS.U_SECTEUR.v, 0) + " V efficaces",
+    { taille: 10.5, couleur: ROUGE, halo: "#eef1f5" });
+}
+
+function construireInterrupteur() {
+  gInter = ajout("poste", el("g", { cursor: "pointer", "data-act": "inter" }));
+  gInter.appendChild(el("rect", { x: INTER.x - 32, y: INTER.y - 20, width: 64,
+    height: 40, rx: 6, fill: "#e6e9ee", stroke: "#5d6773", "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  [-1, 1].forEach(function (s) {
+    gInter.appendChild(el("circle", { cx: INTER.x + s * 20, cy: INTER.y, r: 5,
+      fill: "url(#laiton)", stroke: "#5d4a20", "stroke-width": 1,
+      "pointer-events": "none" }));
+  });
+  gInter.appendChild(el("line", { id: "lame", x1: INTER.x - 20, y1: INTER.y,
+    x2: INTER.x + 20, y2: INTER.y, stroke: "#2f3a4d", "stroke-width": 4,
+    "stroke-linecap": "round", "pointer-events": "none" }));
+  txt("poste", INTER.x, Y_ETIQ.inter, "interrupteur",
+    { taille: 11, gras: true, couleur: INK, halo: "#eef1f5" });
+}
+
+/* Une fiche banane : le bout libre d'un cordon. Elle porte sa PLAQUE DE
+   PRÉHENSION (§12.38) — un objet fin n'offre au pointeur presque rien. */
+function construireFiche(coul) {
+  var g = ajout("objets", el("g", { cursor: "grab",
+    "data-act": "obj-f" + coul }));
+  plaquePrise(g, -18, -22, 36, 44);
+  var c = coul === "rouge" ? "#b03030" : "#2f3a4d";
+  g.appendChild(el("rect", { x: -9, y: -18, width: 18, height: 26, rx: 5,
+    fill: c, stroke: "#00000044", "stroke-width": 1, "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -3.5, y: 6, width: 7, height: 16, rx: 2,
+    fill: "url(#laiton)", stroke: "#5d4a20", "stroke-width": 1,
+    "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -6, y: -14, width: 2.6, height: 16, rx: 1.3,
+    fill: "#ffffff", opacity: 0.35, "pointer-events": "none" }));
+  if (coul === "rouge") gRouge = g; else gNoir = g;
+}
+
+/* ==================================================================
+   15 bis. LES BOUTONS DE SCÈNE
+   ================================================================== */
+var BOUTONS_DEF = [
+  { lib: "Nommer les organes de l'appareil", act: "organes" },
+  { lib: "Relever ce que montre l'écran", act: "relever" },
+  { lib: "Reproduire les deux courbes et conclure", act: "conclure" }
+];
+function agir(a) {
+  if (a === "organes") { nommerOrganes(); return; }
+  if (a === "relever") { relever(); return; }
+  if (a === "conclure") { conclure(); return; }
+  if (a === "mSv") { tournerSv(); return; }
+  if (a === "mSh") { tournerSh(); return; }
+  if (a === "dcac") { basculerCouplage(); return; }
+  if (a === "bal") { basculerBalayage(); return; }
+  if (a === "inter") { basculerInter(); return; }
+}
+
+/* ==================================================================
+   16 bis. PRENDRE ET DÉPOSER — les deux fiches, et le refus du secteur
+   ================================================================== */
+var OBJETS = ["fRouge", "fNoir"];
+function noeudDe(q) { return q === "fRouge" ? gRouge : (q === "fNoir" ? gNoir : null); }
+function placeDe(ou, q) {
+  if (ou === "pilePlus") return B_PILE_P;
+  if (ou === "pileMoins") return B_PILE_M;
+  if (ou === "genA") return B_GEN_A;
+  if (ou === "genB") return B_GEN_B;
+  if (ou === "secteur") return { x: PRISE.x + PRISE.w / 2, y: PRISE.y + PRISE.h / 2 };
+  return q === "fRouge" ? REPOS_R : REPOS_N;
+}
+function maison(q) {
+  var p = placeDe(ETAT[q], q);
+  return { x: p.x, y: p.y };
+}
+/* ⚠ §12.16 : de la plus PETITE zone à la plus GRANDE. Les quatre bornes
+   sont de petites zones ; le repos est une grande zone posée en dernier. */
+function emplacements(q) {
+  var z = [];
+  if (q === "fRouge") {
+    z.push({ type: "pilePlus", x: B_PILE_P.x, y: B_PILE_P.y, r: 30, rv: 20 });
+    z.push({ type: "genA", x: B_GEN_A.x, y: B_GEN_A.y, r: 30, rv: 20 });
+  } else {
+    z.push({ type: "pileMoins", x: B_PILE_M.x, y: B_PILE_M.y, r: 30, rv: 20 });
+    z.push({ type: "genB", x: B_GEN_B.x, y: B_GEN_B.y, r: 30, rv: 20 });
+  }
+  z.push({ type: "secteur", x: PRISE.x + PRISE.w / 2, y: PRISE.y + PRISE.h / 2,
+           r: 52, rv: 30 });
+  var r = placeDe("repos", q);
+  z.push({ type: "repos", x: r.x, y: r.y, r: 150, rv: 26 });
+  return z;
+}
+function deposer(q, cible) {
+  /* ⚠ LE REFUS EST LE GESTE LE PLUS INSTRUCTIF DE CETTE PAGE. Il ne se
+     contente pas de dire non : il cite la ligne de la fiche et chiffre ce
+     qu'il évite. */
+  if (cible.type === "secteur") {
+    replacer(q);
+    refus("REFUSÉ. La fiche l'interdit, et voici pourquoi : le secteur " +
+          "délivre " + nb(PHYS.U_SECTEUR.v, 0) + " V efficaces, donc " +
+          nb(PHYS.U_SECTEUR.v * Math.SQRT2, 0) + " V de crête — " +
+          nb(PHYS.U_SECTEUR.v * Math.SQRT2 / (OSC.DIVY / 2 * REG.sv), 0) +
+          " fois ce que l'écran peut montrer à " + nb(REG.sv, 1) + " V/div. " +
+          "On n'emploie ici que des sources BASSE TENSION.", S_SECTEUR);
+    majTout();
+    return;
+  }
+  ETAT[q] = cible.type;
+  replacer(q);
+  if (cible.type === "repos") {
+    noter("Fiche " + (q === "fRouge" ? "rouge" : "noire") + " débranchée et " +
+          "reposée sur la paillasse.", false);
+  } else {
+    succes("Fiche " + (q === "fRouge" ? "rouge" : "noire") + " enfoncée dans " +
+           "la borne " + nomBorne(cible.type) + ".");
+  }
+  majTout();
+}
+function nomBorne(t) {
+  return { pilePlus: "+ de la pile", pileMoins: "− de la pile",
+           genA: "A du générateur", genB: "B du générateur",
+           repos: "de repos" }[t] || t;
+}
+function ouPoser(q) {
+  return "La fiche " + (q === "fRouge" ? "**rouge**, reliée à l'entrée **Y**"
+    : "**noire**, reliée à la **masse**") + ", se pose sur une borne de la " +
+    "pile ou du générateur — jamais ailleurs.";
+}
+
+/* ==================================================================
+   17. CE QUE FONT LES GESTES
+   ================================================================== */
+function nommerOrganes() {
+  ETAT.organes = true;
+  succes("Les organes sont nommés sur l'appareil : l'écran quadrillé, " +
+         "l'entrée Y, la masse, le sélecteur DC/AC, la sensibilité verticale " +
+         "et le balayage. L'oscilloscope se branche EN DÉRIVATION, comme un " +
+         "voltmètre : il visualise une TENSION, pas un courant.");
+  secuDire(S_VERIF, "");
+  majTout();
+}
+function tournerSv() {
+  REG.sv = OSC.SV[(iSv() + 1) % OSC.SV.length];
+  apresReglage();
+}
+function tournerSh() {
+  REG.sh = OSC.SH[(iSh() + 1) % OSC.SH.length];
+  apresReglage();
+}
+function basculerCouplage() {
+  ETAT.couplage = ETAT.couplage === "DC" ? "AC" : "DC";
+  noter("Sélecteur sur " + ETAT.couplage + (ETAT.couplage === "AC"
+    ? " : l'entrée est alors en série avec un condensateur, et la composante CONTINUE ne passe plus."
+    : " : l'entrée laisse passer le continu comme l'alternatif."), false);
+  majTout();
+}
+function basculerBalayage() {
+  ETAT.balayage = !ETAT.balayage;
+  noter(ETAT.balayage
+    ? "Balayage en marche à " + nb(REG.sh, 1) + " ms/div : le spot parcourt " +
+      "l'écran de gauche à droite, et l'axe horizontal devient celui du temps."
+    : "Balayage arrêté : le spot ne peut plus se déplacer qu'en HAUTEUR, et " +
+      "sa hauteur est la tension.", false);
+  majTout();
+}
+function basculerInter() {
+  ETAT.inter = !ETAT.inter;
+  noter(ETAT.inter ? "Interrupteur fermé." : "Interrupteur ouvert.", false);
+  majTout();
+}
+function apresReglage() {
+  ETAT.horsProto = horsProtocole();
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  majAffichageReglages();
+  majTout();
+}
+/* LE RELEVÉ : la page consigne CE QUE LE MODÈLE A CALCULÉ, et rien d'autre.
+   La colonne dépend de la source branchée, la ligne du balayage. */
+function relever() {
+  if (!FIG.branche) {
+    refus("Rien n'est branché sur l'entrée Y : il n'y a pas de tension à " +
+          "relever. Enfoncer les deux fiches sur la même source.", S_VERIF);
+    return;
+  }
+  if (FIG.src.mode === "continu" && !ETAT.inter) {
+    refus("L'interrupteur est ouvert : le circuit n'est pas fermé.", S_VERIF);
+    return;
+  }
+  if (ETAT.couplage !== FIG.couplageAttendu) {
+    refus("Le sélecteur est sur " + ETAT.couplage + " alors que la fiche " +
+          "prescrit " + FIG.couplageAttendu + " pour cette source. En AC, la " +
+          "composante continue est bloquée : la pile donnerait un spot au " +
+          "CENTRE, et l'on relèverait une tension nulle là où il y en a " +
+          nb(PHYS.E_PILE.v, 1) + " V.", S_VERIF);
+    return;
+  }
+  var col = FIG.src.mode === "continu" ? 1 : 2;
+  var k = col === 1 ? 0 : 2;
+  if (!ETAT.balayage) {
+    if (ETAT.releves[k]) { noter("Ce relevé est déjà fait.", false); return; }
+    ETAT.releves[k] = true;
+    revelerCellule(0, col);
+    verifierFiche(0, col, FIG.v.spot);
+    succes("Balayage arrêté, " + (col === 1 ? "pile" : "générateur") + " : " +
+           "l'écran montre " + FIG.v.spot + ". Étendue du tracé sur une " +
+           "période : " + div(FIG.v.etendue) + " division" +
+           (FIG.v.etendue >= 2 ? "s" : "") + ".");
+  } else {
+    if (ETAT.releves[k + 1]) { noter("Ce relevé est déjà fait.", false); return; }
+    if (!ETAT.releves[k]) {
+      refus("La fiche demande d'observer D'ABORD le spot, balayage arrêté : " +
+            "c'est par contraste avec lui que la courbe prend un sens.", S_VERIF);
+      return;
+    }
+    ETAT.releves[k + 1] = true;
+    [1, 2, 3, 4].forEach(function (r) { revelerCellule(r, col); });
+    verifierFiche(1, col, FIG.v.courbe);
+    verifierFiche(4, col, FIG.v.nature);
+    succes("Balayage en marche, " + (col === 1 ? "pile" : "générateur") +
+           " : l'écran montre " + FIG.v.courbe + ", le signe est " +
+           FIG.v.signe + ", la tension " + FIG.v.varie + " — c'est une " +
+           FIG.v.nature + ".");
+  }
+  majTout();
+}
+function conclure() {
+  if (!(ETAT.releves[0] && ETAT.releves[1] && ETAT.releves[2] && ETAT.releves[3])) {
+    refus("Les quatre observations ne sont pas toutes faites : il faut le " +
+          "spot ET la courbe, pour la pile ET pour le générateur.", S_VERIF);
+    return;
+  }
+  ETAT.conclu = true;
+  $("concl").classList.remove("masque");
+  $("bilan").textContent = "pile → droite horizontale → tension CONTINUE   ·   " +
+    "générateur → sinusoïde symétrique → tension ALTERNATIVE SINUSOÏDALE";
+  secuDire(S_MAISON, "ok");
+  succes("Les deux courbes sont reproduites et le tableau est complet. " +
+         "L'oscilloscope visualise une TENSION en fonction du temps : la " +
+         "courbe obtenue s'appelle un oscillogramme.");
+  majTout();
+}
+function termine() { return !!ETAT.conclu; }
+
+/* ==================================================================
+   19. LE RENDU
+   ================================================================== */
+function rendre() {
+  vide(gFils); vide(gOrganes);
+  MOL_SV.poser(iSv(), OSC.SV.length, nb(REG.sv, REG.sv < 1 ? 1 : 0));
+  MOL_SH.poser(iSh(), OSC.SH.length, nb(REG.sh, REG.sh < 1 ? 1 : 0));
+  INV.dcac.poser(ETAT.couplage === "AC", ETAT.couplage);
+  INV.bal.poser(ETAT.balayage, ETAT.balayage ? "en marche" : "arrêté");
+  gGenAig.textContent = nb(REG.gen, 1) + " V~";
+  gInter.querySelector("#lame").setAttribute("y2",
+    ETAT.inter ? INTER.y : INTER.y - 18);
+  OBJETS.forEach(function (q) { replacer(q); });
+  /* LES CORDONS, dans la couche `fils` : peints par-dessus les appareils,
+     ils se liraient comme un plat de spaghettis posé sur eux (§8). */
+  [["fRouge", BORNE_Y, "#b03030"], ["fNoir", BORNE_M, "#2f3a4d"]]
+    .forEach(function (c) {
+      var p = maison(c[0]), a = c[1];
+      var mx = (a.x + p.x) / 2, my = Math.max(a.y, p.y) + 54;
+      gFils.appendChild(el("path", { d: "M " + pt(a.x, a.y) + " Q " +
+        pt(mx, my) + " " + pt(p.x, p.y), fill: "none", stroke: c[2],
+        "stroke-width": 4.6, "stroke-linecap": "round", opacity: 0.92 }));
+    });
+  dessinerTrace(FIG.src, REG.sv, REG.sh, ETAT.balayage, true, ETAT.couplage);
+  if (FIG.debordeY) {
+    /* le message va DANS l'écran : au-dessus, il tomberait sur l'intitulé
+       de l'appareil */
+    txt2(gOrganes, xDiv(0), ECRAN_Y0 + 18,
+      "le tracé déborde de l'écran — changer la sensibilité verticale",
+      "#ffd873", 11.5, true);
+  }
+  /* LES ORGANES NOMMÉS : une légende posée DANS L'ESPACE LIBRE, à gauche du
+     boîtier et sous le journal — et non des étiquettes semées sur l'appareil,
+     où elles barraient les commandes. */
+  if (ETAT.organes) {
+    gOrganes.appendChild(el("rect", { x: 26, y: 286, width: 190, height: 150,
+      rx: 9, fill: "#ffffffdd", stroke: "#b4530f", "stroke-width": 1.4 }));
+    ["l'écran quadrillé, 10 × 8 div", "la borne d'entrée Y",
+     "la borne de masse", "le sélecteur DC / AC",
+     "la sensibilité verticale Sv", "le balayage Sh"]
+      .forEach(function (o, i) {
+        gOrganes.appendChild(el("text", { x: 38, y: 310 + i * 21,
+          "font-size": 11, fill: "#b4530f", "pointer-events": "none" },
+          "· " + o));
+      });
+  }
+}
+function txt2(g, x, y, s, c, t, gras) {
+  g.appendChild(el("text", { x: x, y: y, "text-anchor": "middle",
+    "font-size": t || 12, "font-weight": gras ? "bold" : "normal", fill: c,
+    "paint-order": "stroke", stroke: "#12203a", "stroke-width": 3.4,
+    "stroke-linejoin": "round", "pointer-events": "none" }, s));
+}
+
+/* ==================================================================
+   20 bis. LA CONSIGNE — une cascade sur l'état, une seule vérité
+   ================================================================== */
+function consigne() {
+  if (!ETAT.organes) return "Presser **Nommer les organes de l'appareil** : " +
+    "on repère avant de brancher.";
+  if (!ETAT.regle1) return "Sélecteur sur **DC**, sensibilité verticale sur " +
+    "**" + nb(PROTO.sv, 1) + " V/div**, et balayage **arrêté**.";
+  if (!ETAT.releves[0]) return "Brancher la **pile** — rouge sur +, noire sur " +
+    "− —, fermer l'interrupteur, puis relever le **spot**.";
+  if (!ETAT.releves[1]) return "Mettre le **balayage en marche** sur " +
+    nb(PROTO.sh, 1) + " ms/div, et relever la **courbe**.";
+  if (!ETAT.debranche) return "Ouvrir l'interrupteur, **débrancher la pile**, " +
+    "et mettre le sélecteur sur **AC**.";
+  if (!ETAT.releves[2]) return "Brancher le **générateur alternatif**, " +
+    "balayage **arrêté**, et relever le spot.";
+  if (!ETAT.releves[3]) return "Remettre le **balayage en marche** et relever " +
+    "la courbe.";
+  if (!ETAT.conclu) return "Reproduire les deux courbes et **conclure**.";
+  return "Expérience terminée : la conclusion est démasquée.";
+}
+
+/* ==================================================================
+   21 bis. LE PARCOURS D'ÉTAPES
+   ================================================================== */
+var ETAPES = [
+  { n: "Repérer les organes", f: function () { return ETAT.organes; } },
+  { n: "Régler DC et Sv", f: function () { return ETAT.regle1; } },
+  { n: "Le spot de la pile", f: function () { return ETAT.releves[0]; } },
+  { n: "La courbe de la pile", f: function () { return ETAT.releves[1]; } },
+  { n: "Débrancher, passer en AC", f: function () { return ETAT.debranche; } },
+  { n: "Le spot du générateur", f: function () { return ETAT.releves[2]; } },
+  { n: "La courbe du générateur", f: function () { return ETAT.releves[3]; } },
+  { n: "Conclure", f: function () { return ETAT.conclu; } }
+];
+
+/* ==================================================================
+   22. LES PANNEAUX ET LES GRAPHES
+   ================================================================== */
+function majBoutons() {
+  var a;
+  for (a in BOUTONS) BOUTONS[a].armer(false);
+  BOUTONS.organes.armer(!ETAT.organes);
+  BOUTONS.relever.armer(ETAT.organes && FIG.branche &&
+    ETAT.couplage === FIG.couplageAttendu);
+  BOUTONS.conclure.armer(ETAT.releves[3] && !ETAT.conclu);
+  if (ETAT.organes) BOUTONS.organes.fait();
+  if (ETAT.conclu) BOUTONS.conclure.fait();
+}
+function majLectures() {
+  $("lSrc").textContent = FIG.src.mode === "continu" ? "la pile, " +
+      nb(PHYS.E_PILE.v, 1) + " V"
+    : (FIG.src.mode === "alternatif" ? "le générateur, " + nb(REG.gen, 1) + " V~"
+       : "rien");
+  $("lBal").textContent = ETAT.balayage ? nb(REG.sh, 1) + " ms/div" : "arrêté";
+  $("lEt").textContent = div(FIG.v.etendue) + " div";
+  $("lTr").textContent = FIG.v.traversees + " par balayage";
+  $("lNature").textContent = FIG.branche ? FIG.v.nature : "—";
+  $("lNature").className = "v" + (FIG.branche ? "" : " off");
+  majCarnet();
+  tracerOsc(); tracerUt();
+}
+function majCarnet() {
+  var t = $("carnet"), i, j;
+  if (!t.children.length) {
+    var tr = document.createElement("tr");
+    ["Ce que l'on examine", "ce que le modèle calcule", "d'où cela sort"]
+      .forEach(function (h) {
+        var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+      });
+    t.appendChild(tr);
+    for (i = 0; i < 5; i++) {
+      tr = document.createElement("tr");
+      for (j = 0; j < 3; j++) tr.appendChild(document.createElement("td"));
+      t.appendChild(tr);
+    }
+  }
+  /* ⚠ §12.11 : ce panneau est bâti AVANT la première intégration, donc
+     avant que `FIG` existe. Il RECALCULE plutôt que de relire un cache —
+     `FIG.v` y levait pendant le démarrage, sur une page qui avait l'air de
+     charger (§12.47). */
+  var src = sourceBranchee();
+  var v = verdictsOsc(src, REG.sv, REG.sh, ETAT.couplage);
+  var b = src.mode !== "rien";
+  var L = [
+    ["Le spot, balayage arrêté", b ? v.spot : "—",
+     "étendue du tracé = " + div(v.etendue) + " div"],
+    ["La courbe, balayage en marche", b ? v.courbe : "—",
+     v.traversees + " traversée(s) de l'axe"],
+    ["Signe de la tension", b ? v.signe : "—",
+     "extrêmes " + div(v.ymin) + " et " + div(v.ymax) + " div"],
+    ["La tension varie-t-elle ?", b ? v.varie : "—",
+     "seuil : étendue < 0,05 div"],
+    ["Nature de la tension", b ? v.nature : "—",
+     "des deux lignes précédentes"]
+  ];
+  L.forEach(function (l, k) {
+    var tr = t.querySelectorAll("tr")[k + 1];
+    for (j = 0; j < 3; j++) {
+      tr.children[j].textContent = l[j];
+      tr.children[j].className = j === 1 ? "mes" : (j === 2 ? "" : "");
+    }
+  });
+}
+function tracerOsc() {
+  var g = $("gOsc"), Wg = 360, Hg = 200, x0 = 16, y0 = 14;
+  var wg = Wg - 2 * x0, hg = Hg - 2 * y0, dx = wg / OSC.DIVX, dy = hg / OSC.DIVY;
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: Wg, height: Hg, fill: "#0d1a12",
+    rx: 6 }));
+  g.appendChild(el("rect", { x: x0, y: y0, width: wg, height: hg,
+    fill: "#0f2417" }));
+  var i;
+  for (i = 0; i <= OSC.DIVX; i++) {
+    g.appendChild(el("line", { x1: x0 + i * dx, y1: y0, x2: x0 + i * dx,
+      y2: y0 + hg, stroke: "#2f6b45",
+      "stroke-width": i === OSC.DIVX / 2 ? 1.6 : 0.7 }));
+  }
+  for (i = 0; i <= OSC.DIVY; i++) {
+    g.appendChild(el("line", { x1: x0, y1: y0 + i * dy, x2: x0 + wg,
+      y2: y0 + i * dy, stroke: "#2f6b45",
+      "stroke-width": i === OSC.DIVY / 2 ? 1.6 : 0.7 }));
+  }
+  if (!FIG.branche) {
+    g.appendChild(el("text", { x: Wg / 2, y: Hg / 2 + 4, "text-anchor": "middle",
+      "font-size": 12, fill: "#4f8f68" }, "rien n'est branché sur l'entrée Y"));
+    return;
+  }
+  var p = traceOsc(FIG.src, REG.sv, REG.sh, ETAT.balayage, 600, ETAT.couplage);
+  var pts = [], ymin = 1e9, ymax = -1e9;
+  for (i = 0; i < p.length; i++) {
+    ymin = Math.min(ymin, p[i].y); ymax = Math.max(ymax, p[i].y);
+    pts.push(pt(x0 + (p[i].x + OSC.DIVX / 2) * dx,
+      y0 + hg / 2 - borne(p[i].y, -OSC.DIVY / 2 - 0.4, OSC.DIVY / 2 + 0.4) * dy));
+  }
+  if (ETAT.balayage) {
+    g.appendChild(el("polyline", { points: pts.join(" "), fill: "none",
+      stroke: "#7dffb0", "stroke-width": 2.2 }));
+  } else if (ymax - ymin < 0.05) {
+    g.appendChild(el("circle", { cx: x0 + wg / 2,
+      cy: y0 + hg / 2 - borne(ymax, -4, 4) * dy, r: 3.6, fill: "#7dffb0" }));
+  } else {
+    g.appendChild(el("line", { x1: x0 + wg / 2,
+      y1: y0 + hg / 2 - borne(ymin, -4, 4) * dy, x2: x0 + wg / 2,
+      y2: y0 + hg / 2 - borne(ymax, -4, 4) * dy, stroke: "#7dffb0",
+      "stroke-width": 3 }));
+  }
+  g.appendChild(el("text", { x: x0 + 4, y: y0 + 12, "font-size": 10,
+    fill: "#9fd6b0" }, nb(REG.sv, 1) + " V/div · " +
+    (ETAT.balayage ? nb(REG.sh, 1) + " ms/div" : "balayage arrêté") +
+    " · " + ETAT.couplage));
+}
+function tracerUt() {
+  var g = $("gUt"), Wg = 360, Hg = 168, x0 = 40, y0 = 16, y1 = 138;
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: Wg, height: Hg, fill: "#ffffff" }));
+  var yc = (y0 + y1) / 2, duree = OSC.DIVX * REG.sh;
+  var uM = Math.max(1, FIG.branche ? FIG.umax * 1.25 : 1);
+  function X(t) { return x0 + t / duree * (Wg - x0 - 10); }
+  function Y(u) { return yc - borne(u / uM, -1, 1) * (yc - y0); }
+  g.appendChild(el("line", { x1: x0, y1: yc, x2: Wg - 8, y2: yc,
+    stroke: "#b7bfca", "stroke-width": 1.4 }));
+  g.appendChild(el("line", { x1: x0, y1: y0, x2: x0, y2: y1, stroke: "#b7bfca",
+    "stroke-width": 1.4 }));
+  g.appendChild(el("text", { x: 6, y: Y(uM * 0.8) + 4, "font-size": 9.5,
+    fill: "#6b7686" }, nb(uM * 0.8, 1) + " V"));
+  g.appendChild(el("text", { x: 6, y: yc + 4, "font-size": 9.5,
+    fill: "#6b7686" }, "0"));
+  g.appendChild(el("text", { x: Wg - 8, y: y1 + 18, "text-anchor": "end",
+    "font-size": 9.5, fill: "#6b7686" }, "t (ms) — " + nb(duree, 0) +
+    " ms de balayage"));
+  if (!FIG.branche) return;
+  var pts = [], i, n = 500, t;
+  for (i = 0; i <= n; i++) {
+    t = i * duree / n;
+    pts.push(pt(X(t), Y(uSource(t * 1e-3, FIG.src))));
+  }
+  g.appendChild(el("polyline", { points: pts.join(" "), fill: "none",
+    stroke: FIG.src.mode === "continu" ? "#b03030" : "#3c5f86",
+    "stroke-width": 2.4 }));
+}
+
+/* ==================================================================
+   23. LES PANNEAUX HTML PROPRES À LA PAGE
+   ================================================================== */
+function construireHTMLPage() {
+  $("eqModele").textContent =
+    "la source          u(t) = E                       (pile, continue)\n" +
+    "                   u(t) = Umax·sin(2π f t)        (générateur, alternatif)\n" +
+    "                   Umax = √2 · Ueff\n" +
+    "\n" +
+    "l'écran            y(t) = u(t) / Sv               en divisions\n" +
+    "                   x(t) = t / Sh − 5              en divisions (balayage)\n" +
+    "                   couplage AC : on retranche la valeur moyenne\n" +
+    "\n" +
+    "les cinq verdicts, pris sur 900 échantillons d'un balayage :\n" +
+    "   étendue  = ymax − ymin        < 0,05 div → point / droite / continue\n" +
+    "   signe    = ymin · ymax        > 0 → le signe ne change pas\n" +
+    "   traversées de l'axe           ≥ 2 par balayage → sinusoïde";
+  var sp = { mode: "continu", e: PHYS.E_PILE.v };
+  var sa = { mode: "alternatif", ueff: 10.6, f: PHYS.F.v, forme: "sinus" };
+  var vp = verdictsOsc(sp, PROTO.sv, PROTO.sh, "DC");
+  var va = verdictsOsc(sa, PROTO.sv, PROTO.sh, "AC");
+  $("eqBilan").textContent =
+    "LA PILE, sous Sv = " + nb(PROTO.sv, 1) + " V/div et Sh = " +
+      nb(PROTO.sh, 1) + " ms/div\n" +
+    "   hauteur du tracé : " + nb(PHYS.E_PILE.v / PROTO.sv, 2) + " division au-dessus de l'axe\n" +
+    "   étendue " + nb(vp.etendue, 3) + " div, " + vp.traversees + " traversée(s)\n" +
+    "   -> " + vp.spot + " · " + vp.courbe + " · " + vp.signe + "\n" +
+    "   -> " + vp.varie + " · " + vp.nature + "\n" +
+    "\n" +
+    "LE GÉNÉRATEUR, à 10,6 V efficaces\n" +
+    "   Umax = " + nb(10.6 * Math.SQRT2, 1) + " V, soit " +
+      nb(10.6 * Math.SQRT2 / PROTO.sv, 1) + " divisions de crête\n" +
+    "   étendue " + nb(va.etendue, 3) + " div, " + va.traversees + " traversée(s)\n" +
+    "   -> " + va.spot + " · " + va.courbe + " · " + va.signe + "\n" +
+    "   -> " + va.varie + " · " + va.nature;
+  $("capotSrc").innerHTML = "Le seuil « étendue &lt; 0,05 division » sépare " +
+    "une tension constante d'une tension qui varie. Il laisse une marge " +
+    "immense de part et d'autre des deux observations de la fiche : la pile " +
+    "donne <b>exactement 0</b>, et le générateur <b>" + nb(va.etendue, 1) +
+    " divisions</b>, soit " + nb(va.etendue / 0.05, 0) + " fois le seuil (§12.3).";
+  $("legendeSeuils").innerHTML = "Les lectures d'écran s'écrivent à la " +
+    "résolution de l'instrument — <b>un dixième de division</b>, soit une " +
+    "demi sous-graduation — et pas un chiffre de plus (§12.21).";
+  majCarnet();
+}
+function brancherCommandes() {
+  $("rSv").addEventListener("input", function () {
+    REG.sv = OSC.SV[+this.value]; apresReglage();
+  });
+  $("rSh").addEventListener("input", function () {
+    REG.sh = OSC.SH[+this.value]; apresReglage();
+  });
+  $("rGen").addEventListener("input", function () {
+    REG.gen = parseFloat(this.value); majAffichageReglages(); majTout();
+  });
+  $("bProto").addEventListener("click", function () {
+    REG.sv = PROTO.sv; REG.sh = PROTO.sh;
+    apresReglage();
+    noter("Réglages ramenés à ceux de la fiche : Sv = " + nb(PROTO.sv, 1) +
+          " V/div, Sh = " + nb(PROTO.sh, 1) + " ms/div.", false);
+  });
+}
+function lireReglages() {
+  REG.sv = OSC.SV[+$("rSv").value];
+  REG.sh = OSC.SH[+$("rSh").value];
+  REG.gen = parseFloat($("rGen").value);
+  ETAT.horsProto = horsProtocole();
+}
+function majAffichageReglages() {
+  $("rSv").value = iSv(); $("rSh").value = iSh(); $("rGen").value = REG.gen;
+  $("oSv").textContent = nb(REG.sv, REG.sv < 1 ? 1 : 0) + " V/div";
+  $("oSh").textContent = nb(REG.sh, REG.sh < 1 ? 1 : 0) + " ms/div";
+  $("oGen").textContent = nb(REG.gen, 1) + " V~";
+  $("aideSv").innerHTML = Math.abs(REG.sv - PROTO.sv) < 1e-9
+    ? "la sensibilité de la fiche — la pile y occupe " +
+      nb(PHYS.E_PILE.v / REG.sv, 2) + " division"
+    : "<b>hors protocole</b> : la fiche fixe " + nb(PROTO.sv, 1) + " V/div";
+  $("aideSh").innerHTML = Math.abs(REG.sh - PROTO.sh) < 1e-9
+    ? "la durée de balayage de la fiche — " + nb(OSC.DIVX * REG.sh, 0) +
+      " ms d'un bord à l'autre"
+    : "<b>hors protocole</b> : la fiche fixe " + nb(PROTO.sh, 1) + " ms/div";
+  $("aideGen").innerHTML = "cette fiche ne fixe pas la position du " +
+    "générateur : elle est entre " + nb(GEN_MIN, 0) + " et " + nb(GEN_MAX, 0) +
+    " V. À " + nb(REG.gen, 1) + " V efficaces, la crête vaut " +
+    nb(REG.gen * Math.SQRT2, 1) + " V, soit " +
+    nb(REG.gen * Math.SQRT2 / REG.sv, 1) + " divisions.";
+}
+function remettreScene() {
+  /* Le balayage repart EN MARCHE et les molettes à leur position de la
+     fiche : c'est l'état d'un appareil qu'on vient d'allumer, et l'étape 2
+     du protocole consiste précisément à l'arrêter. */
+  REG.gen = 10.6; REG.sv = PROTO.sv; REG.sh = PROTO.sh;
+  OBJETS.forEach(function (q) {
+    var n = noeudDe(q);
+    if (!n) return;
+    n.removeAttribute("filter");
+    COUCHES.objets.appendChild(n);
+  });
+}
+
+/* ==================================================================
+   LE GUIDAGE — un prédicat par étape de la fiche, dans l'ordre
+   ==================================================================
+   ⚠ AUCUN PRÉDICAT NE SE DÉFAIT PLUS TARD : « le balayage est arrêté »
+   redeviendrait faux à l'étape 4, et « la pile est branchée » à l'étape 5.
+   On latche donc l'ACQUIS, pas l'état courant.                             */
+var GUIDE = [
+  /* 1. repérer les organes de l'appareil */
+  { fait: function () { return ETAT.organes; },
+    aide: "Presser <b>« Nommer les organes de l'appareil »</b> : l'écran " +
+      "quadrillé, l'entrée Y, la masse, le sélecteur DC/AC et les deux " +
+      "sensibilités s'étiquettent sur le boîtier.",
+    montre: function () { surlignerBouton("organes"); } },
+
+  /* 2. DC, Sv = 5 V/div, balayage OFF */
+  { fait: function () { return ETAT.regle1; },
+    aide: function () {
+      if (ETAT.couplage !== "DC") return "Basculer le sélecteur sur <b>DC</b>.";
+      if (Math.abs(REG.sv - PROTO.sv) > 1e-9) return "Tourner la molette " +
+        "<b>Sv</b> jusqu'à <b>" + nb(PROTO.sv, 1) + " V/div</b> (elle est sur " +
+        nb(REG.sv, 1) + ").";
+      return "Mettre le <b>balayage sur arrêté</b> : on regarde d'abord le spot.";
+    },
+    montre: function () {
+      if (ETAT.couplage !== "DC") { haloMol(486, 452, 40); return; }
+      if (Math.abs(REG.sv - PROTO.sv) > 1e-9) { haloMol(316, 470, 34); return; }
+      haloMol(486, 512, 40);
+    } },
+
+  /* 3. brancher la pile, fermer l'interrupteur, observer le spot */
+  { fait: function () { return ETAT.releves[0]; },
+    aide: function () {
+      if (ETAT.fRouge !== "pilePlus") return "Glisser la <b>fiche rouge</b> — " +
+        "celle de l'entrée Y — sur le pôle <b>+</b> de la pile.";
+      if (ETAT.fNoir !== "pileMoins") return "Glisser la <b>fiche noire</b> — " +
+        "celle de la masse — sur le pôle <b>−</b>.";
+      if (!ETAT.inter) return "Fermer l'<b>interrupteur</b>.";
+      return "Presser <b>« Relever ce que montre l'écran »</b>.";
+    },
+    montre: function () {
+      if (ETAT.fRouge !== "pilePlus") { surlignerObjet("fRouge", 54, 60);
+        montrerCibles("fRouge"); return; }
+      if (ETAT.fNoir !== "pileMoins") { surlignerObjet("fNoir", 54, 60);
+        montrerCibles("fNoir"); return; }
+      if (!ETAT.inter) { halo(INTER.x - 40, INTER.y - 28, 80, 56, 10); return; }
+      surlignerBouton("relever");
+    } },
+
+  /* 4. balayage en marche, observer la courbe */
+  { fait: function () { return ETAT.releves[1]; },
+    aide: function () {
+      if (!ETAT.balayage) return "Mettre le <b>balayage en marche</b>, sur <b>" +
+        nb(PROTO.sh, 1) + " ms/div</b>.";
+      if (Math.abs(REG.sh - PROTO.sh) > 1e-9) return "Tourner la molette " +
+        "<b>Sh</b> jusqu'à <b>" + nb(PROTO.sh, 1) + " ms/div</b>.";
+      return "Presser <b>« Relever ce que montre l'écran »</b>.";
+    },
+    montre: function () {
+      if (!ETAT.balayage) { haloMol(486, 512, 40); return; }
+      if (Math.abs(REG.sh - PROTO.sh) > 1e-9) { haloMol(400, 470, 34); return; }
+      surlignerBouton("relever");
+    } },
+
+  /* 5. ouvrir, débrancher la pile, sélecteur sur AC */
+  { fait: function () { return ETAT.debranche; },
+    aide: function () {
+      if (ETAT.inter) return "Ouvrir l'<b>interrupteur</b> avant de toucher " +
+        "aux fiches.";
+      if (ETAT.fRouge === "pilePlus" || ETAT.fNoir === "pileMoins") {
+        return "<b>Débrancher la pile</b> : ramener les deux fiches au repos.";
+      }
+      return "Basculer le sélecteur sur <b>AC</b>.";
+    },
+    montre: function () {
+      if (ETAT.inter) { halo(INTER.x - 40, INTER.y - 28, 80, 56, 10); return; }
+      if (ETAT.fRouge === "pilePlus") { surlignerObjet("fRouge", 54, 60);
+        montrerCibles("fRouge"); return; }
+      if (ETAT.fNoir === "pileMoins") { surlignerObjet("fNoir", 54, 60);
+        montrerCibles("fNoir"); return; }
+      haloMol(486, 452, 40);
+    } },
+
+  /* 6. brancher le générateur, balayage arrêté, observer le spot */
+  { fait: function () { return ETAT.releves[2]; },
+    aide: function () {
+      if (ETAT.fRouge !== "genA") return "Glisser la <b>fiche rouge</b> sur la " +
+        "borne <b>A</b> du générateur — sa sortie BASSE TENSION, jamais son " +
+        "entrée secteur.";
+      if (ETAT.fNoir !== "genB") return "Glisser la <b>fiche noire</b> sur la " +
+        "borne <b>B</b>.";
+      if (ETAT.balayage) return "Arrêter le <b>balayage</b> : on regarde " +
+        "d'abord le spot, comme pour la pile.";
+      return "Presser <b>« Relever ce que montre l'écran »</b>.";
+    },
+    montre: function () {
+      if (ETAT.fRouge !== "genA") { surlignerObjet("fRouge", 54, 60);
+        montrerCibles("fRouge"); return; }
+      if (ETAT.fNoir !== "genB") { surlignerObjet("fNoir", 54, 60);
+        montrerCibles("fNoir"); return; }
+      if (ETAT.balayage) { haloMol(486, 512, 40); return; }
+      surlignerBouton("relever");
+    } },
+
+  /* 7. balayage en marche, observer la courbe */
+  { fait: function () { return ETAT.releves[3]; },
+    aide: function () {
+      if (!ETAT.balayage) return "Remettre le <b>balayage en marche</b>.";
+      return "Presser <b>« Relever ce que montre l'écran »</b>.";
+    },
+    montre: function () {
+      if (!ETAT.balayage) { haloMol(486, 512, 40); return; }
+      surlignerBouton("relever");
+    } },
+
+  /* 8. reproduire les deux courbes et compléter le tableau */
+  { fait: function () { return ETAT.conclu; },
+    aide: "Presser <b>« Reproduire les deux courbes et conclure »</b>.",
+    montre: function () { surlignerBouton("conclure"); } }
+];
+function haloMol(cx, cy, r) { halo(cx - r, cy - r, 2 * r, 2 * r, r); }
+
+/* Les deux acquis LATCHÉS. ⚠ Ils se posent dans `integrer()`, c'est-à-dire
+   à chaque geste — et non dans l'horloge : un état qui n'apparaîtrait qu'au
+   tic suivant ferait passer la pression pour une panne (§12bis, l'empreinte). */
+function latcher() {
+  if (!ETAT.regle1 && ETAT.organes && ETAT.couplage === "DC" &&
+      Math.abs(REG.sv - PROTO.sv) < 1e-9 && !ETAT.balayage) ETAT.regle1 = true;
+  if (!ETAT.debranche && ETAT.releves[1] && !ETAT.inter &&
+      ETAT.fRouge === "repos" && ETAT.fNoir === "repos" &&
+      ETAT.couplage === "AC") ETAT.debranche = true;
+}
+/* ==================================================================
+   20. CONSIGNE, JOURNAL, SÉCURITÉ, TABLEAU
+   ================================================================== */
+/* §12.10 : un refus tient tant qu'il n'est pas résolu, et pas une seconde
+   de plus. Toute action qui ABOUTIT lève la retenue. */
+function dire(t, fini) {
+  if (ETAT.retenue && Date.now() < ETAT.retenue) return;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  ETAT.retenue = 0;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne";
+  ETAT.retenue = Date.now() + 4000;
+}
+function noter(t, positif) {
+  var n = $("obs");
+  n.textContent = t;
+  n.className = "obs" + (positif ? " pos" : "");
+}
+function succes(t) { ETAT.retenue = 0; noter(t, true); }
+function refus(t, ligne) { signaler(t); noter(t, false); secuDire(ligne, "refus"); }
+function secuDire(t, cls) {
+  var b = $("secuBande"), i, ul;
+  $("secuTexte").textContent = t || "";
+  $("secuPic").textContent = cls === "ok" ? "✔" : (cls === "refus" ? "⛔" : "⚠");
+  b.className = "secubande" + (cls ? " " + cls : "");
+  ul = $("securite");
+  if (!ul) return;
+  for (i = 0; i < ul.children.length; i++) {
+    ul.children[i].className = (SECU[i] === t) ? "actif" : "";
+  }
+}
+/* §6.3 : cellule par cellule, jamais par ligne ni par colonne — une même
+   ligne porte des observations faites à des instants différents. */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;                          /* §11.3 */
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+function tableauVierge() {
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+}
+function construireTableau() {
+  var t = $("tab"), tr = document.createElement("tr"), i, k, td;
+  vide(t);
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th");
+    th.innerHTML = md(e);
+    tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (k = 0; k < NL; k++) {
+    tr = document.createElement("tr");
+    for (i = 0; i < NC; i++) {
+      td = document.createElement("td");
+      td.className = "vide";
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  tableauVierge();
+}
+/* §11.5 : quand le modèle et la fiche divergent, on le DIT. */
+function verifierFiche(k, c, obtenu) {
+  if (ETAT.horsProto) return;
+  var attendu = cel(k, c);
+  if (!attendu) return;
+  if (String(obtenu).toLowerCase().indexOf(String(attendu).toLowerCase()) < 0 &&
+      String(attendu).toLowerCase().indexOf(String(obtenu).toLowerCase()) < 0) {
+    noter("⚠ Le modèle et la fiche divergent sur « " + intitule(k) +
+          " » : le modèle donne « " + obtenu + " », la fiche « " + attendu +
+          " ». Vérifier les constantes.", false);
+  }
+}
+
+/* §11.5 + §12.44 : on compare le NOMBRE, pas la chaîne — la fiche écrit
+   « 6, côté objet » là où le modèle calcule « 6,0 ». Et l'on demande à la
+   fiche si elle fixe une VALEUR : quand elle n'en donne pas, il n'y a rien
+   à comparer et le contrôle se tait. */
+function verifierNombre(k, c, obtenu, tol) {
+  if (ETAT.horsProto) return true;
+  var m = /(-?\d+(?:,\d+)?)/.exec(cel(k, c) || "");
+  if (!m) return true;
+  var att = parseFloat(m[1].replace(",", "."));
+  if (!isFinite(att)) return true;
+  if (Math.abs(obtenu - att) <= (tol === undefined ? 0.05 : tol)) return true;
+  noter("⚠ Le modèle et la fiche divergent sur « " + intitule(k) + " » : le " +
+        "modèle donne " + nb(obtenu, 2) + ", la fiche " + nb(att, 2) +
+        ". Vérifier les constantes.", false);
+  return false;
+}
+
+/* ==================================================================
+   21. LE PARCOURS D'ÉTAPES
+   ==================================================================
+   L'état se DÉDUIT de `ETAT`, jamais d'un compteur séparé (§11.1).        */
+function majEtapes() {
+  var d = $("etapes"), i, k = -1, c;
+  for (i = 0; i < ETAPES.length; i++) if (!ETAPES[i].f()) { k = i; break; }
+  if (!d.children.length) {
+    ETAPES.forEach(function (e, j) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">' + (j + 1) + '</span>' + e.n;
+      d.appendChild(n);
+    });
+  }
+  for (i = 0; i < ETAPES.length; i++) {
+    d.children[i].className = ETAPES[i].f() ? "faite" : (i === k ? "actif" : "");
+  }
+  c = $("checks");
+  if (!c) return;
+  if (!c.children.length) {
+    CHECKS.forEach(function (h) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">sécurité</span>' + h.n;
+      c.appendChild(n);
+    });
+  }
+  CHECKS.forEach(function (h, j) {
+    c.children[j].className = valCheck(h.k) ? "oui" : "non";
+  });
+}
+/* Certaines vérifications ne se lisent pas directement dans `ETAT` : une
+   consigne peut rester vraie TANT QU'ON N'A PAS ENCORE fait tel geste, et le
+   redevenir ensuite. La page le dit dans `valCheckPage`, et un `undefined`
+   renvoie au cas général. */
+function valCheck(k) {
+  if (typeof valCheckPage === "function") {
+    var r = valCheckPage(k);
+    if (r !== undefined) return r;
+  }
+  return !!ETAT[k];
+}
+function checkManquant() {
+  var i;
+  for (i = 0; i < CHECKS.length; i++) {
+    if (CHECKS[i].quand() && !valCheck(CHECKS[i].k)) return CHECKS[i];
+  }
+  return null;
+}
+
+/* ==================================================================
+   23. LES PANNEAUX HTML — la part commune
+   ================================================================== */
+function construireHTML() {
+  $("titre").textContent = "Paillasse virtuelle — " + depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + DONNEES.niveau +
+    " · " + DONNEES.unite + " · " + DONNEES.lecon;
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation ||
+    DONNEES.observation || "");
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion || "");
+  $("seanceB").textContent = "durée prescrite : " + DUREE_SEANCE + " min";
+  $("seanceM").textContent = MODALITE;
+  var u = $("materiel");
+  vide(u);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); u.appendChild(li);
+  });
+  u = $("securite");
+  vide(u);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); u.appendChild(li);
+  });
+  construireTableau();
+  /* §7.3 : le tableau des constantes se RÉGÉNÈRE depuis PHYS, il n'est
+     jamais retapé dans le HTML. */
+  var t = $("capotConst"), tr = document.createElement("tr"), k;
+  vide(t);
+  ["Constante", "Valeur", "D'où elle vient"].forEach(function (h) {
+    var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (k in PHYS) {
+    tr = document.createElement("tr");
+    [PHYS[k].n, (typeof PHYS[k].v === "number" ? sci(PHYS[k].v, 3) : PHYS[k].v) +
+      (PHYS[k].u ? " " + PHYS[k].u : ""), PHYS[k].s].forEach(function (v, i) {
+      var td = document.createElement("td");
+      td.textContent = v;
+      if (i === 1) td.className = "mes";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation || "");
+  if (typeof construireHTMLPage === "function") construireHTMLPage();
+}
+
+/* ==================================================================
+   25. L'HORLOGE
+   ==================================================================
+   `setInterval` + `Date.now()`, jamais `requestAnimationFrame` : aucun état
+   ne doit dépendre du rafraîchissement (SKILL §6.2, §13.5 bis).
+   Le minuteur de séance court en temps RÉEL et ne s'accélère jamais (§5.4). */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 250);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+  if (typeof tickPage === "function") tickPage(dt);
+}
+function majSeance() {
+  var f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceJ").style.width = borne(f, 0, 1) * 100 + "%";
+  $("seanceT").parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+/* ⚠ `integrer()` EN PREMIÈRE LIGNE. Chaque geste change ce que le modèle
+   voit ; sans ce recalcul, la page raisonne sur l'état précédent et un
+   prédicat du GUIDE reste faux alors que le geste vient d'être fait. */
+function majTout() {
+  integrer();
+  majEtapes();
+  majLectures();
+  rendre();
+  majBoutons();
+  majProtocole();
+  dire(consigne(), typeof termine === "function" ? termine() : false);
+}
+
+/* ==================================================================
+   26 bis. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages : on refait la même
+   manipulation dans les mêmes conditions. Le minuteur de séance, lui, ne se
+   rembobine pas (§5.4).                                                    */
+function recommencer() {
+  purger(); effacerCibles(); prise = null;
+  effacerGuide();          /* aucun halo ne survit a la remise en etat */
+  arreterDeroule();        /* ni un deroule en cours */
+  var garde = ETAT.tSeance || 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = garde;
+  ETAT.horsProto = horsProtocole();
+  /* ⚠ APRÈS `arreterDeroule()`, ET PAS AVANT. Le poseur du module glisse
+     `arreterDeroule()` juste après `effacerGuide()`, et cette fonction
+     ABAISSE `ANIM_ON` pour couper une animation en cours. Relevé plus haut,
+     le drapeau était rabaissé aussitôt : toute animation de la page était
+     morte dès le démarrage, sans la moindre erreur JS. */
+  ANIM_ON = true;
+  remettreScene();
+  Object.keys(BOUTONS).forEach(function (a) { BOUTONS[a].neuf(); });
+  /* Le tableau redevient vierge et la conclusion se remasque — sans quoi
+     l'élève suivant trouverait la réponse déjà écrite. */
+  tableauVierge();
+  $("concl").classList.add("masque");
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  secuDire(SECU_DEPART, "");
+  integrer();
+  majAffichageReglages();
+  majTout();
+  noter(MOT_REZERO, false);
+}
+
+/* ==================================================================
+   26. LE GUIDAGE — les surlignages
+   ================================================================== */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b || b.cx === undefined) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+/* `maison` rend déjà la place de chaque objet, y compris quand elle change
+   avec l'état : on la relit plutôt que de recopier des coordonnées (§12.18). */
+function surlignerObjet(q, w, h) {
+  var m = maison(q);
+  if (!m) return;
+  w = w || 88; h = h || 96;
+  halo(m.x - w / 2, m.y - h / 2, w, h, 14);
+}
+/* ⚠ §12bis.3-7 : un bouton HTML de la colonne ne peut pas recevoir un halo
+   SVG. Il lui faut un contour en style en ligne, ET une fermeture
+   d'annulation — un style ne se défait pas par `removeChild`. */
+function surlignerHTML(id) {
+  var n = $(id);
+  if (!n) return;
+  var av = n.style.boxShadow, av2 = n.style.outline;
+  n.style.boxShadow = "0 0 0 3px " + GOLD;
+  n.style.outline = "2px dashed " + GOLD;
+  guideSurb.push({ parentNode: { removeChild: function () {
+    n.style.boxShadow = av; n.style.outline = av2; } } });
+}
+
+/* ==================================================================
+   27. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ETAT = neufEtat();
+  ajouterDefs(); ajouterCouches();
+  construireScene();
+  construireBoutons();
+  brancherPrise(); brancherBoutons();
+  brancherPlein();   /* le plein ecran : sans cet appel, le bouton du cadre est mort */
+  construireHTML(); brancherCommandes(); brancherGuide();
+  lireReglages();
+  integrer();
+  majAffichageReglages();
+  construireProtocole();   /* AVANT le premier majProtocole (§12bis.3-2) */
+  recommencer();
+  demarrerHorloge();
+}
+
+/* ==================================================================
+   26. LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT et marque celle où
+   l'on en est.
+
+   ⚠ DEUX RÈGLES, ET ELLES SE TIENNENT.
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le panneau
+      avance donc TOUT SEUL dès que le geste est fait — et il RECULE si l'on
+      défait un geste, ce qu'un compteur ne saurait faire.
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit
+      la consigne, SURLIGNE l'objet à prendre et la zone où le poser — le
+      geste reste à faire.                                                  */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne suit
+     pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+function brancherGuide() {
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  $("rezero").addEventListener("click", recommencer);
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. REPÉRER LES ORGANES DE L'APPAREIL — on repère avant de brancher */
+  function () { presserBouton("organes"); return 420; },
+
+  /* 2. SÉLECTEUR SUR DC, Sv = 5 V/div, BALAYAGE ARRÊTÉ. Les molettes sont
+     des sélecteurs à crans : on les tourne d'un cran par pression, comme en
+     salle. Rien n'est écrit dans REG — on presse le bouton de l'appareil. */
+  function () {
+    if (ETAT.couplage !== "DC") { presserBouton("dcac"); return 340; }
+    if (Math.abs(REG.sv - PROTO.sv) > 1e-9) { presserBouton("mSv"); return 300; }
+    if (ETAT.balayage) { presserBouton("bal"); return 340; }
+    return 0;
+  },
+
+  /* 3. BRANCHER LA PILE, FERMER L'INTERRUPTEUR, OBSERVER LE SPOT. Les deux
+     fiches se GLISSENT sur les bornes : la zone se demande à
+     `emplacements()` dans l'état courant, jamais en dur. */
+  function () {
+    var z;
+    if (ETAT.fRouge !== "pilePlus") {
+      z = zoneDe("fRouge", "pilePlus");
+      if (z) { deposer("fRouge", z); return 380; }
+      return 0;
+    }
+    if (ETAT.fNoir !== "pileMoins") {
+      z = zoneDe("fNoir", "pileMoins");
+      if (z) { deposer("fNoir", z); return 380; }
+      return 0;
+    }
+    if (!ETAT.inter) { presserBouton("inter"); return 360; }
+    presserBouton("relever");
+    return 460;
+  },
+
+  /* 4. BALAYAGE EN MARCHE, OBSERVER LA COURBE */
+  function () {
+    if (!ETAT.balayage) { presserBouton("bal"); return 360; }
+    if (Math.abs(REG.sh - PROTO.sh) > 1e-9) { presserBouton("mSh"); return 300; }
+    presserBouton("relever");
+    return 460;
+  },
+
+  /* 5. OUVRIR, DÉBRANCHER LA PILE, PASSER EN AC. L'ordre est de la fiche :
+     on ouvre AVANT de toucher aux fiches. */
+  function () {
+    var z;
+    if (ETAT.inter) { presserBouton("inter"); return 360; }
+    if (ETAT.fRouge !== "repos") {
+      z = zoneDe("fRouge", "repos");
+      if (z) { deposer("fRouge", z); return 360; }
+      return 0;
+    }
+    if (ETAT.fNoir !== "repos") {
+      z = zoneDe("fNoir", "repos");
+      if (z) { deposer("fNoir", z); return 360; }
+      return 0;
+    }
+    presserBouton("dcac");
+    return 360;
+  },
+
+  /* 6. BRANCHER LE GÉNÉRATEUR, BALAYAGE ARRÊTÉ, OBSERVER LE SPOT */
+  function () {
+    var z;
+    if (ETAT.fRouge !== "genA") {
+      z = zoneDe("fRouge", "genA");
+      if (z) { deposer("fRouge", z); return 380; }
+      return 0;
+    }
+    if (ETAT.fNoir !== "genB") {
+      z = zoneDe("fNoir", "genB");
+      if (z) { deposer("fNoir", z); return 380; }
+      return 0;
+    }
+    if (ETAT.balayage) { presserBouton("bal"); return 360; }
+    presserBouton("relever");
+    return 460;
+  },
+
+  /* 7. BALAYAGE EN MARCHE, OBSERVER LA COURBE */
+  function () {
+    if (!ETAT.balayage) { presserBouton("bal"); return 360; }
+    presserBouton("relever");
+    return 460;
+  },
+
+  /* 8. REPRODUIRE LES DEUX COURBES ET CONCLURE */
+  function () { presserBouton("conclure"); return 520; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, ce qui est le premier
+   usage de cette page en classe. On agrandit le CADRE, pas la mise en page. */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+demarrer();
+})();
+</script>
+</body>
+</html>

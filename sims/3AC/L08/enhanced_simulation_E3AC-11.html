@@ -1,0 +1,2691 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-11 · Le chariot, les deux figurines et l'élève qui marche</title>
+
+<!--
+  ===================================================================
+  E3AC-11 · 3AC · L08 — PAILLASSE VIRTUELLE
+  « Le chariot, les deux figurines et l'élève qui marche :
+    mouvement et repos sont relatifs »
+  ===================================================================
+
+  CE QUE CETTE EXPÉRIENCE A DE PARTICULIER
+  ----------------------------------------
+  Il n'y a rien à doser, rien à chauffer, rien qui change de couleur. Ce
+  qu'on manipule ici n'est pas la matière, c'est le POINT DE VUE. La fiche
+  demande douze fois la même chose — « ce corps-ci, par rapport à ce
+  corps-là : mouvement ou repos ? » — et la seule difficulté de la leçon est
+  que la réponse change alors que RIEN ne change dans la salle.
+
+  Une page qui se contenterait d'afficher le tableau rempli manquerait tout.
+  Ce qui doit être manipulable, c'est le référentiel lui-même.
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Une seule règle, appliquée douze fois :
+
+      X est AU REPOS par rapport à R   si et seulement si   v(X) = v(R)
+
+  Rien d'autre. Pas de table de vérité, pas de cas particulier écrit à la
+  main : les douze cases sont douze soustractions. Les deux cases barrées
+  ne sont pas une exception qu'on aurait codée, elles tombent de ce qu'un
+  corps ne peut pas servir de référence à lui-même — la question n'a pas
+  de sens, et la page le dit au lieu de répondre « au repos ».
+
+  Conséquence directe, et c'est tout l'intérêt : si l'on fait ralentir
+  l'élève avec le curseur, trois cases basculent d'elles-mêmes. Personne
+  ne les a réécrites ; la soustraction a changé de signe.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  1. Il colle la figurine A sur le chariot (glisser-déposer) et pose la
+     figurine B sur la paillasse.
+  2. Il CHOISIT un référentiel en cliquant dessus : le repère de la salle,
+     le chariot, ou l'élève qui marche.
+  3. Il tire le chariot d'un bout à l'autre, à la main, en le glissant.
+
+  Et la scène se redessine DEPUIS le référentiel choisi. Référentiel
+  « chariot » : le chariot ne bouge plus, c'est la salle qui défile en
+  sens inverse. C'est exactement ce que voit l'élève assis dans le car de
+  la situation-problème, et c'est la seule façon de faire sentir qu'aucun
+  des deux points de vue n'est le bon.
+
+  ATTENTION — CE QUE LA PAGE NE FAIT PAS
+  --------------------------------------
+  * Elle ne modifie AUCUN fichier partagé. Ni generer.py, ni les gabarits,
+    ni la page simulation_E3AC-11.html engendrée à côté d'elle.
+  * Elle ne parle jamais de vitesse « absolue » ni de référentiel
+    « galiléen » : hors programme, et le mot ferait croire qu'il existe un
+    bon référentiel.
+  * Elle ne montre pas de vitesses à l'élève dans le décor. Les valeurs en
+    m·s⁻¹ n'existent que sous « Sous le capot » et dans les curseurs, qui
+    sont l'outil de l'enseignant.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E3AC-11 :
+  titre, objectif, matériel, sécurité, protocole, en-têtes et lignes du
+  tableau, valeurs attendues, conclusion. Rien n'est inventé ici.
+-->
+
+<style>
+
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.oui{color:var(--green)}
+.lect .v.non{color:#b03030}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.temoin td{background:#f4f6f9}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.rappel{background:var(--bluebg);border-left:3px solid var(--gold);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin-top:8px;
+        color:var(--muted)}
+.rappel b{color:var(--ink)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+
+.cases{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px;
+           border:1.5px solid transparent}
+.cases>div.act{border-color:var(--gold);background:#fdf6e6}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:13px;font-weight:700;color:var(--ink);margin-top:2px}
+.cases .u.mob{color:var(--orange)}
+.cases .u.rep{color:var(--green)}
+.cases .u.nul{color:#9aa5b2;font-weight:600}
+.cases .v{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px}
+.corps{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.corps button{flex:1 1 auto;font-size:11.5px;padding:5px 8px;border-radius:7px;
+              border:1.5px solid var(--line);background:#fff;cursor:pointer;
+              color:var(--ink);font-family:inherit}
+.corps button.on{border-color:var(--gold);background:#fdf6e6;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-11 · 3AC · L08</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le protocole demande que l'élève marche
+        « à la même allure » que le chariot ; ce n'est plus le cas. Le tableau
+        de référence cesse donc de se remplir — il consigne le résultat de
+        l'expérience prescrite, pas celui d'une variante. Le carnet, lui,
+        continue d'enregistrer, et les panneaux de droite restent justes.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Le corps suivi <span class="note" id="suiviNom">—</span></h2>
+      <p class="src" style="margin:0 0 2px">Cliquer un corps sur la paillasse,
+        ou choisir ci-dessous.</p>
+      <div class="corps" id="corpsBtns"></div>
+      <div class="cases" id="suiviCases"></div>
+      <p class="src" id="suiviPhrase" style="margin-top:9px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Vu par rapport <span class="note" id="refNom">la paillasse</span></h2>
+      <p class="src" style="margin:0 0 6px">Ce que chaque corps fait, dans le
+        référentiel choisi. Une flèche nulle, c'est un corps au repos.</p>
+      <svg id="gVu" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           role="img" aria-label="Vitesses relatives dans le référentiel choisi"></svg>
+    </div>
+
+    <div class="carte">
+      <h2>Les allures <span class="note">réglages de l'enseignant</span></h2>
+      <p class="src" style="margin:0 0 6px">Le protocole les veut ÉGALES.
+        Les séparer fait basculer trois cases — c'est la démonstration.</p>
+      <div class="reg">
+        <label for="rChar">Allure du chariot</label><output id="oChar"></output>
+        <input type="range" id="rChar" min="0.05" max="0.70" step="0.05" value="0.35">
+        <div class="aide">« lentement et régulièrement », dit le protocole.</div>
+      </div>
+      <div class="reg">
+        <label for="rElev">Allure de l'élève qui marche</label><output id="oElev"></output>
+        <input type="range" id="rElev" min="0" max="0.70" step="0.05" value="0.35">
+        <div class="aide">À 0, l'élève s'arrête : il devient un second repère
+          de la salle, et sa colonne recopie celle de la paillasse.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · La règle unique</h3>
+      <p>Les douze cases du tableau ne sont pas écrites : elles sont
+        <b>calculées</b>, chacune par la même comparaison.</p>
+      <p class="fx" id="capotRegle"></p>
+      <p>Le seuil de comparaison vaut <b id="capotSeuil"></b> : en dessous, deux
+        allures sont tenues pour égales. Il ne s'agit pas d'une constante
+        physique mais de la précision avec laquelle un observateur assis
+        distingue « ça bouge » de « ça ne bouge pas ».</p>
+
+      <h3>2 · Les allures, et d'où elles viennent</h3>
+      <table id="capotVit"></table>
+
+      <h3>3 · Les deux cases barrées</h3>
+      <p>Elles ne sont pas codées à part. Un corps ne peut pas servir de
+        référence à lui-même : la question « le chariot bouge-t-il par rapport
+        au chariot ? » n'a pas de réponse, elle n'a pas de sens. La page
+        refuse donc de répondre plutôt que d'écrire « au repos », qui laisserait
+        croire à un résultat.</p>
+
+      <h3>4 · Ce que montre le déplacement de la scène</h3>
+      <p>Choisir un référentiel ne change rien au mouvement : cela change ce
+        qu'on soustrait. La page rend cela littéral en dessinant les positions
+        <span class="fx">x(t) − x<sub>réf</sub>(t)</span>. Référentiel
+        « chariot », c'est la salle qui défile ; référentiel « paillasse »,
+        c'est le chariot. Les deux dessins sont exacts, et ils se contredisent
+        en apparence : c'est précisément ce que la leçon veut faire admettre.</p>
+
+      <h3>5 · Ce que le modèle simplifie</h3>
+      <ul>
+        <li><b>Les allures sont constantes.</b> Un chariot tiré à la main
+        accélère puis ralentit ; ici, dès qu'on le lâche il s'arrête net. Cela
+        ne change rien au tableau, qui ne compare que des états.</li>
+        <li><b>Le mouvement est strictement horizontal.</b> Il n'y a qu'un axe,
+        celui de la paillasse — c'est le montage de la fiche.</li>
+        <li><b>L'élève marche à la hauteur du chariot</b> tant que les deux
+        allures sont égales. Séparées, il prend de l'avance ou du retard, et
+        la page le montre au lieu de le corriger.</li>
+      </ul>
+
+      <h3>6 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-11.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-11",
+  "niveau": "3AC",
+  "unite": "U2",
+  "lecon": "L08",
+  "titre": "Le chariot, les deux figurines et l'élève qui marche : mouvement et repos sont relatifs",
+  "axe": "Le référentiel : le mouvement et le repos sont relatifs",
+  "objectif": "Établir qu'un même corps peut être, au même instant, en mouvement par rapport à un corps et au repos par rapport à un autre, et dégager de ce constat la nécessité de choisir un corps de référence — le référentiel — avant toute description d'un mouvement.",
+  "duree": 20,
+  "modalite": "groupes de 4 — 6 postes le long des paillasses, un apprenant marcheur par poste",
+  "materiel": [
+    "Un **chariot** de laboratoire, ou à défaut une **planche à roulettes**, une petite voiture-jouet ou un livre que l'on fait glisser",
+    "**Deux figurines identiques** (ou deux gommes, ou deux bouchons) : la figurine **A** et la figurine **B**",
+    "Un morceau de **pâte adhésive** pour fixer la figurine A sur le chariot",
+    "Un **fil** ou une ficelle pour tirer le chariot régulièrement",
+    "Une **règle graduée** posée le long de la paillasse, qui matérialise les positions",
+    "Le **tableau à double entrée** projeté, et une copie vierge par groupe",
+    "Un **repère collé** sur la paillasse et un autre sur le mur, pour désigner sans ambiguïté le référentiel « salle »"
+  ],
+  "securite": [
+    "Le chariot se tire **lentement** et **le long** de la paillasse : il ne se lance jamais, et il ne franchit jamais le bord.",
+    "La figurine A est **fixée** à la pâte adhésive : une figurine qui tombe d'un chariot lancé est le seul incident possible de cette séance.",
+    "L'apprenant qui marche à côté du chariot marche **en avant du poste, côté allée**, jamais entre deux paillasses et jamais à reculons.",
+    "Les cartables sont rangés sous les tables : l'allée doit rester dégagée pendant toute la manipulation.",
+    "Aucun produit, aucun verre, aucune source de chaleur n'intervient dans cette expérience."
+  ],
+  "protocole": [
+    "Poser la règle graduée le long de la paillasse et repérer la position de départ du chariot.",
+    "Fixer la **figurine A** sur le chariot avec la pâte adhésive.",
+    "Poser la **figurine B** directement sur la paillasse, à côté du trajet du chariot, sans la fixer au chariot.",
+    "Un apprenant tire le chariot **lentement et régulièrement** d'un bout à l'autre de la paillasse.",
+    "**En même temps**, un second apprenant marche à côté du chariot, à la **même allure**, en restant à sa hauteur.",
+    "Un troisième apprenant, resté assis, observe la scène et remplit le tableau.",
+    "Pour chaque case du tableau, annoncer **d'abord** le corps de référence choisi, **puis seulement** la réponse : « en mouvement » ou « au repos ».",
+    "Refaire une seconde fois le trajet en changeant les rôles, pour que chaque apprenant observe au moins une fois depuis le chariot en marche et une fois depuis sa place."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Le corps observé",
+      "par rapport à la paillasse (la salle)",
+      "par rapport au chariot",
+      "par rapport à l'élève qui marche"
+    ],
+    "lignes": [
+      [
+        "La figurine A (fixée sur le chariot)",
+        "",
+        "",
+        ""
+      ],
+      [
+        "La figurine B (posée sur la paillasse)",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Le chariot",
+        "",
+        "",
+        ""
+      ],
+      [
+        "L'élève qui marche à côté du chariot",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "La figurine A (fixée sur le chariot)",
+        "En mouvement",
+        "Au repos",
+        "Au repos"
+      ],
+      [
+        "La figurine B (posée sur la paillasse)",
+        "Au repos",
+        "En mouvement",
+        "En mouvement"
+      ],
+      [
+        "Le chariot",
+        "En mouvement",
+        "———",
+        "Au repos"
+      ],
+      [
+        "L'élève qui marche à côté du chariot",
+        "En mouvement",
+        "Au repos",
+        "———"
+      ]
+    ]
+  },
+  "observation": "Sur la même ligne du tableau, la figurine fixée au chariot est dite « en mouvement » par rapport à la paillasse et « au repos » par rapport au chariot et à l'élève qui marche : un seul objet, un seul instant, deux réponses opposées et toutes deux justes.",
+  "conclusion": "Le mouvement et le repos sont relatifs : ils n'existent que par rapport à un référentiel, qui est un corps solide choisi comme référence et qui n'a pas besoin d'être lui-même immobile.",
+  "oheric": {
+    "observation": "Dans le car de ramassage, Yassine voit le camion qui roule à sa hauteur comme s'il était **arrêté**, tandis que son petit frère, resté au bord de la route, le voit **rouler**. Ils parlent du même camion, au même instant, et ils disent le contraire l'un de l'autre. Un même corps peut-il donc être à la fois en mouvement et au repos ?",
+    "hypothese": "Si l'état de mouvement ou de repos d'un corps dépend du corps par rapport auquel on l'observe, alors un même objet sera dit **en mouvement** par rapport à l'un et **au repos** par rapport à un autre, au même instant — et les deux réponses seront justes.",
+    "experience": "Une figurine **A** est fixée sur un chariot que l'on tire lentement le long de la paillasse ; une figurine **B** est posée sur la paillasse, immobile ; un apprenant marche à côté du chariot, **à la même allure**. Chaque groupe remplit un tableau à double entrée : pour chacun des quatre corps, on dit s'il est en mouvement ou au repos par rapport à la **paillasse**, par rapport au **chariot**, puis par rapport à l'**élève qui marche**.",
+    "resultats": "La figurine **A** est **en mouvement** par rapport à la paillasse, mais **au repos** par rapport au chariot et **au repos** par rapport à l'élève qui marche. La figurine **B**, elle, est **au repos** par rapport à la paillasse et **en mouvement** par rapport au chariot comme par rapport à l'élève. Le chariot est en mouvement par rapport à la paillasse et au repos par rapport à l'élève qui marche. La ligne de la figurine A porte donc, pour **un seul objet** et **un seul instant**, à la fois « en mouvement » et « au repos ».",
+    "interpretation": "Les deux réponses ne se contredisent pas, parce qu'elles **ne répondent pas à la même question** : l'une compare la figurine à la paillasse, l'autre au chariot. D'une colonne à l'autre du tableau, rien n'a changé au mouvement lui-même — on a seulement changé le **corps de comparaison**. Ce corps s'appelle le **corps de référence**, ou **référentiel**. On voit aussi qu'il n'a nul besoin d'être immobile « pour de vrai » : l'élève qui marche est un excellent référentiel, et c'est par rapport à lui que la figurine A est au repos. L'hypothèse est validée. Le tableau montre enfin que la réponse ne dépend pas de la nature de l'objet mais uniquement du couple **(corps étudié, référentiel)** : c'est ce couple, et lui seul, qu'il faut annoncer.",
+    "conclusion": "Pour décrire le mouvement ou le repos d'un corps, il faut choisir un autre corps solide, appelé **corps de référence** ou **référentiel**. Un corps est **en mouvement** par rapport à un référentiel si sa **position change** par rapport à lui au cours du temps, et **au repos** si elle ne change pas. Un même corps pouvant être en mouvement par rapport à l'un et au repos par rapport à l'autre, le mouvement et le repos sont des notions **relatives** : elles n'ont de sens que si l'on précise **par rapport à quoi**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+
+
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ==================================================================
+   Cette expérience n'en compte presque aucune, et c'est normal : elle ne
+   mesure rien, elle compare. Les deux seules valeurs numériques sont des
+   ALLURES, que la fiche ne chiffre pas — elle dit « lentement et
+   régulièrement » et « à la même allure ». Ce sont donc des réglages, pas
+   des constantes de la nature, et la page le dit.                        */
+var PHYS = {
+  V_CHARIOT: { v: 0.35, u: "m·s⁻¹", n: "allure du chariot tiré à la main",
+    s: "la fiche dit « lentement et régulièrement », sans chiffre : 0,35 m·s⁻¹ est l'allure d'une main qui tire un chariot le long d'une paillasse de 2 m en six secondes" },
+  V_ELEVE: { v: 0.35, u: "m·s⁻¹", n: "allure de l'élève qui marche",
+    s: "le protocole l'impose ÉGALE à celle du chariot : « à la même allure, en restant à sa hauteur »" },
+  SEUIL: { v: 0.02, u: "m·s⁻¹", n: "seuil au-dessous duquel deux allures sont dites égales",
+    s: "précision d'un observateur assis, pas une constante physique — repère de LECTURE (§12.3)" },
+  L_PAILLASSE: { v: 2.0, u: "m", n: "longueur utile de la paillasse",
+    s: "longueur d'une paillasse de collège, qui fixe la course du chariot et l'échelle de la règle graduée" }
+};
+
+/* ==================================================================
+   2. CE QUE LA FICHE DIT — lu, jamais recopié à la main (§0)
+   ================================================================== */
+function T(k) { return DONNEES[k] || ""; }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+
+/* Le tableau de la fiche : quatre lignes (les corps) et trois colonnes
+   (les référentiels). On lit les intitulés exacts, jamais des raccourcis. */
+function entetes() { return TM().entetes || []; }
+function lignesFiche() { return TM().lignes || []; }
+function valeursFiche() { return TM().valeurs || []; }
+
+/* Les quatre corps, dans l'ordre de la fiche. La clé technique sert au
+   dessin ; le nom affiché vient TOUJOURS du YAML. */
+var CORPS = [
+  { k: "figA", court: "Figurine A" },
+  { k: "figB", court: "Figurine B" },
+  { k: "chariot", court: "Le chariot" },
+  { k: "eleve", court: "L'élève" }
+];
+function nomCorps(i) {
+  var l = lignesFiche()[i];
+  return l && l[0] ? String(l[0]) : CORPS[i].court;
+}
+/* Les trois référentiels : ce sont les colonnes 1 à 3 des en-têtes. La
+   colonne 0 (« Le corps observé ») n'est pas un référentiel. */
+var REFS = [{ k: "salle" }, { k: "chariot" }, { k: "eleve" }];
+function nomRef(j) {
+  var e = entetes()[j + 1];
+  return e ? String(e).replace(/^par rapport\s+/i, "") : REFS[j].k;
+}
+
+/* La fiche écrit « ——— » dans les deux cases sans objet. On relit CE
+   caractère-là plutôt que d'en inventer un. */
+function marqueSansObjet() {
+  var v = valeursFiche(), i, j;
+  for (i = 0; i < v.length; i++) {
+    for (j = 1; j < v[i].length; j++) {
+      if (!/mouvement|repos/i.test(v[i][j])) return v[i][j];
+    }
+  }
+  return "———";
+}
+/* Les deux libellés de réponse, eux aussi relus dans la fiche : elle écrit
+   « En mouvement » et « Au repos », avec ces majuscules-là. */
+function motMouvement() {
+  var v = valeursFiche(), i, j;
+  for (i = 0; i < v.length; i++)
+    for (j = 1; j < v[i].length; j++)
+      if (/mouvement/i.test(v[i][j])) return v[i][j];
+  return "En mouvement";
+}
+function motRepos() {
+  var v = valeursFiche(), i, j;
+  for (i = 0; i < v.length; i++)
+    for (j = 1; j < v[i].length; j++)
+      if (/repos/i.test(v[i][j])) return v[i][j];
+  return "Au repos";
+}
+
+/* La ligne de sécurité qui parle de tel ou tel danger. On la vise par ce
+   qu'elle DIT, jamais par son rang — §12.14. */
+function secu(motif) {
+  var s = L("securite"), i, re = new RegExp(motif, "i");
+  for (i = 0; i < s.length; i++) if (re.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+
+/* ==================================================================
+   3. LE SOLVEUR — une soustraction, douze fois
+   ==================================================================
+   Toute la physique de cette page tient dans etatRelatif(). Il n'y a pas
+   de table de vérité : si l'on change une allure, les cases se recalculent
+   parce que la soustraction a changé, pas parce qu'une règle a été
+   réécrite. C'est la différence entre une page qui CALCULE et une page qui
+   rejoue la fiche.                                                        */
+
+var REG = { vChar: PHYS.V_CHARIOT.v, vElev: PHYS.V_ELEVE.v };
+
+/* L'allure de chaque corps, dans la salle. C'est le seul endroit où l'on
+   décide « qui suit quoi » — et cela vient du montage, pas d'un choix :
+   la figurine A est COLLÉE au chariot, donc elle a son allure ; la
+   figurine B est POSÉE sur la paillasse, donc elle a celle de la salle. */
+function allure(k) {
+  /* La figurine A ne prend l'allure du chariot que si elle y est COLLÉE.
+     Tant qu'elle attend sur la paillasse, elle a celle de la salle — et le
+     panneau de droite doit le dire, sans quoi il annoncerait un résultat
+     avant le geste qui le produit (§12.9 de la campagne). */
+  if (k === "figA") return (ETAT && ETAT.fixeA) ? REG.vChar : 0;
+  if (k === "figB") return 0;              // posée, non solidarisée
+  if (k === "chariot") return REG.vChar;
+  if (k === "eleve") return REG.vElev;
+  if (k === "salle") return 0;             // la paillasse et le mur
+  return 0;
+}
+
+/* La règle unique. Elle rend null quand la question n'a pas de sens. */
+function etatRelatif(kCorps, kRef) {
+  if (kCorps === kRef) return null;        // pas de référence à soi-même
+  var dv = allure(kCorps) - allure(kRef);
+  return Math.abs(dv) < PHYS.SEUIL.v ? "repos" : "mouvement";
+}
+function vitesseRelative(kCorps, kRef) {
+  return allure(kCorps) - allure(kRef);
+}
+function motEtat(e) {
+  if (e === null) return marqueSansObjet();
+  return e === "repos" ? motRepos() : motMouvement();
+}
+
+/* Le protocole exige les deux allures égales. Au-delà, on n'est plus dans
+   l'expérience prescrite : le tableau de référence cesse de se remplir,
+   mais tout le reste continue de dire la vérité. */
+function horsProtocole() {
+  return Math.abs(REG.vChar - REG.vElev) >= PHYS.SEUIL.v ||
+         REG.vChar < 0.05;
+}
+
+/* Vérification interne : au protocole, les douze cases calculées doivent
+   redonner EXACTEMENT les douze cases de la fiche. Si un jour elles
+   divergent, c'est le modèle qui a tort, jamais la fiche — et la page
+   doit le dire au lieu de l'ignorer. */
+function accordAvecLaFiche() {
+  var att = valeursFiche(), i, j, e;
+  if (!att.length) return true;
+  for (i = 0; i < CORPS.length && i < att.length; i++) {
+    for (j = 0; j < REFS.length; j++) {
+      e = etatRelatif(CORPS[i].k, REFS[j].k);
+      if (motEtat(e) !== String(att[i][j + 1])) return false;
+    }
+  }
+  return true;
+}
+
+/* ==================================================================
+   4. L'ÉTAT DE LA PAILLASSE
+   ================================================================== */
+var svg = null, COUCHES = {}, gSalle = null;
+var gChariot = null, gFig = {}, gEleve = null, gPate = null, gRegle = null;
+var ETAT = null;
+
+function neufEtat() {
+  return {
+    regle: false,        // la règle graduée est posée
+    pate: false,         // la pâte adhésive est sur le chariot
+    fixeA: false,        // la figurine A est collée sur le chariot
+    poseB: false,        // la figurine B est posée sur la paillasse
+    ref: "salle",        // le référentiel choisi
+    avance: 0,           // course du chariot, en pixels
+    fait: {},            // les référentiels dont le trajet est terminé
+    suivi: "figA",       // le corps affiché dans le panneau de droite
+    conclu: false,
+    notes: []
+  };
+}
+
+/* ==================================================================
+   5. LA GÉOMÉTRIE — mesurée une fois, puis respectée
+   ==================================================================
+   ZONES INTERDITES, relevées sur capture et non estimées (§12.9) :
+     · le bandeau de consigne    x 224..896   y < 60
+     · le journal d'observation  x < 278      y < 350
+     · la plaque de sécurité     x < 276      y 320..456
+   D'où une paillasse qui commence à x = 300, et pas plus à gauche.      */
+var W = 1120, H = 760, SOL = 600, BANC = 628;
+var Y_BT1 = 660, Y_BT2 = 700;                         // deux rangées de boutons
+var TABLE_X0 = 300, TABLE_X1 = 1054, TABLE_Y = 412;   // dessus de la paillasse
+var PX_M = (TABLE_X1 - TABLE_X0) / 2.0;               // la règle fait 2,00 m
+/* ⚠️ La course s'arrête à 880 et non au bout de la paillasse : il faut de
+   la place, à droite, pour le RANGEMENT des figurines et de la pâte. À
+   986, le chariot démarrait SOUS les objets qui l'attendaient et les
+   trois se confondaient en un tas illisible — relevé sur capture. */
+var X_DEPART = 352, X_FIN = 880;
+var COURSE = X_FIN - X_DEPART;
+var Y_PATE = TABLE_Y - 6, X_PATE = 1016;
+var EL_H = 150;                                       // hauteur de l'élève
+var Y_CHIPS = 132;                                    // la rangée de référentiels
+
+/* Les deux figurines attendent au bout de la paillasse, hors du trajet du
+   chariot. Elles sont volontairement CÔTE À CÔTE et identiques : la fiche
+   insiste, « deux figurines identiques ». */
+function posRangement(k) { return { x: k === "figA" ? 928 : 970, y: TABLE_Y }; }
+
+/* ==================================================================
+   6. LES DÉFINITIONS DE DESSIN
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("sol", [[0, "#cfd6de"], [1, "#aeb8c4"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("bois", [[0, "#c99a58"], [0.5, "#a97c3c"], [1, "#8a6128"]]);
+  grad("inox", [[0, "#8d97a5"], [0.28, "#e7ecf1"], [0.55, "#aab4c0"], [1, "#79838f"]], true);
+  grad("figA", [[0, "#e8a33d"], [0.5, "#cf7f1c"], [1, "#a86212"]]);
+  grad("figB", [[0, "#7fa8d8"], [0.5, "#4f7cb5"], [1, "#375c8c"]]);
+  grad("blouse", [[0, "#f2f5f9"], [0.5, "#dde5ee"], [1, "#c3cede"]]);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .28 }));
+  D.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+    "flood-color": "#12203a", "flood-opacity": .4 }));
+  D.appendChild(f);
+}
+
+/* ==================================================================
+   7. LES COUCHES
+   ==================================================================
+   « salle » porte tout ce qui appartient à la pièce — le sol, la
+   paillasse, la règle, les deux repères collés. C'est ce groupe qu'on
+   translate quand le référentiel choisi n'est plus la salle : alors c'est
+   la pièce qui défile, et c'est exactement ce qu'il faut montrer.        */
+function ajouterCouches() {
+  ["fond", "salle", "poste", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+  gSalle = COUCHES.salle;
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+/* Couper un texte en lignes d'au plus n caractères, sans couper un mot. */
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   8. LE DÉCOR FIXE
+   ================================================================== */
+function construireFond() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: SOL, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: SOL, width: W, height: BANC - SOL, fill: "url(#sol)" }));
+  ajout("fond", el("line", { x1: 0, y1: SOL, x2: W, y2: SOL,
+    stroke: "#93a0af", "stroke-width": 2 }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC, fill: "url(#banc)" }));
+}
+
+/* La salle : c'est elle qui défilera si l'on choisit un autre référentiel. */
+function construireSalle() {
+  var i, x, g = gSalle;
+  /* Les joints du carrelage : sans eux, un sol uni ne défile pas — il n'a
+     rien qui bouge. C'est la seule raison de leur présence. */
+  for (i = -6; i <= 30; i++) {
+    x = 40 + i * 78;
+    g.appendChild(el("line", { x1: x, y1: SOL, x2: x - 26, y2: BANC,
+      stroke: "#93a0af", "stroke-width": 1.2, opacity: .55, "pointer-events": "none" }));
+  }
+  /* La paillasse, vue de côté : plateau, ceinture, deux pieds. */
+  g.appendChild(el("rect", { x: TABLE_X0 - 14, y: TABLE_Y, width: TABLE_X1 - TABLE_X0 + 28,
+    height: 13, rx: 3, fill: "url(#bois)", stroke: "#6d4d1e", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: TABLE_X0, y: TABLE_Y + 13, width: TABLE_X1 - TABLE_X0,
+    height: 16, fill: "#8a6128", opacity: .85, "pointer-events": "none" }));
+  [TABLE_X0 + 26, TABLE_X1 - 40].forEach(function (px) {
+    g.appendChild(el("rect", { x: px, y: TABLE_Y + 29, width: 15, height: SOL - TABLE_Y - 29,
+      fill: "#7d5722", stroke: "#5f4118", "stroke-width": 1.2, "pointer-events": "none" }));
+  });
+  construireRegle(g);
+  construireReperes(g);
+}
+
+/* La règle graduée posée le long de la paillasse : c'est l'ÉCHELLE, et la
+   fiche en fait le premier geste du protocole. Elle n'apparaît donc pas
+   avant qu'on l'ait posée. */
+function construireRegle(g) {
+  var i, x, gr = g.appendChild(el("g", { id: "regle", opacity: 0,
+    "pointer-events": "none" }));
+  gRegle = gr;
+  gr.appendChild(el("rect", { x: TABLE_X0, y: TABLE_Y - 15, width: TABLE_X1 - TABLE_X0,
+    height: 15, rx: 2, fill: "#f7f0dc", stroke: "#b9a878", "stroke-width": 1.2 }));
+  for (i = 0; i <= 20; i++) {
+    x = TABLE_X0 + i * PX_M / 10;
+    gr.appendChild(el("line", { x1: x, y1: TABLE_Y - 15, x2: x,
+      y2: TABLE_Y - (i % 5 === 0 ? 5 : 9), stroke: "#8a7b52",
+      "stroke-width": i % 10 === 0 ? 1.7 : 1 }));
+    if (i % 5 === 0) {
+      txtIn(gr, x, TABLE_Y - 5.5, nb(i / 10, 1) + (i === 20 ? " m" : ""),
+        { taille: 8, couleur: "#8a7b52" });
+    }
+  }
+}
+
+/* Les deux repères collés : la fiche les demande explicitement, « un
+   repère collé sur la paillasse et un autre sur le mur, pour désigner sans
+   ambiguïté le référentiel salle ». Ils sont CLIQUABLES : c'est par eux
+   qu'on choisit la salle comme référence. */
+function construireReperes(g) {
+  var r;
+  function croix(px, py, lbl, sous) {
+    var c = g.appendChild(el("g", { "data-act": "ref-salle", cursor: "pointer" }));
+    c.appendChild(el("rect", { x: px - 15, y: py - 15, width: 30, height: 30,
+      fill: "#fff9e2", stroke: "#c8912a", "stroke-width": 1.6, rx: 3,
+      transform: "rotate(-8 " + pt(px, py) + ")" }));
+    c.appendChild(el("line", { x1: px - 8, y1: py, x2: px + 8, y2: py,
+      stroke: ORANGE, "stroke-width": 2.4, "pointer-events": "none" }));
+    c.appendChild(el("line", { x1: px, y1: py - 8, x2: px, y2: py + 8,
+      stroke: ORANGE, "stroke-width": 2.4, "pointer-events": "none" }));
+    txtIn(c, px, py + 30, lbl, { taille: 9.5, couleur: "#8a7b52", gras: true });
+    if (sous) txtIn(c, px, py + 41, sous, { taille: 8.5, couleur: "#9aa5b2" });
+    return c;
+  }
+  /* Sur le mur, à droite : hors du bandeau de consigne (x < 896), hors du
+     journal et hors de la rangée de puces. Mesuré, pas estimé. */
+  croix(898, 214, "repère du mur", "collé");
+  /* Sur le pied droit de la paillasse : le seul endroit du meuble où ni
+     le chariot, ni les figurines, ni l'élève ne passent. */
+  r = croix(1021, 502, "repère de la paillasse", "collé");
+}
+
+/* ==================================================================
+   9. LES CORPS
+   ==================================================================
+   Chaque corps porte un data-act : c'est par là qu'on le saisit, qu'on le
+   suit, ou qu'on le prend pour référence.                                */
+
+/* Le chariot : plateau, deux roues, et le fil par lequel on le tire. */
+function construireChariot() {
+  var g = ajout("objets", el("g", { "data-act": "chariot", cursor: "grab" }));
+  gChariot = g;
+  /* La zone de préhension, généreuse et DÉCLARÉE : tout le reste du dessin
+     est décoratif et désarmé (§12.15). */
+  g.appendChild(el("rect", { x: -46, y: -30, width: 92, height: 44, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -42, y: -18, width: 84, height: 13, rx: 3,
+    fill: "url(#inox)", stroke: "#5d6874", "stroke-width": 1.3 }));
+  d.appendChild(el("rect", { x: -36, y: -25, width: 8, height: 8, rx: 2,
+    fill: "#8d97a5", stroke: "#5d6874", "stroke-width": 1 }));
+  [-26, 26].forEach(function (rx) {
+    d.appendChild(el("circle", { cx: rx, cy: 1, r: 8.5, fill: "#39414d",
+      stroke: "#20262f", "stroke-width": 1.6 }));
+    d.appendChild(el("circle", { cx: rx, cy: 1, r: 3, fill: "#9aa5b2" }));
+  });
+  /* Le fil : il part du chariot vers la droite, vers la main qui tire. */
+  d.appendChild(el("path", { id: "filChariot", d: "M 42,-12 L 96,-26",
+    stroke: "#b9a878", "stroke-width": 1.8, fill: "none", "stroke-linecap": "round" }));
+}
+
+/* Une figurine : la fiche dit « deux figurines identiques ». Elles ne
+   diffèrent donc que par leur lettre et leur couleur de repérage. */
+function construireFigurine(k) {
+  var lettre = k === "figA" ? "A" : "B";
+  var g = ajout(k === "figB" ? "avant" : "objets",
+    el("g", { "data-act": k, cursor: "grab" }));
+  gFig[k] = g;
+  g.appendChild(el("rect", { x: -13, y: -40, width: 26, height: 44, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("ellipse", { cx: 0, cy: -1, rx: 10, ry: 3.4, fill: "#12203a", opacity: .18 }));
+  d.appendChild(el("path", { d: "M -8,-2 L -6,-22 L 6,-22 L 8,-2 Z",
+    fill: "url(#" + k + ")", stroke: "#5c4415", "stroke-width": 1.1 }));
+  d.appendChild(el("circle", { cx: 0, cy: -28, r: 6.5, fill: "url(#" + k + ")",
+    stroke: "#5c4415", "stroke-width": 1.1 }));
+  txtIn(d, 0, -8.5, lettre, { taille: 10.5, gras: true, couleur: "#fff" });
+  /* La pâte adhésive, quand la figurine A est collée : elle doit SE VOIR,
+     sinon « fixée » et « posée » se ressemblent. */
+  var p = d.appendChild(el("g", { id: "pate-" + k, opacity: 0 }));
+  p.appendChild(el("ellipse", { cx: 0, cy: -1.5, rx: 9, ry: 3.6, fill: "#e8d9a8",
+    stroke: "#bda96f", "stroke-width": 1 }));
+  return g;
+}
+
+/* L'élève qui marche, dans l'allée, DEVANT la paillasse. Il est plus grand
+   que les figurines parce qu'il est plus près : c'est ce qui fait lire la
+   scène en profondeur. */
+function construireEleve() {
+  var g = ajout("avant", el("g", { "data-act": "eleve", cursor: "grab" }));
+  gEleve = g;
+  g.appendChild(el("rect", { x: -26, y: -EL_H, width: 52, height: EL_H + 8, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("ellipse", { cx: 0, cy: 2, rx: 24, ry: 6, fill: "#12203a", opacity: .2 }));
+  /* Les jambes : deux groupes qu'on fera pivoter à la marche. */
+  var j1 = d.appendChild(el("g", { id: "jambeAr" }));
+  j1.appendChild(el("rect", { x: -6, y: -62, width: 12, height: 62, rx: 5, fill: "#3c4a5e" }));
+  var j2 = d.appendChild(el("g", { id: "jambeAv" }));
+  j2.appendChild(el("rect", { x: -6, y: -62, width: 12, height: 62, rx: 5, fill: "#4d5d73" }));
+  d.appendChild(el("path", { d: "M -21,-62 L -24,-104 q 0,-9 9,-11 L 15,-115 "
+    + "q 9,2 9,11 L 21,-62 Z", fill: "url(#blouse)", stroke: "#8b97a6",
+    "stroke-width": 1.3 }));
+  var b = d.appendChild(el("g", { id: "brasEleve" }));
+  b.appendChild(el("rect", { x: -5, y: -108, width: 10, height: 42, rx: 5,
+    fill: "url(#blouse)", stroke: "#8b97a6", "stroke-width": 1 }));
+  b.appendChild(el("circle", { cx: 0, cy: -63, r: 5, fill: "#e6c39a",
+    stroke: "#b08d63", "stroke-width": 1 }));
+  b.setAttribute("transform", "translate(17,0)");
+  d.appendChild(el("rect", { x: -5, y: -119, width: 10, height: 10, fill: "#e6c39a" }));
+  d.appendChild(el("circle", { cx: 0, cy: -128, r: 14, fill: "#e6c39a",
+    stroke: "#b08d63", "stroke-width": 1.2 }));
+  d.appendChild(el("path", { d: "M -14,-133 q 14,-14 28,0 q -7,-7 -14,-7 q -7,0 -14,7 Z",
+    fill: "#3b2e22" }));
+}
+
+/* La rangée des trois référentiels, FIXE, sous le bandeau de consigne.
+   ⚠️ Posées sous le chariot et sous l'élève, les pastilles tombaient
+   l'une sur le plateau de la paillasse, l'autre dans la plinthe — et
+   surtout elles se DÉPLAÇAIENT avec leur corps : la seule commande dont
+   l'élève a besoin en permanence était la plus fuyante de la page.
+   Sans étiquette, personne ne devine non plus qu'un chariot peut servir
+   de référentiel — or c'est justement ce que la leçon veut faire
+   admettre. */
+var CHIPS = [];
+function construireChips() {
+  var g = ajout("ui", el("g", { id: "chips" })), j, x = 300, lg, b;
+  txt("ui", 300, Y_CHIPS - 20, "OBSERVER PAR RAPPORT", { ancre: "start",
+      taille: 9.5, gras: true, couleur: "#8a7b52", esp: 1.1 });
+  for (j = 0; j < REFS.length; j++) {
+    lg = 22 + nomRef(j).length * 6.2;
+    b = g.appendChild(el("g", { "data-act": "ref-" + REFS[j].k, cursor: "pointer",
+      id: "chip-" + REFS[j].k }));
+    b.appendChild(el("rect", { x: x, y: Y_CHIPS - 13, width: lg, height: 26,
+      rx: 13, fill: "#fff9e2", stroke: "#c8912a", "stroke-width": 1.5 }));
+    txtIn(b, x + lg / 2, Y_CHIPS + 4.5, nomRef(j),
+      { taille: 11, couleur: "#8a6a1e" });
+    CHIPS.push({ k: REFS[j].k, x: x, lg: lg });
+    x += lg + 12;
+  }
+}
+
+/* La pâte adhésive, posée à droite hors de la paillasse : c'est un OUTIL,
+   on la glisse sur le chariot avant d'y fixer la figurine A. */
+function construirePate() {
+  var g = ajout("objets", el("g", { "data-act": "pate", cursor: "grab" }));
+  gPate = g;
+  g.appendChild(el("rect", { x: -20, y: -20, width: 40, height: 34, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("ellipse", { cx: 0, cy: 0, rx: 15, ry: 9, fill: "#e8d9a8",
+    stroke: "#bda96f", "stroke-width": 1.3 }));
+  d.appendChild(el("ellipse", { cx: -4, cy: -3, rx: 5, ry: 3, fill: "#f2e8c6" }));
+  txt("poste", X_PATE, Y_PATE - 22, "pâte adhésive", { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* La plaque de sécurité, sous le journal. Largeur alignée sur celle du
+   journal (254 unités ≈ 217 px écran) : les deux boîtes sont l'une sous
+   l'autre, elles doivent avoir la même largeur.                          */
+function construireSecurite() {
+  var X = 20, Y = 320, LG = 254, HT = 136;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8, "pointer-events": "none" }));
+  txt("poste", X + 11, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.3 });
+  /* On vise la ligne par ce qu'elle DIT (§12.14) : c'est l'allée dégagée
+     qui est le vrai risque de cette séance, pas le chariot. */
+  enrouler(secu("allée|marche").replace(/\s*:.*$/, ""), 34, 4).forEach(function (s, i) {
+    txt("poste", X + 11, Y + 42 + i * 14, s, { ancre: "start", taille: 10,
+        gras: true, couleur: ROUGE });
+  });
+  txt("poste", X + 11, Y + 104, "Aucun produit, aucun verre,", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+  txt("poste", X + 11, Y + 118, "aucune source de chaleur.", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+}
+
+/* La légende du bas, qui dit ce que le schéma est et ce qu'il n'est pas. */
+function construireLegende() {
+  txt("ui", W / 2, 742, "schéma habillé — la règle graduée est à l'échelle, "
+    + "les allures sont celles des curseurs",
+    { taille: 9.5, couleur: "#8794a5" });
+}
+
+/* ==================================================================
+   10. OÙ SE TROUVE CHAQUE CORPS
+   ==================================================================
+   parcours(k) : de combien le corps k s'est déplacé DANS LA SALLE.
+   decalage()  : ce qu'il faut retrancher à tout le monde pour que le
+                 référentiel choisi paraisse immobile. C'est la seule
+                 ligne de la page qui « change de point de vue », et elle
+                 est littéralement une soustraction.                      */
+function parcours(k) {
+  if (k === "chariot") return ETAT.avance;
+  if (k === "figA") return ETAT.fixeA ? ETAT.avance : 0;
+  if (k === "eleve") {
+    if (REG.vChar <= 0) return 0;
+    return ETAT.avance * (REG.vElev / REG.vChar);
+  }
+  return 0;                                  // figB et la salle ne bougent pas
+}
+function decalage() { return -parcours(ETAT.ref); }
+
+function positionCorps(k) {
+  var d = decalage();
+  if (k === "chariot") return { x: X_DEPART + ETAT.avance + d, y: TABLE_Y - 9 };
+  if (k === "eleve") return { x: X_DEPART + parcours("eleve") + d, y: SOL };
+  if (k === "figA") {
+    if (ETAT.fixeA) return { x: X_DEPART + ETAT.avance + d, y: TABLE_Y - 22 };
+    return { x: posRangement("figA").x + d, y: TABLE_Y };
+  }
+  if (k === "figB") {
+    if (ETAT.poseB) return { x: X_POSE_B + d, y: TABLE_Y + 7 };
+    return { x: posRangement("figB").x + d, y: TABLE_Y };
+  }
+  return { x: 0, y: 0 };
+}
+/* La figurine B se pose « à côté du trajet du chariot », dit la fiche :
+   sur la paillasse, à portée de regard, mais pas au départ du chariot. */
+var X_POSE_B = 690;
+
+/* ==================================================================
+   11. LE MOTEUR DE MANIPULATION
+   ==================================================================
+   La capture du pointeur est prise sur le SVG et non sur l'objet : un
+   objet qu'on redessine pendant le glissement perdrait sa capture. Un
+   seuil de 5 px sépare le clic du glissement.                            */
+var PRISE = null, SEUIL_PX = 5;
+
+function ptSvg(ev) {
+  var p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function cible(x, y) {
+  var s = svg.createSVGPoint(), n;
+  s.x = x; s.y = y;
+  s = s.matrixTransform(svg.getScreenCTM());
+  n = document.elementFromPoint(s.x, s.y);
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n.getAttribute("data-act");
+    n = n.parentNode;
+  }
+  return null;
+}
+function noeudAct(n) {
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+
+function brancherManipulation() {
+  svg.addEventListener("pointerdown", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act"), p;
+    if (!a) return;
+    p = ptSvg(ev);
+    PRISE = { act: a, noeud: n, x0: p.x, y0: p.y, av0: ETAT.avance,
+              bouge: false };
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
+  });
+  svg.addEventListener("pointermove", function (ev) {
+    if (!PRISE) return;
+    var p = ptSvg(ev), dx = p.x - PRISE.x0, dy = p.y - PRISE.y0;
+    if (!PRISE.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL_PX) return;
+    PRISE.bouge = true;
+    if (PRISE.act === "chariot") {
+      tirerA(PRISE.av0 + dx);
+    } else {
+      montrerFantome(PRISE.act, p.x, p.y);
+    }
+  });
+  function lacher(ev) {
+    if (!PRISE) return;
+    var pr = PRISE, p = ptSvg(ev);
+    PRISE = null;
+    effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (!pr.bouge) { cliquer(pr.act); return; }
+    if (pr.act === "chariot") { finTirage(); return; }
+    deposer(pr.act, p.x, p.y);
+  }
+  svg.addEventListener("pointerup", lacher);
+  svg.addEventListener("pointercancel", function (ev) {
+    if (!PRISE) return;
+    PRISE = null; effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    redessiner();
+  });
+}
+
+/* Le fantôme : l'objet suit le doigt sans quitter sa place tant qu'il n'est
+   pas déposé. On le dessine dans la couche « drag », au-dessus de tout. */
+var FANTOME = null;
+function montrerFantome(a, x, y) {
+  if (!FANTOME) {
+    FANTOME = COUCHES.drag.appendChild(el("g", { opacity: .78,
+      "pointer-events": "none" }));
+    var src = a === "pate" ? gPate : gFig[a];
+    if (src) {
+      var c = src.cloneNode(true);
+      c.removeAttribute("data-act");
+      c.setAttribute("pointer-events", "none");
+      FANTOME.appendChild(c);
+    }
+  }
+  FANTOME.setAttribute("transform", "translate(" + pt(x, y) + ")");
+  surlignerZones(a, x, y);
+}
+function effacerFantome() {
+  if (FANTOME) { COUCHES.drag.removeChild(FANTOME); FANTOME = null; }
+  var z = svg.querySelector("#zones");
+  if (z) vide(z);
+}
+
+/* ==================================================================
+   12. LES ZONES DE DÉPÔT
+   ==================================================================
+   ⚠️ Les DEUX zones plausibles sont proposées, pas seulement la bonne.
+   Viser la mauvaise doit produire un refus qui ENSEIGNE ; si la mauvaise
+   zone n'existe pas, le geste tombe dans le message générique et la page
+   explique le plus mal ce qu'elle devrait expliquer le mieux.            */
+function zoneChariot() {
+  var p = positionCorps("chariot");
+  return { type: "chariot", x: p.x, y: p.y - 8, r: 78 };
+}
+function zonePaillasse() {
+  return { type: "paillasse", x: (TABLE_X0 + TABLE_X1) / 2 + decalage(),
+           y: TABLE_Y - 10, r: 0, x0: TABLE_X0 + decalage(),
+           x1: TABLE_X1 + decalage() };
+}
+/* Les zones sont rendues DE LA PLUS PETITE À LA PLUS GRANDE, jamais
+   dans l'ordre où l'on souhaiterait qu'on les vise : le chariot est
+   posé SUR la paillasse, donc sa zone est incluse dans celle du
+   plateau, et c'est lui qu'il faut essayer en premier. */
+function emplacements(a) {
+  if (a === "pate" || a === "figA" || a === "figB") {
+    return [zoneChariot(), zonePaillasse()];
+  }
+  return [];
+}
+/* Celle des zones que le dépôt accepterait : c'est elle que vise le
+   bouton, pour que bouton et glisser aboutissent au même état (§12.13)
+   sans dépendre de l'ordre de test ci-dessus. */
+function zoneVoulue(a) {
+  var z = emplacements(a), i;
+  for (i = 0; i < z.length; i++) if (accepte(a, z[i])) return z[i];
+  return z[0] || null;
+}
+function dansZone(z, x, y) {
+  if (z.type === "paillasse") {
+    return x > z.x0 && x < z.x1 && y > TABLE_Y - 80 && y < TABLE_Y + 34;
+  }
+  return Math.abs(x - z.x) < z.r && Math.abs(y - z.y) < 62;
+}
+function zoneSous(a, x, y) {
+  var z = emplacements(a), i;
+  for (i = 0; i < z.length; i++) if (dansZone(z[i], x, y)) return z[i];
+  return null;
+}
+function surlignerZones(a, x, y) {
+  var g = svg.querySelector("#zones");
+  if (!g) g = COUCHES.ui.appendChild(el("g", { id: "zones", "pointer-events": "none" }));
+  vide(g);
+  emplacements(a).forEach(function (z) {
+    var ok = dansZone(z, x, y);
+    if (z.type === "paillasse") {
+      g.appendChild(el("rect", { x: z.x0, y: TABLE_Y - 46, width: z.x1 - z.x0,
+        height: 52, rx: 6, fill: "none", stroke: ok ? GOLD : "#c8b98a",
+        "stroke-width": ok ? 2.4 : 1.4, "stroke-dasharray": "7 5" }));
+    } else {
+      g.appendChild(el("rect", { x: z.x - 52, y: z.y - 34, width: 104, height: 62,
+        rx: 6, fill: "none", stroke: ok ? GOLD : "#c8b98a",
+        "stroke-width": ok ? 2.4 : 1.4, "stroke-dasharray": "7 5" }));
+    }
+  });
+}
+
+/* ==================================================================
+   13. CE QUI SE PASSE QUAND ON DÉPOSE
+   ================================================================== */
+function accepte(a, z) {
+  if (!z) return false;
+  if (a === "pate") return z.type === "chariot" && !ETAT.pate;
+  if (a === "figA") return z.type === "chariot" && ETAT.pate && !ETAT.fixeA;
+  if (a === "figB") return z.type === "paillasse" && !ETAT.poseB;
+  return false;
+}
+function refus(a, z) {
+  if (!z) return "Viser la paillasse ou le chariot : c'est là que les choses se posent.";
+  if (a === "pate") {
+    if (ETAT.pate) return "La pâte est déjà sur le chariot.";
+    return "La pâte adhésive va sur le CHARIOT : c'est lui qui doit retenir "
+         + "la figurine A quand il démarrera.";
+  }
+  if (a === "figA") {
+    if (ETAT.fixeA) return "La figurine A est déjà fixée.";
+    if (z.type === "paillasse")
+      return "Posée sur la paillasse, la figurine A ne suivrait pas le chariot — "
+           + "elle serait une seconde figurine B, et la ligne la plus instructive "
+           + "du tableau disparaîtrait.";
+    if (!ETAT.pate)
+      return "Sans pâte adhésive, la figurine A glisserait dès le démarrage : "
+           + "elle ne serait pas SOLIDAIRE du chariot, et « au repos par rapport "
+           + "au chariot » deviendrait faux.";
+    return "";
+  }
+  if (a === "figB") {
+    if (ETAT.poseB) return "La figurine B est déjà posée.";
+    if (z.type === "chariot")
+      return "La fiche dit « sans la fixer au chariot » : la figurine B doit rester "
+           + "sur la paillasse, sinon les deux figurines feraient la même chose et "
+           + "la comparaison n'apprendrait plus rien.";
+    return "";
+  }
+  return "";
+}
+
+function deposer(a, x, y) {
+  var z = zoneSous(a, x, y);
+  if (!accepte(a, z)) { signaler(refus(a, z)); redessiner(); return; }
+  if (a === "pate") {
+    ETAT.pate = true;
+    noter("Pâte adhésive posée sur le plateau du chariot.");
+  } else if (a === "figA") {
+    ETAT.fixeA = true;
+    noter("Figurine A fixée : elle est SOLIDAIRE du chariot, elle ira "
+        + "partout où il ira.");
+  } else if (a === "figB") {
+    ETAT.poseB = true;
+    noter("Figurine B posée sur la paillasse, à côté du trajet, sans être "
+        + "fixée au chariot.");
+  }
+  succes();
+  ETAT.suivi = a === "pate" ? ETAT.suivi : a;
+  redessiner();
+}
+
+/* ==================================================================
+   14. TIRER LE CHARIOT
+   ================================================================== */
+function tirerA(av) {
+  ETAT.avance = borne(av, 0, COURSE);
+  redessiner();
+}
+function finTirage() {
+  if (ETAT.avance >= COURSE - 6) {
+    ETAT.avance = COURSE;
+    terminerTrajet();
+  }
+  redessiner();
+}
+/* Un trajet terminé RENSEIGNE la colonne du référentiel choisi — et une
+   seule. C'est ce que demande le protocole : « refaire une seconde fois le
+   trajet en changeant les rôles ». */
+function terminerTrajet() {
+  if (!pretAObserver()) { signaler(pourquoiPasPret()); return; }
+  if (ETAT.fait[ETAT.ref]) return;
+  if (horsProtocole()) {
+    noter("Hors protocole (allures différentes) : la colonne « par rapport "
+        + nomRefDe(ETAT.ref) + " » reste vide. Les panneaux de droite, eux, "
+        + "continuent de dire ce qui se passe.");
+    return;
+  }
+  ETAT.fait[ETAT.ref] = true;
+  var nMob = 0, nRep = 0;
+  CORPS.forEach(function (c) {
+    var e = etatRelatif(c.k, ETAT.ref);
+    if (e === "mouvement") nMob++;
+    else if (e === "repos") nRep++;
+  });
+  noter("Trajet observé « par rapport " + nomRefDe(ETAT.ref) + " » : "
+      + nMob + " en mouvement, " + nRep + " au repos. Colonne renseignée.");
+  succes();
+}
+function pretAObserver() { return ETAT.regle && ETAT.fixeA && ETAT.poseB; }
+function pourquoiPasPret() {
+  if (!ETAT.regle) return "Poser d'abord la règle graduée le long de la paillasse : "
+    + "c'est elle qui matérialise les positions.";
+  if (!ETAT.fixeA) return "Fixer d'abord la figurine A sur le chariot.";
+  return "Poser d'abord la figurine B sur la paillasse.";
+}
+
+/* ==================================================================
+   15. CLIQUER — suivre un corps, ou le prendre pour référence
+   ================================================================== */
+function cliquer(a) {
+  if (a.indexOf("ref-") === 0) {
+    choisirRef(a.slice(4));
+    return;
+  }
+  if (a === "chariot" || a === "figA" || a === "figB" || a === "eleve") {
+    ETAT.suivi = a;
+    redessiner();
+    return;
+  }
+}
+function choisirRef(k) {
+  if (ETAT.ref === k) return;
+  if (ETAT.avance > 0 && ETAT.avance < COURSE) {
+    signaler("Ramener d'abord le chariot au départ : on ne change pas de "
+           + "référence au milieu d'un trajet, on refait le trajet.");
+    return;
+  }
+  ETAT.ref = k;
+  ETAT.avance = 0;
+  noter("Référence : « par rapport " + nomRefDe(k) + " ». Les réponses du "
+      + "trajet suivant se liront par rapport à ce corps-là, et à aucun autre.");
+  redessiner();
+}
+function nomRefDe(k) {
+  var i;
+  for (i = 0; i < REFS.length; i++) if (REFS[i].k === k) return nomRef(i);
+  return k;
+}
+function nomCorpsCourt(k) {
+  var i;
+  for (i = 0; i < CORPS.length; i++) if (CORPS[i].k === k) return nomCorps(i);
+  return k;
+}
+
+/* ==================================================================
+   16. LE CARNET ET LA CONSIGNE
+   ================================================================== */
+var MSG = null, MSG_JUSQUA = 0;
+function signaler(t) {
+  MSG = t; MSG_JUSQUA = Date.now() + 4200;
+  majConsigne();
+}
+function succes() { MSG = null; MSG_JUSQUA = 0; majConsigne(); }
+function noter(t) {
+  ETAT.notes.push(t);
+  while (ETAT.notes.length > 2) ETAT.notes.shift();
+  var o = $("obs");
+  o.textContent = ETAT.notes.join(" ");
+  o.className = "obs pos";
+}
+function consigne() { return $("consigne").textContent; }
+function majConsigne() {
+  var t;
+  if (MSG && Date.now() < MSG_JUSQUA) { t = MSG; }
+  else {
+    MSG = null;
+    t = consigneEtape();
+  }
+  $("consigne").textContent = t;
+}
+function consigneEtape() {
+  if (!ETAT.regle) return "Poser la règle graduée le long de la paillasse.";
+  if (!ETAT.pate) return "Glisser la pâte adhésive sur le plateau du chariot.";
+  if (!ETAT.fixeA) return "Glisser la figurine A sur le chariot pour l'y fixer.";
+  if (!ETAT.poseB) return "Glisser la figurine B sur la paillasse, à côté du trajet.";
+  var reste = REFS.filter(function (r) { return !ETAT.fait[r.k]; });
+  if (!reste.length) return "Les trois colonnes sont renseignées : comparer la "
+    + "ligne de la figurine A, et conclure.";
+  if (ETAT.avance >= COURSE) return "Ramener le chariot au départ, puis choisir "
+    + "une autre référence.";
+  if (ETAT.ref === "chariot") return "Tirer le chariot d'un bout à l'autre. "
+    + "Vu depuis le chariot, c'est la SALLE qui défile : le chariot, lui, ne "
+    + "bouge pas d'un pouce.";
+  if (ETAT.ref === "eleve") return "Tirer le chariot. Vu depuis l'élève qui "
+    + "marche, la salle défile et le chariot reste à sa hauteur.";
+  return "Tirer le chariot d'un bout à l'autre de la paillasse, lentement.";
+}
+
+/* ==================================================================
+   17. LE RENDU
+   ================================================================== */
+function redessiner() {
+  var d = decalage(), i, p, k;
+  gSalle.setAttribute("transform", "translate(" + pt(d, 0) + ")");
+  if (gRegle) gRegle.setAttribute("opacity", ETAT.regle ? 1 : 0);
+  ["chariot", "figA", "figB", "eleve"].forEach(function (kk) {
+    var g = kk === "chariot" ? gChariot : (kk === "eleve" ? gEleve : gFig[kk]);
+    if (!g) return;
+    var q = positionCorps(kk);
+    g.setAttribute("transform", "translate(" + pt(q.x, q.y) + ")");
+  });
+  /* La pâte se voit sur la figurine A une fois collée, et sur le chariot
+     avant : sinon « fixée » et « posée » se ressemblent trop. */
+  var pa = svg.querySelector("#pate-figA");
+  if (pa) pa.setAttribute("opacity", ETAT.fixeA ? 1 : 0);
+  if (gPate) {
+    gPate.setAttribute("transform", "translate(" + pt(X_PATE, Y_PATE) + ")");
+    gPate.setAttribute("opacity", ETAT.pate ? .32 : 1);
+    gPate.setAttribute("cursor", ETAT.pate ? "default" : "grab");
+  }
+  /* Les jambes de l'élève marchent si — et seulement si — il avance. */
+  animerEleve();
+  majBadges();
+  majHalo();
+  majTableau();
+  majPanneaux();
+  majBoutons();
+  majConsigne();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+  $("alerte").style.display = horsProtocole() ? "block" : "none";
+}
+
+/* La marche : l'angle des jambes suit la DISTANCE parcourue, pas l'horloge.
+   Un élève qui n'avance pas ne doit pas pédaler sur place. */
+function animerEleve() {
+  if (!gEleve) return;
+  var s = parcours("eleve"), ph = Math.sin(s / 26) * 22;
+  var a = gEleve.querySelector("#jambeAv"), b = gEleve.querySelector("#jambeAr"),
+      br = gEleve.querySelector("#brasEleve");
+  if (a) a.setAttribute("transform", "rotate(" + ph.toFixed(1) + " 0 -62)");
+  if (b) b.setAttribute("transform", "rotate(" + (-ph).toFixed(1) + " 0 -62)");
+  if (br) br.setAttribute("transform", "translate(14,0) rotate("
+      + (-ph * 0.7).toFixed(1) + " 0 -106)");
+}
+
+/* La pastille du référentiel choisi s'allume ; celle des deux autres reste
+   une invitation. Le repère de la salle est double (mur + paillasse). */
+function majBadges() {
+  var i, c, chip, on, r, t;
+  for (i = 0; i < CHIPS.length; i++) {
+    c = CHIPS[i];
+    chip = svg.querySelector("#chip-" + c.k);
+    if (!chip) continue;
+    on = ETAT.ref === c.k;
+    r = chip.querySelector("rect");
+    t = chip.querySelector("text");
+    r.setAttribute("fill", on ? "#c8912a" : "#fff9e2");
+    r.setAttribute("stroke-width", on ? 2 : 1.5);
+    t.setAttribute("fill", on ? "#fff" : "#8a6a1e");
+    t.setAttribute("font-weight", on ? "bold" : "normal");
+  }
+  /* Les deux croix collées s'allument quand c'est la salle qui sert de
+     référence : sans cela, « la paillasse » resterait une abstraction. */
+  svg.querySelectorAll('[data-act="ref-salle"]').forEach(function (b) {
+    var rr = b.querySelector("rect");
+    if (rr) {
+      rr.setAttribute("fill", ETAT.ref === "salle" ? "#fdf0cc" : "#fff9e2");
+      rr.setAttribute("stroke-width", ETAT.ref === "salle" ? 3 : 1.6);
+    }
+  });
+  majTrait();
+}
+/* Le trait qui va de la puce choisie au corps qu'elle désigne : sans lui,
+   « observer depuis le chariot » reste un mot dans un bouton. */
+function majTrait() {
+  var g = svg.querySelector("#trait"), i, c = null, p;
+  if (!g) g = COUCHES.ui.appendChild(el("g", { id: "trait",
+    "pointer-events": "none" }));
+  vide(g);
+  for (i = 0; i < CHIPS.length; i++) if (CHIPS[i].k === ETAT.ref) c = CHIPS[i];
+  if (!c) return;
+  if (ETAT.ref === "salle") {
+    p = { x: 898 + decalage(), y: 196 };
+  } else {
+    p = positionCorps(ETAT.ref);
+    p.y -= ETAT.ref === "eleve" ? EL_H + 4 : 32;
+  }
+  g.appendChild(el("path", { d: "M " + pt(c.x + c.lg / 2, Y_CHIPS + 14)
+    + " C " + pt(c.x + c.lg / 2, Y_CHIPS + 76) + " " + pt(p.x, p.y - 66)
+    + " " + pt(p.x, p.y), stroke: GOLD, "stroke-width": 1.6, fill: "none",
+    "stroke-dasharray": "5 4", opacity: .75 }));
+  g.appendChild(el("circle", { cx: p.x, cy: p.y, r: 3.4, fill: GOLD }));
+}
+/* Le corps suivi porte un liseré, jamais un aplat : un aplat se lit comme
+   une matière et non comme une sélection. */
+function majHalo() {
+  var g = svg.querySelector("#halo");
+  if (!g) g = COUCHES.avant.appendChild(el("g", { id: "halo", "pointer-events": "none" }));
+  vide(g);
+  var p = positionCorps(ETAT.suivi), h = ETAT.suivi === "eleve" ? EL_H + 14 : 52;
+  var w = ETAT.suivi === "eleve" ? 58 : (ETAT.suivi === "chariot" ? 104 : 34);
+  g.appendChild(el("rect", { x: p.x - w / 2, y: p.y - h + 4, width: w, height: h,
+    rx: 7, fill: "none", stroke: GOLD, "stroke-width": 2, "stroke-dasharray": "6 4" }));
+}
+
+/* ==================================================================
+   18. LES BOUTONS COLLECTIFS
+   ==================================================================
+   Chacun refait, d'un clic, un geste qui se fait aussi à la main. Le
+   bouton et le glisser passent par la MÊME fonction : sans quoi l'un des
+   deux enregistrerait et l'autre non (§12.13).                           */
+var BOUTONS = [
+  { id: "regle", t: "Poser la règle graduée", f: function () {
+      if (ETAT.regle) { signaler("La règle est déjà posée."); return; }
+      ETAT.regle = true;
+      noter("Règle graduée posée : elle matérialise les positions de 0 à "
+          + nb(PHYS.L_PAILLASSE.v, 2) + " m.");
+      succes();
+    }, fait: function () { return ETAT.regle; } },
+  { id: "pate", t: "Coller la pâte sur le chariot", f: function () {
+      if (!ETAT.regle) { signaler(pourquoiPasPret()); return; }
+      deposerDirect("pate");
+    }, fait: function () { return ETAT.pate; } },
+  { id: "fixeA", t: "Fixer la figurine A", f: function () {
+      deposerDirect("figA");
+    }, fait: function () { return ETAT.fixeA; } },
+  { id: "poseB", t: "Poser la figurine B", f: function () {
+      deposerDirect("figB");
+    }, fait: function () { return ETAT.poseB; } },
+  { id: "refSalle", t: "Observer depuis la paillasse", f: function () {
+      choisirRef("salle");
+    }, fait: function () { return !!ETAT.fait.salle; } },
+  { id: "refChariot", t: "Observer depuis le chariot", f: function () {
+      choisirRef("chariot");
+    }, fait: function () { return !!ETAT.fait.chariot; } },
+  { id: "refEleve", t: "Observer depuis l'élève", f: function () {
+      choisirRef("eleve");
+    }, fait: function () { return !!ETAT.fait.eleve; } },
+  { id: "tirer", t: "Tirer le chariot", f: function () {
+      if (!pretAObserver()) { signaler(pourquoiPasPret()); return; }
+      if (ETAT.avance >= COURSE) {
+        signaler("Le chariot est au bout : le ramener au départ.");
+        return;
+      }
+      animerTrajet();
+    }, fait: function () { return ETAT.avance >= COURSE; } },
+  { id: "ramener", t: "Ramener le chariot", f: function () {
+      if (ETAT.avance <= 0) { signaler("Le chariot est déjà au départ."); return; }
+      ETAT.avance = 0;
+      noter("Chariot ramené au départ, prêt pour un nouveau trajet.");
+      succes();
+    }, fait: function () { return false; } },
+  { id: "conclure", t: "Comparer et conclure", f: function () {
+      var reste = REFS.filter(function (r) { return !ETAT.fait[r.k]; });
+      if (reste.length) {
+        signaler("Il reste " + reste.length + " référence"
+          + (reste.length > 1 ? "s" : "") + " à essayer : le tableau se remplit "
+          + "colonne par colonne, un trajet par colonne.");
+        return;
+      }
+      ETAT.conclu = true;
+      noter("Sur la ligne de la figurine A, « " + motMouvement().toLowerCase()
+          + " » et « " + motRepos().toLowerCase() + " » figurent en même temps, "
+          + "et les deux sont justes.");
+      succes();
+    }, fait: function () { return ETAT.conclu; } }
+];
+
+/* Le bouton passe par le même chemin que le glisser : on vise le centre de
+   la bonne zone et l'on dépose. Si le dépôt est refusé, c'est le MÊME
+   message qui s'affiche. */
+function deposerDirect(a) {
+  var z = zoneVoulue(a);
+  if (!z) return;
+  var x = z.type === "paillasse" ? X_POSE_B + decalage() : z.x;
+  var y = z.type === "paillasse" ? TABLE_Y - 10 : z.y;
+  deposer(a, x, y);
+}
+
+/* Le trajet animé : le chariot avance tout seul, à l'allure réglée, et
+   l'élève marche à la sienne. Rien n'est sauté — c'est le même chemin que
+   le glissement à la main, image par image. */
+/* ⚠️ setTimeout et Date.now(), PAS requestAnimationFrame : sous le budget
+   de temps virtuel du pilote, rAF n'est jamais appelé et ce bouton — qui
+   doit mener au MÊME état que le glissement (§12.13) — serait
+   invérifiable. Une animation dont dépend un résultat ne repose pas sur
+   le rendu. */
+var ANIM_ON = false, ANIM_T0 = 0;
+function animerTrajet() {
+  if (ANIM_ON) return;
+  ANIM_ON = true;
+  ANIM_T0 = Date.now();
+  setTimeout(pasTrajet, 16);
+}
+function pasTrajet() {
+  if (!ANIM_ON) return;
+  var dt = (Date.now() - ANIM_T0) / 1000;
+  ETAT.avance = borne(REG.vChar * PX_M * dt, 0, COURSE);
+  redessiner();
+  if (ETAT.avance >= COURSE) {
+    ANIM_ON = false;
+    terminerTrajet();
+    redessiner();
+    return;
+  }
+  setTimeout(pasTrajet, 16);
+}
+
+/* ⚠️ Dix boutons ne tiennent pas sur une ligne : à la première capture,
+   les quatre derniers sortaient du cadre. On répartit sur DEUX rangées,
+   coupées là où le protocole se coupe — préparer, puis observer. */
+function construireBoutons() {
+  var g = ajout("ui", el("g", { id: "boutons" })), b;
+  var rangs = [[], []];
+  BOUTONS.forEach(function (bt, i) { rangs[i < 4 ? 0 : 1].push(bt); });
+  rangs.forEach(function (rang, r) {
+    var y = r ? Y_BT2 : Y_BT1, tot = 0, x;
+    rang.forEach(function (bt) { bt.lg = 16 + bt.t.length * 6.35; tot += bt.lg + 9; });
+    x = (W - tot + 9) / 2;
+    rang.forEach(function (bt) {
+      b = g.appendChild(el("g", { "data-act": "bt-" + bt.id, cursor: "pointer",
+        id: "bt-" + bt.id }));
+      b.appendChild(el("rect", { x: x, y: y - 15, width: bt.lg, height: 30,
+        rx: 8, fill: "#eef4ea", stroke: "#9fb98a", "stroke-width": 1.4 }));
+      txtIn(b, x + bt.lg / 2, y + 5, bt.t, { taille: 11.5, couleur: "#2f4a1e" });
+      bt.x = x; bt.y = y;
+      x += bt.lg + 9;
+    });
+  });
+}
+function majBoutons() {
+  BOUTONS.forEach(function (bt) {
+    var n = svg.querySelector("#bt-" + bt.id);
+    if (!n) return;
+    var r = n.querySelector("rect"), on = bt.fait();
+    r.setAttribute("fill", on ? "#d7e8c8" : "#eef4ea");
+    r.setAttribute("stroke", on ? "#5f8a3a" : "#9fb98a");
+    r.setAttribute("stroke-width", on ? 2.2 : 1.4);
+  });
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act");
+    if (!a || a.indexOf("bt-") !== 0) return;
+    var id = a.slice(3), i;
+    for (i = 0; i < BOUTONS.length; i++) {
+      if (BOUTONS[i].id === id) { BOUTONS[i].f(); redessiner(); return; }
+    }
+  });
+}
+
+/* ==================================================================
+   19. LE TABLEAU DE LA FICHE
+   ==================================================================
+   Il se remplit COLONNE par colonne : une colonne par trajet observé.
+   Une case n'apparaît jamais avant que le geste qui la produit ait été
+   fait — sans quoi la page répondrait à la question avant de la poser.  */
+function majTableau() {
+  var t = $("tab"), i, j, tr, td, e, tete = entetes();
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  tete.forEach(function (h, c) {
+    td = tr.appendChild(document.createElement("th"));
+    td.textContent = depouille(h);
+    if (c > 0 && ETAT.ref === REFS[c - 1].k) td.className = "suivi";
+  });
+  for (i = 0; i < CORPS.length; i++) {
+    tr = t.appendChild(document.createElement("tr"));
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = nomCorps(i);
+    if (CORPS[i].k === ETAT.suivi) tr.className = "suivi";
+    for (j = 0; j < REFS.length; j++) {
+      td = tr.appendChild(document.createElement("td"));
+      if (!ETAT.fait[REFS[j].k]) { td.className = "vide"; td.textContent = ""; continue; }
+      e = etatRelatif(CORPS[i].k, REFS[j].k);
+      td.textContent = motEtat(e);
+      td.className = "mes";
+      if (e === null) td.style.color = "#9aa5b2";
+      else if (e === "repos") td.style.color = "var(--green)";
+      else td.style.color = "var(--orange)";
+    }
+  }
+  $("concl").className = ETAT.conclu ? "box" : "box masque";
+}
+function nbCellules() {
+  return $("tab").querySelectorAll("td.mes").length;
+}
+
+/* ==================================================================
+   20. LES PANNEAUX DE DROITE
+   ================================================================== */
+function majPanneaux() {
+  majSuivi();
+  majBoutonsCorps();
+  majGrapheVu();
+  $("refNom").textContent = nomRefDe(ETAT.ref);
+}
+
+function majSuivi() {
+  var k = ETAT.suivi, c = $("suiviCases"), j, e, dv, d;
+  $("suiviNom").textContent = nomCorpsCourt(k);
+  vide(c);
+  for (j = 0; j < REFS.length; j++) {
+    d = c.appendChild(el2("div"));
+    if (REFS[j].k === ETAT.ref) d.className = "act";
+    d.appendChild(el2("div", "t", "par rapport " + nomRef(j)));
+    e = etatRelatif(k, REFS[j].k);
+    /* ⚠️ Rien n'est annoncé avant le trajet qui le montre : la page ne
+       doit pas répondre à la question de la leçon dès le chargement. */
+    if (!ETAT.fait[REFS[j].k]) {
+      d.appendChild(el2("div", "u nul", "à observer"));
+      d.appendChild(el2("div", "v", "trajet non fait"));
+      continue;
+    }
+    d.appendChild(el2("div", "u " + (e === null ? "nul" : e === "repos" ? "rep" : "mob"),
+      motEtat(e)));
+    dv = vitesseRelative(k, REFS[j].k);
+    d.appendChild(el2("div", "v", e === null ? "question sans objet"
+      : "Δv = " + nb(Math.abs(dv), 2) + " m·s⁻¹"));
+  }
+  $("suiviPhrase").textContent = phraseSuivi(k);
+}
+function el2(tag, cls, txtc) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txtc !== undefined) n.textContent = txtc;
+  return n;
+}
+/* La phrase complète que la fiche exige : « ... est en mouvement par
+   rapport à ... ». Elle n'apparaît qu'une fois le trajet fait. */
+function phraseSuivi(k) {
+  var faits = REFS.filter(function (r) { return ETAT.fait[r.k]; });
+  if (!faits.length) {
+    return "Choisir une référence, puis tirer le chariot : c'est le trajet qui "
+         + "renseigne la colonne, pas le réglage.";
+  }
+  var mob = [], rep = [], j, e;
+  for (j = 0; j < REFS.length; j++) {
+    if (!ETAT.fait[REFS[j].k]) continue;
+    e = etatRelatif(k, REFS[j].k);
+    if (e === "mouvement") mob.push(nomRef(j));
+    else if (e === "repos") rep.push(nomRef(j));
+  }
+  var p = [];
+  if (mob.length) p.push(nomCorpsCourt(k) + " est " + motMouvement().toLowerCase()
+    + " par rapport " + mob.join(" et ") + ".");
+  if (rep.length) p.push(nomCorpsCourt(k) + " est " + motRepos().toLowerCase()
+    + " par rapport " + rep.join(" et ") + ".");
+  if (mob.length && rep.length) {
+    p.push("Les deux réponses sont justes en même temps : elles ne répondent "
+         + "pas à la même question.");
+  }
+  return p.join(" ");
+}
+
+/* Le graphe « vu depuis » : une flèche par corps, longueur proportionnelle
+   à la vitesse RELATIVE. Une flèche nulle se dessine comme un point, pas
+   comme une flèche minuscule — sinon « au repos » ressemble à « lent ».  */
+function construireGrapheVu() {
+  var s = $("gVu"), D = s.appendChild(el("defs", {})), m;
+  m = D.appendChild(el("marker", { id: "fl", viewBox: "0 0 10 10", refX: 9,
+    refY: 5, markerWidth: 5.5, markerHeight: 5.5, orient: "auto" }));
+  m.appendChild(el("path", { d: "M 0,0 L 10,5 L 0,10 z", fill: ORANGE }));
+}
+/* ⚠️ CE GRAPHE DONNAIT LES QUATRE RÉPONSES DÈS LE CHARGEMENT. La leçon
+   tient tout entière dans « la figurine A est-elle en mouvement ? », et
+   la page y répondait avant le premier geste, dans un panneau plus
+   lisible que le tableau lui-même. Il est désormais tenu au MÊME état
+   que le tableau : rien ne s'affiche tant que le trajet correspondant
+   n'a pas été fait. */
+function majGrapheVu() {
+  var s = $("gVu"), i, y, e, dv, x0 = 152, ech = 118, L, lignes;
+  while (s.childNodes.length > 1) s.removeChild(s.lastChild);
+  function T2(x, y2, t, o) {
+    o = o || {};
+    s.appendChild(el("text", { x: x, y: y2, "text-anchor": o.a || "start",
+      "font-size": o.s || 11, fill: o.c || INK,
+      "font-weight": o.g ? "bold" : "normal" }, t));
+  }
+  s.appendChild(el("line", { x1: x0, y1: 18, x2: x0, y2: 158,
+    stroke: "#cfd6de", "stroke-width": 1.4 }));
+  T2(x0, 12, "référence", { a: "middle", s: 8.5, c: "#9aa5b2" });
+  var vu = !!ETAT.fait[ETAT.ref];
+  for (i = 0; i < CORPS.length; i++) {
+    y = 36 + i * 32;
+    /* Le nom vient du YAML ; on l'enroule au lieu de le tronquer, car
+       « L'élève qui marche à côté du chariot » sortait du cadre. */
+    lignes = enrouler(nomCorps(i).replace(/\s*\(.*\)$/, ""), 21, 2);
+    lignes.forEach(function (t, li) {
+      T2(x0 - 8, y + (lignes.length === 1 ? 4 : li * 12 - 2), t,
+        { a: "end", s: 10 });
+    });
+    e = etatRelatif(CORPS[i].k, ETAT.ref);
+    if (e === null) {
+      T2(x0 + 10, y + 4, "— c'est la référence elle-même",
+        { s: 9.5, c: "#9aa5b2" });
+      continue;
+    }
+    if (!vu) {
+      s.appendChild(el("line", { x1: x0 + 6, y1: y, x2: x0 + 40, y2: y,
+        stroke: "#cfd6de", "stroke-width": 2, "stroke-dasharray": "4 4" }));
+      T2(x0 + 48, y + 4, "à observer", { s: 10, c: "#9aa5b2" });
+      continue;
+    }
+    dv = vitesseRelative(CORPS[i].k, ETAT.ref);
+    if (e === "repos") {
+      s.appendChild(el("circle", { cx: x0, cy: y, r: 4.5, fill: VERT }));
+      T2(x0 + 12, y + 4, motRepos(), { s: 10.5, c: VERT, g: true });
+      continue;
+    }
+    L = borne(dv * ech, -92, 92);
+    s.appendChild(el("line", { x1: x0, y1: y, x2: x0 + L, y2: y, stroke: ORANGE,
+      "stroke-width": 2.6, "marker-end": "url(#fl)" }));
+    T2(x0 + (L > 0 ? L + 8 : L - 8), y + 4, motMouvement(),
+      { s: 10, c: ORANGE, g: true, a: L > 0 ? "start" : "end" });
+  }
+  T2(x0, 172, vu ? "vitesses relatives — panneau de l'enseignant"
+    : "le trajet depuis cette référence n'a pas encore été fait",
+    { a: "middle", s: 8.5, c: "#9aa5b2" });
+}
+
+/* ==================================================================
+   21. LES CURSEURS
+   ==================================================================
+   ⚠️ La valeur initiale d'un curseur DOIT tomber sur la grille du pas
+   (§12.12) : 0,35 est bien un multiple de 0,05 à partir de 0,05 comme
+   de 0. Vérifié, pas supposé.                                           */
+function brancherCurseurs() {
+  function lier(id, out, cle, suff) {
+    var r = $(id), o = $(out);
+    function maj() {
+      REG[cle] = parseFloat(r.value);
+      o.textContent = nb(REG[cle], 2) + suff;
+      redessiner();
+    }
+    r.addEventListener("input", maj);
+    maj();
+  }
+  lier("rChar", "oChar", "vChar", " m·s⁻¹");
+  lier("rElev", "oElev", "vElev", " m·s⁻¹");
+}
+
+/* ==================================================================
+   22. LA SÉANCE
+   ================================================================== */
+var T0 = Date.now();
+function majSeance() {
+  var d = (DONNEES.duree || 20) * 60, e = (Date.now() - T0) / 1000;
+  $("seanceT").textContent = mmss(Math.min(e, d));
+  $("seanceJ").style.width = borne(100 * e / d, 0, 100) + "%";
+}
+
+/* ==================================================================
+   23. LE REMISE À ZÉRO
+   ==================================================================
+   Elle rembobine l'EXPÉRIENCE, jamais l'horloge de la séance : le temps
+   passé en classe ne se rattrape pas.                                    */
+function rezero() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  ETAT = neufEtat();
+  MSG = null; MSG_JUSQUA = 0; ANIM_ON = false;
+  $("obs").textContent = "—";
+  $("obs").className = "obs";
+  redessiner();
+}
+
+/* ==================================================================
+   24. LE TEXTE DE LA FICHE, PLACÉ DANS LA PAGE
+   ================================================================== */
+function remplirTextes() {
+  $("titre").textContent = depouille(T("titre"));
+  document.title = "Paillasse virtuelle — " + DONNEES.id + " · " + depouille(T("titre"));
+  $("ref").textContent = DONNEES.id + " · " + T("niveau") + " · " + T("lecon")
+    + " · résultats calculés";
+  $("objectif").innerHTML = md(T("objectif"));
+  $("observation").innerHTML = md(T("observation"));
+  $("conclTxt").innerHTML = md(T("conclusion"));
+  $("seanceB").textContent = "durée prescrite par la fiche";
+  $("seanceM").textContent = " " + (DONNEES.duree || 20) + " min · "
+    + depouille(T("modalite")).replace(/^.*?·\s*/, "");
+  ["materiel", "securite"].forEach(function (k) {
+    var u = $(k);
+    vide(u);
+    L(k).forEach(function (x) {
+      var li = document.createElement("li");
+      li.innerHTML = md(x);
+      u.appendChild(li);
+    });
+  });
+  $("capotRegle").textContent = "X est au repos par rapport à R  ⟺  |v(X) − v(R)| < "
+    + nb(PHYS.SEUIL.v, 2) + " m·s⁻¹";
+  $("capotSeuil").textContent = nb(PHYS.SEUIL.v, 2) + " m·s⁻¹";
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+  majCapotVit();
+}
+function majCapotVit() {
+  var t = $("capotVit"), tr, k;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Grandeur", "Valeur", "D'où elle vient"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  for (k in PHYS) {
+    if (!PHYS.hasOwnProperty(k)) continue;
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].n;
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(PHYS[k].v, 2) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].s;
+  }
+}
+
+/* ==================================================================
+   25. LES BOUTONS DE CORPS, DANS LE PANNEAU DE DROITE
+   ================================================================== */
+function construireBoutonsCorps() {
+  var g = $("corpsBtns"), i;
+  vide(g);
+  CORPS.forEach(function (c, i) {
+    var b = document.createElement("button");
+    b.textContent = nomCorps(i).replace(/\s*\(.*\)$/, "");
+    b.setAttribute("data-corps", c.k);
+    b.addEventListener("click", function () { ETAT.suivi = c.k; redessiner(); });
+    g.appendChild(b);
+  });
+}
+function majBoutonsCorps() {
+  var g = $("corpsBtns");
+  Array.prototype.forEach.call(g.children, function (b) {
+    b.className = b.getAttribute("data-corps") === ETAT.suivi ? "on" : "";
+  });
+}
+
+/* ==================================================================
+   26. DÉMARRAGE
+   ================================================================== */
+/* ==================================================================
+   27. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = W / s.width, ky = H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* Un bouton de scène : sa géométrie est lue sur le rectangle qu'il porte,
+   ce qui évite de toucher à construireBoutons(). */
+function surlignerBouton(id) {
+  var n = svg.querySelector("#bt-" + id), r = n && n.querySelector("rect");
+  if (!r) return null;
+  return haloGuide(+r.getAttribute("x") - 7, +r.getAttribute("y") - 7,
+                   +r.getAttribute("width") + 14,
+                   +r.getAttribute("height") + 14, 13);
+}
+/* La ZONE où poser : on réemploie le surligneur de la page — un second
+   mécanisme de cible ferait deux traits de couleurs différentes pour la
+   même chose — puis on confie ses rectangles à effacerGuide, pour
+   qu'aucun ne survive au guidage. */
+function montrerCibles(a, x, y) {
+  surlignerZones(a, x, y);
+  var g = svg.querySelector("#zones"), i;
+  if (!g) return;
+  for (i = 0; i < g.childNodes.length; i++) guideSurb.push(g.childNodes[i]);
+}
+
+/* Combien de colonnes du tableau sont renseignées : une par trajet
+   observé. C'est cet état-là qui porte les étapes 4 à 8 de la fiche —
+   il n'y a pas de compteur, on RELIT ETAT.fait. */
+function nbColonnes() {
+  var i, n = 0;
+  for (i = 0; i < REFS.length; i++) if (ETAT.fait[REFS[i].k]) n++;
+  return n;
+}
+function refRestante() {
+  var i;
+  for (i = 0; i < REFS.length; i++) if (!ETAT.fait[REFS[i].k]) return REFS[i].k;
+  return null;
+}
+var BT_REF = { salle: "refSalle", chariot: "refChariot", eleve: "refEleve" };
+
+/* Les huit étapes de la fiche. L'ordre suit le protocole ; les prédicats,
+   eux, LISENT l'état — les deux ne se recopient pas.
+   Les étapes 4 et 5 partagent un prédicat : la fiche fait tirer le chariot
+   et marcher l'élève « en même temps », et la page n'a qu'un trajet. */
+var GUIDE = [
+  { fait: function () { return ETAT.regle; },
+    aide: "Poser la <b>règle graduée</b> le long de la paillasse : c'est elle "
+        + "qui matérialise la position de départ du chariot.",
+    montre: function () { surlignerBouton("regle"); surlignerNoeud(gRegle, 6); } },
+
+  { fait: function () { return ETAT.fixeA; },
+    aide: function () {
+      return ETAT.pate
+        ? "Prendre la <b>figurine A</b>, au bout de la paillasse, et la "
+        + "<b>glisser sur le chariot</b> : la pâte l'y retiendra."
+        : "Prendre la <b>pâte adhésive</b>, à droite, et la glisser sur le "
+        + "<b>plateau du chariot</b> — sans elle, la figurine A ne serait pas "
+        + "solidaire du chariot.";
+    },
+    montre: function () {
+      var a = ETAT.pate ? "figA" : "pate", z = zoneChariot();
+      surlignerNoeud('[data-act="' + a + '"]');
+      montrerCibles(a, z.x, z.y);
+    } },
+
+  { fait: function () { return ETAT.poseB; },
+    aide: "Prendre la <b>figurine B</b> et la poser <b>sur la paillasse</b>, à "
+        + "côté du trajet — la fiche dit « sans la fixer au chariot ».",
+    montre: function () {
+      surlignerNoeud('[data-act="figB"]');
+      montrerCibles("figB", X_POSE_B + decalage(), TABLE_Y - 10);
+    } },
+
+  { fait: function () { return ETAT.avance >= COURSE || nbColonnes() > 0; },
+    aide: "Tirer le chariot <b>d'un bout à l'autre</b> de la paillasse, "
+        + "lentement et régulièrement : le saisir et le glisser, ou presser "
+        + "« Tirer le chariot ».",
+    montre: function () {
+      surlignerNoeud('[data-act="chariot"]');
+      surlignerBouton("tirer");
+    } },
+
+  { fait: function () { return nbColonnes() > 0; },
+    aide: function () {
+      return "Pendant le MÊME trajet, l'élève marche à côté du chariot, à la "
+        + "<b>même allure</b>. Les deux curseurs d'allure doivent rester égaux"
+        + (horsProtocole() ? " — ils ne le sont pas, et le trajet ne "
+           + "renseignera aucune colonne." : ".");
+    },
+    montre: function () { surlignerNoeud('[data-act="eleve"]'); } },
+
+  { fait: function () { return !!ETAT.fait.salle; },
+    aide: function () {
+      return "L'apprenant resté assis observe depuis sa place : prendre la "
+        + "référence <b>« " + nomRefDe("salle") + " »</b>, puis refaire le "
+        + "trajet. C'est ce trajet-là qui remplit sa colonne du tableau.";
+    },
+    montre: function () {
+      surlignerNoeud("#chip-salle", 4);
+      surlignerBouton("refSalle");
+    } },
+
+  { fait: function () { return nbColonnes() >= 2; },
+    aide: function () {
+      var k = refRestante();
+      return "Annoncer <b>d'abord la référence</b>, puis seulement la réponse : "
+        + "changer de référence — « " + (k ? nomRefDe(k) : "—") + " » reste à "
+        + "essayer — et refaire le trajet. Une réponse sans sa référence ne "
+        + "veut rien dire.";
+    },
+    montre: function () {
+      var k = refRestante();
+      if (!k) return;
+      surlignerNoeud("#chip-" + k, 4);
+      surlignerBouton(BT_REF[k]);
+    } },
+
+  { fait: function () { return nbColonnes() >= 3 && ETAT.conclu; },
+    aide: function () {
+      var k = refRestante();
+      return k
+        ? "Refaire le trajet une dernière fois, depuis « " + nomRefDe(k)
+          + " », pour que chacun ait observé depuis le chariot ET depuis sa "
+          + "place."
+        : "Les trois colonnes sont renseignées : presser <b>« Comparer et "
+          + "conclure »</b> et lire la ligne de la figurine A.";
+    },
+    montre: function () {
+      var k = refRestante();
+      if (k) { surlignerNoeud("#chip-" + k, 4); surlignerBouton(BT_REF[k]); }
+      else surlignerBouton("conclure");
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : les
+     curseurs appellent redessiner() avant le démarrage du panneau. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape soit lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  MSG = null; MSG_JUSQUA = 0;
+  majConsigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 2, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* Arreter le deroule, c'est aussi arreter le geste EN COURS : sur ces
+     paillasses, un trajet anime continuerait seul jusqu'a son terme et
+     renseignerait une ligne que l'enseignant venait d'interrompre. On coupe
+     l'animation la ou elle en est — ce que fait un eleve qui lache le
+     chariot en route. Aucun resultat n'est ecrit : la fin de trajet, elle,
+     passe par `finTirage()` / `finRotation()`, qui ne sont pas appeles. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* Le panneau se rafraichit une derniere fois par le RENDU de la page.
+       Les lots precedents avaient un `avancer()` qui le faisait ; ces
+       pages-ci n'en ont pas, et sur E3AC-13 `avancer(x, v, a, t)` est la
+       cinematique de la bille — un homonyme, pas un rafraichisseur. */
+    redessiner();
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* Cette paillasse n'a pas de `ec("…")` : ses boutons de scène sont les
+     entrées de `BOUTONS`, dessinées avec `data-act="bt-<id>"` (§18). Un vrai
+     clic dessus passe donc par `brancherBoutons()`, puis par la MÊME
+     fonction que le glisser — `deposerDirect()` vise la zone que
+     `zoneVoulue()` accepte, jamais une coordonnée écrite en dur. */
+
+  /* 1. la règle graduée le long de la paillasse */
+  function () { presserBouton("bt-regle"); return 360; },
+
+  /* 2. la figurine A SOLIDAIRE du chariot. Deux gestes, un par pression :
+     `accepte()` refuse la figurine tant que la pâte n'est pas sur le
+     plateau, et le bouton de la pâte refuse tant que la règle n'est pas
+     posée (`pourquoiPasPret()`). On lève la condition au lieu de la
+     contourner. */
+  function () {
+    if (!ETAT.pate) { presserBouton("bt-pate"); return 380; }
+    presserBouton("bt-fixeA");
+    return 420;
+  },
+
+  /* 3. la figurine B posée sur la paillasse, « sans la fixer au chariot » */
+  function () { presserBouton("bt-poseB"); return 420; },
+
+  /* 4, 5 et 6. UN SEUL trajet les porte toutes les trois : la fiche fait
+     tirer le chariot ET marcher l'élève « en même temps » (les deux allures
+     restent celles du réglage, donc égales, donc dans le protocole), et ce
+     trajet-là est observé depuis la référence par défaut — la salle. Le
+     panneau saute donc de l'étape 4 à l'étape 7 : il DÉDUIT, il ne compte
+     pas. Le délai se calcule sur le modèle — `animerTrajet()` avance de
+     `REG.vChar · PX_M` pixels par seconde — et non sur une durée devinée. */
+  function () {
+    if (ETAT.avance >= COURSE) { presserBouton("bt-ramener"); return 320; }
+    presserBouton("bt-tirer");
+    return Math.max(1500, COURSE / (REG.vChar * PX_M) * 1000 + 1400);
+  },
+  function () {
+    if (ETAT.avance >= COURSE) { presserBouton("bt-ramener"); return 320; }
+    presserBouton("bt-tirer");
+    return Math.max(1500, COURSE / (REG.vChar * PX_M) * 1000 + 1400);
+  },
+  function () {
+    if (ETAT.avance >= COURSE) { presserBouton("bt-ramener"); return 320; }
+    presserBouton("bt-tirer");
+    return Math.max(1500, COURSE / (REG.vChar * PX_M) * 1000 + 1400);
+  },
+
+  /* 7. la deuxième colonne : « annoncer d'abord la référence, puis la
+     réponse ». On demande à la page laquelle reste — `refRestante()` — puis
+     on refait le trajet. `choisirRef()` remet le chariot au départ
+     lui-même ; c'est pour cela qu'on change de référence AVANT de tirer, et
+     non l'inverse. */
+  function () {
+    var k = refRestante();
+    if (!k) return 0;
+    if (ETAT.ref !== k) { presserBouton("bt-" + BT_REF[k]); return 420; }
+    presserBouton("bt-tirer");
+    return Math.max(1500, COURSE / (REG.vChar * PX_M) * 1000 + 1400);
+  },
+
+  /* 8. la troisième colonne, puis « Comparer et conclure » — ce dernier
+     bouton n'est pas une étape de plus : c'est lui que l'étape 8 de la fiche
+     désigne, et c'est lui qui démasque la conclusion. */
+  function () {
+    var k = refRestante();
+    if (k) {
+      if (ETAT.ref !== k) { presserBouton("bt-" + BT_REF[k]); return 420; }
+      presserBouton("bt-tirer");
+      return Math.max(1500, COURSE / (REG.vChar * PX_M) * 1000 + 1400);
+    }
+    presserBouton("bt-conclure");
+    return 520;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  var p = $("paillasse");
+  svg = p.appendChild(el("svg", { viewBox: "0 0 " + W + " " + H,
+    width: "100%", role: "img",
+    "aria-label": "Paillasse virtuelle : un chariot, deux figurines et un élève qui marche" }));
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  ajouterDefs();
+  ajouterCouches();
+  construireFond();
+  construireSalle();
+  construireSecurite();
+  construireChariot();
+  construireFigurine("figA");
+  construireFigurine("figB");
+  construirePate();
+  construireEleve();
+  construireChips();
+  construireBoutons();
+  construireLegende();
+  construireGrapheVu();
+  construireBoutonsCorps();
+  brancherManipulation();
+  brancherBoutons();
+  /* ⚠️ L'état AVANT les curseurs : brancherCurseurs() appelle redessiner()
+     pour afficher sa valeur de départ, et redessiner() lit ETAT. Dans
+     l'autre ordre, la page mourait sur un TypeError au chargement. */
+  ETAT = neufEtat();
+  brancherCurseurs();
+  remplirTextes();
+  $("rezero").addEventListener("click", rezero);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  construireProtocole();
+  redessiner();
+  majSeance();
+  setInterval(majSeance, 1000);
+  setInterval(function () {
+    if (MSG && Date.now() >= MSG_JUSQUA) { MSG = null; majConsigne(); }
+  }, 400);
+  /* Le contrôle interne du §3 : si un jour les douze cases calculées ne
+     redonnaient plus les douze cases de la fiche, il faut le SAVOIR. */
+  if (!accordAvecLaFiche()) {
+    console.warn("E3AC-11 : le modèle ne redonne plus le tableau de la fiche.");
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else {
+  demarrer();
+}
+})();
+</script>
+</body>
+</html>

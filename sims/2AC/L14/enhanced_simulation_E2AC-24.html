@@ -1,0 +1,2683 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-24 · Déterminer une distance focale et comparer les vergences</title>
+<!-- L'ECOUTEUR D'ERREURS EST ICI, ET PAS EN FIN DE BODY (SKILL §12.47). -->
+<script>
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message) + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<!--
+  ===================================================================
+  E2AC-24 · 2AC · U2 · L14 — PAILLASSE VIRTUELLE
+  « Déterminer une distance focale et comparer les vergences »
+  ===================================================================
+
+  LA FOCALE SE MESURE — ELLE N'EST PAS AFFICHÉE
+  ---------------------------------------------
+  C'est toute la différence entre cette page et une figure. La fiche
+  demande de DÉPLACER l'écran jusqu'à ce que la tache soit « la plus petite
+  et la plus nette », puis de LIRE la distance sur la règle du banc. La
+  page fait exactement cela, et rien d'autre :
+
+   · LE DIAMÈTRE DE LA TACHE est calculé, à chaque position de l'écran, par
+     un TRACÉ DE RAYONS — cinq directions incidentes réparties sur le
+     diamètre apparent de la source, neuf hauteurs d'entrée dans
+     l'ouverture utile, Descartes en vecteurs sur chacun des deux dioptres.
+     Le diamètre de la tache est l'étendue des points d'impact. Aucune
+     formule de flou n'est écrite.
+   · LE MINIMUM EST CHERCHÉ, pas connu : la page balaie le banc et retient
+     la position où ce diamètre est le plus petit. C'est ce que fait
+     l'élève, et c'est ce que la page refuse de contourner — tant que
+     l'écran n'y est pas, elle refuse le relevé et DIT de combien on est
+     loin, en millimètres.
+   · LA LECTURE SE FAIT À LA RÈGLE. Le banc est gradué au millimètre : la
+     valeur brute du solveur, 5,007 cm, est LUE 5,0 cm. Écrire 5,007
+     revendiquerait une précision que la règle n'a pas (§12.21).
+   · LA VERGENCE EN DÉCOULE, et l'unité est le piège que la fiche signale
+     elle-même : C = 1/f′ n'est en dioptries que si f′ est en MÈTRES. La
+     page fait la conversion à l'écran, en trois temps, et affiche ce que
+     donnerait l'oubli — 1/5 = 0,2, qui n'a aucun sens.
+
+  ET LES DEUX RAYONS DE COURBURE NE SONT PAS CHOISIS : ILS SONT DÉDUITS.
+  La fiche donne les deux focales qu'on doit trouver. La page inverse donc
+  la formule des opticiens — 1/f′ = (n−1)·[2/R + (n−1)·e/(n·R²)] — par
+  dichotomie, pour fabriquer deux verres qui ONT ces focales-là. Puis elle
+  les MESURE par le tracé, et retrouve la fiche. C'est un aller-retour
+  complet : la fiche entre par un bout, elle ressort par l'autre.
+
+  CE QUE LE MODÈLE DONNE EN PLUS
+  ------------------------------
+  L'OUVERTURE EST LA CONDITION DE GAUSS. À 4 mm d'ouverture utile, la tache
+  la plus petite fait 2 µm et se forme à 5,06 cm ; à pleine ouverture
+  (25 mm) elle fait 0,72 mm et se forme à 4,66 cm — c'est-à-dire AVANT le
+  foyer. L'aberration de sphéricité déplace le point de mesure, et le
+  curseur d'ouverture le montre. C'est déjà la question du diaphragme, que
+  l'expérience suivante traite.
+  ET LE DISQUE SOLAIRE NE SE RÉSORBE PAS : la source n'est pas un point,
+  son diamètre apparent vaut 0,533°, et la tache la plus petite garde
+  2·α·f′ — un demi-millimètre. Le curseur permet de passer du Soleil à la
+  lampe lointaine que la fiche propose aussi.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Fiche `E2AC-24` de `experiences.yaml`, bloc `DONNEES` régénéré (§0).
+  · LES DEUX FOCALES SONT LUES DANS LE TABLEAU — « 5,0 » et « 10,0 » — et
+    servent à fabriquer les deux verres. Rien n'est écrit en dur.
+  · Trois grandeurs sont des AJOUTS étiquetés : l'ouverture utile du
+    porte-lentille (10 mm), le demi-diamètre apparent du Soleil
+    (4,7 mrad = 0,533°, valeur astronomique) et l'épaisseur au centre.
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome ; pas de vue 3D ; elle DOUBLE `simulation_E2AC-24.html`.
+  · LA SCÈNE SE REGARDE DE CÔTÉ, dans le plan méridien (§12.20), et
+    l'ÉCRAN est en outre dessiné de face, en encart, parce que c'est là
+    que la tache se juge.
+  · À l'échelle : les distances sur le banc, l'ouverture utile, le
+    diamètre de la tache — grossi d'un facteur écrit dans le cadre, sans
+    quoi un demi-millimètre ferait deux pixels.
+  · LE SOLEIL N'EST PAS MANIPULABLE. La fiche l'écrit deux fois : on ne
+    regarde jamais le Soleil à travers une lentille, et un montage laissé
+    au Soleil met le feu. La page refuse le geste et le dit.
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §6.2 · §6.11 · §6.12 · §12.2 · §12.5 · §12.12 · §12.16 · §12.18 ·
+  §12.21 (la lecture s'écrit avec les chiffres que la règle justifie) ·
+  §12.26 (les décimales du quotient viennent de son incertitude) ·
+  §12.41 · §12.47.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --rouge:#b03030;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #00000077;
+          pointer-events:none;max-width:52%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(244px,22%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #00000055}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0006}
+.rezero:hover{filter:brightness(1.09)}
+
+/* ---- LE BANDEAU DE SÉCURITÉ ----
+   Une lampe qu'on ne doit pas fixer, du verre qui peut éclater, des béchers
+   d'eau près d'une prise : la sécurité n'est pas un encadré à côté du
+   montage, c'est une condition d'exécution. Le bandeau porte en permanence
+   la ligne de `securite` qui motive le geste en cours. */
+.secubande{margin-top:10px;border-radius:9px;padding:10px 14px;
+           border-left:6px solid var(--rouge);background:var(--redbg);
+           display:flex;gap:12px;align-items:flex-start}
+.secubande .pic{font-size:22px;line-height:1.1}
+.secubande .co{flex:1;min-width:0}
+.secubande .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+              font-weight:700;color:var(--rouge);display:block;margin-bottom:2px}
+.secubande .t{font-size:13.5px;color:#4a1f1f;line-height:1.45}
+.secubande.refus{background:#f7d9d9;border-left-color:#8c1c1c}
+.secubande.refus .k{color:#8c1c1c}
+.secubande.ok{background:var(--greenbg);border-left-color:var(--green)}
+.secubande.ok .k{color:var(--green)}
+.secubande.ok .t{color:#22380f}
+
+.checks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.checks div{flex:1 1 calc(33% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted);
+            position:relative;min-width:120px}
+.checks div .n{font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+               font-weight:700;color:#c0a0a0;display:block}
+.checks div.non{border-color:#e6b9b9;background:#fdf4f4}
+.checks div.non .n{color:var(--rouge)}
+.checks div.oui{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.checks div.oui .n{color:var(--green)}
+.checks div.oui::after{content:"✓";position:absolute;right:7px;top:5px;
+                       font-weight:700;color:var(--green)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:92px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect div.ajout{background:#f4f0fa}
+.lect div.ajout .k{color:#6b4b9a}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:var(--rouge);background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.box.secu li{margin-bottom:4px}
+.box.secu li.actif{background:#f7d9d9;border-radius:4px;padding:2px 4px;
+                   margin-left:-4px;font-weight:600}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on lui impose donc une BOÎTE explicite, en
+   `!important` — c'est exactement le cas pour lequel ce mot existe : le SVG
+   porte un style EN LIGNE qui bat tout sélecteur, et sans cela la scène
+   projetée est rognée en haut et en bas. Les 56 px retranchés sont la bande
+   réservée à la flèche d'avance. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:flex-start;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de neuf
+   étapes fait 450 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit en clair. Passée par un échappement CSS, la séquence du
+   caractère se fait avaler par le chiffre qui la suit et sort en « ¹3 ». */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--serif);font-size:16px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-24 · 2AC · L14</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="secubande" id="secuBande">
+      <span class="pic" id="secuPic">⚠</span>
+      <span class="co">
+        <span class="k" id="secuTitre">Consigne de sécurité du geste en cours</span>
+        <span class="t" id="secuTexte">…</span>
+      </span>
+    </div>
+    <div class="checks" id="checks"></div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeSeuils"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:var(--rouge)">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La tache sur l'écran <span class="note">c'est elle qu'on cherche à réduire</span></h2>
+      <svg id="gTache" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="lect" style="margin-top:10px">
+        <div><div class="k">Position de l'écran</div><div class="v" id="lZ">—</div></div>
+        <div><div class="k">Diamètre de la tache</div><div class="v" id="lTache">—</div></div>
+        <div><div class="k">Le plus petit possible</div><div class="v" id="lMin">—</div></div>
+        <div><div class="k">Écart au minimum</div><div class="v" id="lEcart">—</div></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Le diamètre de la tache le long du banc <span class="note">le minimum se cherche</span></h2>
+      <svg id="gProfil" viewBox="0 0 360 196" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Chaque point est un tracé complet. Le creux est <b>plat</b> : c'est
+        pour cela qu'on cherche « la plus petite ET la plus nette », et
+        c'est pour cela qu'une règle au millimètre suffit.
+      </div>
+      <div class="lect" style="margin-top:10px">
+        <div class="ajout"><div class="k">Foyer paraxial calculé</div>
+          <div class="v" id="lPara">—</div></div>
+        <div class="ajout"><div class="k">Tache minimale au Soleil</div>
+          <div class="v" id="lSol">—</div></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>De la distance à la vergence <span class="note">et le piège de l'unité</span></h2>
+      <svg id="gVergence" viewBox="0 0 360 186" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        C = 1/f′ n'est en <b>dioptries</b> que si f′ est en <b>mètres</b> —
+        c'est la réserve que la fiche prend elle-même. La conversion est
+        faite ici en trois temps, et l'oubli est affiché à côté.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg"><label for="rOuv">Ouverture utile du porte-lentille</label><output id="oOuv"></output>
+        <input type="range" id="rOuv" min="2" max="25" step="1" value="10">
+        <div class="aide" id="aideOuv"></div></div>
+      <div class="reg"><label for="rSol">Demi-diamètre angulaire de la source</label><output id="oSol"></output>
+        <input type="range" id="rSol" min="0" max="12" step="0.1" value="4.7">
+        <div class="aide" id="aideSol"></div></div>
+      <div class="reg"><label for="rN">Indice du verre</label><output id="oN"></output>
+        <input type="range" id="rN" min="1.400" max="1.900" step="0.001" value="1.517">
+        <div class="aide" id="aideN"></div></div>
+      <div class="reg"><label for="rE">Épaisseur au centre</label><output id="oE"></output>
+        <input type="range" id="rE" min="1" max="8" step="0.5" value="4">
+        <div class="aide" id="aideE"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="eqModele"></div>
+      <p>La focale n'est <b>pas</b> affichée : elle est cherchée, comme sur
+      le banc — en déplaçant l'écran jusqu'au minimum du diamètre de la
+      tache, puis en lisant à la règle.</p>
+      <h3>2 · Ce que devient la lumière</h3>
+      <div class="eq" id="eqBilan"></div>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Une seule longueur d'onde.</b> La focale du bleu et celle du
+        rouge diffèrent de 1 % environ sur un verre courant : la tache la
+        plus petite du blanc est un compromis, et elle est irisée.</li>
+        <li><b>La source est un disque uniforme.</b> Le Soleil est assombri
+        au bord ; la tache réelle a un profil plus doux.</li>
+        <li><b>Aucune diffraction.</b> À 4 mm d'ouverture et 50 mm de
+        focale, la tache d'Airy fait 17 µm : le modèle annonce 2 µm, ce qui
+        est faux — mais dix fois sous ce que la règle peut voir.</li>
+        <li><b>L'écran est un plan parfait, perpendiculaire à l'axe.</b> Un
+        écran de travers déplace le minimum et l'étale.</li>
+        <li><b>Le jugement « la plus petite ET la plus nette » est réduit à
+        un diamètre.</b> L'œil, lui, juge un contraste, et il trouve le
+        minimum mieux que le diamètre géométrique ne le suggère.</li>
+        <li><b>Le centre optique est supposé au milieu du verre.</b> Pour
+        une lentille symétrique c'est vrai ; pour une plan-convexe, non — et
+        la mesure de OF′ s'en ressentirait.</li>
+        <li><b>La sécurité simulée n'est pas la sécurité.</b> Le Soleil à
+        travers une lentille brûle la rétine et met le feu au papier : la
+        page refuse le geste, elle ne protège personne.</li>
+      </ul>
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-24.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-24",
+  "niveau": "2AC",
+  "unite": "U2",
+  "lecon": "L14",
+  "titre": "Déterminer une distance focale et comparer les vergences de deux lentilles",
+  "axe": "Le foyer image, la distance focale et la vergence",
+  "objectif": "Déterminer expérimentalement la distance focale de deux lentilles convergentes en cherchant leur foyer image, calculer leur vergence en dioptries et conclure laquelle est la plus convergente.",
+  "duree": 25,
+  "modalite": "groupes de 4 — 8 postes ; mesure au Soleil si le temps le permet, sinon à la source lointaine",
+  "materiel": [
+    "Deux lentilles minces convergentes par poste : (L₁) et (L₂)",
+    "**Banc d'optique** gradué en centimètres — c'est lui qui donne la mesure",
+    "**Source lumineuse** placée très loin, ou lumière du **Soleil** par la fenêtre",
+    "**Écran** blanc mobile, ou simple feuille de papier",
+    "Règle graduée, feuille de papier, crayon"
+  ],
+  "securite": [
+    "**Ne jamais regarder le Soleil à travers une lentille** : la brûlure de la rétine est immédiate et définitive.",
+    "Une lentille convergente pointée vers le Soleil **met le feu au papier** en quelques secondes : ne pas laisser le montage sans surveillance.",
+    "Ne pas poser une lentille au Soleil sur une table de bois ou près d'un cahier.",
+    "Tenir les lentilles par la tranche ; signaler tout verre ébréché."
+  ],
+  "protocole": [
+    "Placer la lentille (L₁) sur le banc d'optique, face à une source **très éloignée** — le Soleil par la fenêtre, ou une lampe à l'autre bout de la salle : les rayons qui l'atteignent sont alors **parallèles** à l'axe optique.",
+    "Placer l'**écran** derrière la lentille et le déplacer lentement le long du banc.",
+    "Repérer la position où la tache lumineuse est **la plus petite et la plus nette** : les rayons s'y rassemblent, c'est le **foyer image F′**.",
+    "Mesurer sur la règle du banc la distance entre le centre optique O de la lentille et le point F′ : c'est la **distance focale f′ = OF′**, en centimètres.",
+    "Convertir cette distance en **mètres**, puis calculer la **vergence** C = 1/f′, en **dioptries (δ)**.",
+    "**Témoin** : reprendre les cinq étapes à l'identique avec la lentille (L₂), sans déplacer la source ni changer l'écran.",
+    "Comparer les deux distances focales et les deux vergences, et dire laquelle des deux lentilles est la plus convergente."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Lentille",
+      "f′ mesurée (cm)",
+      "f′ (m)",
+      "C = 1/f′ (δ)",
+      "Conclusion"
+    ],
+    "lignes": [
+      [
+        "(L₁)",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "(L₂)",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "(L₁)",
+        "5,0",
+        "0,050",
+        "**20**",
+        "la **plus** convergente"
+      ],
+      [
+        "(L₂)",
+        "10,0",
+        "0,100",
+        "**10**",
+        "la **moins** convergente"
+      ]
+    ]
+  },
+  "observation": "La lentille (L₁) rassemble le faisceau parallèle à 5,0 cm de son centre optique, la lentille (L₂) à 10,0 cm. Les vergences correspondantes sont 20 δ et 10 δ.",
+  "conclusion": "La distance focale f′ = OF′ se mesure entre le centre optique et le foyer image ; elle s'exprime en mètres. La vergence C = 1/f′ s'exprime en dioptries. Plus la distance focale est petite, plus la vergence est grande et plus la lentille converge.",
+  "oheric": {
+    "observation": "Deux lentilles convergentes se ressemblent, mais l'une est nettement plus bombée que l'autre. Placées l'une après l'autre au Soleil, elles concentrent toutes deux la lumière en un point brillant — mais pas à la **même distance** du verre : le point le plus proche est celui de la lentille la plus bombée, et c'est celui qui enflamme le papier le plus vite. Où se forme exactement ce point, et comment chiffrer cette différence entre les deux lentilles ?",
+    "hypothese": "**Si** une lentille convergente rassemble en un point unique tout faisceau parallèle à son axe, **alors** ce point est une caractéristique de la lentille, et **la distance qui le sépare du centre optique** doit suffire à comparer deux lentilles : plus elle est **courte**, plus la lentille « converge » fort.",
+    "experience": "Éclairer la lentille (L₁) avec un faisceau **parallèle** — le Soleil ou une source très lointaine —, déplacer l'écran jusqu'à obtenir la tache **la plus petite et la plus nette**, et mesurer sur le banc la distance OF′. Convertir en mètres et calculer C = 1/f′. **Témoin** : refaire exactement la même mesure avec la lentille (L₂), sans rien changer d'autre au montage.",
+    "resultats": "Pour la lentille (L₁), la tache la plus petite et la plus nette est obtenue à **5,0 cm** du centre optique : f′₁ = 5,0 cm = **0,050 m**, d'où C₁ = 1 / 0,050 = **20 δ**. Pour la lentille (L₂), elle est obtenue à **10,0 cm** : f′₂ = 10,0 cm = **0,100 m**, d'où C₂ = 1 / 0,100 = **10 δ**. Au-delà de F′, dans les deux cas, les rayons se **croisent** et recommencent à s'écarter : la tache grandit de nouveau.",
+    "interpretation": "Le point où la tache est la plus petite est celui où **tous** les rayons parallèles se rassemblent : c'est le **foyer image F′**, et la distance OF′ est la **distance focale f′** de la lentille. La comparaison ne laisse aucun doute puisque le **témoin** a été mesuré dans le même montage, avec la même source : (L₁), plus bombée, rassemble les rayons **deux fois plus près** de son centre que (L₂). Sa vergence, qui est l'**inverse** de sa distance focale, est donc **deux fois plus grande**. La vergence mesure la capacité de la lentille à faire converger la lumière — d'où son nom arabe **قوة العدسة**, la « force » de la lentille. Attention à l'unité : C n'est en dioptries que si f′ est en **mètres** ; oublier la conversion donne 1/5 = 0,2, qui n'a aucun sens.",
+    "conclusion": "Tout faisceau parallèle à l'axe optique d'une lentille convergente émerge en passant par un point unique de cet axe, le **foyer image F′**. Le symétrique de F′ par rapport au centre optique O est le **foyer objet F**. La distance **f′ = OF = OF′** est la **distance focale** ; son unité est le **mètre (m)**. La **vergence** de la lentille est C = 1/f′ ; son unité est la **dioptrie (δ)**. Une lentille est d'autant plus convergente que sa **vergence est grande** et sa **distance focale petite**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030", JAUNE = "#ffd21e";
+var LISERE = "#7a5c10", SCHEMA = "#8ea0bb";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.47 : `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0 — le
+   garde-fou d'origine laissait donc passer `null`, et `null.toFixed` levait
+   PENDANT le démarrage, sur une page qui avait l'air de charger. Le TYPE se
+   teste avant la finitude. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+function nbAuto(x) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  var a = Math.abs(x);
+  return nb(x, a >= 100 ? 0 : (a >= 10 ? 1 : (a >= 1 ? 2 : (a >= 0.01 ? 3 : 4))));
+}
+function expo(e) {
+  var s = "" + e, o = "", i, T = { "0": "⁰", "1": "¹", "2": "²", "3": "³",
+    "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  for (i = 0; i < s.length; i++) o += T[s.charAt(i)] || s.charAt(i);
+  return o;
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x) || x === 0) return nb(x, d);
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10);
+  if (e >= -2 && e <= 4) return nbAuto(x);
+  return nb(x / Math.pow(10, e), d === undefined ? 1 : d) + "·10" + expo(e);
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+/* Le mini-markdown du YAML. Le gras se dépouille AVANT l'italique : le motif
+   de l'italique ne doit jamais voir une paire d'astérisques doubles. */
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* §12.2 : `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de nb(). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function lignesTxt(txt, n) {
+  var mots = String(txt || "").split(/\s+/), out = [], cur = "";
+  mots.forEach(function (m) {
+    if (!cur.length) { cur = m; return; }
+    if ((cur + " " + m).length <= n) { cur += " " + m; }
+    else { out.push(cur); cur = m; }
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+function degres(r) { return r * 180 / Math.PI; }
+function rads(d) { return d * Math.PI / 180; }
+function sinh(x) { return (Math.exp(x) - Math.exp(-x)) / 2; }
+function cosh(x) { return (Math.exp(x) + Math.exp(-x)) / 2; }
+
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ================================================================== */
+var PHYS = {
+  N_BK7: { v: 1.51680, u: "", n: "indice du verre N-BK7 à la raie d (587,6 nm)",
+    s: "catalogue optique du borosilicate crown — la valeur de référence des lentilles de démonstration" },
+  ALPHA_SOLEIL: { v: 4.65e-3, u: "rad", n: "demi-diamètre apparent du Soleil",
+    s: "0,533° de diamètre vu de la Terre — valeur astronomique, moyenne sur l'année" },
+  OUV_UTILE: { v: 0.010, u: "m", n: "ouverture utile du porte-lentille",
+    s: "AJOUT — un porte-lentille de collège diaphragme le verre à une dizaine de millimètres" },
+  E_CENTRE: { v: 0.004, u: "m", n: "épaisseur au centre des deux lentilles",
+    s: "AJOUT — une lentille de démonstration fait environ 4 mm au centre" },
+  DIV_REGLE: { v: 0.001, u: "m", n: "division de la règle du banc",
+    s: "L'INSTRUMENT DE LA MESURE : la fiche dit « mesurer sur la règle du banc » et donne ses résultats au dixième de centimètre" },
+  LAMBDA: { v: 5.5e-7, u: "m", n: "longueur d'onde de référence",
+    s: "550 nm, valeur d'usage en optique visible — elle ne sert ici qu'à chiffrer la limite de diffraction" }
+};
+function P(k) { return PHYS[k].v; }
+
+/* ==================================================================
+   3. LE YAML — et LES DEUX FOCALES QUE LE TABLEAU PORTE
+   ==================================================================
+   ⚠ Les deux focales ne sont pas écrites dans le code : elles sont LUES
+   dans la colonne « f′ mesurée » du tableau, et elles servent à fabriquer
+   les deux verres. La page les mesure ensuite par le tracé.             */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var NL = LIG.length, NC = ENTETES.length;
+var SECU = (DONNEES.securite || []).map(depouille);
+var MATERIEL = (DONNEES.materiel || []).map(depouille);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var C_FCM = 1, C_FM = 2, C_VERG = 3, C_CONCL = 4;
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k) { return depouille((LIG[k] || [])[0]); }
+function secuOu(motif, repli) {
+  var i, re = new RegExp(motif, "i");
+  for (i = 0; i < SECU.length; i++) if (re.test(SECU[i])) return SECU[i];
+  return repli || (SECU[0] || "");
+}
+var S_SOLEIL = secuOu("regarder le Soleil|rétine");
+var S_FEU = secuOu("met le feu|sans surveillance");
+var S_BOIS = secuOu("table de bois|cahier");
+var S_TRANCHE = secuOu("par la tranche|ébréché");
+function nombreDe(s) {
+  var m = String(s || "").match(/(\d[\d,.]*)/);
+  return m ? parseFloat(m[1].replace(",", ".")) : null;
+}
+/* La focale que la fiche annonce pour la ligne k, en CENTIMÈTRES. */
+function focaleFiche(k) {
+  var v = nombreDe(cel(k, C_FCM));
+  return v === null ? (k === 0 ? 5 : 10) : v;
+}
+
+/* ==================================================================
+   3 bis. LES DURÉES ET LES LONGUEURS — de la fiche, jamais du code
+   ================================================================== */
+var DUREE_SEANCE = +(DONNEES.duree || 25);
+var MODALITE = depouille(DONNEES.modalite || "");
+
+/* ==================================================================
+   4. RÉGLAGES
+   ================================================================== */
+var PROTO = { ouv: 10, sol: 4.7, n: 1.517, e: 4 };
+var REG = { ouv: 10, sol: 4.7, n: 1.517, e: 4 };
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+
+/* ==================================================================
+   5. LE SOLVEUR — le verre est DÉDUIT de la fiche, puis MESURÉ
+   ==================================================================
+   Aller : la fiche donne f′. On cherche par dichotomie le rayon R d'une
+   lentille biconvexe symétrique qui a cette focale-là, avec la formule
+   des opticiens ÉPAISSE :
+       1/f′ = (n−1)·[ 2/R + (n−1)·e/(n·R²) ]      (R₂ = −R₁ = −R)
+   Retour : on trace les rayons à travers ce verre et l'on cherche où la
+   tache est la plus petite. Les deux chemins doivent se retrouver — et
+   c'est ce que la page vérifie, en millimètres, sous le carnet.         */
+function focaleDe(R, e, n) {
+  /* ⚠ R₂ = −R₁ = −R, donc R₁·R₂ = −R² : le terme d'épaisseur est NÉGATIF.
+     Écrit avec un plus, le rayon déduit sortait 3 % trop grand et la page
+     mesurait 5,2 cm là où la fiche annonce 5,0. */
+  var inv = (n - 1) * (2 / R - (n - 1) * e / (n * R * R));
+  return Math.abs(inv) < 1e-12 ? Infinity : 1 / inv;
+}
+function rayonPour(fCible, e, n) {
+  var lo = 5, hi = 4000, mi, i;                 /* en millimètres */
+  for (i = 0; i < 60; i++) {
+    mi = 0.5 * (lo + hi);
+    if (focaleDe(mi, e, n) > fCible) hi = mi; else lo = mi;
+  }
+  return 0.5 * (lo + hi);
+}
+function verre(k) {
+  var f = focaleFiche(k) * 10;                  /* cm → mm */
+  var R = rayonPour(f, REG.e, REG.n);
+  return { k: k, R: R, e: REG.e, n: REG.n, fCible: f,
+           fFormule: focaleDe(R, REG.e, REG.n) };
+}
+/* --- LE TRACÉ, en vecteurs, sans aucune approximation ---------------- */
+function normaliser(v) {
+  var m = Math.sqrt(v.z * v.z + v.y * v.y);
+  return { z: v.z / m, y: v.y / m };
+}
+function interSphere(P0, U, zv, R) {
+  if (!isFinite(R)) {
+    if (Math.abs(U.z) < 1e-12) return null;
+    var tp = (zv - P0.z) / U.z;
+    return tp > 1e-9 ? { z: zv, y: P0.y + tp * U.y, N: { z: -1, y: 0 } } : null;
+  }
+  var C = zv + R, oz = P0.z - C, oy = P0.y;
+  var b = 2 * (U.z * oz + U.y * oy), c = oz * oz + oy * oy - R * R;
+  var disc = b * b - 4 * c, sq, t1, t2, za, zb, t, pz, py;
+  if (disc < 0) return null;
+  sq = Math.sqrt(disc);
+  t1 = (-b - sq) / 2; t2 = (-b + sq) / 2;
+  za = P0.z + t1 * U.z; zb = P0.z + t2 * U.z;
+  if (t1 <= 1e-9 && t2 <= 1e-9) return null;
+  if (t1 <= 1e-9) t = t2;
+  else if (t2 <= 1e-9) t = t1;
+  else t = Math.abs(za - zv) <= Math.abs(zb - zv) ? t1 : t2;
+  pz = P0.z + t * U.z; py = P0.y + t * U.y;
+  return { z: pz, y: py, N: normaliser({ z: (pz - C) / R, y: py / R }) };
+}
+function refracter(U, N, n1, n2) {
+  var cosi = -(U.z * N.z + U.y * N.y), nn = n1 / n2, k, f;
+  if (cosi < 0) { N = { z: -N.z, y: -N.y }; cosi = -cosi; }
+  k = 1 - nn * nn * (1 - cosi * cosi);
+  if (k < 0) return null;
+  f = nn * cosi - Math.sqrt(k);
+  return normaliser({ z: nn * U.z + f * N.z, y: nn * U.y + f * N.y });
+}
+/* Un rayon venant de l'infini sous l'angle theta, entrant à la hauteur y0
+   dans l'ouverture utile. Rend sa demi-droite de sortie.                */
+function rayonSortant(V, y0, theta) {
+  var U = normaliser({ z: 1, y: Math.tan(theta) });
+  var P0 = { z: -80, y: y0 - U.y / U.z * (-80 + V.e / 2) };
+  var A = interSphere(P0, U, -V.e / 2, V.R), U1, B, U2;
+  if (!A) return null;
+  U1 = refracter(U, A.N, 1, V.n);
+  if (!U1) return null;
+  B = interSphere({ z: A.z, y: A.y }, U1, V.e / 2, -V.R);
+  if (!B) return null;
+  U2 = refracter(U1, B.N, V.n, 1);
+  if (!U2) return null;
+  return { z0: B.z, y0s: B.y, U: U2 };
+}
+var N_H = 9, N_TH = 5;
+function faisceauSortant(V) {
+  var out = [], i, j, y0, th, r;
+  var ym = REG.ouv / 2, al = REG.sol * 1e-3;
+  for (j = 0; j < N_TH; j++) {
+    th = N_TH === 1 ? 0 : -al + 2 * al * j / (N_TH - 1);
+    for (i = 0; i < N_H; i++) {
+      y0 = -ym + 2 * ym * i / (N_H - 1);
+      r = rayonSortant(V, y0, th);
+      if (r) out.push(r);
+    }
+  }
+  return out;
+}
+/* LE DIAMÈTRE DE LA TACHE à l'abscisse z, en millimètres : l'étendue des
+   points d'impact des rayons sortants. Aucune formule de flou. */
+function diametreTache(F, z) {
+  var i, y, lo = 1e18, hi = -1e18;
+  for (i = 0; i < F.length; i++) {
+    y = F[i].y0s + (z - F[i].z0) * F[i].U.y / F[i].U.z;
+    if (y < lo) lo = y;
+    if (y > hi) hi = y;
+  }
+  return hi > lo ? hi - lo : 0;
+}
+/* LE MINIMUM SE CHERCHE — balayage grossier puis affinage, exactement ce
+   que fait l'élève en déplaçant l'écran. */
+/* ⚠ LE BALAYAGE EST CHER — c'est le prix d'une vraie mesure, et il ne se
+   paie qu'une fois par configuration. Le memo se vide dès qu'un réglage
+   change, c'est-à-dire exactement quand le résultat change. */
+var MEMO_MIN = {};
+function videMemo() { MEMO_MIN = {}; }
+function minimumTache(V) {
+  var cle = [V.k, V.R, V.e, V.n, REG.ouv, REG.sol].join("|");
+  if (MEMO_MIN[cle]) return MEMO_MIN[cle];
+  MEMO_MIN[cle] = minimumTacheBrut(V);
+  return MEMO_MIN[cle];
+}
+function minimumTacheBrut(V) {
+  var F = faisceauSortant(V), z, d, zb = V.fCible, db = 1e18, pas, i;
+  for (z = V.fCible * 0.5; z <= V.fCible * 1.6; z += V.fCible * 0.004) {
+    d = diametreTache(F, z);
+    if (d < db) { db = d; zb = z; }
+  }
+  pas = V.fCible * 0.004;
+  for (i = 0; i < 3; i++) {
+    for (z = zb - pas; z <= zb + pas; z += pas / 8) {
+      d = diametreTache(F, z);
+      if (d < db) { db = d; zb = z; }
+    }
+    pas /= 8;
+  }
+  return { z: zb, d: db, F: F };
+}
+/* LE FOYER PARAXIAL, pour comparer : le rayon le plus proche de l'axe. */
+function foyerParaxial(V) {
+  var r = rayonSortant(V, 0.05, 0);
+  if (!r || Math.abs(r.U.y) < 1e-14) return null;
+  return r.z0 - r.y0s * r.U.z / r.U.y;
+}
+/* --- LA LECTURE À LA RÈGLE (§12.21) ---------------------------------
+   Le banc est gradué au millimètre : une valeur brute de 50,07 mm se LIT
+   50 mm, c'est-à-dire 5,0 cm. Écrire 5,007 revendiquerait une précision
+   que la règle n'a pas.                                                 */
+function lireALaRegle(mm) {
+  return Math.round(mm / (P("DIV_REGLE") * 1000)) * (P("DIV_REGLE") * 1000);
+}
+function fMesureeCm(V) { return lireALaRegle(minimumTache(V).z) / 10; }
+/* La vergence, et le PIÈGE de l'unité que la fiche signale elle-même. */
+function vergence(fCm) { return 1 / (fCm / 100); }
+function vergenceOubliee(fCm) { return 1 / fCm; }
+/* Les décimales d'un quotient viennent de son incertitude (§12.26) : la
+   règle donne f′ à un demi-millimètre près, donc C à ΔC = C·Δf/f près —
+   0,2 δ pour la plus courte focale. On écrit donc C en ENTIER, comme la
+   fiche. */
+function decimalesVergence() {
+  /* La demi-division de la règle, en centimètres. */
+  var demi = P("DIV_REGLE") * 100 / 2, k, f, dC, pire = 0;
+  /* ⚠ TOUTE LA SÉRIE À LA MÊME PRÉCISION, celle du cas le plus
+     défavorable : écrire « 20 » à 5 cm et « 10,0 » à 10 cm laisserait
+     croire que le rapport est mieux connu d'un bout à l'autre du tableau. */
+  for (k = 0; k < NL; k++) {
+    f = focaleFiche(k);
+    dC = vergence(f) * demi / f;
+    if (dC > pire) pire = dC;
+  }
+  /* le dernier chiffre écrit doit être PLUS GROSSIER que l'incertitude */
+  return Math.max(0, Math.floor(-Math.log(pire) / Math.LN10));
+}
+function motConclusion(k) {
+  var a = fMesureeCm(verre(0)), b = fMesureeCm(verre(1)), moi = k === 0 ? a : b;
+  if (Math.abs(a - b) < 1e-9) return "les deux se valent";
+  return moi === Math.min(a, b) ? "la plus convergente" : "la moins convergente";
+}
+function celluleCalculee(k, c) {
+  var f = fMesureeCm(verre(k));
+  if (c === C_FCM) return nb(f, 1);
+  if (c === C_FM) return nb(f / 100, 3);
+  if (c === C_VERG) return nb(vergence(f), decimalesVergence());
+  if (c === C_CONCL) return motConclusion(k);
+  return "";
+}
+
+/* ==================================================================
+   7. L'ÉTAT — ⚠ §12.17 : toute clé lue dans le code figure ici.
+   ================================================================== */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0, svg = null;
+var COUCHES = {};
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+function relVierge() {
+  var m = [], i, j;
+  for (i = 0; i < NL; i++) { m.push([]); for (j = 0; j < NC; j++) m[i].push(false); }
+  return m;
+}
+function neufEtat() {
+  return { banc: false, loin: false, dans: null, z: 70, bouge: false, pas: 16,
+           pose1: false, trouve: [false, false], conclu: false,
+           rel: relVierge(), mesures: {},
+           tSeance: 0, retenue: 0, horsProto: false };
+}
+var CHECKS = [
+  { k: "banc", n: "Banc installé, lentille et écran alignés", faire: "installer le banc" },
+  { k: "loin", n: "Source très éloignée : rayons parallèles", faire: "viser la source lointaine" }
+];
+function checkManquant() {
+  var i;
+  for (i = 0; i < CHECKS.length; i++) if (!ETAT[CHECKS[i].k]) return CHECKS[i];
+  return null;
+}
+function kDe(cle) { return cle === "L1" ? 0 : 1; }
+function cleDe(k) { return k === 0 ? "L1" : "L2"; }
+function verreCourant() { return verre(ETAT.dans ? kDe(ETAT.dans) : 0); }
+/* Le minimum est CHERCHÉ à chaque fois qu'on en a besoin, et mis en cache
+   pour la seule configuration courante : le tracé coûte cher. */
+var CACHE = { cle: "", val: null };
+function minCourant() {
+  var V = verreCourant();
+  var cle = [ETAT.dans, REG.ouv, REG.sol, REG.n, REG.e].join("|");
+  if (CACHE.cle !== cle) { CACHE.cle = cle; CACHE.val = minimumTache(V); }
+  return CACHE.val;
+}
+function tacheIci() { return diametreTache(minCourant().F, ETAT.z); }
+function ecartAuMin() { return ETAT.z - minCourant().z; }
+var TOL_MM = 2;                    /* deux millimètres : deux divisions de règle */
+function auMinimum() { return Math.abs(ecartAuMin()) <= TOL_MM; }
+function ligneRestante() {
+  var i, c;
+  for (i = 0; i < NL; i++) {
+    for (c = 1; c < NC; c++) if (!ETAT.rel[i][c]) return { k: i, c: c };
+  }
+  return null;
+}
+function ligneFaite(k, cols) {
+  var i;
+  for (i = 0; i < cols.length; i++) if (!ETAT.rel[k][cols[i]]) return false;
+  return true;
+}
+
+/* ==================================================================
+   8. LA GÉOMÉTRIE — le banc vu de CÔTÉ, dans le plan méridien
+   ==================================================================
+   Quatre pixels par millimètre : les distances sur le banc, l'ouverture
+   utile et la marche des rayons sont donc TOUTES à l'échelle du calcul.
+   Seul le diamètre de la TACHE est grossi, et le facteur est écrit dans
+   le cadre — un demi-millimètre ferait deux pixels (§10.4).             */
+var W = 1120, H = 760, AXE = 260, ECH = 4, X_LENT = 300;
+var PAILL_Y = 480, MEUBLE_Y = 600, Y_BOUTONS = 686;
+var PLAT_X0 = 120, PLAT_X1 = 500, PLAT_CY = 545;
+var GROSSI_TACHE = 18;
+var Y_ETIQ = { vue: 116, vue2: 134, lent: 412, ecran: 412, plateau: 500, regle: 452 };
+function xEcran() { return X_LENT + ETAT.z * ECH; }
+function homeL(cle) { return { x: cle === "L1" ? 200 : 400, y: PLAT_CY }; }
+
+/* ==================================================================
+   9. DÉFS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  function rgrad(id, stops) {
+    g = el("radialGradient", { id: id, cx: .5, cy: .5, r: .5 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [0.55, "#eef2f7"], [1, "#dde5ee"]]);
+  grad("bois", [[0, "#c79a4e"], [0.35, "#b8862f"], [1, "#8a6220"]]);
+  grad("meuble", [[0, "#2b323b"], [1, "#171c23"]]);
+  grad("inox", [[0, "#79838f"], [0.26, "#c9d2db"], [0.5, "#eef2f6"],
+                [0.74, "#a3adb9"], [1, "#6d7681"]], true);
+  grad("inoxV", [[0, "#6d7681"], [0.3, "#b7c0cb"], [0.55, "#e6ebf1"], [1, "#79838f"]]);
+  grad("verre", [[0, "#b6c4d2"], [0.18, "#dfe7ef"], [0.42, "#ffffff"],
+                 [0.72, "#d3dde7"], [1, "#a9b8c8"]], true);
+  grad("ciel", [[0, "#bfe0f0"], [1, "#8ec4e0"]]);
+  rgrad("soleil", [[0, "#fffbe8", 1], [0.4, "#ffe89a", .95], [1, "#ffd21e", 0]]);
+  rgrad("tache", [[0, "#fff6cf", 1], [0.7, "#ffe89a", .9], [1, "#ffe89a", 0]]);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#000000", "flood-opacity": .45 }));
+  D.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 10, stdDeviation: 9,
+    "flood-color": "#000000", "flood-opacity": .6 }));
+  D.appendChild(f);
+  f = el("filter", { id: "flou", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  D.appendChild(f);
+}
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 };
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo; a["stroke-width"] = 3;
+    a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function etiqG(g, x, y, s, ancre, couleur) {
+  g.appendChild(el("text", { x: x, y: y, "text-anchor": ancre || "middle",
+    "font-size": 11.5, "font-weight": "bold", fill: couleur || ORANGE,
+    "letter-spacing": 1.1, "paint-order": "stroke", stroke: "#eef2f7",
+    "stroke-width": 3, "stroke-linejoin": "round", "pointer-events": "none" }, s));
+}
+
+/* ==================================================================
+   11. LE DÉCOR ET LA SCÈNE
+   ================================================================== */
+var gMur, gFenetre, gBanc, gEcranN, gRayonsN, gLent = {}, gRegle;
+function construireDecor() {
+  gMur = ajout("fond", el("rect", { x: 0, y: 0, width: W, height: MEUBLE_Y,
+    fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: PAILL_Y, width: W, height: 16, fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: MEUBLE_Y, width: W, height: H - MEUBLE_Y,
+    fill: "url(#meuble)" }));
+  ajout("poste", el("rect", { x: PLAT_X0, y: 505, width: PLAT_X1 - PLAT_X0,
+    height: 80, rx: 10, fill: "#e7e2d4", stroke: "#a8956f", "stroke-width": 2 }));
+  txt("poste", PLAT_X0 + 6, Y_ETIQ.plateau,
+      "les deux lentilles convergentes — les prendre par la tranche",
+      { ancre: "start", taille: 11, gras: true, couleur: ORANGE, halo: "#eef2f7" });
+  txt("poste", W - 20, Y_ETIQ.vue, "LE BANC, VU DE CÔTÉ",
+      { ancre: "end", taille: 13, gras: true, couleur: "#3f4a58", esp: 1.6,
+        halo: "#eef2f7" });
+  txt("poste", W - 20, Y_ETIQ.vue2,
+      "4 pixels par millimètre · seule la TACHE est grossie ×" + GROSSI_TACHE,
+      { ancre: "end", taille: 10.5, couleur: "#6b7686", halo: "#eef2f7" });
+}
+function construireScene() {
+  gRayonsN = ajout("fils", el("g", { "pointer-events": "none" }));
+  gBanc = ajout("poste", el("g", {}));
+  gRegle = ajout("poste", el("g", {}));
+  gEcranN = ajout("objets", el("g", { cursor: "ew-resize", "data-act": "obj-ecran" }));
+  ["L1", "L2"].forEach(function (q) {
+    gLent[q] = ajout("objets", el("g", { cursor: "grab", "data-act": "obj-" + q }));
+  });
+  redessinerScene();
+}
+function pied(g, x, yHaut) {
+  g.appendChild(el("rect", { x: x - 6, y: yHaut, width: 12, height: PAILL_Y - yHaut,
+    rx: 3, fill: "url(#inoxV)", stroke: "#5d6670", "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: x, cy: PAILL_Y + 3, rx: 24, ry: 6,
+    fill: "url(#inox)", stroke: "#5d6670", "pointer-events": "none" }));
+}
+function dessinerVerre(g, V, ech, opac) {
+  var hy = REG.ouv / 2 * ech * 2.2, i, n = 24, y, z1, z2, d = "";
+  /* la silhouette du verre, tracée à son rayon — le porte-lentille n'en
+     laisse voir que l'ouverture utile, et c'est elle qui est à l'échelle */
+  for (i = 0; i <= n; i++) {
+    y = -hy + 2 * hy * i / n;
+    z1 = -V.e / 2 * ech - profilR(V.R, y / ech) * ech;
+    d += (i ? " L " : "M ") + pt(z1, y);
+  }
+  for (i = n; i >= 0; i--) {
+    y = -hy + 2 * hy * i / n;
+    z2 = V.e / 2 * ech + profilR(V.R, y / ech) * ech;
+    d += " L " + pt(z2, y);
+  }
+  g.appendChild(el("path", { d: d + " Z", fill: "url(#verre)",
+    opacity: opac === undefined ? 0.66 : opac, stroke: "#7f93a6",
+    "stroke-width": 2, "pointer-events": "none" }));
+  g.appendChild(el("path", { d: "M " + pt(-2, -hy * 0.7) + " L " + pt(-2, hy * 0.7),
+    stroke: "#ffffff", "stroke-width": 3, opacity: 0.6, "pointer-events": "none" }));
+}
+function profilR(R, y) {
+  var a = Math.abs(R), yy = Math.min(Math.abs(y), a * 0.9999);
+  return a - Math.sqrt(a * a - yy * yy);
+}
+function redessinerScene() {
+  var i, x;
+  vide(gBanc); vide(gRegle);
+  /* ---- LA FENÊTRE ET LA SOURCE TRÈS ÉLOIGNÉE ---- */
+  /* ⚠ LA FENÊTRE DESCEND SOUS LE JOURNAL : posée à y = 96, sa moitié
+     haute passait dessous et ne se lisait pas (§12.42). */
+  gBanc.appendChild(el("rect", { x: 24, y: 208, width: 120, height: 148, rx: 4,
+    fill: "url(#ciel)", stroke: "#8a94a4", "stroke-width": 3,
+    "pointer-events": "none" }));
+  gBanc.appendChild(el("line", { x1: 84, y1: 208, x2: 84, y2: 356,
+    stroke: "#8a94a4", "stroke-width": 3, "pointer-events": "none" }));
+  if (ETAT.loin) {
+    gBanc.appendChild(el("circle", { cx: 54, cy: 250, r: 26, fill: "url(#soleil)",
+      "pointer-events": "none" }));
+    gBanc.appendChild(el("circle", { cx: 54, cy: 250, r: 11, fill: "#fffbe8",
+      "pointer-events": "none" }));
+  }
+  /* ⚠ DANS `gBanc`, PAS DANS LA COUCHE. `redessinerScene()` ne vide que
+     `gBanc` et `gRegle` ; deposees directement dans « poste », ces deux
+     etiquettes survivaient a chaque redessin et s'EMPILAIENT. Mesure du
+     15/08 : deux exemplaires au chargement, QUATRE apres six pressions, tous
+     au meme pixel — d'ou un lisere double et un texte qui s'epaissit.
+     `txt()` rend son noeud : on le reparente dans le groupe qui, lui, est
+     vide a chaque tour. (piege 7, trouve par `verifier_etiquettes.py`) */
+  gBanc.appendChild(txt("poste", 84, 374, "la source, très éloignée",
+      { taille: 11, gras: true, couleur: ORANGE, halo: "#eef2f7" }));
+  gBanc.appendChild(txt("poste", 84, 390, "→ rayons parallèles à l'axe",
+      { taille: 10, couleur: "#6b7686", halo: "#eef2f7" }));
+  /* ---- LE PORTE-LENTILLE ---- */
+  var hy = REG.ouv / 2 * ECH * 2.2 + 26;
+  gBanc.appendChild(el("rect", { x: X_LENT - 40, y: AXE - hy, width: 9,
+    height: 2 * hy, rx: 3, fill: "url(#inoxV)", stroke: "#5d6670",
+    "pointer-events": "none" }));
+  gBanc.appendChild(el("rect", { x: X_LENT + 31, y: AXE - hy, width: 9,
+    height: 2 * hy, rx: 3, fill: "url(#inoxV)", stroke: "#5d6670",
+    "pointer-events": "none" }));
+  /* le DIAPHRAGME : c'est lui, l'ouverture utile, et il est à l'échelle */
+  gBanc.appendChild(el("rect", { x: X_LENT - 30, y: AXE - hy + 4, width: 60,
+    height: hy - REG.ouv / 2 * ECH - 4, fill: "#3f4a58", opacity: 0.9,
+    "pointer-events": "none" }));
+  gBanc.appendChild(el("rect", { x: X_LENT - 30, y: AXE + REG.ouv / 2 * ECH,
+    width: 60, height: hy - REG.ouv / 2 * ECH - 4, fill: "#3f4a58", opacity: 0.9,
+    "pointer-events": "none" }));
+  pied(gBanc, X_LENT, AXE + hy);
+  etiqG(gBanc, X_LENT, Y_ETIQ.lent, "porte-lentille — ouverture " + nb(REG.ouv, 0) + " mm");
+  /* ---- LA RÈGLE DU BANC : c'est ELLE qui donne la mesure ---- */
+  gRegle.appendChild(el("line", { x1: X_LENT, y1: Y_ETIQ.regle, x2: W - 30,
+    y2: Y_ETIQ.regle, stroke: SCHEMA, "stroke-width": 1.6, "pointer-events": "none" }));
+  for (i = 0; i * 10 * ECH + X_LENT < W - 30; i++) {
+    x = X_LENT + i * 10 * ECH;
+    gRegle.appendChild(el("line", { x1: x, y1: Y_ETIQ.regle - 5, x2: x,
+      y2: Y_ETIQ.regle + 5, stroke: SCHEMA, "stroke-width": 1.3,
+      "pointer-events": "none" }));
+    if (i % 2 === 0) {
+      gRegle.appendChild(el("text", { x: x, y: Y_ETIQ.regle + 18,
+        "text-anchor": "middle", "font-size": 9, fill: SCHEMA,
+        "pointer-events": "none" }, i));
+    }
+  }
+  gRegle.appendChild(el("text", { x: W - 30, y: Y_ETIQ.regle - 8,
+    "text-anchor": "end", "font-size": 9.5, fill: SCHEMA,
+    "pointer-events": "none" }, "règle du banc, en centimètres depuis O"));
+  redessinerEcran();
+  redessinerLentilles();
+}
+function redessinerEcran() {
+  var xe = xEcran(), d;
+  vide(gEcranN);
+  gEcranN.appendChild(el("rect", { x: xe - 26, y: AXE - 120, width: 52,
+    height: 260, fill: "#ffffff", "fill-opacity": 0.001 }));
+  gEcranN.appendChild(el("rect", { x: xe - 7, y: AXE - 108, width: 14,
+    height: 216, rx: 3, fill: "#f4f7fa", stroke: "#9aa5b2", "stroke-width": 2,
+    filter: "url(#ombreDouce)", "pointer-events": "none" }));
+  gEcranN.appendChild(el("rect", { x: xe - 5, y: AXE + 108, width: 10,
+    height: PAILL_Y - AXE - 108, fill: "url(#inoxV)", stroke: "#5d6670",
+    "pointer-events": "none" }));
+  gEcranN.appendChild(el("ellipse", { cx: xe, cy: PAILL_Y + 3, rx: 22, ry: 6,
+    fill: "url(#inox)", stroke: "#5d6670", "pointer-events": "none" }));
+  /* LA TACHE, grossie d'un facteur ÉCRIT dans le cadre — un demi-
+     millimètre ferait deux pixels, et c'est elle qu'on juge (§10.4). */
+  if (ETAT.loin && ETAT.dans) {
+    d = tacheIci() * ECH * GROSSI_TACHE / 2;
+    gEcranN.appendChild(el("ellipse", { cx: xe, cy: AXE,
+      rx: Math.max(2.5, d * 0.34), ry: Math.max(3, d), fill: "url(#tache)",
+      "pointer-events": "none" }));
+  }
+  etiqG(gEcranN, xe, Y_ETIQ.ecran, "écran — " + nb(ETAT.z / 10, 1) + " cm");
+}
+function redessinerLentilles() {
+  ["L1", "L2"].forEach(function (q) {
+    var g = gLent[q], V = verre(kDe(q)), dedans = ETAT.dans === q;
+    var p = dedans ? { x: X_LENT, y: AXE, ech: ECH } : { x: homeL(q).x, y: PLAT_CY, ech: 2.2 };
+    var hy = REG.ouv / 2 * p.ech * 2.2;
+    vide(g);
+    g.appendChild(el("rect", { x: -30, y: -hy - 20, width: 60, height: 2 * hy + 40,
+      fill: "#ffffff", "fill-opacity": 0.001 }));
+    dessinerVerre(g, V, p.ech, dedans ? 0.72 : 0.6);
+    g.appendChild(el("text", { x: 0, y: hy + 18, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: dedans ? VERT : INK,
+      "paint-order": "stroke", stroke: dedans ? "#eef2f7" : "#e7e2d4",
+      "stroke-width": 3, "pointer-events": "none" }, intitule(kDe(q))));
+    g.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+  });
+}
+/* ==================================================================
+   14. LE TRACÉ SUR LA SCÈNE — il RELIT le solveur
+   ================================================================== */
+function redessinerLumiere() {
+  var F, i, r, xe = xEcran(), ye, xs;
+  vide(gRayonsN);
+  if (!ETAT.loin || !ETAT.banc) return;
+  if (!ETAT.dans) {
+    for (i = 0; i < 5; i++) {
+      ye = AXE - 40 + i * 20;
+      gRayonsN.appendChild(el("path", { d: "M " + pt(150, ye) + " L " + pt(xe - 8, ye),
+        fill: "none", stroke: JAUNE, "stroke-width": 2, opacity: 0.6 }));
+    }
+    return;
+  }
+  F = minCourant().F;
+  for (i = 0; i < F.length; i++) {
+    r = F[i];
+    xs = X_LENT + r.z0 * ECH;
+    ye = AXE - (r.y0s + (ETAT.z - r.z0) * r.U.y / r.U.z) * ECH;
+    /* avant la lentille : le rayon parallèle, à sa hauteur d'entrée */
+    gRayonsN.appendChild(el("path", { d: "M " + pt(150, AXE - r.y0s * ECH) +
+      " L " + pt(xs, AXE - r.y0s * ECH), fill: "none", stroke: JAUNE,
+      "stroke-width": 1.4, opacity: 0.4 }));
+    gRayonsN.appendChild(el("path", { d: "M " + pt(xs, AXE - r.y0s * ECH) +
+      " L " + pt(xe - 8, ye), fill: "none", stroke: LISERE, "stroke-width": 2.8,
+      opacity: 0.35 }));
+    gRayonsN.appendChild(el("path", { d: "M " + pt(xs, AXE - r.y0s * ECH) +
+      " L " + pt(xe - 8, ye), fill: "none", stroke: JAUNE, "stroke-width": 1.5 }));
+  }
+  /* le repère du minimum : il n'est PAS montré tant qu'on ne l'a pas
+     cherché — sinon la page donnerait la réponse avant la manipulation */
+  if (ETAT.trouve[kDe(ETAT.dans)]) {
+    var xm = X_LENT + minCourant().z * ECH;
+    gRayonsN.appendChild(el("line", { x1: xm, y1: AXE - 128, x2: xm, y2: AXE + 128,
+      stroke: ORANGE, "stroke-width": 1.6, "stroke-dasharray": "6 4", opacity: 0.9 }));
+    gRayonsN.appendChild(el("text", { x: xm, y: AXE - 136, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: ORANGE, "paint-order": "stroke",
+      stroke: "#eef2f7", "stroke-width": 3 }, "F′"));
+  }
+  /* la cote OF′, quand elle a été relevée */
+  if (ETAT.rel[kDe(ETAT.dans)][C_FCM]) {
+    var xf = X_LENT + lireALaRegle(minCourant().z) * ECH;
+    gRayonsN.appendChild(el("line", { x1: X_LENT, y1: AXE + 126, x2: xf,
+      y2: AXE + 126, stroke: ORANGE, "stroke-width": 1.6 }));
+    [X_LENT, xf].forEach(function (x) {
+      gRayonsN.appendChild(el("line", { x1: x, y1: AXE + 121, x2: x, y2: AXE + 131,
+        stroke: ORANGE, "stroke-width": 1.6 }));
+    });
+    gRayonsN.appendChild(el("text", { x: (X_LENT + xf) / 2, y: AXE + 120,
+      "text-anchor": "middle", "font-size": 11.5, "font-weight": "bold",
+      fill: ORANGE, "paint-order": "stroke", stroke: "#eef2f7", "stroke-width": 3 },
+      "f′ = OF′ = " + nb(lireALaRegle(minCourant().z) / 10, 1) + " cm"));
+  }
+}
+
+/* ==================================================================
+   15. LES BOUTONS DE SCÈNE
+   ================================================================== */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var t = [0, 1].map(function () {
+    return g.appendChild(el("text", { x: cx, y: cy, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: GRIS,
+      "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, ""));
+  });
+  function poserLibelle(s) {
+    var q = lignesTxt(s, 16);
+    if (q.length < 2) { t[0].textContent = q[0] || ""; t[0].setAttribute("y", cy + 5);
+                        t[1].textContent = ""; }
+    else { t[0].textContent = q[0]; t[0].setAttribute("y", cy - 2);
+           t[1].textContent = q.slice(1).join(" "); t[1].setAttribute("y", cy + 12); }
+  }
+  poserLibelle(l1);
+  function peindre(fond, trait, encre, ep) {
+    r.setAttribute("fill", fond); r.setAttribute("stroke", trait);
+    r.setAttribute("stroke-width", ep);
+    t.forEach(function (n) { n.setAttribute("fill", encre); });
+  }
+  BOUTONS[act] = { cx: cx, cy: cy, w: w, h: ht, libelle: poserLibelle,
+    armer: function (v) {
+      if (r.getAttribute("data-fait") === "1") return;
+      peindre("#ffffff", v ? GOLD : LIGNE, v ? INK : GRIS, v ? 2.6 : 1.8);
+    },
+    fait: function () { r.setAttribute("data-fait", "1"); peindre("#eef6e6", VERT, VERT, 2); },
+    neuf: function () { r.removeAttribute("data-fait"); peindre("#ffffff", LIGNE, GRIS, 1.8); } };
+  return BOUTONS[act];
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (e) {
+    var n = e.target, a = null;
+    while (n && n !== svg) {
+      if (n.getAttribute && n.getAttribute("data-act")) { a = n.getAttribute("data-act"); break; }
+      n = n.parentNode;
+    }
+    if (!a || /^obj-/.test(a)) return;
+    agir(a);
+  });
+}
+function agir(a) {
+  if (a === "banc") { installerBanc(); return; }
+  if (a === "loin") { viserSourceLointaine(); return; }
+  if (a === "relever") { releverFocale(); return; }
+  if (a === "vergence") { calculerVergence(); return; }
+  if (a === "conclure") { comparerEtConclure(); return; }
+}
+
+/* ==================================================================
+   16. PRENDRE ET DÉPOSER
+   ==================================================================
+   L'ÉCRAN SE GLISSE LIBREMENT le long du banc — c'est LA manipulation de
+   l'expérience, et il n'y a aucune zone aimantée : aimanter la position
+   du foyer donnerait la réponse avant la mesure.                        */
+var prise = null, ptSVG = null, cibles = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function noeudDe(q) { return q === "ecran" ? gEcranN : gLent[q]; }
+function maison(q) {
+  if (q === "ecran") return { x: xEcran(), y: AXE };
+  return ETAT.dans === q ? { x: X_LENT, y: AXE }
+    : { x: homeL(q).x, y: PLAT_CY };
+}
+function replacer() { redessinerScene(); }
+/* §12.16 : de la plus PETITE zone à la plus GRANDE. */
+function emplacements(q) {
+  if (q === "ecran") {
+    return [{ type: "banc", x: xEcran(), y: AXE, r: 1e6 }];
+  }
+  return [
+    { type: "porte", x: X_LENT, y: AXE, r: 70 },
+    { type: "plateau", x: homeL(q).x, y: PLAT_CY, r: 120 }
+  ];
+}
+function zoneType(q, type) {
+  var z = emplacements(q), i;
+  for (i = 0; i < z.length; i++) if (z[i].type === type) return z[i];
+  return null;
+}
+function montrerCibles(q) {
+  effacerCibles();
+  if (q === "ecran") return;
+  emplacements(q).forEach(function (c) {
+    var n = ajout("arriere", el("circle", { cx: c.x, cy: c.y, r: 28, fill: "none",
+      stroke: GOLD, "stroke-width": 3, "stroke-dasharray": "9 6",
+      "pointer-events": "none" }));
+    n.appendChild(el("animate", { attributeName: "opacity", values: "1;.35;1",
+      dur: "1.2s", repeatCount: "indefinite" }));
+    cibles.push(n);
+  });
+}
+function effacerCibles() {
+  cibles.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  cibles = [];
+}
+function cibleLaPlusProche(q, p) {
+  var z = emplacements(q), i, d, best = null, bd = 1e9;
+  for (i = 0; i < z.length; i++) {
+    d = Math.sqrt(Math.pow(p.x - z[i].x, 2) + Math.pow(p.y - z[i].y, 2));
+    if (d <= z[i].r && d < bd) { bd = d; best = z[i]; }
+  }
+  return best;
+}
+function saisir(q, e) {
+  if (prise) return;                                   /* verrou en 1re ligne */
+  e.preventDefault();
+  var m = maison(q), p = versSVG(e), g = noeudDe(q);
+  if (!g) return;
+  prise = { quoi: q, id: e.pointerId, dx: m.x - p.x, dy: m.y - p.y,
+            x0: p.x, y0: p.y, bouge: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  g.setAttribute("filter", "url(#ombrePrise)");
+  COUCHES.drag.appendChild(g);
+  montrerCibles(q);
+  secuDire(q === "ecran" ? S_FEU : S_TRANCHE, "");
+}
+function brancherPrise() {
+  ["L1", "L2", "ecran"].forEach(function (q) {
+    var n = noeudDe(q);
+    if (n) n.addEventListener("pointerdown", function (e) { saisir(q, e); });
+  });
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    var p = versSVG(e), g = noeudDe(prise.quoi), m = maison(prise.quoi);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    if (prise.quoi === "ecran") {
+      g.setAttribute("transform", "translate(" + (p.x + prise.dx - m.x).toFixed(1) + ",0)");
+    } else {
+      g.setAttribute("transform", "translate(" + (p.x + prise.dx).toFixed(1) + "," +
+        (p.y + prise.dy).toFixed(1) + ")");
+    }
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var p = versSVG(e), d = prise, g = noeudDe(prise.quoi), cible;
+    prise = null;
+    effacerCibles();
+    if (g) { g.removeAttribute("filter"); COUCHES.objets.appendChild(g); }
+    if (!d.bouge) { replacer(); signaler(ouPoser(d.quoi)); return; }
+    if (d.quoi === "ecran") { poserEcran((p.x + d.dx - X_LENT) / ECH); return; }
+    cible = cibleLaPlusProche(d.quoi, p);
+    if (!cible) { replacer(); signaler(ouPoser(d.quoi)); return; }
+    deposer(d.quoi, cible);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);      /* ne PAS l'oublier */
+}
+function ouPoser(q) {
+  if (q === "ecran") return "L'écran se glisse <b>le long du banc</b> : c'est " +
+    "ainsi qu'on cherche la position où la tache est la plus petite.";
+  return "La lentille se pose dans le <b>porte-lentille</b>, ou revient sur le plateau.";
+}
+
+/* ==================================================================
+   17. CE QUE FONT LES GESTES
+   ================================================================== */
+function deposer(q, cible) {
+  if (q === "ecran") { poserEcran(cible && cible.z !== undefined ? cible.z : ETAT.z); return; }
+  if (cible && cible.type === "porte") { monterLentille(q); return; }
+  if (ETAT.dans === q) ETAT.dans = null;
+  redessinerScene(); majTout();
+}
+function poserEcran(zmm) {
+  ETAT.z = borne(zmm, 10, (W - 60 - X_LENT) / ECH);
+  ETAT.bouge = true;
+  redessinerEcran(); redessinerLumiere();
+  majTout();
+}
+/* LA RECHERCHE DU MINIMUM, un pas à la fois — c'est le geste de l'élève :
+   on déplace, on regarde la tache, on repart du bon côté. La page ne
+   connaît pas la réponse d'avance : elle compare deux diamètres. */
+/* Le geste continu : l'élève ne déplace pas l'écran d'un cran à la fois,
+   il le fait GLISSER jusqu'à voir la tache cesser de rétrécir. On enchaîne
+   donc les pas — au plus huit — et l'on s'arrête dès qu'on ne gagne plus.
+   Rien n'est su d'avance : chaque pas est une comparaison de diamètres. */
+function glisserVersMin(nmax) {
+  var i, bouge = false;
+  for (i = 0; i < (nmax || 8); i++) {
+    if (!descendreVersMin()) break;
+    bouge = true;
+    if (auMinimum() && ETAT.pas <= 1) break;
+  }
+  return bouge;
+}
+function descendreVersMin() {
+  var F = minCourant().F, d0 = diametreTache(F, ETAT.z), pas = ETAT.pas;
+  var dp = diametreTache(F, ETAT.z + pas), dm = diametreTache(F, ETAT.z - pas);
+  if (dp < d0 && dp <= dm) { poserEcran(ETAT.z + pas); return true; }
+  if (dm < d0) { poserEcran(ETAT.z - pas); return true; }
+  if (pas <= 0.5) return false;
+  ETAT.pas = pas / 2;
+  majTout();
+  return true;
+}
+function monterLentille(q) {
+  if (ETAT.dans === q) { replacer(); signaler("Cette lentille est déjà en place."); return; }
+  if (!ETAT.banc) {
+    replacer();
+    refus("Installer d'abord le banc : la lentille et l'écran doivent être " +
+          "alignés sur la règle graduée, sinon la mesure ne veut rien dire.", S_TRANCHE);
+    return;
+  }
+  ETAT.dans = q;                                       /* l'état AVANT l'image */
+  ETAT.pas = 16;
+  CACHE.cle = "";
+  var V = verre(kDe(q));
+  succes(intitule(kDe(q)) + " dans le porte-lentille. Son rayon de courbure, " +
+    nb(V.R, 2) + " mm, n'est pas choisi : il est DÉDUIT de la focale que la " +
+    "fiche annonce, par inversion de la formule des opticiens. La page va " +
+    "maintenant la mesurer, et l'on verra si les deux se retrouvent.");
+  secuDire(S_TRANCHE, "");
+  redessinerScene(); majTout();
+}
+function installerBanc() {
+  if (ETAT.banc) { signaler("Le banc est déjà installé."); return; }
+  ETAT.banc = true;
+  succes("Banc installé : le porte-lentille à l'origine de la règle, l'écran " +
+    "derrière, et la règle graduée en centimètres depuis O.");
+  secuDire(S_BOIS, "ok");
+  majTout();
+}
+function viserSourceLointaine() {
+  ETAT.loin = !ETAT.loin;
+  if (ETAT.loin) {
+    succes("Source très éloignée dans l'axe : les rayons qui atteignent la " +
+      "lentille sont PARALLÈLES. Son demi-diamètre apparent vaut " +
+      nb(REG.sol, 1) + " mrad — le Soleil en fait 4,7, et c'est pourquoi la " +
+      "tache la plus petite ne se réduit jamais à un point.");
+    secuDire(S_SOLEIL, "ok");
+  } else noter("Le banc ne vise plus la source lointaine.", false);
+  redessinerScene(); majTout();
+}
+function releverFocale() {
+  var k, V, m;
+  if (!ETAT.banc || !ETAT.loin) {
+    refus("Il faut d'abord installer le banc et viser la source très " +
+          "éloignée : sans rayons parallèles, il n'y a pas de foyer image.", S_SOLEIL);
+    return;
+  }
+  if (!ETAT.dans) { signaler("Placer une lentille dans le porte-lentille."); return; }
+  k = kDe(ETAT.dans); V = verre(k); m = minCourant();
+  if (!auMinimum()) {
+    signaler("La tache n'est pas encore la plus petite : elle mesure " +
+      nb(tacheIci(), 3) + " mm ici, et " + nb(m.d, 3) + " mm au minimum — " +
+      "déplacer l'écran de " + nb(Math.abs(ecartAuMin()), 1) + " mm vers " +
+      (ecartAuMin() > 0 ? "la lentille" : "l'arrière") + ".");
+    return;
+  }
+  if (ETAT.rel[k][C_FCM]) { signaler("Cette mesure est déjà consignée."); return; }
+  ETAT.rel[k][C_FCM] = true;
+  ETAT.mesures[k] = { V: V, m: m, f: lireALaRegle(m.z) / 10 };
+  revelerCellule(k, C_FCM);
+  verifierAccord(k, C_FCM);
+  succes("Foyer image trouvé : la tache y mesure " + nb(m.d, 3) + " mm, son " +
+    "minimum. Le solveur donne " + nb(m.z / 10, 3) + " cm ; la règle du banc " +
+    "est graduée au millimètre, donc on LIT " + nb(lireALaRegle(m.z) / 10, 1) +
+    " cm. Écrire les millièmes revendiquerait une précision que la règle n'a pas.");
+  majTout();
+}
+function calculerVergence() {
+  var k, f;
+  if (!ETAT.dans) { signaler("Placer une lentille dans le porte-lentille."); return; }
+  k = kDe(ETAT.dans);
+  if (!ETAT.rel[k][C_FCM]) { signaler("Relever d'abord la distance focale."); return; }
+  if (ETAT.rel[k][C_VERG]) { signaler("Cette vergence est déjà calculée."); return; }
+  f = fMesureeCm(verre(k));
+  ETAT.rel[k][C_FM] = true;
+  ETAT.rel[k][C_VERG] = true;
+  revelerCellule(k, C_FM);
+  revelerCellule(k, C_VERG);
+  verifierAccord(k, C_FM);
+  verifierAccord(k, C_VERG);
+  succes("Conversion puis calcul : " + nb(f, 1) + " cm = " + nb(f / 100, 3) +
+    " m, donc C = 1/" + nb(f / 100, 3) + " = " + nb(vergence(f), decimalesVergence()) +
+    " δ. ⚠ Si l'on oublie de convertir, on écrit 1/" + nb(f, 1) + " = " +
+    nb(vergenceOubliee(f), 2) + ", qui n'a aucun sens — c'est la réserve que " +
+    "la fiche prend elle-même.");
+  majTout();
+}
+function verifierAccord(k, c) {
+  if (ETAT.horsProto) return;
+  var mot = celluleCalculee(k, c), att = depouille(cel(k, c));
+  if (att.replace(/\s/g, "").indexOf(mot.replace(/\s/g, "")) < 0) {
+    noter("⚠ Le modèle et la fiche ne s'accordent pas sur « " + intitule(k) +
+      " » : le modèle obtient « " + mot + " » là où la fiche écrit « " + att +
+      " ». Vérifier les constantes.", false);
+  }
+}
+function comparerEtConclure() {
+  var a, b;
+  if (!ligneFaite(0, [C_FCM, C_FM, C_VERG]) || !ligneFaite(1, [C_FCM, C_FM, C_VERG])) {
+    signaler("Les deux lentilles doivent être mesurées avant de comparer : " +
+      "c'est le témoin qui donne son sens à la comparaison.");
+    return;
+  }
+  a = fMesureeCm(verre(0)); b = fMesureeCm(verre(1));
+  ETAT.conclu = true;
+  [0, 1].forEach(function (k) {
+    if (ETAT.rel[k][C_CONCL]) return;
+    ETAT.rel[k][C_CONCL] = true;
+    revelerCellule(k, C_CONCL);
+    verifierAccord(k, C_CONCL);
+  });
+  $("concl").classList.remove("masque");
+  succes("Comparaison : " + nb(a, 1) + " cm contre " + nb(b, 1) + " cm, soit un " +
+    "rapport de " + nb(b / a, 2) + " ; et " + nb(vergence(a), 0) + " δ contre " +
+    nb(vergence(b), 0) + " δ, rapport " + nb(vergence(a) / vergence(b), 2) +
+    " — l'inverse exact, par construction. Le témoin a été mesuré dans le MÊME " +
+    "montage, avec la MÊME source : la comparaison ne laisse aucun doute. " +
+    "Écart à la fiche : " + nb(Math.abs(a - focaleFiche(0)), 1) + " cm et " +
+    nb(Math.abs(b - focaleFiche(1)), 1) + " cm.");
+  majTout();
+}
+
+/* ==================================================================
+   18. CONSIGNE, JOURNAL, SÉCURITÉ, TABLEAU
+   ================================================================== */
+function dire(t, fini) {
+  if (ETAT.retenue && Date.now() < ETAT.retenue) return;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  ETAT.retenue = 0;
+  var n = $("consigne");
+  n.innerHTML = md(t); n.className = "consigne";
+  ETAT.retenue = Date.now() + 4000;
+}
+function succes(t) { ETAT.retenue = 0; noter(t, true); }
+function refus(t, ligne) { signaler(t); noter(t, false); secuDire(ligne, "refus"); }
+function noter(t, positif) {
+  var n = $("obs"); n.textContent = t;
+  n.className = "obs" + (positif ? " pos" : "");
+}
+function secuDire(t, cls) {
+  var b = $("secuBande"), i, ul;
+  $("secuTexte").textContent = t || "";
+  $("secuPic").textContent = cls === "ok" ? "✔" : (cls === "refus" ? "⛔" : "⚠");
+  b.className = "secubande" + (cls ? " " + cls : "");
+  ul = $("securite");
+  if (!ul) return;
+  for (i = 0; i < ul.children.length; i++) {
+    ul.children[i].className = (SECU[i] === t) ? "actif" : "";
+  }
+}
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;                          /* §11.3 */
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+function consigne() {
+  var k;
+  if (ETAT.conclu) return "Expérience terminée : la conclusion est démasquée.";
+  if (!ETAT.banc) return "Installer le banc : lentille, écran, règle graduée.";
+  if (!ETAT.loin) return "Viser la source très éloignée : les rayons doivent " +
+    "arriver parallèles à l'axe.";
+  if (!ETAT.dans) return "Placer " + intitule(ETAT.rel[0][C_FCM] ? 1 : 0) +
+    " dans le porte-lentille.";
+  k = kDe(ETAT.dans);
+  if (!ETAT.rel[k][C_FCM]) {
+    if (!auMinimum()) return "Déplacer l'écran : la tache mesure " +
+      nb(tacheIci(), 3) + " mm, il faut la rendre la plus petite possible.";
+    return "La tache est au plus petit : relever f′ = OF′ sur la règle.";
+  }
+  if (!ETAT.rel[k][C_VERG]) return "Convertir en mètres et calculer la vergence.";
+  if (!ligneFaite(1, [C_FCM, C_FM, C_VERG])) return "Témoin : reprendre les cinq " +
+    "étapes avec " + intitule(1) + ", sans déplacer la source.";
+  return "Comparer les deux focales et les deux vergences, et conclure.";
+}
+
+/* ==================================================================
+   19. LE PARCOURS D'ÉTAPES
+   ================================================================== */
+var ETAPES = [
+  { n: "Installer le banc", f: function () { return ETAT.banc; } },
+  { n: "Source lointaine", f: function () { return ETAT.loin || ETAT.conclu; } },
+  { n: intitule(0) + " en place", f: function () { return ETAT.pose1; } },
+  { n: "Chercher la tache", f: function () { return ETAT.trouve[0]; } },
+  { n: "f′ relevée", f: function () { return ETAT.rel[0][C_FCM]; } },
+  { n: "Vergence calculée", f: function () { return ETAT.rel[0][C_VERG]; } },
+  { n: "Témoin " + intitule(1), f: function () {
+      return ligneFaite(1, [C_FCM, C_FM, C_VERG]); } },
+  { n: "Comparer et conclure", f: function () { return ETAT.conclu; } }
+];
+function majEtapes() {
+  var d = $("etapes"), i, k = -1, c;
+  for (i = 0; i < ETAPES.length; i++) if (!ETAPES[i].f()) { k = i; break; }
+  if (!d.children.length) {
+    ETAPES.forEach(function (e, j) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">' + (j + 1) + '</span>' + e.n;
+      d.appendChild(n);
+    });
+  }
+  for (i = 0; i < ETAPES.length; i++) {
+    d.children[i].className = ETAPES[i].f() ? "faite" : (i === k ? "actif" : "");
+  }
+  c = $("checks");
+  if (!c.children.length) {
+    CHECKS.forEach(function (h) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">sécurité</span>' + h.n;
+      c.appendChild(n);
+    });
+  }
+  CHECKS.forEach(function (h, j) { c.children[j].className = ETAT[h.k] ? "oui" : "non"; });
+}
+
+/* ==================================================================
+   20. LES PANNEAUX HTML
+   ================================================================== */
+function construireHTML() {
+  $("titre").textContent = "Paillasse virtuelle — " + depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E2AC-24") + " · " + DONNEES.niveau +
+    " · " + DONNEES.unite + " · " + DONNEES.lecon;
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation ||
+    DONNEES.observation || "");
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion || "");
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation || "");
+  $("seanceM").textContent = nb(DUREE_SEANCE, 0) + " min · " + MODALITE;
+  var t = $("tab"), tr = document.createElement("tr"), i, j, td;
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < NL; i++) {
+    tr = document.createElement("tr");
+    for (j = 0; j < NC; j++) {
+      td = document.createElement("td");
+      if (LIG[i] && LIG[i][j]) { td.innerHTML = md(LIG[i][j]); }
+      else { td.className = "vide"; td.textContent = ""; }
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  var ul = $("materiel");
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  ul = $("securite");
+  SECU.forEach(function (s) {
+    var li = document.createElement("li"); li.textContent = s; ul.appendChild(li);
+  });
+  var ct = $("capotConst"), k;
+  tr = document.createElement("tr");
+  ["Constante", "Valeur", "Provenance"].forEach(function (h) {
+    var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+  });
+  ct.appendChild(tr);
+  for (k in PHYS) {
+    tr = document.createElement("tr");
+    td = document.createElement("td"); td.textContent = PHYS[k].n; tr.appendChild(td);
+    td = document.createElement("td"); td.className = "mes";
+    td.textContent = sci(PHYS[k].v, 4) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(td);
+    td = document.createElement("td"); td.className = "src";
+    td.textContent = PHYS[k].s; tr.appendChild(td);
+    ct.appendChild(tr);
+  }
+  $("capotSrc").textContent = "Les deux focales sont LUES dans le tableau de " +
+    "la fiche — « " + cel(0, C_FCM) + " » et « " + cel(1, C_FCM) + " » cm — et " +
+    "servent à fabriquer les deux verres par inversion de la formule des " +
+    "opticiens. La page les mesure ensuite par le tracé, et les retrouve : " +
+    "c'est un aller-retour, pas une copie.";
+  $("eqModele").textContent =
+    "ALLER — le verre est DÉDUIT de la fiche :\n" +
+    "  1/f′ = (n−1)·[ 2/R + (n−1)·e/(n·R²) ]     (biconvexe symétrique)\n" +
+    "  R cherché par dichotomie pour que f′ soit celle du tableau\n\n" +
+    "RETOUR — la focale est MESURÉE :\n" +
+    "  5 directions incidentes sur le diamètre apparent de la source\n" +
+    "  × 9 hauteurs dans l'ouverture utile = 45 rayons\n" +
+    "  Descartes en vecteurs sur chacun des deux dioptres\n" +
+    "  diamètre de la tache à l'abscisse z = étendue des impacts\n" +
+    "  f′ = le z qui MINIMISE ce diamètre, cherché par balayage\n\n" +
+    "LECTURE — la règle du banc est graduée au millimètre :\n" +
+    "  50,07 mm se LIT 50 mm, donc 5,0 cm            (§12.21)\n\n" +
+    "VERGENCE — C = 1/f′, et f′ en MÈTRES :\n" +
+    "  ΔC = C·Δf/f, soit 0,2 δ à 5 cm : C s'écrit en entier (§12.26)";
+  $("eqBilan").textContent =
+    "rien n'est transformé : le verre dévie, il n'absorbe pas.\n\n" +
+    "ce qui change d'une lentille à l'autre, c'est le RAYON de ses\n" +
+    "faces — et le rayon commande la focale, qui commande la vergence :\n" +
+    "  R plus petit  →  f′ plus courte  →  C plus grande\n" +
+    "  « la force de la lentille », قوة العدسة, comme dit la fiche.\n\n" +
+    "et le disque solaire ne se résorbe pas : même au foyer, la tache\n" +
+    "garde 2·α·f′ — un demi-millimètre pour 5 cm de focale.";
+}
+function margesSeuils() {
+  var V0 = verre(0), V1 = verre(1), m0 = minimumTache(V0), m1 = minimumTache(V1);
+  var p0 = foyerParaxial(V0);
+  return "<b>L'aller-retour, chiffré.</b> La fiche annonce " + cel(0, C_FCM) +
+    " cm et " + cel(1, C_FCM) + " cm. La page en déduit deux verres de rayons " +
+    nb(V0.R, 2) + " mm et " + nb(V1.R, 2) + " mm, puis les MESURE par le " +
+    "tracé : la tache est la plus petite à <b>" + nb(m0.z, 3) + " mm</b> et " +
+    "<b>" + nb(m1.z, 3) + " mm</b>, ce qui se lit à la règle du banc — graduée " +
+    "au millimètre — <b>" + nb(lireALaRegle(m0.z) / 10, 1) + " cm</b> et <b>" +
+    nb(lireALaRegle(m1.z) / 10, 1) + " cm</b>. L'écart entre le solveur et la " +
+    "fiche vaut donc " + nb(Math.abs(m0.z / 10 - focaleFiche(0)), 3) + " cm et " +
+    nb(Math.abs(m1.z / 10 - focaleFiche(1)), 3) + " cm — sous la division de " +
+    "la règle dans les deux cas. <b>Aucun seuil d'aspect sur cette page</b> : " +
+    "la seule tolérance est celle de l'instrument, deux divisions, en deçà de " +
+    "laquelle la page accepte le relevé. Et le foyer PARAXIAL, lui, tombe à " +
+    nb(p0, 3) + " mm : l'écart au minimum réel est l'aberration de " +
+    "sphéricité, que l'ouverture commande.";
+}
+
+/* ==================================================================
+   21. LES GRAPHES
+   ================================================================== */
+function cadre(g, w, h, xl, yl) {
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#fbfcfd",
+    stroke: "#e3e6ea" }));
+  g.appendChild(el("line", { x1: 46, y1: h - 26, x2: w - 8, y2: h - 26,
+    stroke: "#9aa5b2", "stroke-width": 1.4 }));
+  g.appendChild(el("line", { x1: 46, y1: 10, x2: 46, y2: h - 26,
+    stroke: "#9aa5b2", "stroke-width": 1.4 }));
+  g.appendChild(el("text", { x: w - 8, y: h - 10, "text-anchor": "end",
+    "font-size": 10, fill: "#6b7686" }, xl));
+  g.appendChild(el("text", { x: 6, y: 12, "font-size": 10, fill: "#6b7686" }, yl));
+}
+function tracerTache() {
+  var g = $("gTache"), w = 360, h = 176, d, m;
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#20262f" }));
+  if (!ETAT.loin || !ETAT.dans) {
+    g.appendChild(el("text", { x: w / 2, y: h / 2, "text-anchor": "middle",
+      "font-size": 11, fill: "#b7bfca" },
+      ETAT.dans ? "viser la source lointaine" : "aucune lentille sur le banc"));
+    return;
+  }
+  d = tacheIci(); m = minCourant();
+  var ech = 58 / Math.max(m.d * 4, 0.6);
+  g.appendChild(el("circle", { cx: 106, cy: 84, r: 62, fill: "#12161c",
+    stroke: "#39424e", "stroke-width": 2 }));
+  g.appendChild(el("circle", { cx: 106, cy: 84, r: borne(d * ech / 2, 1.5, 60),
+    fill: "url(#tache)" }));
+  g.appendChild(el("text", { x: 106, y: 162, "text-anchor": "middle",
+    "font-size": 10, fill: "#c3ccd6" }, "l'écran, vu de face"));
+  g.appendChild(el("text", { x: 200, y: 44, "font-size": 11, fill: "#c3ccd6" },
+    "diamètre ici"));
+  g.appendChild(el("text", { x: 200, y: 66, "font-size": 17, "font-weight": "bold",
+    fill: "#e8c96a" }, nb(d, 3) + " mm"));
+  g.appendChild(el("text", { x: 200, y: 94, "font-size": 11, fill: "#c3ccd6" },
+    "le plus petit possible"));
+  g.appendChild(el("text", { x: 200, y: 114, "font-size": 15, "font-weight": "bold",
+    fill: auMinimum() ? "#a8d18a" : "#8a94a4" }, nb(m.d, 3) + " mm"));
+  g.appendChild(el("text", { x: 200, y: 138, "font-size": 11,
+    fill: auMinimum() ? "#a8d18a" : "#e8a05a" },
+    auMinimum() ? "au minimum : on peut relever"
+      : "déplacer de " + nb(Math.abs(ecartAuMin()), 1) + " mm"));
+}
+function tracerProfil() {
+  var g = $("gProfil"), w = 360, h = 196, i, z, d = "", m = minCourant();
+  var z0 = m.z * 0.55, z1 = m.z * 1.55, dmax = 0;
+  cadre(g, w, h, "position de l'écran (cm)", "diamètre de la tache (mm)");
+  if (!ETAT.dans) {
+    g.appendChild(el("text", { x: w / 2, y: h / 2, "text-anchor": "middle",
+      "font-size": 11, fill: "#6b7686" }, "aucune lentille sur le banc"));
+    return;
+  }
+  for (i = 0; i <= 60; i++) {
+    z = z0 + (z1 - z0) * i / 60;
+    dmax = Math.max(dmax, diametreTache(m.F, z));
+  }
+  function px(x) { return 46 + (x - z0) / (z1 - z0) * (w - 58); }
+  function py(v) { return (h - 26) - borne(v / dmax, 0, 1) * (h - 44); }
+  for (i = 0; i <= 60; i++) {
+    z = z0 + (z1 - z0) * i / 60;
+    d += (i ? " L " : "M ") + pt(px(z), py(diametreTache(m.F, z)));
+  }
+  g.appendChild(el("path", { d: d, fill: "none", stroke: INK, "stroke-width": 2.6 }));
+  if (ETAT.trouve[kDe(ETAT.dans)]) {
+    g.appendChild(el("line", { x1: px(m.z), y1: 12, x2: px(m.z), y2: h - 26,
+      stroke: GOLD, "stroke-width": 1.8, "stroke-dasharray": "5 4" }));
+    g.appendChild(el("text", { x: px(m.z) + 3, y: 24, "font-size": 9, fill: GOLD },
+      "F′ à " + nb(m.z / 10, 2) + " cm"));
+  }
+  g.appendChild(el("circle", { cx: px(borne(ETAT.z, z0, z1)),
+    cy: py(diametreTache(m.F, ETAT.z)), r: 5, fill: ORANGE }));
+  [z0, m.z, z1].forEach(function (x) {
+    g.appendChild(el("text", { x: px(x), y: h - 14, "text-anchor": "middle",
+      "font-size": 9, fill: "#6b7686" }, nb(x / 10, 1)));
+  });
+}
+function tracerVergence() {
+  var g = $("gVergence"), w = 360, h = 186, i, k, f, y = 34;
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#fbfcfd",
+    stroke: "#e3e6ea" }));
+  g.appendChild(el("text", { x: 10, y: 20, "font-size": 11, "font-weight": "bold",
+    fill: INK }, "de la distance à la vergence, en trois temps"));
+  for (k = 0; k < NL; k++) {
+    if (!ETAT.rel[k][C_FCM]) continue;
+    f = fMesureeCm(verre(k));
+    g.appendChild(el("text", { x: 10, y: y + 14, "font-size": 11.5,
+      "font-weight": "bold", fill: k === 0 ? ORANGE : VERT }, intitule(k)));
+    g.appendChild(el("text", { x: 76, y: y + 14, "font-size": 12,
+      "font-family": "ui-monospace, monospace", fill: INK },
+      nb(f, 1) + " cm  →  " + nb(f / 100, 3) + " m  →  C = " +
+      nb(vergence(f), decimalesVergence()) + " δ"));
+    g.appendChild(el("text", { x: 76, y: y + 30, "font-size": 10, fill: ROUGE },
+      "sans convertir : 1/" + nb(f, 1) + " = " + nb(vergenceOubliee(f), 2) +
+      " — sans aucun sens"));
+    y += 52;
+  }
+  if (y === 34) {
+    g.appendChild(el("text", { x: w / 2, y: h / 2, "text-anchor": "middle",
+      "font-size": 11, fill: "#6b7686" }, "aucune focale relevée pour l'instant"));
+    return;
+  }
+  if (ETAT.rel[0][C_FCM] && ETAT.rel[1][C_FCM]) {
+    var a = fMesureeCm(verre(0)), b = fMesureeCm(verre(1));
+    g.appendChild(el("text", { x: 10, y: h - 14, "font-size": 11, fill: INK },
+      "rapport des focales " + nb(b / a, 2) + "  ·  rapport des vergences " +
+      nb(vergence(a) / vergence(b), 2) + " — l'inverse exact"));
+  }
+}
+
+/* ==================================================================
+   22. LES LECTURES ET LE CARNET
+   ================================================================== */
+function majLectures() {
+  var m, p;
+  function put(id, s, off) {
+    var n = $(id); n.textContent = s; n.className = "v" + (off ? " off" : "");
+  }
+  put("lZ", nb(ETAT.z / 10, 1) + " cm");
+  if (!ETAT.dans || !ETAT.loin) {
+    ["lTache", "lMin", "lEcart", "lPara", "lSol"].forEach(function (i) {
+      put(i, "—", true);
+    });
+    majCarnet();
+    return;
+  }
+  m = minCourant(); p = foyerParaxial(verreCourant());
+  put("lTache", nb(tacheIci(), 3) + " mm");
+  put("lMin", nb(m.d, 3) + " mm");
+  put("lEcart", nb(ecartAuMin(), 1) + " mm" + (auMinimum() ? "  ✓" : ""));
+  put("lPara", p === null ? "—" : nb(p / 10, 3) + " cm");
+  put("lSol", nb(2 * REG.sol * 1e-3 * m.z, 3) + " mm");
+  majCarnet();
+}
+function majCarnet() {
+  var t = $("carnet"), tr, td, L = [], k, V, m, f;
+  vide(t);
+  tr = document.createElement("tr");
+  ["Lentille", "R déduit", "f′ brute", "f′ lue", "f′ (m)", "C (δ)",
+   "tache min.", "fiche"].forEach(function (h) {
+    td = document.createElement("th"); td.textContent = h; tr.appendChild(td);
+  });
+  t.appendChild(tr);
+  for (k = 0; k < NL; k++) {
+    if (!ETAT.mesures[k]) continue;
+    V = verre(k); m = minimumTache(V); f = lireALaRegle(m.z) / 10;
+    L.push([intitule(k), nb(V.R, 2) + " mm", nb(m.z / 10, 3) + " cm",
+            nb(f, 1) + " cm", nb(f / 100, 3) + " m",
+            nb(vergence(f), decimalesVergence()),
+            nb(m.d, 3) + " mm",
+            cel(k, C_FCM) + " cm · " + depouille(cel(k, C_VERG)) + " δ"]);
+  }
+  if (!L.length) {
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.setAttribute("colspan", 8); td.className = "vide";
+    td.textContent = "aucune mesure : chercher la position où la tache est la plus petite";
+    tr.appendChild(td); t.appendChild(tr);
+    return;
+  }
+  L.forEach(function (r) {
+    tr = document.createElement("tr");
+    r.forEach(function (x, j) {
+      td = document.createElement("td");
+      if (j >= 1 && j <= 6) td.className = "mes";
+      td.textContent = x; tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  });
+}
+
+/* ==================================================================
+   23. LES COMMANDES HTML — §12.12 : chaque `value` sur la grille
+   ================================================================== */
+var CURSEURS = [
+  { id: "rOuv", k: "ouv", o: "oOuv", a: "aideOuv",
+    f: function (v) { return nb(v, 0) + " mm"; } },
+  { id: "rSol", k: "sol", o: "oSol", a: "aideSol",
+    f: function (v) { return nb(v, 1) + " mrad"; } },
+  { id: "rN", k: "n", o: "oN", a: "aideN", f: function (v) { return nb(v, 3); } },
+  { id: "rE", k: "e", o: "oE", a: "aideE", f: function (v) { return nb(v, 1) + " mm"; } }
+];
+function lireReglages() {
+  CURSEURS.forEach(function (c) { REG[c.k] = +$(c.id).value; });
+  CACHE.cle = ""; videMemo();
+  ETAT.horsProto = horsProtocole();
+}
+function majAffichageReglages() {
+  CURSEURS.forEach(function (c) {
+    $(c.o).textContent = c.f(REG[c.k]);
+    if (c.k === "ouv") {
+      $(c.a).innerHTML = "<b>Ajout — c'est la CONDITION DE GAUSS.</b> À " +
+        "petite ouverture la tache est minuscule et se forme au foyer ; à " +
+        "pleine ouverture l'aberration de sphéricité la grossit ET déplace " +
+        "le minimum <b>avant</b> F′. C'est déjà la question du diaphragme.";
+    } else if (c.k === "sol") {
+      $(c.a).innerHTML = "<b>Ajout.</b> Le Soleil fait <b>4,7 mrad</b> de " +
+        "demi-diamètre apparent (0,533°) ; une lampe à l'autre bout de la " +
+        "salle, que la fiche propose aussi, en fait bien moins. À 0, la " +
+        "source est un point et la tache minimale ne tient plus qu'à " +
+        "l'aberration.";
+    } else if (c.k === "n") {
+      $(c.a).innerHTML = "<b>Ajout.</b> Changer l'indice change le rayon " +
+        "déduit — mais pas la focale, qui est celle de la fiche : c'est elle " +
+        "l'invariant de la page.";
+    } else {
+      $(c.a).innerHTML = "<b>Ajout.</b> L'épaisseur au centre entre dans la " +
+        "formule des opticiens, donc dans le rayon déduit. Une lentille plus " +
+        "épaisse a besoin d'un rayon plus grand pour la même focale.";
+    }
+  });
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+function brancherCommandes() {
+  CURSEURS.forEach(function (c) {
+    $(c.id).addEventListener("input", function () {
+      lireReglages();
+      redessinerScene();
+      majAffichageReglages();
+      majTout();
+    });
+  });
+  $("bProto").addEventListener("click", function () {
+    CURSEURS.forEach(function (c) { $(c.id).value = String(PROTO[c.k]); });
+    lireReglages(); redessinerScene(); majAffichageReglages(); majTout();
+    noter("Réglages ramenés à ceux du protocole.", true);
+  });
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+}
+
+/* ==================================================================
+   24. L'HORLOGE
+   ================================================================== */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 250);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(0.6, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+  dire(consigne(), ETAT.conclu);
+}
+function majSeance() {
+  var f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceJ").style.width = borne(f, 0, 1) * 100 + "%";
+  $("seanceT").parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function majTout() {
+  /* ⚠ LES VERROUS (§12bis.1, piège n° 3). Le protocole REMPLACE la lentille
+     à l'étape 6 : « L₁ est en place » redeviendrait faux et le panneau
+     reculerait à l'infini. Une fois atteints, ces états sont faits. */
+  if (ETAT.banc && ETAT.loin && ETAT.dans === "L1") ETAT.pose1 = true;
+  if (ETAT.dans && ETAT.loin && auMinimum()) ETAT.trouve[kDe(ETAT.dans)] = true;
+  redessinerEcran();
+  redessinerLumiere();
+  majEtapes();
+  majLectures();
+  tracerTache(); tracerProfil(); tracerVergence();
+  majBoutons();
+  $("bilan").textContent = ETAT.conclu
+    ? "C = 1/f′ : la vergence est l'INVERSE de la distance focale, et elle se " +
+      "mesure en dioptries — à condition que f′ soit en mètres"
+    : "la focale ne s'affiche pas : elle se cherche, en déplaçant l'écran";
+  majProtocole();
+  dire(consigne(), ETAT.conclu);
+}
+function majBoutons() {
+  var a, k = ETAT.dans ? kDe(ETAT.dans) : -1;
+  for (a in BOUTONS) BOUTONS[a].armer(false);
+  if (BOUTONS.banc) BOUTONS.banc.armer(!ETAT.banc);
+  if (BOUTONS.loin) {
+    BOUTONS.loin.libelle(ETAT.loin ? "Détourner le banc" : "Viser la source lointaine");
+    BOUTONS.loin.armer(!ETAT.loin && ETAT.banc);
+  }
+  if (BOUTONS.relever) {
+    BOUTONS.relever.armer(ETAT.loin && k >= 0 && !ETAT.rel[k][C_FCM] && auMinimum());
+  }
+  if (BOUTONS.vergence) {
+    BOUTONS.vergence.armer(k >= 0 && ETAT.rel[k][C_FCM] && !ETAT.rel[k][C_VERG]);
+  }
+  if (BOUTONS.conclure) {
+    BOUTONS.conclure.armer(ligneFaite(0, [C_FCM, C_FM, C_VERG]) &&
+      ligneFaite(1, [C_FCM, C_FM, C_VERG]) && !ETAT.conclu);
+  }
+  if (ETAT.banc && BOUTONS.banc) BOUTONS.banc.fait();
+  if (ETAT.conclu && BOUTONS.conclure) BOUTONS.conclure.fait();
+}
+
+/* ==================================================================
+   25. RECOMMENCER
+   ================================================================== */
+function recommencer() {
+  purger(); effacerCibles(); prise = null;
+  effacerGuide();          /* aucun halo ne survit a la remise en etat */
+  arreterDeroule();        /* ni un deroule en cours */
+  var garde = ETAT.tSeance || 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = garde;
+  ETAT.horsProto = horsProtocole();
+  CACHE.cle = "";
+  ["L1", "L2", "ecran"].forEach(function (q) {
+    var n = noeudDe(q);
+    if (!n) return;
+    n.removeAttribute("filter");
+    COUCHES.objets.appendChild(n);
+  });
+  redessinerScene();
+  Object.keys(BOUTONS).forEach(function (a) { BOUTONS[a].neuf(); });
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      if (LIG[i - 1] && LIG[i - 1][j]) { tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = ""; }
+      else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  $("concl").classList.add("masque");
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  secuDire(S_SOLEIL, "");
+  $("legendeSeuils").innerHTML = margesSeuils();
+  majAffichageReglages();
+  majTout();
+  noter("Poste remis en état : banc à installer, lentilles sur le plateau, " +
+        "écran à " + nb(ETAT.z / 10, 1) + " cm.", false);
+}
+
+/* ==================================================================
+   26. LE GUIDAGE
+   ================================================================== */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", { x: x, y: y, width: w, height: h,
+    rx: r === undefined ? 12 : r, fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity", values: "1;0.35;1",
+    dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b || b.cx === undefined) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+function surlignerLentille(q) {
+  var m = maison(q);
+  halo(m.x - 38, m.y - 44, 76, 88, 14);
+}
+function surlignerPorte() { halo(X_LENT - 50, AXE - 76, 100, 152, 12); }
+function surlignerEcranN() { halo(xEcran() - 30, AXE - 118, 60, 236, 10); }
+function surlignerFenetre() { halo(16, 200, 136, 164, 8); }
+function surlignerCurseur(id) {
+  var n = $(id);
+  if (!n) return;
+  var av = n.style.outline;
+  n.style.outline = "3px dashed " + GOLD;
+  n.style.outlineOffset = "3px";
+  guideSurb.push({ parentNode: { removeChild: function () {
+    n.style.outline = av; n.style.outlineOffset = "";
+  } } });
+}
+/* Le geste d'une lentille, écrit une fois : la monter, chercher le
+   minimum en déplaçant l'écran, relever, calculer. Il n'écrit AUCUN
+   résultat — chaque pas passe par la fonction du geste. */
+function mesurerLentille(q) {
+  var k = kDe(q), z;
+  if (ETAT.dans !== q) {
+    z = zoneType(q, "porte");
+    if (z) { deposer(q, z); return 440; }
+    return 0;
+  }
+  if (!ETAT.rel[k][C_FCM]) {
+    if (!auMinimum() || !ETAT.trouve[k]) {
+      if (glisserVersMin(8)) return 300;
+    }
+    presserBouton("relever");
+    return 420;
+  }
+  if (!ETAT.rel[k][C_VERG]) { presserBouton("vergence"); return 420; }
+  return 0;
+}
+
+var GUIDE = [
+  /* 1. « Placer la lentille (L₁) sur le banc, face à une source très
+         éloignée : les rayons qui l'atteignent sont parallèles à l'axe. » */
+  { fait: function () { return ETAT.pose1; },
+    aide: function () {
+      if (!ETAT.banc) return "Presser <b>« Installer le banc »</b>.";
+      if (!ETAT.loin) return "Presser <b>« Viser la source lointaine »</b> — le " +
+        "Soleil par la fenêtre, ou une lampe à l'autre bout de la salle.";
+      return "Glisser <b>" + intitule(0) + "</b> dans le porte-lentille.";
+    },
+    montre: function () {
+      if (!ETAT.banc) { surlignerBouton("banc"); surlignerPorte(); return; }
+      if (!ETAT.loin) { surlignerBouton("loin"); surlignerFenetre(); return; }
+      surlignerLentille("L1"); surlignerPorte(); montrerCibles("L1");
+    } },
+
+  /* 2. « Placer l'écran derrière la lentille et le déplacer lentement le
+         long du banc. » */
+  { fait: function () { return ETAT.bouge; },
+    aide: "Glisser l'<b>écran</b> le long du banc — la tache change de taille " +
+      "à chaque position, et c'est ce changement qu'on suit.",
+    montre: function () { surlignerEcranN(); } },
+
+  /* 3. « Repérer la position où la tache lumineuse est la plus petite et la
+         plus nette : c'est le foyer image F′. » */
+  { fait: function () { return ETAT.trouve[0]; },
+    aide: function () {
+      return "Continuer à déplacer l'<b>écran</b> : la tache mesure " +
+        nb(tacheIci(), 3) + " mm ici, et elle peut descendre à " +
+        nb(minCourant().d, 3) + " mm. La page ne dit pas où — elle compare.";
+    },
+    montre: function () { surlignerEcranN(); } },
+
+  /* 4. « Mesurer sur la règle du banc la distance entre O et F′ : c'est la
+         distance focale f′ = OF′, en centimètres. » */
+  { fait: function () { return ETAT.rel[0][C_FCM]; },
+    aide: "Presser <b>« Relever f′ »</b> : la page lit la position à la règle " +
+      "du banc, graduée au millimètre.",
+    montre: function () { surlignerBouton("relever"); surlignerEcranN(); } },
+
+  /* 5. « Convertir cette distance en mètres, puis calculer la vergence
+         C = 1/f′, en dioptries. » */
+  { fait: function () { return ETAT.rel[0][C_FM] && ETAT.rel[0][C_VERG]; },
+    aide: "Presser <b>« Calculer la vergence »</b> — et remarquer ce que " +
+      "donnerait l'oubli de la conversion.",
+    montre: function () { surlignerBouton("vergence"); } },
+
+  /* 6. « TÉMOIN : reprendre les cinq étapes à l'identique avec (L₂), sans
+         déplacer la source ni changer l'écran. » */
+  { fait: function () { return ligneFaite(1, [C_FCM, C_FM, C_VERG]); },
+    aide: function () {
+      if (ETAT.dans !== "L2") return "Glisser <b>" + intitule(1) + "</b> dans le " +
+        "porte-lentille, à la place de l'autre — la source ne bouge pas.";
+      if (!ETAT.rel[1][C_FCM]) return "Chercher de nouveau la tache la plus " +
+        "petite, puis relever f′.";
+      return "Presser <b>« Calculer la vergence »</b>.";
+    },
+    montre: function () {
+      if (ETAT.dans !== "L2") { surlignerLentille("L2"); surlignerPorte();
+        montrerCibles("L2"); return; }
+      if (!ETAT.rel[1][C_FCM]) { surlignerEcranN(); surlignerBouton("relever"); return; }
+      surlignerBouton("vergence");
+    } },
+
+  /* 7. « Comparer les deux distances focales et les deux vergences, et dire
+         laquelle des deux lentilles est la plus convergente. » */
+  { fait: function () { return ETAT.conclu; },
+    aide: "Presser <b>« Comparer et conclure »</b> : la conclusion se démasque.",
+    montre: function () { surlignerBouton("conclure"); } }
+];
+
+/* ==================================================================
+   27. LE PROTOCOLE GUIDÉ
+   ================================================================== */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. LE BANC, LA SOURCE LOINTAINE, LA PREMIÈRE LENTILLE. Trois gestes
+     dans l'ordre de la fiche ; la lentille se pose par un GLISSER, sur la
+     zone qu'`emplacements()` propose dans l'état courant. */
+  function () {
+    var z;
+    if (!ETAT.banc) { presserBouton("banc"); return 380; }
+    if (!ETAT.loin) { presserBouton("loin"); return 380; }
+    z = zoneType("L1", "porte");
+    if (z) { deposer("L1", z); return 440; }
+    return 0;
+  },
+
+  /* 2. DÉPLACER L'ÉCRAN. Un seul pas suffit à satisfaire l'étape — la
+     fiche demande de le déplacer, pas encore de trouver. */
+  function () {
+    if (descendreVersMin()) return 300;
+    poserEcran(ETAT.z + 8);
+    return 300;
+  },
+
+  /* 3. CHERCHER LA TACHE LA PLUS PETITE. ⚠ Le geste NE CONNAÎT PAS la
+     réponse : il compare le diamètre de la tache de part et d'autre de
+     l'écran et repart du bon côté, en divisant le pas quand il ne gagne
+     plus. C'est exactement ce que fait l'élève — d'un mouvement continu,
+     d'où l'enchaînement des pas — et c'est le modèle qui produit le nombre. */
+  function () {
+    if (glisserVersMin(8)) return 300;
+    return 0;
+  },
+
+  /* 4. relever f′ = OF′ sur la règle du banc */
+  function () {
+    presserBouton("relever");
+    return 420;
+  },
+
+  /* 5. convertir en mètres et calculer la vergence */
+  function () {
+    presserBouton("vergence");
+    return 420;
+  },
+
+  /* 6. LE TÉMOIN : les cinq étapes à l'identique avec la seconde lentille,
+     sans déplacer la source. `mesurerLentille()` refait le chemin complet —
+     monter, chercher, relever, calculer — et n'écrit aucun résultat. */
+  function () { return mesurerLentille("L2"); },
+
+  /* 7. comparer les deux focales et les deux vergences */
+  function () {
+    presserBouton("conclure");
+    return 460;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   28. LE PLEIN ÉCRAN
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) { cadre.requestFullscreen(); }
+    else if (cadre.webkitRequestFullscreen) { cadre.webkitRequestFullscreen(); }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   29. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ETAT = neufEtat();
+  CURSEURS.forEach(function (cu) { $(cu.id).value = String(PROTO[cu.k]); });
+  lireReglages();
+  ajouterDefs(); ajouterCouches();
+  construireDecor();
+  construireScene();
+
+  var lib = ["Installer le banc", "Viser la source lointaine", "Relever f′",
+             "Calculer la vergence", "Comparer et conclure"];
+  var act = ["banc", "loin", "relever", "vergence", "conclure"];
+  var n = lib.length, wB = 172, dxB = (W - 2 * 108) / (n - 1);
+  lib.forEach(function (l, i) { boutonScene(108 + i * dxB, Y_BOUTONS, wB, 46, l, act[i]); });
+
+  brancherPrise(); brancherBoutons();
+  brancherPlein();   /* le plein ecran : sans cet appel, le bouton du cadre est mort */
+  construireHTML(); brancherCommandes();
+  majAffichageReglages();
+  construireProtocole();
+  recommencer();
+  demarrerHorloge();
+}
+
+demarrer();
+})();
+</script>
+</body>
+</html>

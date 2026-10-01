@@ -1,0 +1,2695 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-18 · Vérification expérimentale de la loi d'Ohm</title>
+
+<!--
+  ===================================================================
+  E3AC-18 · 3AC · L13 — PAILLASSE VIRTUELLE
+  « Vérification expérimentale de la loi d'Ohm »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Le circuit est résolu, pas rejoué :
+
+      I = U / R(T)              la loi, avec une résistance qui dépend
+                                de la température du composant
+      U lue = arrondi(U / résolution du voltmètre)
+      I lue = arrondi(I / résolution de l'ampèremètre)
+      rapport = U LUE / I LUE
+
+  Et R lui-même se lit deux fois : une première à l'ohmmètre, hors
+  circuit, et une seconde comme PENTE de la droite U = f(I). Que les
+  deux coïncident est le résultat de la leçon, et la page les compare
+  au lieu de les affirmer.
+
+  L'ÉCHAUFFEMENT : LA SÉCURITÉ DE LA FICHE, RENDUE VISIBLE
+  ---------------------------------------------------------
+  La fiche prescrit d'ouvrir l'interrupteur entre deux réglages, et elle
+  dit pourquoi : « le conducteur ohmique s'échauffe, et un composant
+  chaud voit sa résistance dériver — la constance du rapport U/I s'en
+  trouverait faussée ». La page ne se contente pas de le répéter : elle
+  l'intègre.
+
+      P = U²/R          la puissance dissipée par effet Joule
+      ΔT = P · R_th · (1 − e^(−t/τ))     la montée en température
+      R  = R₀ · (1 + α·ΔT)
+
+  À 9 V, laisser fermé deux minutes fait passer le rapport de 100 à
+  103 Ω. Le curseur permet de le voir. C'est la seule manière honnête de
+  faire comprendre une consigne de sécurité : montrer ce qu'elle évite.
+
+  LE CODE DES COULEURS EST DÉCODÉ, PAS RECOPIÉ
+  ---------------------------------------------
+  La fiche décrit le conducteur par ses anneaux — marron, noir, marron.
+  La page les lit : 1, 0, puis ×10¹, soit 100 Ω. Elle affiche la valeur
+  qu'elle en tire, et l'ohmmètre mesure la valeur VRAIE du composant,
+  qui n'est jamais exactement celle du code — la tolérance existe, et
+  elle est déclarée.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  Il mesure d'abord la résistance hors circuit, puis il monte : chaque
+  appareil se glisse à sa place. L'ampèremètre en dérivation aux bornes
+  du générateur est refusé, avec la raison. Puis il règle la tension au
+  bouton du générateur et lit les deux appareils.
+
+  ATTENTION — CE QUE LA PAGE NE FAIT PAS
+  --------------------------------------
+  * Elle ne modifie AUCUN fichier partagé.
+  * Elle ne parle jamais de « chute de tension » ni de puissance devant
+    l'élève : hors programme ici. Ces mots n'existent que sous le capot.
+  * Elle ne dessine la droite qu'une fois les points relevés, et elle
+    l'AJUSTE au lieu de la tracer.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E3AC-18.
+-->
+
+<style>
+
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.oui{color:var(--green)}
+.lect .v.non{color:#b03030}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.temoin td{background:#f4f6f9}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.rappel{background:var(--bluebg);border-left:3px solid var(--gold);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin-top:8px;
+        color:var(--muted)}
+.rappel b{color:var(--ink)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans
+   la vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+
+.cases{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:15px;font-weight:700;color:var(--ink);margin-top:2px;
+          font-family:var(--mono)}
+.cases .u.nul{color:#9aa5b2;font-weight:600;font-family:inherit;font-size:13px}
+.cases .u.mal{color:#b03030}
+.bilan2{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin-top:9px;
+        font-size:12px}
+.bilan2 .n{color:var(--muted)}
+.bilan2 .v{font-family:var(--mono);font-weight:700;text-align:right}
+.bilan2 .v.mal{color:#b03030}
+.bilan2 .v.ok{color:var(--green)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-18 · 3AC · L13</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le protocole demande une lecture prise
+        dès la fermeture, l'interrupteur rouvert entre deux réglages, et
+        l'ampèremètre sur le calibre qui convient. Ce n'est plus le cas : le
+        tableau de référence cesse de se remplir, mais les mesures continuent
+        et le graphe montre ce qu'elles deviennent.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La mesure en cours <span class="note" id="mesNom">—</span></h2>
+      <div class="cases" id="mesCases"></div>
+      <div class="bilan2" id="mesBilan"></div>
+      <p class="src" id="mesPhrase" style="margin-top:9px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>U en fonction de I <span class="note">la pente est R</span></h2>
+      <p class="src" style="margin:0 0 6px">Les points se posent au fur et à
+        mesure. La droite est <b>ajustée</b> sur eux, et sa pente se compare à
+        ce que l'ohmmètre avait lu avant tout montage.</p>
+      <svg id="gGraphe" viewBox="0 0 360 240" style="width:100%;height:auto;display:block"
+           role="img" aria-label="La tension en fonction de l'intensité"></svg>
+      <div class="bilan2" id="grapheBilan"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rU">Tension du générateur</label><output id="oU"></output>
+        <input type="range" id="rU" min="0" max="12" step="0.5" value="0">
+        <div class="aide">Le protocole demande 3 · 4,5 · 6 · 7,5 · 9 V. Au-delà
+          de 9 V, la sécurité de la fiche l'interdit avec ce composant.</div>
+      </div>
+      <div class="reg">
+        <label for="rT">Durée de fermeture avant la lecture</label>
+        <output id="oT"></output>
+        <input type="range" id="rT" min="0" max="120" step="1" value="0">
+        <div class="aide">Le protocole veut qu'on lise dès la fermeture, et
+          qu'on rouvre entre deux réglages. Laisser fermé fait chauffer le
+          conducteur — et le rapport U/I dérive. C'est ce que la sécurité
+          annonce ; ici on le voit.</div>
+      </div>
+      <div class="reg">
+        <label for="rCal">Calibre de l'ampèremètre</label><output id="oCal"></output>
+        <input type="range" id="rCal" min="0" max="2" step="1" value="1">
+        <div class="aide">« Partir du plus grand calibre, puis descendre. » Trop
+          petit, l'appareil déborde ; trop grand, on perd les chiffres.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · Les quatre calculs</h3>
+      <p class="fx" id="capotCalculs"></p>
+
+      <h3>2 · Le code des couleurs, décodé</h3>
+      <table id="capotCode"></table>
+      <p id="capotCodeTxt"></p>
+
+      <h3>3 · L'échauffement, chiffré</h3>
+      <p>C'est le calcul qui justifie la consigne de sécurité. À 9 V, le
+        conducteur dissipe <span class="fx" id="capotP"></span>, et sa
+        température monte vers un palier :</p>
+      <table id="capotChauffe"></table>
+      <p>Le rapport U/I n'est donc constant que si l'on mesure <b>à froid</b> —
+        c'est-à-dire en rouvrant entre deux réglages, exactement comme la fiche
+        le prescrit.</p>
+
+      <h3>4 · Ce que la page retrouve, comparé à la fiche</h3>
+      <table id="capotAccord"></table>
+
+      <h3>5 · La droite ajustée</h3>
+      <table id="capotDroite"></table>
+
+      <h3>6 · Les grandeurs du montage</h3>
+      <table id="capotVals"></table>
+
+      <h3>7 · Ce que le modèle simplifie</h3>
+      <ul>
+        <li><b>Les appareils sont parfaits.</b> Un ampèremètre réel a une
+        résistance interne de quelques ohms, qui s'ajoute au conducteur ; un
+        voltmètre réel dérive un peu de courant. Sur 100 Ω, les deux effets
+        pèsent moins que la résolution d'affichage.</li>
+        <li><b>Les fils n'ont pas de résistance</b> et le générateur pas de
+        résistance interne. Sur un générateur de T.P. réglé en tension, la
+        seconde est compensée.</li>
+        <li><b>Le refroidissement est exponentiel et parfait.</b> Un composant
+        réel refroidit plus lentement qu'il ne chauffe, parce que son support
+        garde la chaleur.</li>
+        <li><b>Le coefficient de température est constant.</b> Il varie lui-même
+        un peu avec la température, mais bien moins que ce qu'on mesure ici.</li>
+      </ul>
+
+      <h3>8 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-18.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-18",
+  "niveau": "3AC",
+  "unite": "U3",
+  "lecon": "L13",
+  "titre": "Vérification expérimentale de la loi d'Ohm",
+  "axe": "La loi d'Ohm — étude expérimentale",
+  "objectif": "Établir expérimentalement que la tension **U** aux bornes d'un conducteur ohmique est **proportionnelle** à l'intensité **I** du courant qui le traverse, et que le coefficient de proportionnalité **U/I** est égal à la résistance **R** du conducteur ohmique, mesurée par ailleurs à l'ohmmètre.",
+  "duree": 22,
+  "modalite": "groupes de 4 — 8 postes ; matériel déposé prêt à chaque poste, montage réalisé par les apprenants",
+  "materiel": [
+    "1 générateur de tension continue **réglable** (0 – 12 V) par poste — le réglage de la tension est le cœur de l'expérience, une pile ne convient pas",
+    "1 conducteur ohmique **R = 100 Ω**, anneaux **marron – noir – marron**, **monté sur support** (1 W au moins) par poste",
+    "**2 multimètres** par poste : le premier sert d'abord d'**ohmmètre**, puis de **voltmètre** ; le second est l'**ampèremètre**",
+    "1 interrupteur par poste",
+    "6 fils de connexion à fiches bananes par poste",
+    "1 calculatrice par groupe, pour le calcul du rapport U/I"
+  ],
+  "securite": [
+    "**Mesurer la résistance AVANT de monter le circuit**, conducteur ohmique **hors tension** : un ohmmètre branché sur un circuit alimenté est faussé, voire détruit — c'est la consigne déjà posée en 1ʳᵉ année.",
+    "**Ne jamais brancher l'ampèremètre en dérivation** aux bornes du générateur : il serait traversé par un courant trop intense et détruit.",
+    "Vérifier avant de fermer : l'**ampèremètre en série** dans la boucle, le **voltmètre en dérivation** aux bornes du seul conducteur ohmique.",
+    "Sur chaque appareil, partir du **plus grand calibre**, puis descendre — jamais l'inverse.",
+    "**Ne fermer l'interrupteur qu'après vérification du montage par l'enseignant**, et régler le générateur sur sa plus petite valeur avant la première fermeture.",
+    "**Ouvrir l'interrupteur entre deux réglages** : le conducteur ohmique s'échauffe, et un composant chaud voit sa résistance dériver — la constance du rapport U/I s'en trouverait faussée.",
+    "**Ne pas dépasser 9 V** avec ce conducteur ohmique, et n'employer qu'un modèle **sur support** : un petit composant d'un quart de watt brûlerait.",
+    "Ne travailler qu'avec le générateur de T.P. fourni : le secteur est interdit."
+  ],
+  "protocole": [
+    "Avant tout montage, mesurer la résistance du conducteur ohmique à l'**ohmmètre**, hors circuit, entre les bornes **COM** et **Ω**, et noter la valeur lue.",
+    "Observer le **schéma du montage projeté** et le reproduire : générateur de tension réglable, interrupteur, conducteur ohmique et **ampèremètre**, tous **en série**.",
+    "Brancher le **voltmètre en dérivation**, aux bornes du **seul** conducteur ohmique.",
+    "Régler le générateur sur sa tension la plus basse, puis faire vérifier le montage par l'enseignant.",
+    "Interrupteur **ouvert**, relever U et I : c'est la première ligne du tableau.",
+    "Fermer l'interrupteur, régler le générateur jusqu'à lire **U = 3 V** au voltmètre, puis relever l'intensité I à l'ampèremètre.",
+    "Ouvrir l'interrupteur, puis recommencer pour **U = 4,5 V**, **6 V**, **7,5 V** et **9 V**.",
+    "**Convertir en ampères** chaque intensité, si l'ampèremètre l'affiche en milliampères.",
+    "Calculer, pour chaque ligne, le rapport **U / I** et l'inscrire dans la dernière colonne **avec son unité**.",
+    "Comparer la colonne **U / I** à la valeur lue au départ sur l'**ohmmètre**."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Mesure",
+      "Tension U (V)",
+      "Intensité I (A)",
+      "Rapport U / I (V/A)"
+    ],
+    "lignes": [
+      [
+        "1 · circuit ouvert",
+        "",
+        "",
+        ""
+      ],
+      [
+        "2",
+        "",
+        "",
+        ""
+      ],
+      [
+        "3",
+        "",
+        "",
+        ""
+      ],
+      [
+        "4",
+        "",
+        "",
+        ""
+      ],
+      [
+        "5",
+        "",
+        "",
+        ""
+      ],
+      [
+        "6",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "1 · circuit ouvert",
+        "0",
+        "0",
+        "—"
+      ],
+      [
+        "2",
+        "3",
+        "0,030",
+        "100"
+      ],
+      [
+        "3",
+        "4,5",
+        "0,045",
+        "100"
+      ],
+      [
+        "4",
+        "6",
+        "0,060",
+        "100"
+      ],
+      [
+        "5",
+        "7,5",
+        "0,075",
+        "100"
+      ],
+      [
+        "6",
+        "9",
+        "0,090",
+        "100"
+      ]
+    ]
+  },
+  "observation": "Un conducteur ohmique freine le courant, on le savait ; mais une tension et une intensité suffisent au réparateur pour annoncer sa valeur.",
+  "conclusion": "Le rapport U/I d'un conducteur ohmique est constant et vaut sa résistance : U = R × I, la loi d'Ohm.",
+  "oheric": {
+    "observation": "En première année, on a établi qu'un conducteur ohmique **freine** le courant : introduit dans un circuit, il fait baisser l'intensité, et d'autant plus que sa résistance est grande. On en connaissait donc le **sens**, jamais le **combien**. Or, chez le réparateur, deux nombres suffisent : il lit une tension et une intensité, et il annonce la valeur du composant. Sur un **même** conducteur ohmique, comment l'intensité I varie-t-elle quand on fait varier la tension U — et ces deux nombres peuvent-ils redonner la résistance R ?",
+    "hypothese": "Si le conducteur ohmique freine **toujours de la même façon** le courant qui le traverse, alors U et I doivent varier **ensemble** : en doublant la tension on doublerait l'intensité, et le **rapport U/I** garderait la **même valeur** d'une mesure à l'autre. Et si ce rapport caractérise bien le dipôle lui-même, alors il doit être **égal à la résistance R** lue sur l'ohmmètre.",
+    "experience": "Mesurer d'abord R à l'**ohmmètre**, hors circuit. Monter ensuite, à partir du schéma projeté, un circuit **série** générateur réglable — interrupteur — conducteur ohmique — **ampèremètre**, avec le **voltmètre en dérivation** aux bornes du conducteur ohmique. Relever le couple (U ; I) pour cinq réglages successifs du générateur — **3 ; 4,5 ; 6 ; 7,5 et 9 V** —, puis calculer le rapport **U/I** ligne par ligne et le comparer à la valeur lue à l'ohmmètre.",
+    "resultats": "L'ohmmètre, branché hors circuit, indique **R = 100 Ω**. Interrupteur ouvert, le voltmètre indique **0 V** et l'ampèremètre **0 A**. Puis, pour **U = 3 V**, l'ampèremètre indique **I = 0,030 A** ; pour **4,5 V**, **0,045 A** ; pour **6 V**, **0,060 A** ; pour **7,5 V**, **0,075 A** ; pour **9 V**, **0,090 A**. Le calcul du rapport donne, ligne après ligne : **100 · 100 · 100 · 100 · 100 V/A**. Chaque fois que la tension augmente, l'intensité augmente ; et quand la tension **double** — de 3 V à 6 V —, l'intensité **double** aussi, de 0,030 A à 0,060 A.",
+    "interpretation": "L'hypothèse est validée sur ses deux points. D'abord, le rapport **U/I reste constant** sur toutes les lignes : U et I sont donc deux grandeurs **proportionnelles**, et doubler l'une double bien l'autre. Ensuite, ce rapport constant vaut **100 V/A**, c'est-à-dire exactement ce qu'indiquait l'**ohmmètre** : le nombre obtenu n'est pas un nombre de plus, c'est la **résistance du dipôle**. L'ohmmètre est ici le **témoin** de l'expérience, et c'est lui qui interdit une conclusion trop rapide : sans cette mesure indépendante, on saurait seulement que U/I est constant, sans savoir de quoi ce constant est le nom. On vérifie au passage que l'unité tombe juste : **1 volt par ampère est exactement 1 ohm**, `1 V/A = 1 Ω`. Attention enfin à ce que le calcul suppose : l'intensité doit être en **ampères**. Un rapport calculé avec des milliampères — 3 ÷ 30 — donnerait 0,1 au lieu de 100, soit une valeur **mille fois trop petite**. Et ce rapport est une propriété **du dipôle** : un autre conducteur ohmique donnerait un autre nombre, plus grand s'il freine davantage le courant — c'est ce que montrait déjà, en 1ʳᵉ année, le passage de 100 Ω à 200 Ω. Avec du matériel réel, les valeurs de la dernière colonne s'écartent légèrement les unes des autres : le rapport n'est constant qu'**à la précision des mesures près**, et c'est bien assez pour conclure.",
+    "conclusion": "La tension **U** aux bornes d'un **conducteur ohmique** est **proportionnelle** à l'intensité **I** du courant qui le traverse. Le coefficient de proportionnalité est la **résistance R** de ce conducteur ohmique, celle-là même que donne l'ohmmètre. C'est la **loi d'Ohm** : **U = R × I**, avec U en volts (V), I en ampères (A) et R en ohms (Ω)."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+
+
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ================================================================== */
+var PHYS = {
+  R_CODE: { v: 100, u: "Ω", n: "valeur lue au code des couleurs",
+    s: "anneaux marron – noir – marron : 1, puis 0, puis ×10¹ — soit 100 Ω. La page les DÉCODE, elle ne recopie pas le nombre" },
+  TOL: { v: 0.05, u: "", n: "tolérance du conducteur ohmique",
+    s: "5 % : la valeur vraie du composant n'est jamais exactement celle du code, et c'est l'ohmmètre qui la donne" },
+  R_VRAI: { v: 100.0, u: "Ω", n: "valeur vraie de CE conducteur ohmique",
+    s: "à 100 Ω pile, dans la tolérance de 5 % : c'est la valeur que l'ohmmètre lit, et c'est celle que le relevé de la fiche impose puisqu'il donne U/I = 100 pour les cinq mesures" },
+  ALPHA: { v: 400e-6, u: "K⁻¹", n: "coefficient de température du film de carbone",
+    s: "400 ppm par kelvin, valeur usuelle d'un conducteur ohmique de T.P. C'est lui qui fait dériver la mesure quand le composant chauffe" },
+  R_TH: { v: 90, u: "K/W", n: "résistance thermique du composant sur son support",
+    s: "un modèle 1 W monté sur support, à l'air calme : 90 K par watt dissipé" },
+  TAU: { v: 25, u: "s", n: "constante de temps thermique",
+    s: "vingt-cinq secondes pour atteindre les deux tiers de l'échauffement — c'est pourquoi une lecture prise DÈS la fermeture ne voit rien" },
+  U_MAX: { v: 9, u: "V", n: "tension maximale admise par la fiche",
+    s: "« Ne pas dépasser 9 V avec ce conducteur ohmique », dit la sécurité — au-delà, un composant d'un quart de watt brûlerait" },
+  DIV_U: { v: 0.01, u: "V", n: "résolution du voltmètre sur le calibre 20 V",
+    s: "un multimètre 3 ½ digits affiche 19,99 V au maximum, donc le centième de volt" },
+  T_LECTURE: { v: 0, u: "s", n: "durée de fermeture avant la lecture, au protocole",
+    s: "on lit dès la fermeture : le conducteur est encore à l'ambiante, et sa résistance vaut celle du code" }
+};
+
+/* Les trois calibres de l'ampèremètre, du plus grand au plus petit.
+   « Partir du plus grand calibre, puis descendre », dit la sécurité. */
+var CALIBRES = [
+  { nom: "2 A", max: 2, div: 0.001 },
+  { nom: "200 mA", max: 0.2, div: 0.0001 },
+  { nom: "20 mA", max: 0.02, div: 0.00001 }
+];
+var CAL_PROTO = 1;                      // 200 mA : celui qui convient ici
+
+/* ==================================================================
+   2. CE QUE LA FICHE DIT (§0)
+   ================================================================== */
+function T(k) { return DONNEES[k] || ""; }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return TM().entetes || []; }
+function lignesFiche() { return TM().lignes || []; }
+function valeursFiche() { return TM().valeurs || []; }
+function nbMes() { return lignesFiche().length; }
+function nomMes(i) {
+  var l = lignesFiche()[i];
+  return l && l[0] ? String(l[0]) : String(i + 1);
+}
+function valFiche(i, c) {
+  var v = valeursFiche()[i];
+  return v ? depouille(String(v[c] || "")) : "";
+}
+/* La tension prescrite pour la mesure i : la fiche la donne dans sa
+   colonne U. C'est elle qui pilote le protocole, et non un tableau
+   écrit ici. */
+function uPrescrite(i) {
+  var s = valFiche(i, 1).replace(",", ".");
+  return s === "" ? NaN : parseFloat(s);
+}
+function estOuvert(i) { return /ouvert/i.test(nomMes(i)); }
+function secu(motif) {
+  var s = L("securite"), i, re = new RegExp(motif, "i");
+  for (i = 0; i < s.length; i++) if (re.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+/* Les trois anneaux du conducteur ohmique, lus dans le MATÉRIEL. */
+function anneaux() {
+  var mat = L("materiel"), i, m;
+  for (i = 0; i < mat.length; i++) {
+    m = /anneaux\s+([a-zéèêà]+)\s*[–-]\s*([a-zéèêà]+)\s*[–-]\s*([a-zéèêà]+)/i
+      .exec(depouille(mat[i]));
+    if (m) return [m[1].toLowerCase(), m[2].toLowerCase(), m[3].toLowerCase()];
+  }
+  return ["marron", "noir", "marron"];
+}
+var COULEURS = {
+  "noir": { n: 0, hex: "#1b1b1b" }, "marron": { n: 1, hex: "#6b3a15" },
+  "rouge": { n: 2, hex: "#b8272b" }, "orange": { n: 3, hex: "#d9741a" },
+  "jaune": { n: 4, hex: "#e0c02a" }, "vert": { n: 5, hex: "#2f7d3a" },
+  "bleu": { n: 6, hex: "#2452a0" }, "violet": { n: 7, hex: "#6c3d8f" },
+  "gris": { n: 8, hex: "#8a8f96" }, "blanc": { n: 9, hex: "#f2f2f2" }
+};
+/* Le décodage : deux chiffres, puis un multiplicateur. */
+function decoder() {
+  var a = anneaux(), c0 = COULEURS[a[0]], c1 = COULEURS[a[1]], c2 = COULEURS[a[2]];
+  if (!c0 || !c1 || !c2) return { valeur: PHYS.R_CODE.v, detail: "code illisible" };
+  var v = (c0.n * 10 + c1.n) * Math.pow(10, c2.n);
+  return { valeur: v, a: a,
+           detail: c0.n + " puis " + c1.n + ", ×10" + sup(c2.n) };
+}
+
+/* ==================================================================
+   3. LE SOLVEUR
+   ==================================================================
+   Le circuit est résolu : I = U / R(T). Et R dépend de la température
+   du composant, qui dépend de ce qu'on lui a fait subir — c'est là que
+   la consigne de sécurité de la fiche devient un calcul.               */
+var REG = { U: 0, t: PHYS.T_LECTURE.v, cal: CAL_PROTO };
+
+/* L'échauffement après t secondes sous la tension U, depuis l'ambiante.
+   P = U²/R₀, et la montée suit une exponentielle de constante τ. */
+function echauffement(U, t) {
+  var P = U * U / PHYS.R_VRAI.v;
+  return P * PHYS.R_TH.v * (1 - Math.exp(-t / PHYS.TAU.v));
+}
+function resistance(U, t) {
+  return PHYS.R_VRAI.v * (1 + PHYS.ALPHA.v * echauffement(U, t));
+}
+function intensite(U, t) {
+  var R = resistance(U, t);
+  return R > 0 ? U / R : 0;
+}
+function cal() { return CALIBRES[REG.cal] || CALIBRES[CAL_PROTO]; }
+function lireU(U) { return Math.round(U / PHYS.DIV_U.v) * PHYS.DIV_U.v; }
+/* L'ampèremètre : il DÉBORDE si le courant dépasse son calibre, et la
+   page le dit au lieu d'afficher un nombre faux. */
+function lireI(I) {
+  var c = cal();
+  if (I > c.max + 1e-12) return null;
+  return Math.round(I / c.div) * c.div;
+}
+function debordement(U, t) { return intensite(U, t) > cal().max + 1e-12; }
+/* Le rapport que l'élève inscrit : calculé sur les DEUX lectures. */
+function rapportDe(Ul, Il) {
+  return (Il === null || Il === 0) ? null : Ul / Il;
+}
+/* Combien de chiffres le rapport justifie-t-il ? Son incertitude vaut
+   celle de I rapportée à I — le voltmètre est bien plus fin. */
+function decRapport(Il) {
+  if (!Il) return 0;
+  var u = (cal().div / 2) / Il;         // incertitude relative sur I
+  return u * 100 >= 0.5 ? 0 : (u * 100 >= 0.05 ? 1 : 2);
+}
+
+function calBon() { return REG.cal === CAL_PROTO; }
+function lectureImmediate() { return REG.t <= 0; }
+function horsProtocole() { return !calBon() || !lectureImmediate(); }
+/* La tension réglée correspond-elle à l'une de celles que la fiche
+   prescrit ? Sinon la ligne ne se renseigne pas. */
+function ligneDeU(U) {
+  var i;
+  for (i = 0; i < nbMes(); i++) {
+    if (!isNaN(uPrescrite(i)) && Math.abs(uPrescrite(i) - U) < 1e-9) return i;
+  }
+  return -1;
+}
+
+/* ==================================================================
+   4. LA DROITE AJUSTÉE
+   ==================================================================
+   Moindres carrés sur les points (I ; U). La pente EST la résistance,
+   et son unité l'ohm. On la comparera à ce que l'ohmmètre a lu.        */
+function ajuster(pts) {
+  var n = pts.length, sx = 0, sy = 0, sxx = 0, sxy = 0, i, d;
+  if (n < 2) return null;
+  for (i = 0; i < n; i++) {
+    sx += pts[i][0]; sy += pts[i][1];
+    sxx += pts[i][0] * pts[i][0]; sxy += pts[i][0] * pts[i][1];
+  }
+  d = n * sxx - sx * sx;
+  if (Math.abs(d) < 1e-18) return null;
+  var a = (n * sxy - sx * sy) / d, b = (sy - a * sx) / n, res = 0;
+  for (i = 0; i < n; i++) {
+    res = Math.max(res, Math.abs(pts[i][1] - (a * pts[i][0] + b)));
+  }
+  return { pente: a, ordonnee: b, residu: res };
+}
+function alignes(dr) { return dr !== null && dr.residu < PHYS.DIV_U.v * 3; }
+function parOrigine(dr) {
+  return dr !== null && Math.abs(dr.ordonnee) < PHYS.DIV_U.v * 3;
+}
+
+/* Contrôle interne : au protocole, les six lignes calculées doivent
+   redonner celles de la fiche. */
+function accordAvecLaFiche() {
+  var faux = [], sauve = { U: REG.U, t: REG.t, c: REG.cal }, i, U, Il, Ul, R;
+  REG.t = 0; REG.cal = CAL_PROTO;
+  for (i = 0; i < nbMes(); i++) {
+    U = uPrescrite(i);
+    if (isNaN(U)) continue;
+    REG.U = U;
+    Ul = lireU(U);
+    Il = lireI(intensite(U, 0));
+    if (Math.abs(Il - parseFloat(valFiche(i, 2).replace(",", "."))) > 1e-9) {
+      faux.push(nomMes(i) + "/I " + nb(Il, 4));
+    }
+    R = rapportDe(Ul, Il);
+    if (R !== null && /^[\d.,]+$/.test(valFiche(i, 3))
+        && Math.abs(R - parseFloat(valFiche(i, 3).replace(",", "."))) > 0.5) {
+      faux.push(nomMes(i) + "/rapport " + nb(R, 1));
+    }
+  }
+  REG.U = sauve.U; REG.t = sauve.t; REG.cal = sauve.c;
+  return faux;
+}
+
+/* ==================================================================
+   5. L'ÉTAT
+   ================================================================== */
+var svg = null, COUCHES = {};
+var gOhm = null, gAmp = null, gVolt = null, gInter = null, gBouton = null;
+var ETAT = null;
+
+function neufEtat() {
+  return {
+    ohmmetre: false,   // la résistance a été mesurée hors circuit
+    ampere: false,     // l'ampèremètre est en série dans la boucle
+    volt: false,       // le voltmètre est en dérivation aux bornes de R
+    ferme: false,      // l'interrupteur
+    lu: {},            // les lignes renseignées
+    conclu: false,
+    notes: []
+  };
+}
+function monte() { return ETAT.ampere && ETAT.volt; }
+
+/* ==================================================================
+   6. LA GÉOMÉTRIE
+   ==================================================================
+   ZONES INTERDITES, relevées sur capture :
+     · bandeau de consigne    x 224..896  y < 60
+     · journal d'observation  x < 278     y < 300
+     · plaque de sécurité     x < 276     y 316..452
+   Le circuit tient dans un rectangle, à droite du journal.             */
+var W = 1120, H = 760, BANC = 628;
+var Y_BT1 = 660, Y_BT2 = 700;
+/* La boucle du circuit : un rectangle, parcouru dans le sens du courant. */
+var CX0 = 330, CX1 = 810, CY0 = 190, CY1 = 470;
+var X_GEN = (CX0 + CX1) / 2;           // le générateur, en haut
+var X_INTER = CX0 + 130;               // l'interrupteur, en haut à gauche
+var X_RES = (CX0 + CX1) / 2;           // le conducteur ohmique, en bas
+var X_AMP = CX1;                       // l'ampèremètre, sur le côté droit
+var Y_AMP = (CY0 + CY1) / 2;
+var Y_VOLT = CY1 + 108;                // le voltmètre, sous le conducteur
+var X_RANGE_A = 950, Y_RANGE_A = 200;  // où attendent les deux multimètres
+var X_RANGE_V = 950, Y_RANGE_V = 380;
+var X_OHM = 950, Y_OHM = 552;          // le composant, hors circuit au départ
+
+/* ==================================================================
+   7. DÉFINITIONS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f, m;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("boitier", [[0, "#e9edf2"], [0.4, "#cdd5de"], [1, "#9aa5b2"]], true);
+  grad("ecran", [[0, "#2b3f33"], [1, "#16261d"]]);
+  grad("corps", [[0, "#e8dcc0"], [0.4, "#cfbf9a"], [1, "#a89571"]]);
+  grad("cuivre", [[0, "#d9a05b"], [0.5, "#b87333"], [1, "#8a5220"]], true);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .26 }));
+  D.appendChild(f);
+  m = D.appendChild(el("marker", { id: "flI", viewBox: "0 0 10 10", refX: 5,
+    refY: 5, markerWidth: 5, markerHeight: 5, orient: "auto" }));
+  m.appendChild(el("path", { d: "M 0,0 L 10,5 L 0,10 z", fill: ORANGE }));
+}
+function ajouterCouches() {
+  ["fond", "poste", "fils", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   8. LE DÉCOR ET LE CIRCUIT
+   ================================================================== */
+function construireFond() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC, fill: "url(#banc)" }));
+}
+
+/* Le générateur réglable : son bouton se TOURNE, et c'est lui qui donne
+   la tension. La fiche insiste — « une pile ne convient pas ». */
+function construireGenerateur() {
+  var g = ajout("objets", el("g", { id: "gen", "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: X_GEN - 74, y: CY0 - 31, width: 148, height: 62,
+    rx: 6, fill: "url(#boitier)", stroke: "#6b7686", "stroke-width": 1.5 }));
+  g.appendChild(el("rect", { x: X_GEN - 62, y: CY0 - 22, width: 62, height: 22,
+    rx: 3, fill: "url(#ecran)" }));
+  g.appendChild(el("text", { id: "genVal", x: X_GEN - 31, y: CY0 - 5,
+    "text-anchor": "middle", "font-size": 13, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "monospace" }, "0,0 V"));
+  txtIn(g, X_GEN, CY0 + 46, "générateur réglable 0 – 12 V",
+    { taille: 9.5, couleur: "#5d6874" });
+  /* Le bouton de réglage : on le TOURNE. */
+  var b = ajout("objets", el("g", { "data-act": "bouton", cursor: "grab",
+    id: "bouton" }));
+  gBouton = b;
+  b.appendChild(el("circle", { cx: X_GEN + 34, cy: CY0, r: 26,
+    fill: "transparent" }));
+  var d = b.appendChild(el("g", { id: "boutonD", "pointer-events": "none" }));
+  d.appendChild(el("circle", { cx: X_GEN + 34, cy: CY0, r: 18,
+    fill: "url(#boitier)", stroke: "#5d6874", "stroke-width": 1.5 }));
+  d.appendChild(el("line", { id: "boutonAig", x1: X_GEN + 34, y1: CY0,
+    x2: X_GEN + 34, y2: CY0 - 15, stroke: ROUGE, "stroke-width": 2.6 }));
+  txtIn(g, X_GEN + 34, CY0 + 34, "tourner", { taille: 8.5, couleur: "#8a6a1e" });
+}
+
+/* Le conducteur ohmique, avec ses trois anneaux — DÉCODÉS, pas écrits. */
+function construireResistance(g, x, y, e) {
+  var a = decoder().a || ["marron", "noir", "marron"], i;
+  g.appendChild(el("rect", { x: x - 42 * e, y: y - 13 * e, width: 84 * e,
+    height: 26 * e, rx: 11 * e, fill: "url(#corps)", stroke: "#8a7752",
+    "stroke-width": 1.3 }));
+  for (i = 0; i < 3; i++) {
+    g.appendChild(el("rect", { x: x - 26 * e + i * 15 * e, y: y - 13 * e,
+      width: 7 * e, height: 26 * e,
+      fill: (COULEURS[a[i]] || COULEURS.noir).hex }));
+  }
+  /* Le quatrième anneau, celui de la tolérance : or. */
+  g.appendChild(el("rect", { x: x + 27 * e, y: y - 13 * e, width: 7 * e,
+    height: 26 * e, fill: "#c8a038" }));
+  /* ⚠ CUIVRE PLEIN, PAS UN DÉGRADÉ. Un dégradé en `objectBoundingBox` sur une
+     ligne HORIZONTALE a une boîte de hauteur nulle : il est dégénéré et ne
+     peint RIEN. Ces deux pattes existaient donc dans le DOM, aux bonnes
+     coordonnées, sans rien dessiner — le conducteur flottait entre deux fils
+     qui s'arrêtaient net. Aucune erreur JS, et le pilotage ne pouvait pas le
+     voir : les nœuds étaient là. Trouvé à la capture, par l'enseignant. */
+  g.appendChild(el("line", { x1: x - 62 * e, y1: y, x2: x - 42 * e, y2: y,
+    stroke: "#b87333", "stroke-width": 3 * e, "stroke-linecap": "round" }));
+  g.appendChild(el("line", { x1: x + 42 * e, y1: y, x2: x + 62 * e, y2: y,
+    stroke: "#b87333", "stroke-width": 3 * e, "stroke-linecap": "round" }));
+}
+
+/* Un multimètre : boîtier, écran, molette, et deux bornes. */
+function construireMultimetre(id, mode) {
+  var g = ajout("objets", el("g", { "data-act": id, cursor: "grab", id: id }));
+  g.appendChild(el("rect", { x: -46, y: -60, width: 92, height: 124,
+    fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -38, y: -54, width: 76, height: 112, rx: 8,
+    fill: "url(#boitier)", stroke: "#6b7686", "stroke-width": 1.6 }));
+  d.appendChild(el("rect", { x: -30, y: -46, width: 60, height: 26, rx: 3,
+    fill: "url(#ecran)" }));
+  d.appendChild(el("text", { id: id + "-val", x: 0, y: -27,
+    "text-anchor": "middle", "font-size": 12, "font-weight": "bold",
+    fill: "#7dffb0", "font-family": "monospace" }, "----"));
+  d.appendChild(el("circle", { cx: 0, cy: 6, r: 17, fill: "#dde4ec",
+    stroke: "#6b7686", "stroke-width": 1.3 }));
+  d.appendChild(el("line", { x1: 0, y1: 6, x2: 0, y2: -8, stroke: "#b8272b",
+    "stroke-width": 2.4 }));
+  d.appendChild(el("text", { id: id + "-mode", x: 0, y: 40,
+    "text-anchor": "middle", "font-size": 11, "font-weight": "bold",
+    fill: "#3b4655" }, mode));
+  [-16, 16].forEach(function (dx) {
+    d.appendChild(el("circle", { cx: dx, cy: 52, r: 4.5, fill: "#3b4655" }));
+  });
+  return g;
+}
+
+function construireSecurite() {
+  var X = 20, Y = 316, LG = 254, HT = 136;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8, "pointer-events": "none" }));
+  txt("poste", X + 11, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.3 });
+  /* On vise la ligne par ce qu'elle DIT (§12.14) : le danger propre à
+     cette séance est l'ampèremètre branché en dérivation. */
+  enrouler(secu("ampèremètre en dérivation").replace(/\s*:.*$/, ""), 34, 4)
+    .forEach(function (s, i) {
+      txt("poste", X + 11, Y + 42 + i * 14, s, { ancre: "start", taille: 10,
+          gras: true, couleur: ROUGE });
+    });
+  txt("poste", X + 11, Y + 104, "Mesurer la résistance AVANT de", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+  txt("poste", X + 11, Y + 118, "monter, hors tension.", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+}
+
+function construireLegende() {
+  txt("ui", W / 2, 742, "schéma habillé — le circuit est résolu à chaque "
+    + "réglage, et la résistance suit la température du composant",
+    { taille: 9.5, couleur: "#8794a5" });
+}
+
+/* ==================================================================
+   9. LE MOTEUR DE MANIPULATION
+   ================================================================== */
+var PRISE = null, SEUIL_PX = 5, FANTOME = null;
+function ptSvg(ev) {
+  var p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function noeudAct(n) {
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+function cible(x, y) {
+  var s = svg.createSVGPoint(), n;
+  s.x = x; s.y = y;
+  s = s.matrixTransform(svg.getScreenCTM());
+  n = noeudAct(document.elementFromPoint(s.x, s.y));
+  return n ? n.getAttribute("data-act") : null;
+}
+function brancherManipulation() {
+  svg.addEventListener("pointerdown", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act"), p;
+    if (!a) return;
+    p = ptSvg(ev);
+    PRISE = { act: a, x0: p.x, y0: p.y, bouge: false, u0: REG.U };
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
+  });
+  svg.addEventListener("pointermove", function (ev) {
+    if (!PRISE) return;
+    var p = ptSvg(ev), dx = p.x - PRISE.x0, dy = p.y - PRISE.y0;
+    if (!PRISE.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL_PX) return;
+    PRISE.bouge = true;
+    if (PRISE.act === "bouton") tournerBouton(PRISE.u0, dx - dy);
+    else montrerFantome(PRISE.act, p.x, p.y);
+  });
+  function lacher(ev) {
+    if (!PRISE) return;
+    var pr = PRISE, p = ptSvg(ev);
+    PRISE = null;
+    effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (!pr.bouge) { if (pr.act === "inter") basculer(); return; }
+    if (pr.act === "bouton") { redessiner(); return; }
+    deposer(pr.act, p.x, p.y);
+  }
+  svg.addEventListener("pointerup", lacher);
+  svg.addEventListener("pointercancel", function (ev) {
+    if (!PRISE) return;
+    PRISE = null; effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    redessiner();
+  });
+}
+/* Le bouton du générateur : on le tourne, et le curseur du panneau
+   commande exactement la même grandeur (§12.13). */
+function tournerBouton(u0, d) {
+  REG.U = borne(Math.round((u0 + d / 26) * 2) / 2, 0, 12);
+  $("rU").value = REG.U.toFixed(1);
+  REG.U = parseFloat($("rU").value);
+  majSorties();
+  redessiner();
+}
+function montrerFantome(a, x, y) {
+  if (!FANTOME) {
+    FANTOME = COUCHES.drag.appendChild(el("g", { opacity: .8,
+      "pointer-events": "none" }));
+    var src = svg.querySelector('[data-act="' + a + '"]'), c;
+    if (src) {
+      c = src.cloneNode(true);
+      c.removeAttribute("data-act");
+      c.setAttribute("pointer-events", "none");
+      FANTOME.appendChild(c);
+    }
+  }
+  FANTOME.setAttribute("transform", "translate(" + pt(x, y) + ")");
+  surlignerZones(a, x, y);
+}
+function effacerFantome() {
+  if (FANTOME) { COUCHES.drag.removeChild(FANTOME); FANTOME = null; }
+  var z = svg.querySelector("#zones");
+  if (z) vide(z);
+}
+
+/* ==================================================================
+   10. LES ZONES
+   ==================================================================
+   Quatre emplacements, et deux d'entre eux sont des PIÈGES que la fiche
+   nomme dans sa sécurité : l'ampèremètre en dérivation aux bornes du
+   générateur, et l'ohmmètre sur un circuit alimenté.                   */
+function zoneSerie() {
+  return { type: "serie", x: X_AMP, y: Y_AMP, r: 58 };
+}
+function zoneDerivR() {
+  return { type: "derivR", x: X_RES, y: Y_VOLT, r: 62 };
+}
+function zoneDerivGen() {
+  return { type: "derivGen", x: X_GEN, y: CY0 - 92, r: 58 };
+}
+function zoneComposant() {
+  return { type: "composant", x: X_OHM, y: Y_OHM, r: 56 };
+}
+function emplacements(a) {
+  if (a === "mm1") return [zoneComposant(), zoneDerivR(), zoneDerivGen(), zoneSerie()];
+  if (a === "mm2") return [zoneSerie(), zoneDerivGen(), zoneDerivR()];
+  return [];
+}
+function dansZone(z, x, y) { return Math.hypot(x - z.x, y - z.y) < z.r; }
+function zoneSous(a, x, y) {
+  var z = emplacements(a), i;
+  for (i = 0; i < z.length; i++) if (dansZone(z[i], x, y)) return z[i];
+  return null;
+}
+function surlignerZones(a, x, y) {
+  var g = svg.querySelector("#zones");
+  if (!g) g = COUCHES.ui.appendChild(el("g", { id: "zones", "pointer-events": "none" }));
+  vide(g);
+  emplacements(a).forEach(function (z) {
+    var ok = dansZone(z, x, y);
+    g.appendChild(el("circle", { cx: z.x, cy: z.y, r: z.r, fill: "none",
+      stroke: ok ? GOLD : "#c8b98a", "stroke-width": ok ? 2.4 : 1.4,
+      "stroke-dasharray": "7 5" }));
+  });
+}
+
+/* ==================================================================
+   11. LES DÉPÔTS
+   ================================================================== */
+function accepte(a, z) {
+  if (!z) return false;
+  if (a === "mm1") {
+    if (z.type === "composant") return !ETAT.ohmmetre && !monte();
+    if (z.type === "derivR") return ETAT.ohmmetre && !ETAT.volt;
+  }
+  if (a === "mm2") return z.type === "serie" && !ETAT.ampere;
+  return false;
+}
+function refus(a, z) {
+  if (a === "mm2" && z && z.type === "derivGen") {
+    return "JAMAIS l'ampèremètre en dérivation aux bornes du générateur : il "
+         + "serait traversé par un courant trop intense et détruit. C'est la "
+         + "première consigne de sécurité de la fiche.";
+  }
+  if (a === "mm2" && z && z.type === "derivR") {
+    return "L'ampèremètre se branche EN SÉRIE, dans la boucle : c'est le même "
+         + "courant qui doit le traverser et traverser le conducteur.";
+  }
+  if (a === "mm2") return "Placer l'ampèremètre dans la boucle, en série.";
+  if (a === "mm1") {
+    if (z && z.type === "serie") return "Le voltmètre ne se met pas en série : "
+      + "il se branche EN DÉRIVATION, aux bornes du seul conducteur ohmique.";
+    if (z && z.type === "derivGen") return "En dérivation aux bornes du "
+      + "générateur, le voltmètre mesurerait la tension du générateur, pas "
+      + "celle du conducteur ohmique. La fiche dit « aux bornes du SEUL "
+      + "conducteur ohmique ».";
+    if (z && z.type === "composant") {
+      if (ETAT.ohmmetre) return "La résistance est déjà mesurée : "
+        + nb(PHYS.R_VRAI.v, 1) + " Ω.";
+      return "Le conducteur est déjà dans le circuit : un ohmmètre branché sur "
+           + "un circuit alimenté est faussé, voire détruit.";
+    }
+    if (!ETAT.ohmmetre) return "Mesurer D'ABORD la résistance à l'ohmmètre, "
+      + "hors circuit — la sécurité de la fiche l'exige, et c'est cette valeur "
+      + "qu'on comparera au rapport U/I.";
+    return "Brancher le voltmètre en dérivation aux bornes du conducteur ohmique.";
+  }
+  return "";
+}
+function deposer(a, x, y) {
+  var z = zoneSous(a, x, y);
+  if (!accepte(a, z)) { signaler(refus(a, z)); redessiner(); return; }
+  if (a === "mm1" && z.type === "composant") {
+    ETAT.ohmmetre = true;
+    var d = decoder();
+    noter("Résistance mesurée à l'ohmmètre, hors circuit : "
+        + nb(PHYS.R_VRAI.v, 1) + " Ω. Le code des couleurs annonçait "
+        + nb(d.valeur, 0) + " Ω (" + d.detail + "), à "
+        + nb(PHYS.TOL.v * 100, 0) + " % près.");
+  } else if (a === "mm1") {
+    ETAT.volt = true;
+    noter("Voltmètre branché en dérivation, aux bornes du SEUL conducteur "
+        + "ohmique. Le multimètre passe de la fonction ohmmètre à la fonction "
+        + "voltmètre.");
+  } else {
+    ETAT.ampere = true;
+    noter("Ampèremètre branché en série dans la boucle : c'est le même courant "
+        + "qui le traverse et qui traverse le conducteur.");
+  }
+  succes();
+  redessiner();
+}
+
+/* ==================================================================
+   12. FERMER, LIRE
+   ================================================================== */
+function basculer() {
+  if (!monte()) { signaler("Terminer le montage avant de fermer : "
+    + (ETAT.ampere ? "" : "l'ampèremètre en série, ")
+    + (ETAT.volt ? "" : "le voltmètre en dérivation.")); return; }
+  ETAT.ferme = !ETAT.ferme;
+  if (ETAT.ferme) {
+    if (REG.U > PHYS.U_MAX.v + 1e-9) {
+      ETAT.ferme = false;
+      signaler("La sécurité de la fiche interdit de dépasser "
+             + nb(PHYS.U_MAX.v, 0) + " V avec ce conducteur ohmique : baisser "
+             + "la tension avant de fermer.");
+      return;
+    }
+    lireMesure();
+  } else {
+    noter("Interrupteur ouvert : le conducteur refroidit, et sa résistance "
+        + "revient à sa valeur à froid.");
+    succes();
+  }
+  redessiner();
+}
+function lireMesure() {
+  var U = REG.U, i = ligneDeU(U), Ul = lireU(U), Il = lireI(intensite(U, REG.t));
+  if (Il === null) {
+    noter("L'ampèremètre DÉBORDE : sur le calibre " + cal().nom + ", il ne peut "
+        + "pas afficher " + nb(intensite(U, REG.t) * 1000, 1) + " mA. La fiche "
+        + "le dit — partir du plus grand calibre, puis descendre.");
+    succes();
+    return;
+  }
+  if (i < 0) {
+    noter("U = " + nb(Ul, 2) + " V, I = " + nb(Il, 4) + " A. Cette tension ne "
+        + "figure pas parmi celles que le protocole prescrit : la ligne du "
+        + "tableau de référence reste vide.");
+    succes();
+    return;
+  }
+  if (horsProtocole()) {
+    noter("U = " + nb(Ul, 2) + " V, I = " + nb(Il, 4) + " A — mais le réglage "
+        + "n'est pas celui du protocole" + (calBon() ? "" : " (calibre)")
+        + (lectureImmediate() ? "" : " (lecture différée, le composant a chauffé)")
+        + ". La ligne reste vide.");
+    succes();
+    return;
+  }
+  ETAT.lu[i] = { U: Ul, I: Il };
+  noter("Mesure " + nomMes(i) + " : U = " + nb(Ul, 2) + " V, I = " + nb(Il, 4)
+      + " A, rapport U/I = " + nb(rapportDe(Ul, Il), decRapport(Il)) + " Ω.");
+  succes();
+}
+/* La mesure « circuit ouvert » : elle donne (0 ; 0), et c'est une
+   mesure, pas une commodité. */
+function lireOuvert() {
+  var i;
+  for (i = 0; i < nbMes(); i++) if (estOuvert(i)) break;
+  if (i >= nbMes()) { signaler("Cette fiche n'a pas de ligne à circuit ouvert."); return; }
+  if (!monte()) { signaler("Terminer le montage d'abord."); return; }
+  if (ETAT.ferme) { signaler("L'interrupteur doit être OUVERT pour cette "
+    + "première ligne."); return; }
+  if (ETAT.lu[i] !== undefined) { signaler("Cette ligne est déjà relevée."); return; }
+  ETAT.lu[i] = { U: 0, I: 0 };
+  noter("Circuit ouvert : le voltmètre indique 0 V et l'ampèremètre 0 A. Ce "
+      + "point (0 ; 0) est une MESURE, et c'est lui qui permettra de dire que "
+      + "la droite passe par l'origine.");
+  succes();
+  redessiner();
+}
+function toutLu() {
+  var i;
+  for (i = 0; i < nbMes(); i++) if (ETAT.lu[i] === undefined) return false;
+  return true;
+}
+function nbLus() {
+  var i, n = 0;
+  for (i = 0; i < nbMes(); i++) if (ETAT.lu[i] !== undefined) n++;
+  return n;
+}
+function points() {
+  var out = [], i;
+  for (i = 0; i < nbMes(); i++) {
+    if (ETAT.lu[i] === undefined) continue;
+    out.push([ETAT.lu[i].I, ETAT.lu[i].U]);
+  }
+  return out;
+}
+
+/* ==================================================================
+   13. LE CARNET ET LA CONSIGNE
+   ================================================================== */
+var MSG = null, MSG_JUSQUA = 0;
+function signaler(t) { MSG = t; MSG_JUSQUA = Date.now() + 4200; majConsigne(); }
+function succes() { MSG = null; MSG_JUSQUA = 0; majConsigne(); }
+function noter(t) {
+  ETAT.notes.push(t);
+  while (ETAT.notes.length > 2) ETAT.notes.shift();
+  var o = $("obs");
+  o.textContent = ETAT.notes.join(" ");
+  o.className = "obs pos";
+}
+function consigne() { return $("consigne").textContent; }
+function majConsigne() {
+  if (MSG && Date.now() < MSG_JUSQUA) { $("consigne").textContent = MSG; return; }
+  MSG = null;
+  $("consigne").textContent = consigneEtape();
+}
+function consigneEtape() {
+  var i;
+  if (!ETAT.ohmmetre) return "Mesurer la résistance à l'ohmmètre, hors circuit, "
+    + "avant tout montage.";
+  if (!ETAT.ampere) return "Brancher l'ampèremètre EN SÉRIE dans la boucle.";
+  if (!ETAT.volt) return "Brancher le voltmètre EN DÉRIVATION, aux bornes du "
+    + "seul conducteur ohmique.";
+  for (i = 0; i < nbMes(); i++) {
+    if (ETAT.lu[i] !== undefined) continue;
+    if (estOuvert(i)) return "Relever la première ligne, interrupteur OUVERT.";
+    return "Régler le générateur sur " + nb(uPrescrite(i), 1)
+      + " V, fermer, lire — puis rouvrir.";
+  }
+  return "Comparer la colonne U/I à ce que l'ohmmètre avait lu, et conclure.";
+}
+
+/* ==================================================================
+   14. LE RENDU
+   ================================================================== */
+function redessiner() {
+  var U = REG.U, I = ETAT.ferme ? intensite(U, REG.t) : 0;
+  var Il = ETAT.ferme ? lireI(I) : 0;
+  dessinerCircuit(I);
+  $("genVal").textContent = nb(U, 1) + " V";
+  svg.querySelector("#boutonAig").setAttribute("transform",
+    "rotate(" + (U / 12 * 270 - 135).toFixed(1) + " "
+    + pt(X_GEN + 34, CY0) + ")");
+  /* Les deux multimètres, à leur place ou en attente. */
+  gOhm.setAttribute("transform", "translate("
+    + (ETAT.volt ? pt(X_RES, Y_VOLT) : pt(X_RANGE_V, Y_RANGE_V)) + ")");
+  gAmp.setAttribute("transform", "translate("
+    + (ETAT.ampere ? pt(X_AMP + 66, Y_AMP) : pt(X_RANGE_A, Y_RANGE_A)) + ")");
+  svg.querySelector("#mm1-mode").textContent = ETAT.volt ? "V" : "Ω";
+  svg.querySelector("#mm1-val").textContent = ETAT.volt
+    ? (ETAT.ferme ? nb(lireU(U), 2) + " V" : "0,00 V")
+    : (ETAT.ohmmetre ? nb(PHYS.R_VRAI.v, 1) + " Ω" : "----");
+  svg.querySelector("#mm2-val").textContent = ETAT.ampere
+    ? (ETAT.ferme
+       ? (Il === null ? "  OL  " : nb(Il * 1000, cal().div >= 0.001 ? 0 : 1) + " mA")
+       : "0,0 mA")
+    : "----";
+  majTableau();
+  majPanneaux();
+  majBoutons();
+  majConsigne();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+  $("alerte").style.display = horsProtocole() ? "block" : "none";
+}
+/* Le circuit : la boucle, ses composants, et le courant qui y circule
+   — dessiné seulement quand il circule vraiment. */
+function dessinerCircuit(I) {
+  var g = COUCHES.fils, i, x;
+  vide(g);
+  function fil(x1, y1, x2, y2) {
+    g.appendChild(el("path", { d: "M " + pt(x1, y1) + " L " + pt(x2, y2),
+      stroke: "#3b4655", "stroke-width": 3, "pointer-events": "none" }));
+  }
+  /* Haut : générateur — interrupteur — coin. */
+  fil(CX0, CY0, X_INTER - 22, CY0);
+  fil(X_INTER + 22, CY0, X_GEN - 74, CY0);
+  fil(X_GEN + 74, CY0, CX1, CY0);
+  /* Côté droit : ampèremètre en série. */
+  fil(CX1, CY0, CX1, Y_AMP - 26);
+  fil(CX1, Y_AMP + 26, CX1, CY1);
+  /* Bas : le conducteur ohmique. */
+  fil(CX1, CY1, X_RES + 62, CY1);
+  fil(X_RES - 62, CY1, CX0, CY1);
+  /* Côté gauche. */
+  fil(CX0, CY1, CX0, CY0);
+  construireResistance(g, X_RES, CY1, 1);
+  /* L'interrupteur : deux plots et une lame. */
+  g.appendChild(el("g", { "data-act": "inter", cursor: "pointer", id: "inter" }));
+  var gi = svg.querySelector("#inter");
+  gi.appendChild(el("rect", { x: X_INTER - 30, y: CY0 - 26, width: 60,
+    height: 44, fill: "transparent" }));
+  var di = gi.appendChild(el("g", { "pointer-events": "none" }));
+  [-22, 22].forEach(function (dx) {
+    di.appendChild(el("circle", { cx: X_INTER + dx, cy: CY0, r: 5,
+      fill: "#6b7686" }));
+  });
+  di.appendChild(el("line", { x1: X_INTER - 22, y1: CY0,
+    x2: X_INTER + (ETAT.ferme ? 22 : 14), y2: CY0 - (ETAT.ferme ? 0 : 20),
+    stroke: "#3b4655", "stroke-width": 3.4, "stroke-linecap": "round" }));
+  txtIn(di, X_INTER, CY0 - 34, ETAT.ferme ? "fermé" : "ouvert",
+    { taille: 9.5, couleur: ETAT.ferme ? VERT : "#8a6a1e", gras: true });
+  /* L'ampèremètre est intercalé : on montre le trou quand il manque. */
+  if (!ETAT.ampere) {
+    g.appendChild(el("circle", { cx: CX1, cy: Y_AMP, r: 20, fill: "none",
+      stroke: "#c8b98a", "stroke-width": 1.6, "stroke-dasharray": "6 5",
+      "pointer-events": "none" }));
+    txtIn(g, CX1 + 66, Y_AMP, "ampèremètre", { taille: 9.5, couleur: "#9aa5b2" });
+  } else {
+    fil(CX1, Y_AMP - 26, CX1 + 40, Y_AMP - 26);
+    fil(CX1, Y_AMP + 26, CX1 + 40, Y_AMP + 26);
+  }
+  /* Le voltmètre : deux fils qui descendent aux bornes du conducteur. */
+  if (ETAT.volt) {
+    fil(X_RES - 46, CY1, X_RES - 46, Y_VOLT - 40);
+    fil(X_RES + 46, CY1, X_RES + 46, Y_VOLT - 40);
+  } else {
+    txtIn(g, X_RES, Y_VOLT, "voltmètre : aux bornes du conducteur",
+      { taille: 9.5, couleur: "#9aa5b2" });
+  }
+  /* Le courant : des flèches qui n'apparaissent que s'il circule. */
+  if (ETAT.ferme && I > 1e-9) {
+    for (i = 0; i < 4; i++) {
+      x = CX0 + 90 + i * 160;
+      if (x > CX1 - 20) break;
+      g.appendChild(el("path", { d: "M " + pt(x, CY0) + " L " + pt(x + 22, CY0),
+        stroke: ORANGE, "stroke-width": 2.4, "marker-end": "url(#flI)",
+        "pointer-events": "none", opacity: .9 }));
+    }
+    /* À CX0+168 cette étiquette passait derrière le boîtier du
+       générateur (486..634) et se lisait « sens du… ». */
+    txtIn(g, CX0 + 101, CY0 - 15, "sens du courant",
+      { taille: 9, couleur: ORANGE });
+  }
+}
+
+/* ==================================================================
+   15. LES BOUTONS COLLECTIFS
+   ================================================================== */
+var BOUTONS = [
+  { id: "ohm", t: "Mesurer R à l'ohmmètre", f: function () {
+      var z = zoneComposant();
+      deposer("mm1", z.x, z.y);
+    }, fait: function () { return ETAT.ohmmetre; } },
+  { id: "amp", t: "Ampèremètre en série", f: function () {
+      var z = zoneSerie();
+      deposer("mm2", z.x, z.y);
+    }, fait: function () { return ETAT.ampere; } },
+  { id: "volt", t: "Voltmètre en dérivation", f: function () {
+      var z = zoneDerivR();
+      deposer("mm1", z.x, z.y);
+    }, fait: function () { return ETAT.volt; } },
+  { id: "ouvert", t: "Relever à circuit ouvert", f: lireOuvert,
+    fait: function () {
+      var i;
+      for (i = 0; i < nbMes(); i++) if (estOuvert(i)) return ETAT.lu[i] !== undefined;
+      return false;
+    } },
+  { id: "regler", t: "Régler sur la tension suivante", f: function () {
+      var i;
+      for (i = 0; i < nbMes(); i++) {
+        if (ETAT.lu[i] !== undefined || estOuvert(i)) continue;
+        REG.U = uPrescrite(i);
+        $("rU").value = REG.U.toFixed(1);
+        majSorties();
+        noter("Générateur réglé sur " + nb(REG.U, 1) + " V.");
+        succes();
+        return;
+      }
+      signaler("Toutes les tensions du protocole ont été relevées.");
+    }, fait: function () { return false; } },
+  { id: "fermer", t: "Fermer, lire, rouvrir", f: function () {
+      if (!monte()) { basculer(); return; }
+      if (ETAT.ferme) { ETAT.ferme = false; }
+      basculer();
+      ETAT.ferme = false;
+    }, fait: function () { return false; } },
+  { id: "conclure", t: "Comparer et conclure", f: function () {
+      var dr;
+      if (!toutLu()) {
+        signaler("Il reste " + (nbMes() - nbLus()) + " ligne(s) à relever : "
+          + "chaque tension se règle, se ferme, se lit et se rouvre.");
+        return;
+      }
+      dr = ajuster(points());
+      ETAT.conclu = true;
+      noter("La droite ajustée sur les six points a pour pente "
+          + nb(dr.pente, 1) + " Ω et coupe l'axe en " + nb(dr.ordonnee, 3)
+          + " V : elle passe par l'origine. L'ohmmètre avait lu "
+          + nb(PHYS.R_VRAI.v, 1) + " Ω — c'est la même valeur, obtenue de deux "
+          + "façons indépendantes.");
+      succes();
+    }, fait: function () { return ETAT.conclu; } }
+];
+function construireBoutons() {
+  var g = ajout("ui", el("g", { id: "boutons" })), b;
+  var rangs = [[], []];
+  BOUTONS.forEach(function (bt, i) { rangs[i < 4 ? 0 : 1].push(bt); });
+  rangs.forEach(function (rang, r) {
+    var y = r ? Y_BT2 : Y_BT1, tot = 0, x;
+    rang.forEach(function (bt) { bt.lg = 16 + bt.t.length * 6.35; tot += bt.lg + 9; });
+    x = (W - tot + 9) / 2;
+    rang.forEach(function (bt) {
+      b = g.appendChild(el("g", { "data-act": "bt-" + bt.id, cursor: "pointer",
+        id: "bt-" + bt.id }));
+      b.appendChild(el("rect", { x: x, y: y - 15, width: bt.lg, height: 30,
+        rx: 8, fill: "#eef4ea", stroke: "#9fb98a", "stroke-width": 1.4 }));
+      txtIn(b, x + bt.lg / 2, y + 5, bt.t, { taille: 11.5, couleur: "#2f4a1e" });
+      x += bt.lg + 9;
+    });
+  });
+}
+function majBoutons() {
+  BOUTONS.forEach(function (bt) {
+    var n = svg.querySelector("#bt-" + bt.id);
+    if (!n) return;
+    var r = n.querySelector("rect"), on = bt.fait();
+    r.setAttribute("fill", on ? "#d7e8c8" : "#eef4ea");
+    r.setAttribute("stroke", on ? "#5f8a3a" : "#9fb98a");
+    r.setAttribute("stroke-width", on ? 2.2 : 1.4);
+  });
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act");
+    if (!a || a.indexOf("bt-") !== 0) return;
+    var id = a.slice(3), i;
+    for (i = 0; i < BOUTONS.length; i++) {
+      if (BOUTONS[i].id === id) { BOUTONS[i].f(); redessiner(); return; }
+    }
+  });
+}
+
+/* ==================================================================
+   16. LE TABLEAU DE LA FICHE
+   ================================================================== */
+function majTableau() {
+  var t = $("tab"), i, tr, td, r, Il;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  entetes().forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = depouille(h);
+  });
+  for (i = 0; i < nbMes(); i++) {
+    tr = t.appendChild(document.createElement("tr"));
+    if (!estOuvert(i) && Math.abs(uPrescrite(i) - REG.U) < 1e-9) {
+      tr.className = "suivi";
+    }
+    tr.appendChild(document.createElement("td")).textContent = nomMes(i);
+    r = ETAT.lu[i];
+    if (r === undefined) {
+      tr.appendChild(document.createElement("td")).className = "vide";
+      tr.appendChild(document.createElement("td")).className = "vide";
+      tr.appendChild(document.createElement("td")).className = "vide";
+      continue;
+    }
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = nb(r.U, r.U === 0 ? 0 : (r.U % 1 ? 1 : 0));
+    td.className = "mes";
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = r.I === 0 ? "0" : nb(r.I, 3);
+    td.className = "mes";
+    td = tr.appendChild(document.createElement("td"));
+    Il = r.I;
+    td.textContent = Il === 0 ? (valFiche(i, 3) || "—")
+      : nb(rapportDe(r.U, Il), decRapport(Il));
+    td.className = "mes";
+    if (Il !== 0) td.style.color = "var(--orange)";
+    else td.style.color = "#9aa5b2";
+  }
+  $("concl").className = ETAT.conclu ? "box" : "box masque";
+}
+
+/* ==================================================================
+   17. LES PANNEAUX
+   ================================================================== */
+function majPanneaux() { majMesure(); majGraphe(); }
+function el2(tag, cls, t) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (t !== undefined) n.textContent = t;
+  return n;
+}
+function majMesure() {
+  var g = $("mesCases"), U = REG.U, d;
+  var I = ETAT.ferme ? intensite(U, REG.t) : 0;
+  var Il = ETAT.ferme ? lireI(I) : null;
+  $("mesNom").textContent = ETAT.ferme ? "interrupteur fermé"
+    : (monte() ? "interrupteur ouvert" : "montage en cours");
+  vide(g);
+  function C(t, v, cls) {
+    d = g.appendChild(el2("div"));
+    d.appendChild(el2("div", "t", t));
+    d.appendChild(el2("div", "u" + (cls || (v ? "" : " nul")), v || "à mesurer"));
+  }
+  if (!monte() || !ETAT.ferme) {
+    C("tension U", null); C("intensité I", null); C("rapport U/I", null);
+    vide($("mesBilan"));
+    $("mesPhrase").textContent = !ETAT.ohmmetre
+      ? "Mesurer d'abord la résistance à l'ohmmètre, hors circuit : c'est cette "
+        + "valeur qu'on comparera au rapport U/I, et la sécurité l'exige."
+      : (monte()
+         ? "Régler la tension au bouton du générateur, puis fermer l'interrupteur."
+         : "Terminer le montage : ampèremètre en série, voltmètre en dérivation.");
+    return;
+  }
+  C("tension U", nb(lireU(U), 2) + " V");
+  C("intensité I", Il === null ? "OL" : nb(Il, 4) + " A", Il === null ? " mal" : "");
+  C("rapport U/I", Il === null || Il === 0 ? null
+    : nb(rapportDe(lireU(U), Il), decRapport(Il)) + " Ω");
+  majMesureBilan(U, I, Il);
+  $("mesPhrase").textContent = phraseMesure(U, I, Il);
+}
+function majMesureBilan(U, I, Il) {
+  var g = $("mesBilan"), dT = echauffement(U, REG.t), R = resistance(U, REG.t);
+  vide(g);
+  function L2(n, v, cls) {
+    g.appendChild(el2("div", "n", n));
+    g.appendChild(el2("div", "v" + (cls || ""), v));
+  }
+  L2("résistance à froid", nb(PHYS.R_VRAI.v, 1) + " Ω");
+  L2("échauffement du composant", nb(dT, 1) + " K",
+     dT < 1 ? " ok" : " mal");
+  L2("résistance à cette température", nb(R, 2) + " Ω",
+     Math.abs(R - PHYS.R_VRAI.v) < 0.05 ? " ok" : " mal");
+  L2("intensité exacte", nb(I * 1000, 3) + " mA");
+  L2("calibre de l'ampèremètre", cal().nom, calBon() ? " ok" : " mal");
+  L2("résolution de ce calibre", nb(cal().div * 1000, 2) + " mA");
+}
+function phraseMesure(U, I, Il) {
+  var dT = echauffement(U, REG.t);
+  if (Il === null) {
+    return "L'ampèremètre déborde : " + nb(I * 1000, 1) + " mA dépasse le "
+      + "calibre " + cal().nom + ". La fiche le dit — partir du plus grand "
+      + "calibre, puis descendre.";
+  }
+  if (dT >= 1) {
+    return "Le conducteur a chauffé de " + nb(dT, 1) + " K en restant fermé "
+      + nb(REG.t, 0) + " s : sa résistance est passée à "
+      + nb(resistance(U, REG.t), 2) + " Ω, et le rapport U/I s'en trouve "
+      + "faussé. C'est exactement ce que la sécurité de la fiche annonce en "
+      + "demandant d'ouvrir entre deux réglages.";
+  }
+  return "Lecture prise dès la fermeture : le conducteur est encore à "
+    + "l'ambiante et sa résistance vaut celle qu'a lue l'ohmmètre. Le rapport "
+    + "U/I redonne donc cette valeur — et c'est tout l'objet de la leçon.";
+}
+
+/* Le graphe U = f(I). La pente est la résistance. */
+function majGraphe() {
+  var s = $("gGraphe"), pts = points(), dr = ajuster(pts);
+  var x0 = 48, x1 = 336, y0 = 24, y1 = 190, i;
+  var iMax = 0.1, uMax = 10;
+  vide(s);
+  function X(v) { return x0 + v / iMax * (x1 - x0); }
+  function Y(v) { return y1 - v / uMax * (y1 - y0); }
+  s.appendChild(el("rect", { x: 10, y: 12, width: 340, height: 192, rx: 6,
+    fill: "#fbfaf6", stroke: "#e4dfd0", "stroke-width": 1 }));
+  for (i = 0; i <= 10; i++) {
+    s.appendChild(el("line", { x1: X(i * 0.01), y1: y0, x2: X(i * 0.01), y2: y1,
+      stroke: "#e8e2d0", "stroke-width": i % 5 ? .7 : 1.2 }));
+    if (i % 2 === 0) {
+      s.appendChild(el("text", { x: X(i * 0.01), y: y1 + 13,
+        "text-anchor": "middle", "font-size": 8.5, fill: "#9aa5b2" },
+        nb(i * 10, 0)));
+    }
+    s.appendChild(el("line", { x1: x0, y1: Y(i), x2: x1, y2: Y(i),
+      stroke: "#e8e2d0", "stroke-width": i % 5 ? .7 : 1.2 }));
+    if (i % 2 === 0) {
+      s.appendChild(el("text", { x: x0 - 6, y: Y(i) + 3.4, "text-anchor": "end",
+        "font-size": 8.5, fill: "#9aa5b2" }, nb(i, 0)));
+    }
+  }
+  s.appendChild(el("line", { x1: x0, y1: y0, x2: x0, y2: y1,
+    stroke: "#6b7686", "stroke-width": 1.5 }));
+  s.appendChild(el("line", { x1: x0, y1: y1, x2: x1, y2: y1,
+    stroke: "#6b7686", "stroke-width": 1.5 }));
+  s.appendChild(el("text", { x: x1, y: y1 + 26, "text-anchor": "end",
+    "font-size": 10, fill: INK }, "I (mA)"));
+  s.appendChild(el("text", { x: x0 - 4, y: y0 - 8, "text-anchor": "start",
+    "font-size": 10, fill: INK }, "U (V)"));
+  if (!pts.length) {
+    s.appendChild(el("text", { x: 190, y: 106, "text-anchor": "middle",
+      "font-size": 12, fill: "#9aa5b2" }, "aucun couple (U ; I) relevé"));
+    vide($("grapheBilan"));
+    return;
+  }
+  if (dr) {
+    s.appendChild(el("line", { x1: X(0), y1: Y(dr.ordonnee),
+      x2: X(iMax), y2: Y(dr.pente * iMax + dr.ordonnee),
+      stroke: ORANGE, "stroke-width": 2, opacity: .85 }));
+  }
+  for (i = 0; i < pts.length; i++) {
+    s.appendChild(el("circle", { cx: X(pts[i][0]), cy: Y(pts[i][1]), r: 4,
+      fill: "#2f6ea8", stroke: "#fff", "stroke-width": 1.2 }));
+  }
+  s.appendChild(el("text", { x: 190, y: 226, "text-anchor": "middle",
+    "font-size": 9, fill: "#9aa5b2" },
+    pts.length + " couple" + (pts.length > 1 ? "s" : "") + " relevé"
+    + (pts.length > 1 ? "s" : "")
+    + (dr ? " — droite ajustée par moindres carrés" : "")));
+  majGrapheBilan(dr);
+}
+function majGrapheBilan(dr) {
+  var g = $("grapheBilan"), ec;
+  vide(g);
+  if (!dr) {
+    g.appendChild(el2("div", "n", "il faut au moins deux couples"));
+    g.appendChild(el2("div", "v", "—"));
+    return;
+  }
+  function L2(n, v, cls) {
+    g.appendChild(el2("div", "n", n));
+    g.appendChild(el2("div", "v" + (cls || ""), v));
+  }
+  ec = Math.abs(dr.pente - PHYS.R_VRAI.v);
+  L2("pente de la droite", nb(dr.pente, 1) + " Ω");
+  L2("valeur lue à l'ohmmètre",
+     ETAT.ohmmetre ? nb(PHYS.R_VRAI.v, 1) + " Ω" : "pas encore mesurée");
+  if (ETAT.ohmmetre) {
+    L2("écart entre les deux", nb(ec, 2) + " Ω",
+       ec < PHYS.R_VRAI.v * 0.02 ? " ok" : " mal");
+  }
+  L2("ordonnée à l'origine", nb(dr.ordonnee, 3) + " V",
+     parOrigine(dr) ? " ok" : " mal");
+  L2("écart maximal des points", nb(dr.residu, 3) + " V",
+     alignes(dr) ? " ok" : " mal");
+}
+
+/* ==================================================================
+   18. LES CURSEURS
+   ==================================================================
+   ⚠️ Valeurs initiales sur la grille du pas (§12.12) : 0 est multiple
+   de 0,5 ; 0 de 1 ; 1 de 1. Et les cinq tensions du protocole — 3 ·
+   4,5 · 6 · 7,5 · 9 — tombent toutes sur la grille de 0,5. Vérifié.    */
+function majSorties() {
+  $("oU").textContent = nb(REG.U, 1) + " V";
+  $("oT").textContent = nb(REG.t, 0) + " s"
+    + (REG.t <= 0 ? "  (lecture immédiate)" : "");
+  $("oCal").textContent = cal().nom + (calBon() ? "  (celui qui convient)" : "");
+}
+function brancherCurseurs() {
+  function lier(id, cle) {
+    var r = $(id);
+    function maj() {
+      REG[cle] = parseFloat(r.value);
+      majSorties();
+      /* Changer le calibre ou la durée périme les mesures : elles ont
+         été prises dans d'autres conditions (§12.19). */
+      if (ETAT && (cle === "cal" || cle === "t")) {
+        ETAT.lu = {}; ETAT.conclu = false;
+      }
+      if (svg) redessiner();
+    }
+    r.addEventListener("input", maj);
+    maj();
+  }
+  lier("rU", "U");
+  lier("rT", "t");
+  lier("rCal", "cal");
+}
+
+/* ==================================================================
+   19. SÉANCE, REMISE À ZÉRO, TEXTES
+   ================================================================== */
+var T0 = Date.now();
+function majSeance() {
+  var d = (DONNEES.duree || 22) * 60, e = (Date.now() - T0) / 1000;
+  $("seanceT").textContent = mmss(Math.min(e, d));
+  $("seanceJ").style.width = borne(100 * e / d, 0, 100) + "%";
+}
+function rezero() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  ETAT = neufEtat();
+  MSG = null; MSG_JUSQUA = 0;
+  REG.U = 0; REG.t = PHYS.T_LECTURE.v; REG.cal = CAL_PROTO;
+  $("rU").value = "0";
+  $("rT").value = String(PHYS.T_LECTURE.v);
+  $("rCal").value = String(CAL_PROTO);
+  majSorties();
+  $("obs").textContent = "—";
+  $("obs").className = "obs";
+  redessiner();
+}
+function remplirTextes() {
+  $("titre").textContent = depouille(T("titre"));
+  document.title = "Paillasse virtuelle — " + DONNEES.id + " · " + depouille(T("titre"));
+  $("ref").textContent = DONNEES.id + " · " + T("niveau") + " · " + T("lecon")
+    + " · résultats calculés";
+  $("objectif").innerHTML = md(T("objectif"));
+  $("observation").innerHTML = md(T("observation"));
+  $("conclTxt").innerHTML = md(T("conclusion"));
+  $("seanceB").textContent = "durée prescrite par la fiche";
+  $("seanceM").textContent = " " + (DONNEES.duree || 22) + " min · "
+    + depouille(T("modalite"));
+  ["materiel", "securite"].forEach(function (k) {
+    var u = $(k);
+    vide(u);
+    L(k).forEach(function (x) {
+      var li = document.createElement("li");
+      li.innerHTML = md(x);
+      u.appendChild(li);
+    });
+  });
+  $("capotCalculs").textContent =
+    "ΔT = (U²/R₀) · R_th · (1 − e^(−t/τ))       l'échauffement\n"
+    + "R  = R₀ · (1 + α·ΔT)                       la résistance qui dérive\n"
+    + "I  = U / R                                 la loi\n"
+    + "rapport = U LUE / I LUE                    ce que l'élève inscrit";
+  $("capotP").textContent = "P = U²/R = "
+    + nb(PHYS.U_MAX.v * PHYS.U_MAX.v / PHYS.R_VRAI.v, 3) + " W";
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+  majCapotCode();
+  majCapotChauffe();
+  majCapotAccord();
+  majCapotDroite();
+  majCapotVals();
+}
+function majCapotCode() {
+  var t = $("capotCode"), tr, d = decoder(), a = d.a || [], i;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Anneau", "Couleur", "Chiffre", "Rôle"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  ["premier", "deuxième", "troisième"].forEach(function (n, i2) {
+    var c = COULEURS[a[i2]] || COULEURS.noir;
+    tr = t.appendChild(document.createElement("tr"));
+    [n, a[i2] || "—", String(c.n),
+     i2 < 2 ? "chiffre significatif" : "multiplicateur ×10" + sup(c.n)
+    ].forEach(function (v) {
+      tr.appendChild(document.createElement("td")).textContent = v;
+    });
+  });
+  $("capotCodeTxt").textContent = "Le code annonce donc " + nb(d.valeur, 0)
+    + " Ω. Le quatrième anneau, doré, donne la tolérance : "
+    + nb(PHYS.TOL.v * 100, 0) + " %. La valeur VRAIE de ce composant, celle que "
+    + "l'ohmmètre mesure, vaut " + nb(PHYS.R_VRAI.v, 1) + " Ω — dans la "
+    + "tolérance, et c'est elle, non celle du code, qui apparaîtra dans le "
+    + "rapport U/I.";
+}
+function majCapotChauffe() {
+  var t = $("capotChauffe"), tr, sauve = REG.t, dT, R, Il;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Fermé depuis", "Échauffement", "Résistance", "I lue à 9 V", "U/I lu"]
+    .forEach(function (h) {
+      tr.appendChild(document.createElement("th")).textContent = h;
+    });
+  [0, 5, 15, 30, 60, 120].forEach(function (s) {
+    REG.t = s;
+    dT = echauffement(PHYS.U_MAX.v, s);
+    R = resistance(PHYS.U_MAX.v, s);
+    Il = lireI(intensite(PHYS.U_MAX.v, s));
+    tr = t.appendChild(document.createElement("tr"));
+    [nb(s, 0) + " s", nb(dT, 1) + " K", nb(R, 2) + " Ω",
+     nb(Il * 1000, 1) + " mA",
+     nb(rapportDe(lireU(PHYS.U_MAX.v), Il), 1) + " Ω"].forEach(function (v) {
+      tr.appendChild(document.createElement("td")).textContent = v;
+    });
+  });
+  REG.t = sauve;
+}
+function majCapotAccord() {
+  var t = $("capotAccord"), tr, i, U, Ul, Il;
+  var sauve = { U: REG.U, t: REG.t, c: REG.cal };
+  REG.t = 0; REG.cal = CAL_PROTO;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Mesure", "U", "I calculée", "I de la fiche", "U/I calculé", "U/I de la fiche"]
+    .forEach(function (h) {
+      tr.appendChild(document.createElement("th")).textContent = h;
+    });
+  for (i = 0; i < nbMes(); i++) {
+    U = uPrescrite(i);
+    if (isNaN(U)) continue;
+    Ul = lireU(U);
+    Il = U > 0 ? lireI(intensite(U, 0)) : 0;
+    tr = t.appendChild(document.createElement("tr"));
+    [nomMes(i), nb(Ul, 1) + " V",
+     Il === 0 ? "0" : nb(Il, 4) + " A", valFiche(i, 2),
+     Il === 0 ? "—" : nb(rapportDe(Ul, Il), 1) + " Ω", valFiche(i, 3)
+    ].forEach(function (v) {
+      tr.appendChild(document.createElement("td")).textContent = v;
+    });
+  }
+  REG.U = sauve.U; REG.t = sauve.t; REG.cal = sauve.c;
+}
+function majCapotDroite() {
+  var t = $("capotDroite"), tr, i, U, pts = [], dr;
+  var sauve = { U: REG.U, t: REG.t, c: REG.cal };
+  REG.t = 0; REG.cal = CAL_PROTO;
+  for (i = 0; i < nbMes(); i++) {
+    U = uPrescrite(i);
+    if (isNaN(U)) continue;
+    pts.push([U > 0 ? lireI(intensite(U, 0)) : 0, lireU(U)]);
+  }
+  dr = ajuster(pts);
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Grandeur", "Valeur", "Ce qu'elle dit"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  [["pente", nb(dr.pente, 2) + " Ω",
+    "c'est la résistance, obtenue sans ohmmètre"],
+   ["valeur à l'ohmmètre", nb(PHYS.R_VRAI.v, 1) + " Ω",
+    "obtenue autrement, et c'est la même"],
+   ["ordonnée à l'origine", nb(dr.ordonnee, 4) + " V",
+    "nulle : U est PROPORTIONNEL à I"],
+   ["écart maximal des points", nb(dr.residu, 4) + " V",
+    "sous la résolution du voltmètre : les six points sont alignés"]
+  ].forEach(function (r) {
+    tr = t.appendChild(document.createElement("tr"));
+    r.forEach(function (v) {
+      tr.appendChild(document.createElement("td")).textContent = v;
+    });
+  });
+  REG.U = sauve.U; REG.t = sauve.t; REG.cal = sauve.c;
+}
+function majCapotVals() {
+  var t = $("capotVals"), tr, k, v;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Grandeur", "Valeur", "D'où elle vient"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  for (k in PHYS) {
+    if (!PHYS.hasOwnProperty(k)) continue;
+    v = PHYS[k].v;
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].n;
+    tr.appendChild(document.createElement("td")).textContent =
+      (v !== 0 && Math.abs(v) < 1e-3 ? v.toExponential(1)
+       : nb(v, v >= 10 ? 1 : 3)) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].s;
+  }
+}
+
+/* ==================================================================
+   20. DÉMARRAGE
+   ================================================================== */
+/* ==================================================================
+   21. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideDefaire = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  /* Un surlignage qui n'ajoute pas de nœud — le contour posé sur un bouton
+     de la colonne — se défait par une fonction, pas par un removeChild. */
+  guideDefaire.forEach(function (f) { try { f(); } catch (e) { /* rien */ } });
+  guideDefaire = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = W / s.width, ky = H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* ⚠️ On vise par [data-act], jamais par #id : un dégradé de <defs> porte
+   parfois le même nom qu'un objet de la scène, et querySelector rendrait
+   le dégradé — dont la boîte est nulle. */
+function surlignerActe(a, m) {
+  return surlignerNoeud('[data-act="' + a + '"]', m);
+}
+/* Un élément de la PAGE — un bouton de commande, le tableau, un graphe :
+   il n'est pas dans le SVG, on ne peut donc pas lui poser de halo. On lui
+   pose un contour, et on le défait avec le reste du guidage. */
+function surlignerHtml(id) {
+  var b = $(id);
+  if (!b) return null;
+  var av = b.style.outline, ao = b.style.outlineOffset;
+  b.style.outline = "3px dashed " + GOLD;
+  b.style.outlineOffset = "3px";
+  guideDefaire.push(function () {
+    b.style.outline = av; b.style.outlineOffset = ao;
+  });
+  return b;
+}
+/* La ZONE où poser : on réemploie le surligneur de la page — un second
+   mécanisme de cible ferait deux traits de couleurs différentes pour la
+   même chose — puis on confie ses rectangles à effacerGuide, pour
+   qu'aucun ne survive au guidage. */
+function montrerCiblesGuide(a, x, y) {
+  surlignerZones(a, x, y);
+  var g = svg.querySelector("#zones"), i;
+  if (!g) return;
+  for (i = 0; i < g.childNodes.length; i++) guideSurb.push(g.childNodes[i]);
+}
+
+/* Un bouton de scène : sa géométrie est lue sur le rectangle qu'il porte,
+   ce qui évite de toucher à construireBoutons(). */
+function surlignerBouton(id) {
+  var n = svg.querySelector("#bt-" + id), r = n && n.querySelector("rect");
+  if (!r) return null;
+  return haloGuide(+r.getAttribute("x") - 7, +r.getAttribute("y") - 7,
+                   +r.getAttribute("width") + 14,
+                   +r.getAttribute("height") + 14, 13);
+}
+/* La ligne « circuit ouvert » du tableau, et la première ligne sous
+   tension : on les DEMANDE à la fiche, par estOuvert(), plutôt que
+   d'écrire 0 et 1 ici. */
+function ligneOuverte() {
+  var i;
+  for (i = 0; i < nbMes(); i++) if (estOuvert(i)) return i;
+  return -1;
+}
+function ouvertLu() {
+  var i = ligneOuverte();
+  return i >= 0 && ETAT.lu[i] !== undefined;
+}
+function premiereTension() {
+  var i;
+  for (i = 0; i < nbMes(); i++) if (!estOuvert(i)) return i;
+  return -1;
+}
+function prochaineTension() {
+  var i;
+  for (i = 0; i < nbMes(); i++) {
+    if (estOuvert(i) || ETAT.lu[i] !== undefined) continue;
+    return i;
+  }
+  return -1;
+}
+function montrerMultimetre(a, z) {
+  surlignerActe(a);
+  montrerCiblesGuide(a, z.x, z.y);
+}
+
+/* Les dix étapes de la fiche. Les prédicats sortent de la cascade de
+   consigneEtape() et des `fait` de BOUTONS — ils ne sont pas inventés. */
+var GUIDE = [
+  { fait: function () { return ETAT.ohmmetre; },
+    aide: "Avant tout montage : prendre le <b>multimètre en fonction "
+        + "ohmmètre</b> et le glisser sur le <b>conducteur ohmique posé hors "
+        + "circuit</b>, en bas à droite. Un ohmmètre branché sur un circuit "
+        + "alimenté est faussé, voire détruit.",
+    montre: function () { montrerMultimetre("mm1", zoneComposant()); } },
+
+  { fait: function () { return ETAT.ampere; },
+    aide: "Reproduire le montage projeté : générateur, interrupteur, "
+        + "conducteur ohmique et <b>ampèremètre</b>, tous <b>en série</b>. "
+        + "Glisser le second multimètre dans la <b>boucle</b>, sur le côté "
+        + "droit du circuit.",
+    montre: function () { montrerMultimetre("mm2", zoneSerie()); } },
+
+  { fait: function () { return ETAT.volt; },
+    aide: "Ramener le premier multimètre <b>en dérivation</b>, sous le "
+        + "conducteur ohmique : aux bornes du <b>seul</b> conducteur, jamais "
+        + "aux bornes du générateur.",
+    montre: function () { montrerMultimetre("mm1", zoneDerivR()); } },
+
+  { fait: function () { return ouvertLu(); },
+    aide: "Ramener le curseur <b>Tension du générateur</b>, à droite, sur sa "
+        + "valeur la plus basse, puis <b>faire vérifier le montage par "
+        + "l'enseignant</b> : ce geste-là, la page ne peut pas le simuler. "
+        + "Elle marquera l'étape faite en même temps que le premier relevé.",
+    montre: function () {
+      surlignerHtml("rU");
+      surlignerBouton("ouvert");
+    } },
+
+  { fait: function () { return ouvertLu(); },
+    aide: "Interrupteur <b>ouvert</b>, relever U et I : c'est la première "
+        + "ligne du tableau, et le point (0 ; 0) est une <b>mesure</b>. "
+        + "Presser « Relever à circuit ouvert ».",
+    montre: function () {
+      surlignerBouton("ouvert");
+      surlignerActe("inter");
+    } },
+
+  { fait: function () {
+      var i = premiereTension();
+      return i >= 0 && ETAT.lu[i] !== undefined; },
+    aide: function () {
+      var i = premiereTension();
+      return "Fermer l'interrupteur et régler le générateur jusqu'à lire "
+        + "<b>U = " + nb(uPrescrite(i), 1) + " V</b> au voltmètre, puis "
+        + "relever l'intensité I à l'ampèremètre. Les deux boutons « Régler "
+        + "sur la tension suivante » et « Fermer, lire, rouvrir » le font "
+        + "dans l'ordre.";
+    },
+    montre: function () {
+      surlignerBouton("regler");
+      surlignerBouton("fermer");
+      surlignerActe("inter");
+    } },
+
+  { fait: function () { return toutLu(); },
+    aide: function () {
+      var i = prochaineTension();
+      if (i < 0) return "Les " + nbMes() + " lignes du tableau sont relevées.";
+      return "Ouvrir l'interrupteur, puis recommencer : il reste "
+        + (nbMes() - nbLus()) + " ligne(s). La suivante est <b>U = "
+        + nb(uPrescrite(i), 1) + " V</b> — on règle, on ferme, on lit, on "
+        + "rouvre.";
+    },
+    montre: function () {
+      surlignerBouton("regler");
+      surlignerBouton("fermer");
+    } },
+
+  { fait: function () { return toutLu(); },
+    aide: "L'ampèremètre affiche des <b>milliampères</b> : la colonne I du "
+        + "tableau « Résultats », à gauche, les donne <b>convertis en "
+        + "ampères</b>. Cette étape-là se lit et se vérifie, elle ne se "
+        + "manipule pas.",
+    montre: function () { surlignerHtml("tab"); } },
+
+  { fait: function () { return toutLu(); },
+    aide: "Pour chaque ligne, le rapport <b>U / I</b> est calculé dans la "
+        + "dernière colonne du tableau. Vérifier qu'il porte bien son unité, "
+        + "l'<b>ohm</b>.",
+    montre: function () { surlignerHtml("tab"); } },
+
+  { fait: function () { return ETAT.conclu; },
+    aide: function () {
+      if (!toutLu()) {
+        return "Il reste " + (nbMes() - nbLus()) + " ligne(s) à relever avant "
+          + "de pouvoir comparer.";
+      }
+      return "Presser « <b>Comparer et conclure</b> » : la colonne U / I "
+        + "donne-t-elle la valeur que l'<b>ohmmètre</b> avait lue au départ, "
+        + "hors circuit ? Deux chemins indépendants, un seul nombre.";
+    },
+    montre: function () {
+      surlignerBouton("conclure");
+      surlignerHtml("tab");
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : le rendu
+     de la page tourne avant que le panneau ne soit bâti. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape redevienne lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  /* on écarte le message transitoire du bandeau pour que la consigne
+     de l'étape redevienne lisible — c'est le SEUL état touché */
+  MSG = null; MSG_JUSQUA = 0;
+  majConsigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 2, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. l'ohmmètre sur le conducteur ohmique POSÉ HORS CIRCUIT. Le bouton
+     collectif appelle deposer("mm1", zoneComposant()) : c'est le dépôt qui
+     pose ETAT.ohmmetre, et accepte() refuse la zone dès que le montage est
+     fait — un ohmmètre sur un circuit alimenté est détruit. */
+  function () { presserBouton("bt-ohm"); return 420; },
+
+  /* 2. l'ampèremètre EN SÉRIE, dans la boucle. */
+  function () { presserBouton("bt-amp"); return 420; },
+
+  /* 3. le premier multimètre ramené EN DÉRIVATION aux bornes du seul
+     conducteur ohmique — accepte() exige que l'ohmmètre soit passé avant. */
+  function () { presserBouton("bt-volt"); return 420; },
+
+  /* 4. « régler le générateur au plus bas, puis faire vérifier le montage
+     par l'enseignant » : ce geste-là, la page ne le simule pas, et son aide
+     le dit. Le générateur est déjà à 0 V (REG.U le vaut au départ comme
+     après « Recommencer »), et la page marque l'étape faite en même temps
+     que le premier relevé — d'où le même geste qu'à l'étape 5. */
+  function () { presserBouton("bt-ouvert"); return 420; },
+
+  /* 5. interrupteur OUVERT, relever U et I : le point (0 ; 0) est une
+     mesure. Même prédicat que l'étape 4, donc même geste : les deux se
+     cochent ensemble. */
+  function () { presserBouton("bt-ouvert"); return 420; },
+
+  /* 6. la première tension prescrite : on règle, puis on ferme-lit-rouvre.
+     UN geste par pression — le bouton « Régler sur la tension suivante »
+     prend sa valeur dans la fiche, et « Fermer, lire, rouvrir » lit ce que
+     le solveur donne à cette tension-là. */
+  function () {
+    var i = prochaineTension();
+    if (i < 0) return 0;
+    if (Math.abs(REG.U - uPrescrite(i)) > 1e-9) {
+      presserBouton("bt-regler");
+      return 320;
+    }
+    presserBouton("bt-fermer");
+    return 520;
+  },
+
+  /* 7. les tensions restantes — 4,5 V, 6 V, 7,5 V et 9 V — au même rythme.
+     Le déroulé repassera autant de fois qu'il reste de lignes. */
+  function () {
+    var i = prochaineTension();
+    if (i < 0) return 0;
+    if (Math.abs(REG.U - uPrescrite(i)) > 1e-9) {
+      presserBouton("bt-regler");
+      return 320;
+    }
+    presserBouton("bt-fermer");
+    return 520;
+  },
+
+  /* 8. la conversion des milliampères en ampères : elle SE LIT dans la
+     colonne I du tableau, qui se remplit à chaque relevé. Même prédicat que
+     l'étape 7 (toutLu) — même geste, et les deux se cochent ensemble. */
+  function () {
+    var i = prochaineTension();
+    if (i < 0) return 0;
+    if (Math.abs(REG.U - uPrescrite(i)) > 1e-9) {
+      presserBouton("bt-regler");
+      return 320;
+    }
+    presserBouton("bt-fermer");
+    return 520;
+  },
+
+  /* 9. le rapport U/I, calculé ligne par ligne dans la dernière colonne.
+     Troisième étape de la fiche sur le même prédicat toutLu() : même geste
+     encore, les trois se cochent d'un coup. */
+  function () {
+    var i = prochaineTension();
+    if (i < 0) return 0;
+    if (Math.abs(REG.U - uPrescrite(i)) > 1e-9) {
+      presserBouton("bt-regler");
+      return 320;
+    }
+    presserBouton("bt-fermer");
+    return 520;
+  },
+
+  /* 10. comparer la colonne U/I à ce que l'ohmmètre avait lu. C'est
+     « Comparer et conclure » qui ajuste la droite et démasque la
+     conclusion. */
+  function () { presserBouton("bt-conclure"); return 520; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  var p = $("paillasse");
+  construireProtocole();   /* AVANT le premier majProtocole() */
+  svg = p.appendChild(el("svg", { viewBox: "0 0 " + W + " " + H,
+    width: "100%", role: "img",
+    "aria-label": "Paillasse virtuelle : un circuit série et deux multimètres" }));
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  ajouterDefs();
+  ajouterCouches();
+  construireFond();
+  construireSecurite();
+  ETAT = neufEtat();
+  construireGenerateur();
+  gOhm = construireMultimetre("mm1", "Ω");
+  gAmp = construireMultimetre("mm2", "A");
+  /* Le composant hors circuit, celui qu'on mesure à l'ohmmètre avant
+     tout montage. */
+  var gc = ajout("poste", el("g", { id: "compo", "pointer-events": "none" }));
+  construireResistance(gc, X_OHM, Y_OHM, 0.9);
+  txtIn(gc, X_OHM, Y_OHM + 34, "conducteur ohmique, hors circuit",
+    { taille: 9, couleur: "#9aa5b2" });
+  construireBoutons();
+  construireLegende();
+  brancherManipulation();
+  brancherBoutons();
+  brancherCurseurs();
+  remplirTextes();
+  $("rezero").addEventListener("click", rezero);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  redessiner();
+  majSeance();
+  setInterval(majSeance, 1000);
+  setInterval(function () {
+    if (MSG && Date.now() >= MSG_JUSQUA) { MSG = null; majConsigne(); }
+  }, 400);
+  var faux = accordAvecLaFiche();
+  if (faux.length) {
+    console.warn("E3AC-18 : le modèle ne redonne plus la fiche — " + faux.join(", "));
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else {
+  demarrer();
+}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3537 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-24 · Miscibles ou non miscibles ?</title>
+
+<!--
+  ===================================================================
+  E1AC-24 · 1AC · L11 — PAILLASSE VIRTUELLE
+  « Deux liquides : miscibles ou non miscibles ? »
+  ===================================================================
+
+  CE QUE CETTE PAGE EST
+  ---------------------
+  Une paillasse qu'on MANIPULE, dont le verdict est CALCULÉ, et dont chaque
+  étape se voit se FAIRE.
+
+  · On manipule : l'éprouvette verse l'eau, les deux flacons versent l'alcool
+    et l'huile, et les trois bouchons se posent un par un sur les tubes. Les
+    boutons de scène ne servent qu'aux gestes que le protocole fait d'un seul
+    coup, et chacun DOUBLE un glisser qui reste possible.
+
+  · LE VERDICT DÉPEND DE CE QU'ON A MIS, PAS D'UNE ÉTIQUETTE. On peut verser
+    l'huile dans le tube de l'alcool : c'est alors CE tube-là qui redevient
+    trouble puis se sépare, et le tableau de la fiche cesse d'être renseigné
+    parce qu'on n'a plus fait l'expérience prescrite. Rien dans cette page ne
+    lit le nom d'un tube pour décider de son aspect.
+
+  · On calcule, et par trois modèles qui ne se ressemblent pas :
+      – la MISCIBILITÉ décide s'il y aura une ou deux couches. Elle sort d'une
+        comparaison : l'eau peut-elle dissoudre plus qu'on n'en verse ? Pour
+        l'éthanol, oui sans limite ; pour l'huile, moins de 20 mg par litre,
+        soit mille fois moins que les 4,6 g versés.
+      – la MASSE VOLUMIQUE décide de l'ORDRE des couches. C'est un TRI, et
+        c'est tout : l'huile à 918 kg·m⁻³ finit au-dessus de l'eau à 998,2,
+        quel que soit l'ordre dans lequel on a versé.
+      – la LOI DE STOKES décide du TEMPS qu'il faut attendre pour le voir. Une
+        gouttelette de 30 µm remonte à 39 µm/s au début — mais les
+        gouttelettes COALESCENT, leur diamètre croît, leur vitesse aussi, et
+        les 60 mm de colonne sont franchis en 117 s. La fiche en laisse 180.
+    Le NOMBRE DE PARTIES VISIBLES sort de là, et le classement miscible / non
+    miscible sort du nombre de parties. Aucune ligne du tableau n'est écrite.
+
+  · LE REPOS COMPTE, ET LA PAGE LE MONTRE. C'est même toute la leçon : juste
+    après l'agitation, les deux tubes se ressemblent — l'un est limpide,
+    l'autre est laiteux, mais tous deux n'ont qu'UNE partie. Le curseur
+    « temps de repos » part des trois minutes de la fiche ; à dix secondes,
+    l'huile n'a remonté que 6 % de la colonne et l'on classerait *eau + huile*
+    parmi les mélanges homogènes.
+
+  · L'ORDRE DU VERSEMENT SE VÉRIFIE, IL NE SE PROMET PAS. Un bouton de la
+    scène inverse l'ordre : c'est alors le second liquide qui entre le
+    premier, et le glisser-déposer suit. En regard, un panneau permanent
+    relance LE MÊME solveur sur les deux ordres et affiche ses deux réponses.
+    Elles sont identiques, et le capot en dit la raison de code : `couches()`
+    TRIE par masse volumique, et la liste `verses` — qui est la seule à garder
+    l'ordre du versement — n'entre nulle part dans ce tri.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau et conclusion viennent de
+    `valise/curriculum/experiences.yaml`, entrée E1AC-24. Ils ne sont PAS
+    recopiés : le bloc `DONNEES` est régénéré par `_sync_donnees.py`.
+  · Les trois tubes et le témoin sont LUS dans les lignes du tableau
+    (« Eau + alcool à brûler », « Eau seule (témoin) »…), le second liquide se
+    lisant après le « + » de l'intitulé. Le volume et la durée de repos sont
+    lus dans le protocole. Un liquide que la page ne connaîtrait pas serait
+    DIT comme tel, pas deviné.
+  · Les masses volumiques, les solubilités, la viscosité de l'eau et le temps
+    de coalescence vivent dans `PHYS`, chacun avec sa provenance.
+
+  CE QUE LA FICHE NE DONNE PAS, ET QUI EST DIT
+  --------------------------------------------
+  La VIGUEUR de l'agitation. « Agiter énergiquement » ne fixe pas la taille
+  des gouttelettes, et c'est elle qui commande toute la durée de la
+  séparation. Elle est réglable de 10 à 50 µm, à 30 µm par défaut — le milieu
+  de l'intervalle admis pour une émulsion faite à la main. Le verdict de la
+  fiche tient sur tout l'intervalle 20 à 50 µm ; À 10 µm, LA SÉPARATION
+  DEMANDE 271 s ET NE TIENT PLUS DANS LES 180 s DE LA FICHE — la page
+  l'affiche et le chiffre au lieu de le cacher.
+
+  CE QU'ELLE N'EST PAS
+  --------------------
+  · Elle est AUTONOME : ni `generer.py`, ni `moteur.js`, ni
+    `simulation.html.j2`, et elle ne s'ouvre pas depuis `index.html`. Elle
+    DOUBLE `simulation_E1AC-24.html`, elle ne la remplace pas.
+  · Elle n'a pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL : on
+    cherche qu'un tube à essai se reconnaisse comme un tube à essai — d'où le
+    fond rond, le bourrelet du bord et le portoir.
+  · Le dessin est un schéma habillé. Sont à l'échelle : la hauteur de chaque
+    couche, qui suit son volume, et la part de colonne parcourue par l'huile,
+    qui suit l'intégration de Stokes. Ne le sont pas : le diamètre du tube, la
+    verrerie, et la taille des gouttelettes — une gouttelette de 30 µm serait
+    invisible, et c'est justement pour cela que l'émulsion est laiteuse.
+  · LE TEMPS EST COMPRIMÉ, et le facteur est affiché dans la scène. Les trois
+    minutes de repos de la fiche passent en 3,0 s (SKILL §12.52). La
+    compression ne change rien au résultat : la remontée est intégrée au pas
+    de 0,5 s de temps simulé, quel que soit le facteur.
+-->
+
+<script>
+/* L'écouteur d'erreurs est posé AVANT le script de la page, dans le <head> :
+   posé en fin de <body>, il ne voit AUCUNE erreur de démarrage — celles-ci ont
+   déjà eu lieu (SKILL §12.47, corollaire de méthode). Il n'écrit PAS dans la
+   console : un `console.error` serait compté comme une erreur par le pilote. */
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message || e));
+  var n = document.getElementById("errjs");
+  if (n) { n.textContent = "Erreur JS : " + window.__ERR.join(" · "); n.style.display = "block"; }
+});
+</script>
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+#errjs{display:none;background:#b03030;color:#fff;font-family:var(--mono);
+       font-size:12px;padding:6px 20px}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.hp output{color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.ko{color:var(--orange)}
+.lect .v.ok{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-24 · 1AC · L11</span>
+</div>
+<div id="errjs"></div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus renseigné : il consigne le résultat de
+        l'expérience prescrite, pas celui d'une variante. Le carnet de mesures,
+        lui, continue de calculer — et c'est là qu'on voit ce que le réglage change.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ces tubes-ci</b> donnent, aux trois moments. Le nombre de parties
+        sort de la <b>miscibilité</b> et de l'<b>avancement de la séparation</b>
+        calculé par la loi de Stokes — jamais d'une étiquette collée sur un tube.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Ce que le modèle voit <span class="note" id="etatSysteme">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Tubes remplis d'eau</div><div class="v off" id="lEau">—</div></div>
+        <div><div class="k">Seconds liquides</div><div class="v off" id="lSecond">—</div></div>
+        <div><div class="k">Bouchés</div><div class="v off" id="lBouche">—</div></div>
+        <div><div class="k">Moment d'observation</div><div class="v off" id="lMoment">—</div></div>
+        <div><div class="k">Repos écoulé</div><div class="v off" id="lRepos">—</div></div>
+        <div><div class="k">Séparation accomplie</div><div class="v off" id="lSep">—</div></div>
+        <div><div class="k">Séparation complète en</div><div class="v off" id="lTsep">—</div></div>
+        <div><div class="k">Gouttelettes, maintenant</div><div class="v off" id="lGoutte">—</div></div>
+        <div><div class="k">Ordre du versement</div><div class="v" id="lOrdre">eau, puis second liquide</div></div>
+      </div>
+      <div style="margin-top:11px"><span class="lbl">La séparation, seconde par seconde</span></div>
+      <svg id="gSep" viewBox="0 0 360 150" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src">La courbe est <b>intégrée</b> au pas de 0,5 s, jamais tracée
+      d'après une formule devinée : la vitesse de remontée change à chaque
+      instant, parce que les gouttelettes grossissent en se rencontrant. Le
+      trait vertical marque où l'on en est.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages <span class="note">le protocole, et ce qu'on peut en écarter</span></h2>
+      <div class="reg" id="regV">
+        <label for="rV">Volume de chaque liquide</label>
+        <output id="oV">5,0 mL</output>
+        <input type="range" id="rV" min="1" max="10" step="0.5" value="5">
+        <div class="aide">La fiche écrit « environ 5 mL » de chacun. Le volume
+        ne change pas le verdict — il change la hauteur de colonne qu'une
+        gouttelette doit remonter, donc le temps qu'il faut attendre.</div>
+      </div>
+      <div class="reg" id="regT">
+        <label for="rT">Temps de repos avant d'observer</label>
+        <output id="oT">3:00</output>
+        <input type="range" id="rT" min="0" max="600" step="10" value="180">
+        <div class="aide">À dix secondes, l'huile n'a remonté que quelques
+        pour cent de la colonne : les deux tubes se ressemblent encore, et
+        l'on classerait <i>eau + huile</i> parmi les mélanges homogènes.
+        C'est exactement l'erreur que la fiche met en garde.</div>
+      </div>
+      <div class="reg" id="regD">
+        <label for="rD">Vigueur de l'agitation — taille des gouttelettes</label>
+        <output id="oD">30 µm</output>
+        <input type="range" id="rD" min="10" max="50" step="2" value="30">
+        <div class="aide">Le seul nombre que la fiche laisse au poste : elle
+        dit « agiter énergiquement » sans dire à quel point. Agiter
+        <b>plus</b> fort fait des gouttelettes <b>plus fines</b> — et
+        l'émulsion tient <b>plus longtemps</b>. À 10 µm elle survit aux trois
+        minutes de la fiche.</div>
+      </div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle : une question de solubilité, puis une de densité</h3>
+      <p>La <b>miscibilité</b> décide s'il y aura une ou deux couches ; la
+      <b>masse volumique</b> décide de leur <b>ordre</b> ; la <b>loi de
+      Stokes</b> décide du <b>temps qu'il faut attendre</b> pour les voir. Le
+      nombre de parties visibles sort des trois, et le classement sort du
+      nombre de parties.</p>
+      <div class="eq" id="eqModele"></div>
+      <h3>2 · Ce que les deux couples donnent</h3>
+      <div class="eq" id="eqMatiere"></div>
+      <h3>3 · L'ordre du versement ne change rien — et on le vérifie</h3>
+      <p>C'est l'objection que la classe soulève toujours : « et si on avait
+      versé l'huile en premier ? » On ne répond pas par une phrase — on relance
+      le <b>même solveur</b> sur les deux ordres et l'on compare ses deux
+      réponses. La scène montre les deux tubes côte à côte.</p>
+      <div class="eq" id="eqOrdre"></div>
+      <h3>4 · Ce que « agiter énergiquement » veut dire, chiffré</h3>
+      <div class="eq" id="eqLimite"></div>
+      <h3>5 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src">Aucune de ces valeurs n'a été retouchée pour faire tomber
+      le résultat de la fiche. Les masses volumiques et la viscosité sont des
+      tables ; la solubilité de l'huile est celle des triglycérides ; le
+      diamètre des gouttelettes est l'intervalle admis pour une émulsion faite
+      à la main, et il est <b>réglable</b> parce que la fiche ne le donne pas.
+      Le seul seuil est celui de la <b>lecture</b> — à 85 % de la colonne
+      parcourue, l'œil voit deux couches franches —, et il est déclaré comme
+      tel.</p>
+      <h3>6 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Il ne sait pas pourquoi deux liquides sont miscibles.</b> Il
+        compare une solubilité tabulée à ce qu'on verse. Ce qui se passe entre
+        les molécules d'eau et celles de l'éthanol n'est pas au programme de la
+        1AC, et la page ne fait pas semblant de le montrer.</li>
+        <li><b>Il traite la dissolution de l'alcool comme instantanée.</b> En
+        vrai, sans agitation, l'eau et l'alcool mettent plusieurs minutes à se
+        mêler par simple diffusion. La fiche fait agiter ; la page suit la
+        fiche, et le tube non agité reste à deux couches.</li>
+        <li><b>La loi de Stokes suppose une gouttelette seule.</b> Dans une
+        émulsion fraîche elles sont serrées, se gênent et se déforment : la
+        vraie remontée est plus lente et moins régulière que celle-ci.</li>
+        <li><b>La coalescence est réduite à un temps caractéristique.</b> Le
+        diamètre croît proportionnellement au temps, ce qui est une
+        approximation grossière d'un phénomène qui dépend de la concentration
+        en gouttelettes et de la propreté du verre. Une trace de savon
+        stabiliserait l'émulsion pour des heures — c'est le principe de la
+        mayonnaise, et le modèle ne le connaît pas.</li>
+        <li><b>Il ignore la température.</b> Elle change la viscosité de l'eau
+        et la masse volumique des trois liquides. La page travaille à 20 °C et
+        ne le cache pas.</li>
+        <li><b>Il ne modélise ni l'odeur ni l'inflammabilité.</b> L'alcool à
+        brûler est reconnu ici à sa masse volumique, pas à son odeur — et la
+        fiche interdit d'en respirer les vapeurs.</li>
+        <li><b>La hauteur dessinée ignore le fond rond du tube.</b> Un vrai
+        tube contient moins par millimètre en bas qu'au milieu ; le dessin
+        rend les volumes proportionnels à la hauteur. C'est un schéma habillé,
+        et les couches y sont à l'échelle du volume, pas de la géométrie du
+        verre.</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-24.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-24",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L11",
+  "titre": "Deux liquides se mélangent-ils toujours ?",
+  "axe": "Deux liquides : miscibles ou non miscibles ?",
+  "objectif": "Distinguer deux liquides miscibles de deux liquides non miscibles, et montrer que l'aspect uniforme obtenu juste après l'agitation d'une émulsion est provisoire — c'est le repos qui révèle la nature du mélange.",
+  "duree": 15,
+  "modalite": "groupes de 4 — 8 postes",
+  "materiel": [
+    "3 tubes à essai avec bouchon, sur portoir",
+    "Eau",
+    "Alcool à brûler",
+    "Huile de table",
+    "Éprouvette graduée de 10 mL ou pipette graduée",
+    "Étiquettes et marqueur",
+    "Bidon de récupération des résidus"
+  ],
+  "securite": [
+    "L'alcool à brûler est **inflammable** : aucune flamme ni bec Bunsen allumé dans la salle pendant la manipulation.",
+    "Boucher les tubes avant d'agiter et maintenir le bouchon avec le pouce.",
+    "Ne pas respirer les vapeurs d'alcool ; travailler fenêtres ouvertes.",
+    "Ne rien porter à la bouche et se laver les mains à la fin de la séance.",
+    "Verser les résidus dans le bidon de récupération, jamais dans l'évier."
+  ],
+  "protocole": [
+    "Verser environ **5 mL d'eau** dans chacun des trois tubes à essai placés sur le portoir, puis les étiqueter : *eau + alcool*, *eau + huile*, *eau seule*.",
+    "Ajouter environ **5 mL d'alcool à brûler** dans le premier tube et **5 mL d'huile de table** dans le deuxième. Le troisième tube ne reçoit rien : c'est le **témoin**.",
+    "Observer les trois tubes **avant toute agitation** et noter, pour chacun, le nombre de parties visibles.",
+    "Boucher les trois tubes et les agiter énergiquement pendant une dizaine de secondes, de la même façon.",
+    "Observer **immédiatement** après l'agitation, sans reposer les tubes.",
+    "Replacer les tubes sur le portoir, attendre **trois minutes** sans y toucher, puis observer de nouveau.",
+    "Comparer les trois moments d'observation et dire, pour chaque tube, à quel moment on peut se prononcer sur le type de mélange."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Tube",
+      "Avant agitation",
+      "Juste après agitation",
+      "Après trois minutes de repos",
+      "Type de mélange"
+    ],
+    "lignes": [
+      [
+        "Eau + alcool à brûler",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Eau + huile",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Eau seule (témoin)",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Eau + alcool à brûler",
+        "2 parties, l'alcool au-dessus",
+        "liquide limpide, 1 seule partie",
+        "liquide limpide, 1 seule partie",
+        "homogène — liquides miscibles"
+      ],
+      [
+        "Eau + huile",
+        "2 parties, l'huile au-dessus",
+        "liquide trouble et laiteux : une émulsion",
+        "2 parties, l'huile de nouveau au-dessus",
+        "hétérogène — liquides non miscibles"
+      ],
+      [
+        "Eau seule (témoin)",
+        "1 seule partie, limpide",
+        "1 seule partie, limpide",
+        "1 seule partie, limpide",
+        "ce n'est pas un mélange"
+      ]
+    ]
+  },
+  "observation": "Secoués de la même façon, l'eau et l'alcool restent mêlés, tandis que l'eau et l'huile se séparent de nouveau en deux couches dès qu'on les laisse reposer.",
+  "conclusion": "Deux liquides miscibles donnent un mélange homogène, deux liquides non miscibles un mélange hétérogène ; l'émulsion obtenue par agitation d'un mélange non miscible n'est qu'un état provisoire.",
+  "oheric": {
+    "observation": "Dans une bouteille de vinaigrette qu'on vient de secouer, l'huile et le vinaigre semblent n'en faire qu'un ; deux minutes plus tard, deux couches se sont reformées et il faut secouer de nouveau. Pourtant, quand on verse du sirop dans un verre d'eau et qu'on remue, le mélange reste uniforme aussi longtemps qu'on veut. Deux liquides se mélangent-ils toujours de la même façon ?",
+    "hypothese": "Si deux liquides sont **miscibles**, alors après agitation ils forment un mélange homogène **qui le reste** au repos ; s'ils ne le sont pas, alors le mélange retrouve ses deux parties dès qu'on le laisse reposer, et l'aspect uniforme observé juste après l'agitation n'est que **provisoire**.",
+    "experience": "Comparer, dans trois tubes bouchés, le comportement de *eau + alcool à brûler*, de *eau + huile* et d'un témoin d'eau seule, observés à trois moments : avant agitation, immédiatement après agitation, puis après trois minutes de repos.",
+    "resultats": "**Avant agitation**, les deux mélanges montrent **deux parties**, le liquide le plus léger au-dessus. **Juste après agitation**, le tube *eau + alcool* est devenu **limpide** et ne montre plus qu'**une seule partie** ; le tube *eau + huile* est devenu **trouble et laiteux**, d'aspect uniforme lui aussi. **Après trois minutes de repos**, le tube *eau + alcool* est resté limpide et uniforme, tandis que le tube *eau + huile* a retrouvé **deux parties**, l'huile de nouveau au-dessus de l'eau. Le témoin est resté limpide et uniforme aux trois moments.",
+    "interpretation": "L'eau et l'alcool se mélangent l'un à l'autre en toute proportion : on dit qu'ils sont **miscibles**, et ils donnent un mélange **homogène** durable. L'eau et l'huile ne se mélangent pas : ils sont **non miscibles** et donnent un mélange **hétérogène**. L'aspect trouble et uniforme observé juste après l'agitation ne doit tromper personne : l'huile s'est seulement dispersée en gouttelettes minuscules dans l'eau — c'est une **émulsion** — et les gouttelettes se rassemblent dès qu'on cesse d'agiter. Le témoin montre que l'agitation, à elle seule, ne trouble pas un liquide : le trouble vient bien de l'huile dispersée, non du fait d'avoir secoué. L'hypothèse est validée, et l'on en tire une règle de méthode : c'est **après agitation puis repos** qu'on juge un mélange, jamais pendant.",
+    "conclusion": "Deux liquides sont **miscibles** lorsqu'ils forment un mélange **homogène** — l'eau et l'alcool. Ils sont **non miscibles** lorsqu'ils forment un mélange **hétérogène** — l'eau et l'huile. L'agitation d'un mélange non miscible donne une **émulsion**, d'aspect uniforme mais provisoire : seul le repos révèle la vraie nature du mélange."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline. Et
+   l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function sansAccent(s) {
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i")
+    .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+    .replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+}
+function du(nom) {
+  return (/^[haeiouyàâäéèêëîïôöùûü]/i.test(nom) ? "d'" : "de ") + nom;
+}
+function pluriel(n, s) { return n > 1 ? s : ""; }
+/* Un générateur pseudo-aléatoire DÉTERMINISTE. Le désordre d'un modèle doit
+   se rejouer à l'identique, sans quoi la manipulation à la main et le déroulé
+   ne donneraient pas le même carnet (SKILL §12bis.6). */
+function graine(s) {
+  /* ⚠ MINSTD, et PAS un congruentiel a gros multiplicateur : en JS, un
+     produit de 1103515245 par un entier de 31 bits dépasse 2^53 et le
+     résultat n'est plus exact. Le tirage divergeait alors du modèle validé
+     en Python, sans lever la moindre erreur. 16807 × 2147483646 tient
+     largement dans un double. */
+  var e = (s % 2147483646) + 1;
+  return function () { e = (e * 16807) % 2147483647; return e / 2147483647; };
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var TEXTE_PROTO = PROTOCOLE.join("\n");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var i;
+  for (i = 0; i < PROTOCOLE.length; i++) if (motif.test(PROTOCOLE[i])) return PROTOCOLE[i];
+  return "";
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+function citerSecu(motif) {
+  var t = secu(motif);
+  return t ? " « " + t + " »" : "";
+}
+/* Lire un NOMBRE suivi de son unité dans le protocole. Trois règles payées
+   sur E3AC-19 (SKILL §12.29) : le nombre commence par un chiffre, l'unité est
+   sensible à la casse, et elle n'est pas suivie d'une lettre. */
+function lireProto(unite, defaut, sensible) {
+  var re = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-zÀ-ÿ])",
+                      sensible === false ? "i" : "");
+  var m = re.exec(TEXTE_PROTO);
+  return m ? parseFloat(m[1].replace(",", ".")) : defaut;
+}
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20, trentaine: 30, dizaine: 10 };
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* ==================================================================
+   3 bis. LES DURÉES VIENNENT DE LA FICHE — jamais du code (SKILL §5)
+   ================================================================== */
+function secondesProto(motif, defaut) {
+  var i, m, t, n;
+  for (i = 0; i < PROTOCOLE.length; i++) {
+    if (!motif.test(PROTOCOLE[i])) continue;
+    t = PROTOCOLE[i].toLowerCase();
+    m = /(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trentaine|dizaine)\s+(secondes?|minutes?)/.exec(t);
+    if (!m) continue;
+    n = isNaN(+m[1]) ? MOTS_NB[m[1]] : +m[1];
+    if (!n) continue;
+    return m[2].indexOf("minute") === 0 ? n * 60 : n;
+  }
+  return defaut;
+}
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   MINUTERIES ET ANIMATION
+   ==================================================================
+   ⚠ `setTimeout` + `Date.now()`, JAMAIS `requestAnimationFrame` (SKILL
+   §13.5 bis) : sous le pilote, rAF n'est pas appelé, et toute l'animation —
+   avec le résultat qu'elle porte — disparaîtrait SANS lever d'erreur.
+
+   ⚠ ET L'ANIMATION NE DÉCIDE DE RIEN. Le solveur a déjà calculé l'état
+   d'arrivée quand elle commence ; elle ne fait que le rejoindre. Un résultat
+   qui dépendrait du nombre d'images serait un résultat faux (§12.37). */
+var MINUTEURS = [], HORLOGE = null, ANIM_ON = true;
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+/* `sur(u)` reçoit une avance u de 0 à 1, lissée. `fin()` est rappelée à
+   l'arrivée. Une animation coupée (« Recommencer », arrêt du déroulé) ne
+   laisse rien derrière elle : `purger()` efface ses minuteries. */
+function anim(ms, sur, fin) {
+  var PAS = 14, i;
+  for (i = 1; i <= PAS; i++) (function (k) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = k / PAS;
+      sur(t * t * (3 - 2 * t), t);
+      if (k === PAS && fin) fin();
+    }, Math.round(ms * k / PAS));
+  })(i);
+  if (!ms && fin) fin();
+}
+
+/* ==================================================================
+   LES COUCHES SVG — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE tout le reste
+     poste   le mobilier fixe : portoirs, balance, plaque, étagère
+     arriere l'intérieur de la verrerie, l'eau, et les zones de dépôt
+     objets  ce qui se manipule
+     avant   les parois de verre, les étiquettes, la vapeur
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout            */
+var svg = null, DEFS = null, COUCHES = {};
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+/* Les dégradés et filtres communs à toutes les paillasses du lot.
+   ⚠ AUCUN dégradé n'est jamais posé sur le CONTOUR d'un trait (SKILL §10.1) :
+   en `objectBoundingBox`, la boîte d'un segment horizontal ou vertical est
+   plate, le dégradé est dégénéré, et le navigateur NE PEINT RIEN — sans
+   erreur, et sans que le pilotage puisse le voir. Les traits fins sont donc
+   peints en couleur PLEINE. */
+function defsCommunes() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* la bande de bois CLAIRE du plateau : c'est la seule zone sombre-libre où
+     une étiquette se lit (SKILL §12.7) */
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e6d5b4" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9b189" }));
+  DEFS.appendChild(g);
+
+  /* l'eau — dégradé vertical, et la surface se dessine en ELLIPSE */
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+
+  /* le verre : voile de teinte + reflet net + arête sombre (SKILL §10.2) */
+  g = el("linearGradient", { id: "verre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c6d6e3", "stop-opacity": .55 }));
+  g.appendChild(el("stop", { offset: .17, "stop-color": "#ffffff", "stop-opacity": .78 }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#dce8f1", "stop-opacity": .28 }));
+  g.appendChild(el("stop", { offset: .88, "stop-color": "#a9b8c8", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7f93a6", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flouFin", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 1.6 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+  DEFS.appendChild(f);
+}
+/* Sans elle, tout flotte (SKILL §10.3). */
+function ombreAuSol(cx, y, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: y + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Un bécher : intérieur et liquide AVANT la paroi, bourrelet du bord,
+   bec verseur et graduations — c'est le bourrelet, plus que la paroi, qui
+   fait reconnaître un bécher (SKILL §10.2). */
+function paroiVerre(couche, x, y, w, h, r) {
+  var g = ajout(couche, el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "url(#verre)" }));
+  g.appendChild(el("rect", { x: x + w * .1, y: y + 8, width: Math.max(3, w * .07),
+    height: h - 20, rx: 2.5, fill: "#ffffff", opacity: .66 }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3 }));
+  g.appendChild(el("ellipse", { cx: x + w / 2, cy: y, rx: w / 2 + 2.5, ry: 4.5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3.2 }));
+  return g;
+}
+
+/* ==================================================================
+   LE MOTEUR DE GLISSER-DÉPOSER (SKILL §9)
+   ==================================================================
+   ⚠ Le pointeur est capturé sur le SVG, PAS sur l'objet : sans cela, un
+   mouvement rapide sort de l'objet et le glissement s'arrête net au milieu du
+   geste, sans erreur.
+
+   La page fournit `emplacements(o)`, `deposer(o, zone, depart)` et
+   `replacer(o)`. Les zones sont rendues de la plus PETITE à la plus GRANDE
+   (§12.16) : c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du
+   tableau.                                                                  */
+var prise = null, ptSVG = null, surbrillance = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function placer(o, x, y) {
+  o.x = x; o.y = y;
+  o.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ")");
+}
+/* L'objet PARCOURT son trajet : c'est la troisième exigence du §1.2 bis.
+   L'état, lui, est posé AVANT (SKILL §6.2) — l'animation ne décide de rien. */
+function volerVers(o, x1, y1, ms) {
+  var x0 = o.x, y0 = o.y;
+  anim(ms || 520, function (u) {
+    o.g.setAttribute("transform", "translate(" +
+      (x0 + (x1 - x0) * u).toFixed(1) + "," + (y0 + (y1 - y0) * u).toFixed(1) + ")");
+  });
+  o.x = x1; o.y = y1;
+}
+function montrerCibles(o) {
+  effacerCibles();
+  if (!o) return;
+  emplacements(o).forEach(function (z) {
+    if (z.discret) return;
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 10,
+      fill: GOLD, opacity: .18, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* ⚠ TOUT OBJET MANIPULABLE REÇOIT UNE PLAQUE DE PRÉHENSION transparente aux
+   cotes de sa silhouette, insérée EN PREMIER dans son groupe (SKILL §12.38) :
+   un objet fin n'offre au pointeur presque rien, et le glisser ne démarrerait
+   pas — sans erreur, sans refus, sans rien. */
+function prehension(g, x, y, w, h) {
+  var r = el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "#ffffff",
+                       "fill-opacity": 0.001 });
+  if (g.firstChild) g.insertBefore(r, g.firstChild); else g.appendChild(r);
+  return r;
+}
+function brancherObjet(o) {
+  o.g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                        /* verrou en PREMIÈRE ligne */
+    if (o.fige) return;
+    e.preventDefault();
+    var p = versSVG(e);
+    prise = { o: o, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+              x0: p.x, y0: p.y, bouge: false, depart: { x: o.x, y: o.y } };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    o.g.setAttribute("filter", "url(#ombrePrise)");
+    o.g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(o.g);
+    montrerCibles(o);
+  });
+}
+function brancherPrise() {
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    /* Le seuil de 5 px sépare le CLIC du GLISSEMENT (SKILL §9.3). */
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    placer(prise.o, p.x + prise.dx, p.y + prise.dy);
+    if (typeof pendantGlisser === "function") pendantGlisser(prise.o);
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var o = prise.o, bouge = prise.bouge, depart = prise.depart;
+    o.g.removeAttribute("filter");
+    o.g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(o.g);
+    effacerCibles();
+    prise = null;
+    if (!bouge) {
+      placer(o, depart.x, depart.y);
+      if (typeof cliquerObjet === "function") cliquerObjet(o);
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(o).forEach(function (z) {
+      var d = Math.hypot(o.x - z.x, o.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposer(o, best, depart);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);        /* ne PAS l'oublier */
+}
+/* La zone qu'`emplacements()` propose DANS L'ÉTAT COURANT — jamais une
+   position écrite en dur. Un bouton ne vise donc jamais `emplacements(o)[0]`
+   au hasard : il vise celle que `deposer` accepterait (SKILL §12.16). */
+function zoneVoulue(o, type) {
+  var z = emplacements(o) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+
+/* ==================================================================
+   LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                            */
+var BOUTONS = {}, ACTES = [];
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", "fill-opacity": 0.001 }));
+  var r = g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht, noeud: g,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function rangeeBoutons(W, y, libelles, actes) {
+  var n = actes.length, marge = 22, gap = 10;
+  var w = (W - 2 * marge - gap * (n - 1)) / n, i;
+  for (i = 0; i < n; i++) {
+    boutonScene(marge + w / 2 + i * (w + gap), y, w, 42,
+                libelles[i][0], libelles[i][1], actes[i]);
+  }
+}
+
+/* ==================================================================
+   CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  if (!c) return;
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  if (!o) return;
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+var N_CELL = 0;
+function compterCellules() {
+  var i, j, n = 0;
+  for (i = 0; i < N_LIG; i++) {
+    for (j = 0; j < (VAL[i] || []).length; j++) {
+      if (!(LIG[i] || [])[j] && (VAL[i] || [])[j]) n++;
+    }
+  }
+  return n;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t ? t.querySelectorAll("tr")[k + 1] : null;
+  var v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "mes";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerLigne(k) {
+  var j;
+  for (j = 0; j < (VAL[k] || []).length; j++) {
+    if (!(LIG[k] || [])[j]) revelerCellule(k, j);
+  }
+}
+function majCompteurCellules() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t ? t.querySelectorAll("tr") : [], i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  if ($("concl")) $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre, dans l'unité de la grandeur.           */
+function signalerDivergence(cle, texte) {
+  if (ETAT.horsProto) return;
+  if (ETAT.diverge.indexOf(cle) >= 0) return;
+  ETAT.diverge.push(cle);
+  var d = $("diverge");
+  d.innerHTML += (d.innerHTML ? "<br>" : "") + texte;
+  d.style.display = "block";
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.innerHTML = md(cells[i]);
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireEtapes(noms) {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < noms.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + noms[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+/* Les panneaux communs : titre, objectif, observation, conclusion, matériel,
+   sécurité, tableau de la fiche. Tout vient du YAML, rien n'est retapé.     */
+function construireHTMLBase(soustitre) {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · " + soustitre;
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  N_CELL = compterCellules();
+  majCompteurCellules();
+}
+/* Le tableau des constantes du capot se RÉGÉNÈRE depuis `PHYS` — il n'est
+   jamais retapé dans le HTML (SKILL §7.3). */
+function construireConstantes() {
+  var ct = $("capotConst"), c;
+  if (!ct) return;
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  for (c in PHYS) {
+    ct.appendChild(ligneTab([PHYS[c].n,
+      (typeof PHYS[c].v === "number"
+        ? (Math.abs(PHYS[c].v) < 0.01 ? sci(PHYS[c].v, 2)
+                                      : nb(PHYS[c].v, PHYS[c].d === undefined ? 2 : PHYS[c].d))
+        : PHYS[c].v) + " " + PHYS[c].u, PHYS[c].s]));
+  }
+}
+
+/* ==================================================================
+   L'HORLOGE DE LA SÉANCE — et elle seule court en temps RÉEL
+   ==================================================================
+   Elle mesure ce que la manipulation coûte à l'enseignant, pas ce que le
+   modèle simule : elle ne s'accélère JAMAIS, et elle SURVIT à
+   « Recommencer » — la séance ne se rembobine pas (SKILL §5.4, §11.6).      */
+var DERNIER = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tickSeance, 250);
+}
+function tickSeance() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  if (!n) return;
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance(complement) {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    (complement ? " · " + complement : "");
+  majSeance();
+}
+
+/* ==================================================================
+   LE PLEIN ÉCRAN — c'est par lui qu'on projette la scène au tableau
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ================================================================== */
+var PHYS = {
+  G: { v: 9.81, u: "m·s⁻²", d: 2, n: "intensité de la pesanteur",
+       s: "valeur standard, latitude 45°" },
+  ETA_EAU: { v: 1.002e-3, u: "Pa·s", d: 2,
+             n: "viscosité dynamique de l'eau à 20 °C",
+             s: "tables de l'eau pure ; c'est elle qui freine la remontée des " +
+                "gouttelettes d'huile" },
+  RHO_EAU: { v: 998.2, u: "kg·m⁻³", d: 1, n: "masse volumique de l'eau à 20 °C",
+             s: "tables de l'eau pure" },
+  RHO_ALCOOL: { v: 789.3, u: "kg·m⁻³", d: 1,
+                n: "masse volumique de l'alcool à brûler à 20 °C",
+                s: "éthanol dénaturé, 789 à 795 kg·m⁻³ selon le dénaturant. " +
+                   "C'est le plus léger des trois : c'est pour cela qu'il " +
+                   "surnage avant qu'on agite" },
+  RHO_HUILE: { v: 918, u: "kg·m⁻³", d: 0,
+               n: "masse volumique de l'huile de table à 20 °C",
+               s: "huile de tournesol raffinée, 915 à 923 kg·m⁻³. Elle est " +
+                  "plus légère que l'eau de 8 % — et c'est TOUT ce qui décide " +
+                  "de l'ordre des couches" },
+  SOL_ALCOOL: { v: 1e9, u: "g·L⁻¹", d: 0,
+                n: "solubilité de l'éthanol dans l'eau à 20 °C",
+                s: "MISCIBLE EN TOUTE PROPORTION — il n'y a pas de limite, et " +
+                   "c'est la définition même de « miscible »" },
+  SOL_HUILE: { v: 0.02, u: "g·L⁻¹", d: 3,
+               n: "solubilité des triglycérides dans l'eau à 20 °C",
+               s: "moins de 20 mg par litre : mille fois moins que ce qu'on " +
+                  "verse. L'huile ne se dissout pas, elle se disperse" },
+  D_GOUTTE: { v: 3.0e-5, u: "m", d: 1,
+              n: "diamètre des gouttelettes juste après l'agitation",
+              s: "émulsion obtenue à la main, 10 à 50 µm — c'est leur " +
+                 "petitesse qui rend le mélange laiteux : elles diffusent la " +
+                 "lumière au lieu de la laisser passer" },
+  TAU_COAL: { v: 25, u: "s", d: 0, n: "temps caractéristique de coalescence",
+              s: "les gouttelettes se rencontrent et fusionnent ; leur " +
+                 "diamètre croît, donc leur vitesse de remontée aussi. Sans " +
+                 "ce terme, une émulsion de 30 µm mettrait vingt minutes à " +
+                 "se séparer au lieu de deux" },
+  H_COLONNE: { v: 0.060, u: "m", d: 3,
+               n: "hauteur de liquide dans le tube après mélange",
+               s: "tube à essai de 16 mm, 10 mL de liquide : c'est la " +
+                  "distance qu'une gouttelette doit remonter pour rejoindre " +
+                  "la surface" },
+  CONTRACTION: { v: 0.034, u: "—", d: 3,
+                 n: "contraction de volume eau + éthanol à parts égales",
+                 s: "volume d'excès de mélange : 5 mL + 5 mL donnent 9,66 mL " +
+                    "et non 10. AJOUT — non cité par la fiche, affiché comme " +
+                    "tel, et aucun verdict n'en dépend" },
+  SEUIL_PHASE: { v: 0.85, u: "—", d: 2,
+                 n: "seuil de lecture : la séparation est-elle achevée ?",
+                 s: "seuil d'ASPECT, déclaré comme tel. À 85 % de la colonne " +
+                    "parcourue, l'œil voit deux couches franches. À trois " +
+                    "minutes l'huile en a parcouru 100 %, à dix secondes 6 % : " +
+                    "le seuil est très loin des deux" },
+  ACCEL: { v: 60, u: "×", d: 0, n: "compression du temps",
+           s: "les trois minutes de repos de la fiche passent en 3,0 s. " +
+              "L'intégration garde son pas de 0,5 s de temps simulé, quel que " +
+              "soit le facteur (SKILL §12.52)" }
+};
+var G = PHYS.G.v, ETA_EAU = PHYS.ETA_EAU.v, RHO_EAU = PHYS.RHO_EAU.v;
+var H_COLONNE = PHYS.H_COLONNE.v, SEUIL_PHASE = PHYS.SEUIL_PHASE.v;
+var ACCEL = PHYS.ACCEL.v, PAS_SIM = 0.5;
+
+/* Les liquides connus de la page, par leur nom. Un liquide que la fiche
+   citerait et que cette table ne porterait pas serait DIT comme inconnu, pas
+   deviné (§0, règle R4 du contrat de la valise). */
+var LIQUIDES = {
+  eau:    { rho: PHYS.RHO_EAU.v, sol: 0, teinte: "#7fb8d8", clair: "#bfe0f0",
+            nom: "eau" },
+  alcool: { rho: PHYS.RHO_ALCOOL.v, sol: PHYS.SOL_ALCOOL.v, teinte: "#cfe3ee",
+            clair: "#e8f3f9", nom: "alcool" },
+  huile:  { rho: PHYS.RHO_HUILE.v, sol: PHYS.SOL_HUILE.v, teinte: "#e8c65a",
+            clair: "#f4de99", nom: "huile" }
+};
+function cleLiquide(nom) {
+  var t = sansAccent(nom), k;
+  for (k in LIQUIDES) if (t.indexOf(k) >= 0) return k;
+  return null;
+}
+
+/* ==================================================================
+   1 bis. CE QUE LA FICHE DONNE — lu, jamais retapé
+   ================================================================== */
+function colonne(motif, defaut) {
+  var i;
+  for (i = 0; i < ENTETES.length; i++) if (motif.test(depouille(ENTETES[i]))) return i;
+  return defaut;
+}
+var C_TUBE = 0;
+var C_AVANT = colonne(/avant agitation/i, 1);
+var C_APRES = colonne(/juste apr/i, 2);
+var C_REPOS = colonne(/repos/i, 3);
+var C_TYPE = colonne(/type/i, 4);
+var MOMENTS = [C_AVANT, C_APRES, C_REPOS];
+
+/* Les trois tubes sont les LIGNES du tableau. Le second liquide se lit après
+   le « + » de l'intitulé, et le témoin se reconnaît à son propre mot. */
+var TUBES = (function () {
+  var out = [], i, t, m;
+  for (i = 0; i < N_LIG; i++) {
+    t = intitule(i, C_TUBE);
+    if (/t[ée]moin|seule/i.test(t)) {
+      out.push({ k: i, cle: null, nom: "eau seule", temoin: true, titre: t });
+      continue;
+    }
+    m = /\+\s*(.+)$/.exec(t);
+    out.push({ k: i, titre: t, temoin: false,
+               cle: m ? cleLiquide(m[1]) : null,
+               nom: m ? m[1].trim() : t });
+  }
+  return out;
+})();
+var INCONNUS = TUBES.filter(function (t) {
+  return !t.temoin && !LIQUIDES[t.cle];
+}).map(function (t) { return t.nom; });
+
+/* « Verser environ 5 mL d'eau », « agiter une dizaine de secondes »,
+   « attendre trois minutes » */
+var V_FICHE = lireProto("mL", 5, false);
+var T_AGIT = secondesProto(/agiter/i, 10);
+var T_REPOS = secondesProto(/attendre|minutes/i, 180);
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO : ce que le protocole prescrit. REG : ce qui court.
+   ================================================================== */
+/* ⚠ `d` — le diamètre des gouttelettes juste après l'agitation — est le SEUL
+   nombre que la fiche laisse au poste : elle écrit « agiter énergiquement »
+   sans dire à quel point. Plus on agite fort, plus les gouttelettes sont
+   fines, et PLUS LONGTEMPS l'émulsion tient. C'est un réglage, pas une
+   constante ajustée : la valeur du protocole reste celle de `PHYS`.          */
+var PROTO = { v: V_FICHE, t: T_REPOS, d: PHYS.D_GOUTTE.v };
+var REG = { v: V_FICHE, t: T_REPOS, d: PHYS.D_GOUTTE.v };
+/* ⚠ ON NE COMPARE PAS DEUX FLOTTANTS PAR L'ÉGALITÉ STRICTE. `30 × 1e-6` ne
+   redonne pas le `3.0e-5` de PHYS au dernier bit : `horsProtocole()` rendait
+   `true` dès le chargement, `revelerCellule` sortait à sa première ligne, et
+   le tableau de la fiche restait vide alors que TOUTE la manipulation
+   fonctionnait. C'est le §12.12 sous une autre forme, et le symptôme est le
+   même : aucune erreur, et un tableau qui ne se remplit jamais. */
+function memeReglage(a, b) { return Math.abs(a - b) <= Math.abs(b) * 1e-9 + 1e-12; }
+function horsProtocole() {
+  return !memeReglage(REG.v, PROTO.v) || !memeReglage(REG.t, PROTO.t) ||
+         !memeReglage(REG.d, PROTO.d);
+}
+function revenirAuProtocole() { REG.v = PROTO.v; REG.t = PROTO.t; REG.d = PROTO.d; }
+
+/* ==================================================================
+   5. LE SOLVEUR — la miscibilité décide, la densité range, Stokes chronomètre
+   ==================================================================
+   ⚠ RIEN NE DÉPEND DE L'ORDRE DU VERSEMENT. Les couches sont TRIÉES par
+   masse volumique décroissante vers le bas : verser l'huile en premier donne
+   exactement le même tube à l'arrivée, et c'est la preuve que c'est la
+   densité qui commande — c'est ce que la page permet de vérifier.           */
+
+/* Miscibles si l'eau peut en dissoudre plus qu'on n'en verse. */
+function miscible(cle, v_mL) {
+  var l = LIQUIDES[cle];
+  if (!l) return null;
+  var masse = l.rho * v_mL * 1e-6 * 1000;        /* g versés */
+  var capacite = l.sol * (v_mL * 1e-3);          /* g dissolvables */
+  return capacite >= masse;
+}
+/* Les couches à l'équilibre, RANGÉES DU BAS VERS LE HAUT : le plus dense
+   d'abord. C'est un TRI, pas une règle écrite — et il ne regarde jamais
+   l'ordre du versement.
+
+   ⚠ `couches()[0]` est donc la couche du FOND, et la dernière celle du
+   DESSUS. Confondre les deux fait annoncer « l'eau au-dessus » pour un tube
+   eau + huile, c'est-à-dire l'inverse exact de ce que la fiche relève. */
+function couches(t) {
+  var l = [], k;
+  for (k = 0; k < t.verses.length; k++) {
+    l.push({ cle: t.verses[k].cle, v: t.verses[k].v, rho: LIQUIDES[t.verses[k].cle].rho });
+  }
+  l.sort(function (a, b) { return b.rho - a.rho; });   /* le plus lourd en bas */
+  return l;
+}
+/* La couche du DESSUS : la dernière du rangement, donc la plus légère. */
+function cleDessus(ordre) { return ordre[ordre.length - 1]; }
+function cleDessous(ordre) { return ordre[0]; }
+/* Le volume du mélange. Eau et éthanol se CONTRACTENT — c'est un ajout, non
+   cité par la fiche, et il est étiqueté comme tel à l'écran. */
+function volumeTotal(t) {
+  var v = 0, i, aEau = false, aAlcool = false;
+  for (i = 0; i < t.verses.length; i++) {
+    v += t.verses[i].v;
+    if (t.verses[i].cle === "eau") aEau = true;
+    if (t.verses[i].cle === "alcool") aAlcool = true;
+  }
+  return aEau && aAlcool ? v * (1 - PHYS.CONTRACTION.v) : v;
+}
+/* La remontée d'une gouttelette d'huile — Stokes, avec COALESCENCE : le
+   diamètre croît, donc la vitesse aussi. Sans ce terme, une émulsion de
+   30 µm mettrait vingt minutes à se séparer au lieu de deux. */
+function diametreGoutte(cle, t) {
+  return REG.d * (1 + t / PHYS.TAU_COAL.v);
+}
+function vitesseGoutte(cle, t) {
+  var l = LIQUIDES[cle], d = diametreGoutte(cle, t);
+  return Math.abs(RHO_EAU - l.rho) * G * d * d / (18 * ETA_EAU);
+}
+/* La part de colonne parcourue depuis l'agitation — intégrée au pas
+   PAS_SIM, jamais d'un bloc (SKILL §12bis.6, le piège du pas de l'accéléré). */
+function avanceSeparation(cle, duree) {
+  var z = 0, t = 0;
+  if (!LIQUIDES[cle]) return 0;
+  while (t < duree && z < H_COLONNE) {
+    z += vitesseGoutte(cle, t) * PAS_SIM;
+    t += PAS_SIM;
+  }
+  return borne(z / H_COLONNE, 0, 1);
+}
+function tempsSeparation(cle) {
+  var z = 0, t = 0;
+  if (!LIQUIDES[cle]) return 0;
+  while (z < H_COLONNE * SEUIL_PHASE && t < 3600) {
+    z += vitesseGoutte(cle, t) * PAS_SIM;
+    t += PAS_SIM;
+  }
+  return t;
+}
+/* L'ÉTAT d'un tube à un moment donné : 0 avant agitation, 1 juste après,
+   2 après le repos. Tout en sort — le nombre de phases, l'aspect, le
+   classement.                                                              */
+function etatTube(t, moment) {
+  var n = t.verses.length, c, mis, av;
+  if (!n) return { vide: true, phases: 0 };
+  if (n === 1) {
+    return { vide: false, temoin: true, phases: 1, mis: null, sep: 1,
+             ordre: [t.verses[0].cle] };
+  }
+  c = couches(t);
+  mis = miscible(t.second, REG.v);
+  if (moment === 0 || !t.agite) {
+    /* on vient de verser : les deux liquides sont superposés, pas mélangés */
+    return { vide: false, phases: 2, mis: mis, sep: 1,
+             ordre: c.map(function (x) { return x.cle; }) };
+  }
+  if (mis) {
+    return { vide: false, phases: 1, mis: true, sep: 1, ordre: ["melange"] };
+  }
+  av = avanceSeparation(t.second, moment === 1 ? 0 : t.tRepos);
+  return { vide: false, phases: av >= SEUIL_PHASE ? 2 : 1, mis: false, sep: av,
+           emulsion: av < SEUIL_PHASE,
+           ordre: c.map(function (x) { return x.cle; }) };
+}
+/* Ce que l'œil voit, COMPOSÉ à partir du modèle — jamais recopié du tableau. */
+function aspectTube(t, moment) {
+  var e = etatTube(t, moment), k, haut;
+  if (e.vide) return "tube vide";
+  if (e.temoin) return "1 seule partie, limpide";
+  k = cleDessus(e.ordre);
+  haut = k === "melange" ? "" : LIQUIDES[k].nom;
+  if (e.phases === 2) return "2 parties, " + (moment === 2 ? "l'" + haut +
+    " de nouveau au-dessus" : "l'" + haut + " au-dessus");
+  if (e.mis) return "liquide limpide, 1 seule partie";
+  return "liquide trouble et laiteux : une émulsion";
+}
+function typeTube(t) {
+  var e = etatTube(t, 2);
+  if (e.vide) return "—";
+  if (e.temoin) return "ce n'est pas un mélange";
+  if (!LIQUIDES[t.second]) return "inconnu";
+  return e.mis ? "homogène — liquides miscibles"
+               : "hétérogène — liquides non miscibles";
+}
+
+/* ==================================================================
+   5 bis. LA PREUVE QUE C'EST LA DENSITÉ QUI COMMANDE
+   ==================================================================
+   `couches()` TRIE ; il ne regarde jamais l'ordre du versement. On le
+   VÉRIFIE ici en faisant tourner le même solveur sur les deux ordres, et la
+   page affiche les deux résultats côte à côte. Ce n'est pas une phrase :
+   c'est le solveur qui répond deux fois.                                     */
+function ordreCouches(cles) {
+  return cles.slice().sort(function (a, b) {
+    return LIQUIDES[b].rho - LIQUIDES[a].rho;   /* le plus lourd en premier */
+  });
+}
+function memeArrivee(cleSecond) {
+  var a = ordreCouches(["eau", cleSecond]).join(" | ");
+  var b = ordreCouches([cleSecond, "eau"]).join(" | ");
+  return { direct: a, inverse: b, identique: a === b };
+}
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   ⚠ TOUTE CLÉ LUE DANS LE CODE FIGURE ICI (SKILL §12.17) : une clé oubliée
+   rend une branche entière morte, sans lever la moindre erreur.
+
+   `verses` est la LISTE ORDONNÉE de ce qu'on a versé — c'est elle, et elle
+   seule, qui garde l'ordre du versement. Le solveur, lui, la TRIE par masse
+   volumique : c'est pourquoi l'ordre n'a aucune influence sur l'arrivée.    */
+var ETAT = {};
+function neufEtat() {
+  return {
+    tSeance: 0, horsProto: false, nCell: 0, diverge: [],
+    tube: TUBES.map(function (t) {
+      return { k: t.k, verses: [], second: null, bouche: false,
+               agite: false, tRepos: 0 };
+    }),
+    inverse: false,        /* verse-t-on le second liquide AVANT l'eau ? */
+    faitDansLOrdre: [false, false],   /* [ordre direct, ordre inversé] menés au bout */
+    vu: [false, false, false],        /* les trois moments d'observation */
+    repos: false,
+    conclu: false,
+    carnet: TUBES.map(function () { return null; })
+  };
+}
+
+/* ==================================================================
+   8. GÉOMÉTRIE — toutes les cotes de la scène, en constantes nommées
+   ================================================================== */
+var W = 1120, H = 760;
+var BANC = 596, BOIS = 648, Y_BOUTONS = 706;
+var ETAG_Y = 268;                        /* le dessus de l'étagère */
+var TUBE = { w: 76, h: 218, bas: 566, dx: 190, x0: 250 };
+var R_TUBE = TUBE.w / 2;
+var Y_TUBE = TUBE.bas - TUBE.h;          /* le bord supérieur du tube */
+var HAUT_MAX = 150;                      /* px de colonne pour V_MAX */
+var V_MAX = 12;                          /* mL — un tube à essai de 16 mm */
+var PORTOIR = { x: 178, w: 524, rail: 414 };
+/* ⚠ TOUTES LES HAUTEURS D'ÉTIQUETTE DANS UN SEUL OBJET (SKILL §12.7). */
+var Y_ETIQ = { etagere: 262, tube: 616, legende: 150, temps: 168 };
+var ETAG = { x: 44, w: 690 };            /* l'étagère s'arrête AVANT le panneau */
+var PREUVE = { x: 756, y: 196, w: 322, h: 236 };
+var MOMENT_Y = 450, MOMENT_H = 42;       /* les trois bandeaux de conclusion */
+var ORDRE = { x: 44, y: 300, w: 160, h: 26 };
+var CHRONO = { cx: 118, cy: 424, r: 44 };
+var REPOS = {
+  eprouvette: { x: 118, y: 206 },
+  alcool: { x: 268, y: 208 },
+  huile: { x: 404, y: 208 },
+  b0: { x: 560, y: 224 }, b1: { x: 632, y: 224 }, b2: { x: 704, y: 224 }
+};
+function xTube(i) { return TUBE.x0 + i * TUBE.dx; }
+function hLiq(v) { return HAUT_MAX * borne(v / V_MAX, 0, 1); }
+function yLiq(v) { return TUBE.bas - hLiq(v); }
+/* Le contour d'un tube à essai : un cylindre à FOND ROND. C'est le fond rond,
+   plus que la paroi, qui fait reconnaître un tube à essai (SKILL §10.2). */
+function traceTube(x) {
+  var R = R_TUBE;
+  return "M" + pt(x - R, Y_TUBE) + " L" + pt(x - R, TUBE.bas - R) +
+         " A" + R.toFixed(1) + "," + R.toFixed(1) + " 0 0 0 " +
+         pt(x + R, TUBE.bas - R) + " L" + pt(x + R, Y_TUBE) + " Z";
+}
+
+/* ==================================================================
+   9. LES DÉGRADÉS PROPRES À CETTE PAILLASSE
+   ==================================================================
+   ⚠ Aucun dégradé n'est posé sur le CONTOUR d'un trait (SKILL §10.1) : la
+   boîte d'un segment vertical est plate, le dégradé est dégénéré, et le
+   navigateur ne peint rien — sans erreur et sans que le pilotage le voie.  */
+function defsPage() {
+  var g, k;
+  for (k in LIQUIDES) {
+    (function (k) {
+      var r = el("linearGradient", { id: "liq-" + k, x1: 0, y1: 0, x2: 0, y2: 1 });
+      r.appendChild(el("stop", { offset: 0, "stop-color": LIQUIDES[k].clair }));
+      r.appendChild(el("stop", { offset: 1, "stop-color": LIQUIDES[k].teinte }));
+      DEFS.appendChild(r);
+    })(k);
+  }
+  /* l'émulsion : trouble et LAITEUSE — ce sont les gouttelettes qui diffusent
+     la lumière au lieu de la laisser passer */
+  g = el("linearGradient", { id: "emulsion", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#f8f2e2" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#ddd3b6" }));
+  DEFS.appendChild(g);
+  /* le mélange eau + alcool : limpide, et d'une seule teinte */
+  g = el("linearGradient", { id: "melange", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#dcedf7" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#93c2dc" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "liege", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e6cd9a" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#ab8446" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "inox", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#f2f5f8" }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#aab4c0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#6b7480" }));
+  DEFS.appendChild(g);
+}
+
+/* ==================================================================
+   11. LE DÉCOR, L'ÉTAGÈRE ET LE PORTOIR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4,
+                             fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: BOIS - BANC,
+                             fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: BOIS, width: W, height: H - BOIS,
+                             fill: "url(#banc)" }));
+  ajout("poste", el("rect", { x: ETAG.x, y: ETAG_Y, width: ETAG.w, height: 13,
+    rx: 3, fill: "url(#bois)", stroke: "#a08a5e", "stroke-width": 1.4 }));
+  /* le portoir : deux montants, un rail arrière, une semelle */
+  ajout("poste", el("rect", { x: PORTOIR.x, y: PORTOIR.rail, width: PORTOIR.w,
+    height: 15, rx: 3, fill: "url(#bois)", stroke: "#a08a5e", "stroke-width": 1.2 }));
+  [PORTOIR.x, PORTOIR.x + PORTOIR.w - 15].forEach(function (px) {
+    ajout("poste", el("rect", { x: px, y: PORTOIR.rail, width: 15,
+      height: TUBE.bas + 26 - PORTOIR.rail, rx: 3, fill: "url(#bois)",
+      stroke: "#a08a5e", "stroke-width": 1.2 }));
+  });
+  ajout("poste", el("rect", { x: PORTOIR.x, y: TUBE.bas + 12, width: PORTOIR.w,
+    height: 22, rx: 4, fill: "url(#bois)", stroke: "#a08a5e", "stroke-width": 1.4 }));
+  txt("fond", W - 30, Y_ETIQ.legende,
+      "schéma habillé — la hauteur de chaque couche est à l'échelle du volume",
+      { ancre: "end", taille: 10.5, couleur: "#8391a1" });
+  txt("fond", W - 30, Y_ETIQ.temps, "temps × " + ACCEL.toFixed(0) +
+      " pendant le repos", { ancre: "end", taille: 11, couleur: ORANGE });
+}
+
+/* ==================================================================
+   12. LES TROIS TUBES À ESSAI
+   ==================================================================
+   ⚠ L'INTÉRIEUR ET LE LIQUIDE AVANT LA PAROI (SKILL §8) : peinte d'abord, la
+   paroi recouvre le liquide et le tube se lit plein… et gris.
+
+   Chaque tube est UN SEUL groupe : c'est lui qu'on translate pour l'agiter,
+   et le liquide suit sans qu'on ait à le redessiner.                        */
+var TUB_N = [];
+function construireTubes() {
+  TUBES.forEach(function (tb, i) {
+    var x = xTube(i), R = R_TUBE, d = traceTube(x), j;
+    var g = ajout("poste", el("g", { transform: "translate(0,0)" }));
+    var cp = el("clipPath", { id: "clipTube" + i });
+    cp.appendChild(el("path", { d: d }));
+    DEFS.appendChild(cp);
+
+    ombreAuSol(x, TUBE.bas + 30, R + 4, .2);
+    g.appendChild(el("path", { d: d, fill: "#f7fbfd", "pointer-events": "none" }));
+    /* tout le liquide vit sous le CLIP : il ne peut pas déborder du verre */
+    var gl = g.appendChild(el("g", { "clip-path": "url(#clipTube" + i + ")",
+                                     "pointer-events": "none" }));
+    var bas = gl.appendChild(el("rect", { x: x - R, y: TUBE.bas, width: TUBE.w,
+      height: 0, fill: "url(#liq-eau)", opacity: 0 }));
+    var mil = gl.appendChild(el("rect", { x: x - R, y: TUBE.bas, width: TUBE.w,
+      height: 0, fill: "url(#emulsion)", opacity: 0 }));
+    var haut = gl.appendChild(el("rect", { x: x - R, y: TUBE.bas, width: TUBE.w,
+      height: 0, fill: "url(#liq-huile)", opacity: 0 }));
+    /* les gouttelettes de l'émulsion : elles GROSSISSENT en coalesçant */
+    var gouttes = gl.appendChild(el("g", { opacity: 0 }));
+    for (j = 0; j < 18; j++) {
+      gouttes.appendChild(el("circle", { cx: 0, cy: 0, r: 2.4, fill: "#f7ecc9",
+        stroke: "#c9a94f", "stroke-width": .7 }));
+    }
+    var surf = gl.appendChild(el("ellipse", { cx: x, cy: TUBE.bas, rx: R - 2,
+      ry: 4.5, fill: "#ffffff", opacity: 0 }));
+    /* la paroi, PAR-DESSUS */
+    g.appendChild(el("path", { d: d, fill: "url(#verre)", "pointer-events": "none" }));
+    g.appendChild(el("rect", { x: x - R + 9, y: Y_TUBE + 14, width: 6,
+      height: TUBE.h - 74, rx: 3, fill: "#ffffff", opacity: .62,
+      "pointer-events": "none" }));
+    g.appendChild(el("path", { d: d, fill: "none", stroke: "#7f93a6",
+      "stroke-width": 3, "pointer-events": "none" }));
+    g.appendChild(el("ellipse", { cx: x, cy: Y_TUBE, rx: R + 3, ry: 5,
+      fill: "none", stroke: "#7f93a6", "stroke-width": 3.2,
+      "pointer-events": "none" }));
+    [5, 10].forEach(function (v) {
+      g.appendChild(el("line", { x1: x + R - 19, y1: yLiq(v), x2: x + R - 5,
+        y2: yLiq(v), stroke: "#8ba3b6", "stroke-width": 1.5,
+        "pointer-events": "none" }));
+      g.appendChild(el("text", { x: x + R - 22, y: yLiq(v) + 4,
+        "text-anchor": "end", "font-size": 9.5, fill: "#7d8c9b",
+        "font-family": "Arial, Helvetica, sans-serif",
+        "pointer-events": "none" }, v + ""));
+    });
+    /* la zone cliquable : LIRE le tube, c'est le savoir-faire n° 3 */
+    var z = g.appendChild(el("rect", { x: x - R, y: Y_TUBE, width: TUBE.w,
+      height: TUBE.h, rx: 6, fill: "#ffffff", "fill-opacity": 0.001,
+      "data-act": "tube-" + i, cursor: "pointer" }));
+    z.addEventListener("click", function () { cliquerTube(i); });
+
+    var et = txt("avant", x, Y_ETIQ.tube, "", { taille: 12, gras: true,
+      couleur: "#5b4a2c", halo: "#e6d5b4" });
+    var lu = txt("avant", x, Y_TUBE - 24, "", { taille: 11, couleur: GRIS,
+      halo: true });
+    TUB_N.push({ g: g, bas: bas, mil: mil, haut: haut, gouttes: gouttes,
+                 surf: surf, etiq: et, lect: lu, x: x, i: i });
+  });
+}
+
+/* ==================================================================
+   13. CE QUI SE MANIPULE — l'éprouvette, deux flacons, trois bouchons
+   ==================================================================
+   ⚠ Chaque objet reçoit une PLAQUE DE PRÉHENSION aux cotes de sa silhouette
+   (SKILL §12.38) : un objet fin n'offre au pointeur presque rien, et le
+   glisser ne démarrerait pas — sans erreur, sans refus, sans rien.          */
+var EPROUVETTE = null, FLACONS = [], BOUCHONS = [];
+function flacon(cle, nom, r) {
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "flacon-" + cle }));
+  prehension(g, -32, -58, 64, 116);
+  g.appendChild(el("rect", { x: -25, y: -18, width: 50, height: 64, rx: 7,
+    fill: "#eef4f8", stroke: "#7f93a6", "stroke-width": 2.2 }));
+  g.appendChild(el("rect", { x: -21, y: -4, width: 42, height: 46, rx: 4,
+    fill: "url(#liq-" + cle + ")", "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -18, y: -14, width: 6, height: 54, rx: 3,
+    fill: "#ffffff", opacity: .55, "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -9, y: -38, width: 18, height: 22, rx: 3,
+    fill: "#dbe7ef", stroke: "#7f93a6", "stroke-width": 2,
+    "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -12, y: -48, width: 24, height: 12, rx: 3,
+    fill: "url(#liege)", "pointer-events": "none" }));
+  g.appendChild(el("text", { x: 0, y: 62, "text-anchor": "middle",
+    "font-size": 11.5, "font-weight": "bold", fill: "#41586b",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none",
+    "paint-order": "stroke", stroke: "#f4f7fa", "stroke-width": 3.4 }, nom));
+  var o = { type: "flacon", cle: cle, nom: nom, g: g, fige: false,
+            x: r.x, y: r.y };
+  brancherObjet(o);
+  placer(o, o.x, o.y);
+  return o;
+}
+function bouchon(i) {
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "bouchon-" + i }));
+  prehension(g, -22, -20, 44, 40);
+  g.appendChild(el("path", { d: "M" + pt(-13, 11) + " L" + pt(-10, -9) +
+    " L" + pt(10, -9) + " L" + pt(13, 11) + " Z", fill: "url(#liege)",
+    stroke: "#8a6c36", "stroke-width": 1.4, "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: 0, cy: -9, rx: 10, ry: 3.4,
+    fill: "#f0dcae", stroke: "#8a6c36", "stroke-width": 1.2,
+    "pointer-events": "none" }));
+  var o = { type: "bouchon", i: i, g: g, fige: false, surTube: null,
+            x: REPOS["b" + i].x, y: REPOS["b" + i].y };
+  brancherObjet(o);
+  placer(o, o.x, o.y);
+  return o;
+}
+function construireObjets() {
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "eprouvette" }));
+  prehension(g, -24, -56, 48, 112);
+  g.appendChild(el("rect", { x: -16, y: -48, width: 32, height: 94, rx: 4,
+    fill: "#e9f3f9", stroke: "#7f93a6", "stroke-width": 2.4 }));
+  g.appendChild(el("rect", { x: -13, y: -8, width: 26, height: 52,
+    fill: "url(#liq-eau)", opacity: .9, "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -12, y: -46, width: 5, height: 88, rx: 2.5,
+    fill: "#ffffff", opacity: .6, "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: 0, cy: 50, rx: 21, ry: 6, fill: "#cfdae6",
+    stroke: "#7f93a6", "stroke-width": 2, "pointer-events": "none" }));
+  g.appendChild(el("text", { x: 0, y: 70, "text-anchor": "middle",
+    "font-size": 11.5, "font-weight": "bold", fill: "#41586b",
+    "pointer-events": "none", "font-family": "Arial, Helvetica, sans-serif",
+    "paint-order": "stroke", stroke: "#f4f7fa", "stroke-width": 3.4 }, "eau"));
+  EPROUVETTE = { type: "eprouvette", g: g, fige: false,
+                 x: REPOS.eprouvette.x, y: REPOS.eprouvette.y };
+  brancherObjet(EPROUVETTE);
+  placer(EPROUVETTE, EPROUVETTE.x, EPROUVETTE.y);
+
+  /* Un flacon par SECOND LIQUIDE cité dans le tableau — jamais une liste
+     écrite dans le code. Un liquide inconnu de `LIQUIDES` est DIT, pas
+     deviné (§0, règle R4 du contrat de la valise). */
+  TUBES.forEach(function (t) {
+    if (t.temoin || !LIQUIDES[t.cle] || !REPOS[t.cle]) return;
+    FLACONS.push(flacon(t.cle, LIQUIDES[t.cle].nom, REPOS[t.cle]));
+  });
+  TUBES.forEach(function (t, i) { BOUCHONS.push(bouchon(i)); });
+}
+function flaconDe(cle) {
+  var i;
+  for (i = 0; i < FLACONS.length; i++) if (FLACONS[i].cle === cle) return FLACONS[i];
+  return null;
+}
+function bouchonLibre() {
+  var i;
+  for (i = 0; i < BOUCHONS.length; i++) if (BOUCHONS[i].surTube === null) return BOUCHONS[i];
+  return null;
+}
+
+/* ==================================================================
+   14. LE FILET QUI COULE
+   ==================================================================
+   Ce qui se passe doit se VOIR se faire (SKILL §1.2 bis) : le filet coule et
+   le niveau monte, jamais d'un saut.                                        */
+var gFilet = null;
+function construireEffets() {
+  gFilet = ajout("avant", el("rect", { x: 0, y: 0, width: 6, height: 0,
+    fill: "#9ecbe4", opacity: 0, rx: 3, "pointer-events": "none" }));
+}
+function filetVers(i, cle, y0, ms, fin) {
+  var x = xTube(i);
+  gFilet.setAttribute("x", x - 3);
+  gFilet.setAttribute("fill", LIQUIDES[cle] ? LIQUIDES[cle].teinte : "#9ecbe4");
+  gFilet.setAttribute("opacity", .92);
+  anim(ms, function (u) {
+    gFilet.setAttribute("y", y0);
+    gFilet.setAttribute("height", Math.max(0, (Y_TUBE + 16) - y0));
+    dessinerTube(i, u);
+  }, function () {
+    gFilet.setAttribute("opacity", 0);
+    dessinerTube(i, 1);
+    if (fin) fin();
+  });
+}
+
+/* ==================================================================
+   16. LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                            */
+function construireBoutons() {
+  ACTES = ["remplir", "ajouter", "inverser", "agiter", "observer",
+           "reposer", "conclure"];
+  rangeeBoutons(W, Y_BOUTONS, [
+    ["Verser " + nb(PROTO.v, 0) + " mL", "d'eau"],
+    ["Ajouter le second", "liquide"],
+    ["Inverser l'ordre", "du versement"],
+    ["Boucher et agiter", T_AGIT + " s"],
+    ["Observer", "à ce moment"],
+    ["Laisser reposer", motDuree(Math.round(REG.t / 60)) + " minutes"],
+    ["Comparer", "les trois moments"]
+  ], ACTES);
+  ACTES.forEach(function (a) {
+    BOUTONS[a].noeud.addEventListener("click", function () { agir(a); });
+  });
+}
+
+/* ==================================================================
+   17. CE QUE CHAQUE TUBE PEUT ENCORE RECEVOIR
+   ==================================================================
+   ⚠ L'ORDRE DU VERSEMENT EST UN ÉTAT, PAS UNE RÈGLE ÉCRITE. En mode inversé,
+   c'est le second liquide qui entre le premier — et l'arrivée est la même,
+   parce que `couches()` TRIE par masse volumique.                           */
+function aDejaEau(t) {
+  var k;
+  for (k = 0; k < t.verses.length; k++) if (t.verses[k].cle === "eau") return true;
+  return false;
+}
+function peutRecevoirEau(i) {
+  var t = ETAT.tube[i];
+  if (aDejaEau(t)) return false;
+  if (TUBES[i].temoin) return true;
+  return ETAT.inverse ? !!t.second : true;
+}
+function peutRecevoirSecond(i) {
+  var t = ETAT.tube[i];
+  if (TUBES[i].temoin || t.second) return false;
+  if (!LIQUIDES[TUBES[i].cle]) return false;
+  return ETAT.inverse ? true : aDejaEau(t);
+}
+function prochainSansEau() {
+  var i;
+  for (i = 0; i < ETAT.tube.length; i++) if (!aDejaEau(ETAT.tube[i])) return i;
+  return -1;
+}
+function prochainAEau() {
+  var i;
+  for (i = 0; i < ETAT.tube.length; i++) if (peutRecevoirEau(i)) return i;
+  return -1;
+}
+function prochainSansSecond() {
+  var i;
+  for (i = 0; i < ETAT.tube.length; i++) {
+    if (TUBES[i].temoin || !LIQUIDES[TUBES[i].cle]) continue;
+    if (!ETAT.tube[i].second) return i;
+  }
+  return -1;
+}
+function prochainASecond() {
+  var i;
+  for (i = 0; i < ETAT.tube.length; i++) if (peutRecevoirSecond(i)) return i;
+  return -1;
+}
+function prochainSansBouchon() {
+  var i;
+  for (i = 0; i < ETAT.tube.length; i++) {
+    if (!ETAT.tube[i].bouche && ETAT.tube[i].verses.length) return i;
+  }
+  return -1;
+}
+function tousBouches() {
+  return ETAT.tube.every(function (t) { return t.bouche; });
+}
+function tousAgites() {
+  return ETAT.tube.every(function (t) { return t.agite; });
+}
+function toutVerse() {
+  return prochainSansEau() < 0 && prochainSansSecond() < 0;
+}
+/* Le MOMENT d'observation se DÉDUIT de l'état, jamais d'un compteur : c'est
+   lui qui décide de ce que l'œil voit, et de la colonne qu'on renseigne. */
+function momentAffiche() {
+  if (!tousAgites()) return 0;
+  return ETAT.repos ? 2 : 1;
+}
+var NOM_MOMENT = ["avant agitation", "juste après l'agitation",
+                  "après " + mmss(180) + " de repos"];
+
+/* ==================================================================
+   17 bis. LES ZONES DE DÉPÔT
+   ==================================================================
+   Les zones sont rendues de la plus PETITE à la plus GRANDE (SKILL §12.16) :
+   c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du tableau. */
+function zoneTube(i, quoi) {
+  return { type: "tube", i: i, x: xTube(i), y: TUBE.bas - TUBE.h / 2,
+           r: TUBE.dx * 0.58, hw: TUBE.w / 2 + 6, hh: TUBE.h / 2, quoi: quoi };
+}
+function emplacements(o) {
+  var z = [], i;
+  if (o.type === "eprouvette") {
+    for (i = 0; i < ETAT.tube.length; i++) {
+      if (peutRecevoirEau(i)) z.push(zoneTube(i, "l'eau dans un tube qui n'en a pas"));
+    }
+  } else if (o.type === "flacon") {
+    for (i = 0; i < ETAT.tube.length; i++) {
+      if (peutRecevoirSecond(i)) z.push(zoneTube(i, "le second liquide dans un tube"));
+    }
+  } else if (o.type === "bouchon") {
+    for (i = 0; i < ETAT.tube.length; i++) {
+      if (!ETAT.tube[i].bouche && ETAT.tube[i].verses.length) {
+        z.push(zoneTube(i, "le bouchon sur un tube qu'on n'a pas encore bouché"));
+      }
+    }
+  }
+  z.sort(function (a, b) { return a.r - b.r; });
+  return z;
+}
+function deposer(o, z, depart) {
+  if (!z) {
+    volerVers(o, reposDe(o).x, reposDe(o).y, 420);
+    signaler(refusDe(o));
+    return;
+  }
+  if (o.type === "eprouvette") { verserEau(z.i, o); return; }
+  if (o.type === "flacon") { verserSecond(z.i, o); return; }
+  if (o.type === "bouchon") { poserBouchon(z.i, o); return; }
+}
+function reposDe(o) {
+  if (o.type === "bouchon") return REPOS["b" + o.i];
+  if (o.type === "flacon") return REPOS[o.cle];
+  return REPOS.eprouvette;
+}
+/* Un refus n'est jamais muet : il dit la raison, et il CITE la fiche. */
+function refusDe(o) {
+  var n;
+  if (o.type === "eprouvette") {
+    if (prochainSansEau() < 0) return "Les " + ETAT.tube.length +
+      " tubes ont déjà leur eau.";
+    if (ETAT.inverse) return "Ordre inversé : le second liquide entre le " +
+      "PREMIER. Verser l'alcool et l'huile, puis revenir à l'eau.";
+    return "Verser l'eau DANS un tube qui n'en a pas encore :" +
+      citerProto(/verser environ/i);
+  }
+  if (o.type === "flacon") {
+    if (prochainSansSecond() < 0) return "Les deux tubes ont reçu leur second " +
+      "liquide. Le troisième n'en reçoit aucun : c'est le témoin," +
+      citerProto(/t[ée]moin/i);
+    if (!ETAT.inverse && prochainASecond() < 0) return "Verser d'abord l'eau :" +
+      citerProto(/verser environ/i);
+    return "Poser le flacon SUR un tube — pas sur le témoin, qui ne reçoit rien.";
+  }
+  n = prochainSansBouchon();
+  if (n < 0) return "Les tubes qui portent quelque chose sont déjà bouchés.";
+  return "Poser le bouchon SUR un tube :" + citerSecu(/boucher les tubes/i);
+}
+/* Cliquer un tube : le LIRE. C'est le savoir-faire n° 3 de la fiche —
+   observer un même système à trois moments et noter l'évolution. */
+function cliquerTube(i) {
+  var t = ETAT.tube[i], m = momentAffiche(), e = etatTube(t, m);
+  if (!t.verses.length) {
+    noter("Tube « " + TUBES[i].titre + " » : vide. Il attend ses " +
+          nb(REG.v, 0) + " mL.", null);
+  } else if (e.temoin) {
+    noter("Tube « " + TUBES[i].titre + " » (témoin) : " + nb(REG.v, 0) +
+          " mL d'eau seule, et rien d'autre. " + majuscule(aspectTube(t, m)) +
+          ". C'est lui qui montre que l'agitation, à elle seule, ne trouble " +
+          "pas un liquide.", null);
+  } else {
+    noter("Tube « " + TUBES[i].titre + " », " + NOM_MOMENT[m] + " : " +
+          majuscule(aspectTube(t, m)) + " — " + e.phases + " partie" +
+          pluriel(e.phases, "s") + ". Séparation accomplie à " +
+          nb(e.sep * 100, 0) + " %.", null);
+  }
+  succes();
+  avancer();
+}
+function cliquerObjet(o) {
+  if (o.type === "flacon") {
+    noter("Flacon " + du(o.nom) + " — masse volumique " +
+          nb(LIQUIDES[o.cle].rho, 1) + " kg·m⁻³, contre " +
+          nb(PHYS.RHO_EAU.v, 1) + " pour l'eau. " +
+          (LIQUIDES[o.cle].rho < PHYS.RHO_EAU.v ? "Plus léger que l'eau : " +
+           "s'il ne s'y dissout pas, il finira AU-DESSUS."
+           : "Plus lourd que l'eau : il finirait au-dessous."), null);
+    succes();
+  }
+}
+
+/* ==================================================================
+   18. LES GESTES — chacun DOUBLE un glisser, et chacun s'ANIME
+   ==================================================================
+   ⚠ L'ÉTAT EST POSÉ TOUT DE SUITE, l'image ensuite (SKILL §6.2). Le solveur
+   a déjà l'état d'arrivée quand l'animation commence : elle ne décide de
+   rien, elle le rejoint.                                                    */
+function verserEau(i, o) {
+  var t = ETAT.tube[i], x = xTube(i);
+  t.verses.push({ cle: "eau", v: REG.v });          /* l'état d'abord */
+  volerVers(o, x, Y_TUBE - 62, 400);
+  tard(function () {
+    filetVers(i, "eau", Y_TUBE - 46, 620, function () {
+      volerVers(o, REPOS.eprouvette.x, REPOS.eprouvette.y, 380);
+      armer();
+      avancer();
+    });
+  }, 400);
+  noter(nb(REG.v, 0) + " mL d'eau versés dans le tube « " + TUBES[i].titre +
+        " »" + (ETAT.inverse ? " — par-DESSUS le liquide déjà là." : "."), true);
+  succes();
+}
+function verserSecond(i, o) {
+  var t = ETAT.tube[i], x = xTube(i);
+  if (TUBES[i].temoin) {
+    volerVers(o, REPOS[o.cle].x, REPOS[o.cle].y, 420);
+    signaler("Pas dans le témoin :" + citerProto(/t[ée]moin/i));
+    return;
+  }
+  t.verses.push({ cle: o.cle, v: REG.v });          /* l'état d'abord */
+  t.second = o.cle;
+  volerVers(o, x, Y_TUBE - 62, 440);
+  tard(function () {
+    filetVers(i, o.cle, Y_TUBE - 46, 620, function () {
+      volerVers(o, REPOS[o.cle].x, REPOS[o.cle].y, 380);
+      armer();
+      avancer();
+    });
+  }, 440);
+  noter(nb(REG.v, 0) + " mL " + du(o.nom) + " versés dans « " + TUBES[i].titre +
+        " ». Rien n'est encore agité : les deux liquides sont superposés, le " +
+        "plus léger au-dessus.", true);
+  succes();
+}
+/* ⚠ LE VOL EST DÉLIBÉRÉMENT LONG, et ce n'est pas de la coquetterie. Un
+   trajet de 460 ms ne laisse que quatre images dans la fenêtre où
+   `verifier_animation.py` photographie la scène, et les deux premières
+   arrondissent au même dixième de pixel que le départ : le contrôle rendait
+   « SAUT » une fois sur deux, sur un geste pourtant animé. On sépare donc
+   l'APPROCHE au-dessus du tube de l'ENFONCEMENT du bouchon — deux mouvements
+   qui se suivent, et la classe voit ce qu'elle devra faire de sa main.      */
+function poserBouchon(i, o) {
+  var t = ETAT.tube[i], x = xTube(i);
+  t.bouche = true;                                   /* l'état d'abord */
+  o.surTube = i;
+  volerVers(o, x, Y_TUBE - 30, 520);                 /* l'approche */
+  tard(function () {
+    volerVers(o, x, Y_TUBE - 4, 320);                /* l'enfoncement */
+  }, 530);
+  tard(function () {
+    armer();
+    avancer();
+  }, 870);
+  noter("Tube « " + TUBES[i].titre + " » bouché. On tient le bouchon avec le " +
+        "pouce pendant l'agitation :" + citerSecu(/bouchon/i), true);
+  succes();
+}
+/* Les trois tubes s'agitent DE LA MÊME FAÇON : c'est la fiche qui l'exige, et
+   c'est ce qui rend le témoin comparable aux deux autres. */
+function secouer(ms, fin) {
+  anim(ms, function (u) {
+    var dx = Math.sin(u * 27) * 10 * (1 - Math.abs(2 * u - 1) * 0.35);
+    TUB_N.forEach(function (n) {
+      n.g.setAttribute("transform", "translate(" + dx.toFixed(1) + ",0)");
+    });
+    BOUCHONS.forEach(function (b) {
+      if (b.surTube === null) return;
+      b.g.setAttribute("transform", "translate(" + (b.x + dx).toFixed(1) +
+        "," + b.y.toFixed(1) + ")");
+    });
+  }, function () {
+    TUB_N.forEach(function (n) { n.g.setAttribute("transform", "translate(0,0)"); });
+    BOUCHONS.forEach(function (b) {
+      if (b.surTube !== null) placer(b, b.x, b.y);
+    });
+    if (fin) fin();
+  });
+}
+function agiterTous() {
+  ETAT.tube.forEach(function (t) {                   /* l'état d'abord */
+    t.agite = true;
+    t.tRepos = 0;
+  });
+  ETAT.repos = false;
+  ETAT.vu[1] = false;
+  ETAT.vu[2] = false;
+  secouer(900, function () {
+    ETAT.tube.forEach(function (t, i) { dessinerTube(i, 1); });
+    armer();
+    avancer();
+  });
+  noter("Les " + ETAT.tube.length + " tubes agités " + T_AGIT + " s, de la " +
+        "même façon. Observer MAINTENANT, sans les reposer : c'est l'étape " +
+        "que la fiche fait juste après.", true);
+  succes();
+}
+/* ⚠ LE TEMPS SE JOUE, IL NE SE SAUTE PAS. Le repos est intégré par tranches
+   de PAS_SIM secondes de temps simulé, quel que soit le facteur de
+   compression : le résultat ne dépend donc pas de la vitesse d'affichage
+   (SKILL §12bis.6, le piège du pas de l'accéléré).                          */
+function reposer() {
+  var duree = REG.t, tics = Math.max(1, Math.round(duree / PAS_SIM));
+  var ms = Math.max(600, Math.round(duree / ACCEL * 1000));
+  ETAT.repos = true;                                 /* l'état d'arrivée, tout de suite */
+  ETAT.tube.forEach(function (t) { t.tRepos = duree; });
+  anim(ms, function (u) {
+    var t = Math.round(u * tics) * PAS_SIM;
+    ETAT.tube.forEach(function (x) { x.tRepos = t; });
+    ETAT.tube.forEach(function (x, i) { dessinerTube(i, 1); });
+    majJaugeRepos();
+    majLectures();
+  }, function () {
+    ETAT.tube.forEach(function (x) { x.tRepos = duree; });
+    ETAT.tube.forEach(function (x, i) { dessinerTube(i, 1); });
+    majJaugeRepos();
+    armer();
+    avancer();
+  });
+  noter("Repos de " + mmss(duree) + " sans toucher aux tubes. Le temps court " +
+        "à × " + ACCEL.toFixed(0) + " — et c'est le repos, lui seul, qui " +
+        "révèle la nature du mélange.", true);
+  succes();
+}
+/* Observer : le geste qui remplit UNE colonne du tableau, celle du moment où
+   l'on est. Trois moments, trois colonnes — c'est le plan de la fiche. */
+function observer() {
+  var m = momentAffiche(), k;
+  if (ETAT.vu[m]) {
+    signaler("Ce moment est déjà relevé. " + (m === 0
+      ? "Boucher les tubes et les agiter, maintenant."
+      : (m === 1 ? "Laisser reposer " + mmss(REG.t) + ", puis observer de nouveau."
+                 : "Comparer les trois moments pour conclure.")));
+    return;
+  }
+  ETAT.vu[m] = true;                                 /* l'état d'abord */
+  ETAT.tube.forEach(function (t, i) {
+    var e = etatTube(t, m);
+    if (!ETAT.carnet[i]) ETAT.carnet[i] = { m: [null, null, null], type: "—" };
+    ETAT.carnet[i].m[m] = { aspect: aspectTube(t, m), phases: e.phases,
+                            sep: e.sep, mis: e.mis };
+    ETAT.carnet[i].type = typeTube(t);
+  });
+  /* la loupe passe d'un tube à l'autre : on VOIT qu'on observe */
+  anim(950, function (u) {
+    var i = Math.min(ETAT.tube.length - 1, Math.floor(u * ETAT.tube.length));
+    gLoupe.setAttribute("opacity", .95);
+    gLoupe.setAttribute("transform", "translate(" + xTube(i).toFixed(1) +
+      "," + (TUBE.bas - TUBE.h / 2).toFixed(1) + ")");
+  }, function () {
+    gLoupe.setAttribute("opacity", 0);
+    armer();
+    avancer();
+  });
+  for (k = 0; k < ETAT.tube.length; k++) revelerCellule(k, MOMENTS[m]);
+  if (m === 2) {
+    for (k = 0; k < ETAT.tube.length; k++) {
+      revelerCellule(k, C_TYPE);
+      verifierContreFiche(k);
+    }
+    ETAT.faitDansLOrdre[ETAT.inverse ? 1 : 0] = true;
+  }
+  majCarnet();
+  noter("Relevé « " + NOM_MOMENT[m] + " » consigné pour les " +
+        ETAT.tube.length + " tubes.", true);
+  succes();
+}
+/* L'inversion de l'ordre : elle ne se DIT pas, elle se FAIT. Le mode change
+   ce que le glisser-déposer autorise, et l'on refait l'expérience à l'envers.
+   L'arrivée est la même, et c'est la preuve que c'est la densité qui
+   commande — pas la main qui verse.                                         */
+function inverserOrdre() {
+  var quelqueChose = ETAT.tube.some(function (t) { return t.verses.length; });
+  if (quelqueChose) {
+    signaler("Trop tard pour ce coup-ci : il y a déjà du liquide dans les " +
+             "tubes. Presser « Recommencer » (⟳), puis inverser l'ordre avant " +
+             "de verser.");
+    return;
+  }
+  ETAT.inverse = !ETAT.inverse;                      /* l'état d'abord */
+  anim(760, function (u) {
+    var a = ETAT.inverse ? u : 1 - u;
+    gOrdre.setAttribute("opacity", (0.35 + 0.65 * a).toFixed(2));
+    gOrdre.setAttribute("transform", "translate(0," +
+      (-8 * Math.sin(u * Math.PI)).toFixed(1) + ")");
+    fOrdre.setAttribute("width", (18 + (ORDRE.w - 24) * a).toFixed(1));
+  }, function () {
+    gOrdre.setAttribute("transform", "translate(0,0)");
+    armer();
+    avancer();
+  });
+  noter(ETAT.inverse
+    ? "Ordre INVERSÉ : c'est le second liquide qui entre le premier, l'eau " +
+      "par-dessus. Le modèle prédit exactement la même arrivée — à vérifier."
+    : "Ordre du protocole rétabli : l'eau d'abord, le second liquide ensuite.",
+    true);
+  succes();
+}
+function conclure() {
+  if (!ETAT.vu[2]) {
+    signaler("Observer après le repos d'abord : c'est ce relevé-là qui " +
+             "départage les deux tubes.");
+    return;
+  }
+  ETAT.conclu = true;                                /* l'état d'abord */
+  anim(900, function (u) {
+    casesMoment.forEach(function (c, i) {
+      c.g.setAttribute("opacity", borne(u * 3 - i, 0, 1).toFixed(2));
+    });
+  }, function () {
+    armer();
+    avancer();
+  });
+  var mis = [], non = [];
+  ETAT.tube.forEach(function (t, i) {
+    if (TUBES[i].temoin || !t.second) return;
+    (etatTube(t, 2).mis ? mis : non).push(TUBES[i].nom);
+  });
+  noter("On ne peut se prononcer qu'APRÈS le repos : juste après l'agitation, " +
+        "les deux tubes se ressemblent. " + (mis.join(", ") || "aucun") +
+        " reste homogène ; " + (non.join(", ") || "aucun") + " a retrouvé " +
+        "ses deux parties.", true);
+  succes();
+  if (ETAT.vu[2]) $("concl").classList.remove("masque");
+}
+/* Le chemin COMMUN au bouton et au glisser (SKILL §12.13). */
+function agir(a) {
+  var i;
+  if (a === "remplir") {
+    i = prochainAEau();
+    if (i < 0) { signaler(refusDe(EPROUVETTE)); return; }
+    verserEau(i, EPROUVETTE);
+    return;
+  }
+  if (a === "ajouter") {
+    i = prochainASecond();
+    if (i < 0) { signaler(refusDe(FLACONS[0] || EPROUVETTE)); return; }
+    verserSecond(i, flaconDe(TUBES[i].cle) || FLACONS[0]);
+    return;
+  }
+  if (a === "inverser") { inverserOrdre(); return; }
+  if (a === "agiter") {
+    if (!toutVerse()) {
+      signaler("Tous les tubes ne sont pas prêts : il manque " +
+               (prochainSansEau() >= 0 ? "de l'eau" : "un second liquide") + ".");
+      return;
+    }
+    i = prochainSansBouchon();
+    if (i >= 0) { poserBouchon(i, bouchonLibre() || BOUCHONS[i]); return; }
+    if (tousAgites()) {
+      signaler("Les tubes sont déjà agités. " + (ETAT.vu[1]
+        ? "Laisser reposer, maintenant." : "Observer AUSSITÔT, sans reposer."));
+      return;
+    }
+    agiterTous();
+    return;
+  }
+  if (a === "observer") { observer(); return; }
+  if (a === "reposer") {
+    if (!tousAgites()) {
+      signaler("Agiter d'abord :" + citerProto(/agiter/i));
+      return;
+    }
+    if (!ETAT.vu[1]) {
+      signaler("Observer AUSSITÔT après l'agitation d'abord :" +
+               citerProto(/imm[ée]diatement/i) +
+               " — c'est ce relevé-là qui montre que l'émulsion trompe l'œil.");
+      return;
+    }
+    if (ETAT.repos) { signaler("Le repos est déjà passé. Observer de nouveau."); return; }
+    reposer();
+    return;
+  }
+  if (a === "conclure") { conclure(); return; }
+}
+
+/* ==================================================================
+   19. LE RENDU — le dessin RELIT le modèle, il ne le recopie pas (§12.18)
+   ================================================================== */
+var gLoupe = null, gOrdre = null, fOrdre = null, gPreuve = null, ordreTxt = null;
+var casesMoment = [], preuveN = null, jaugeRepos = null;
+/* ⚠ UNE PHASE MINUTÉE DOIT SE VOIR COURIR. Sans jauge, les trois minutes de
+   repos ne changeaient à l'écran que la position de gouttelettes déjà
+   presque arrivées : le contrôle d'animation y voyait un SAUT, et la classe
+   n'aurait vu, elle non plus, rien bouger pendant la moitié de l'attente. */
+function majJaugeRepos() {
+  if (!jaugeRepos) return;
+  var u = REG.t > 0 ? borne(ETAT.tube[0].tRepos / REG.t, 0, 1) : 1;
+  jaugeRepos.setAttribute("width", (PORTOIR.w * u).toFixed(1));
+  jaugeRepos.setAttribute("opacity", ETAT.repos ? .95 : 0);
+}
+function construireLecture() {
+  ajout("ui", el("rect", { x: PORTOIR.x, y: 628, width: PORTOIR.w, height: 9,
+    rx: 4.5, fill: "#e2d5b6", "pointer-events": "none" }));
+  jaugeRepos = ajout("ui", el("rect", { x: PORTOIR.x, y: 628, width: 0,
+    height: 9, rx: 4.5, fill: GOLD, opacity: 0, "pointer-events": "none" }));
+  gLoupe = ajout("ui", el("g", { opacity: 0, "pointer-events": "none" }));
+  gLoupe.appendChild(el("rect", { x: -TUBE.w / 2 - 11, y: -TUBE.h / 2 - 10,
+    width: TUBE.w + 22, height: TUBE.h + 20, rx: 14, fill: "none",
+    stroke: GOLD, "stroke-width": 3.6 }));
+
+  /* le bandeau de l'ordre du versement — sa jauge se remplit quand on inverse */
+  gOrdre = ajout("ui", el("g", { opacity: .35, "pointer-events": "none" }));
+  gOrdre.appendChild(el("rect", { x: ORDRE.x, y: ORDRE.y, width: ORDRE.w,
+    height: ORDRE.h, rx: 13, fill: "#fdf6e6", stroke: GOLD,
+    "stroke-width": 1.6 }));
+  fOrdre = gOrdre.appendChild(el("rect", { x: ORDRE.x + 3, y: ORDRE.y + 3,
+    width: 18, height: ORDRE.h - 6, rx: 10, fill: "#f6e3b4" }));
+  ordreTxt = gOrdre.appendChild(el("text", { x: ORDRE.x + ORDRE.w / 2,
+    y: ORDRE.y + 18, "text-anchor": "middle", "font-size": 11,
+    "font-weight": "bold", fill: "#8a5a00",
+    "font-family": "Arial, Helvetica, sans-serif" }, ""));
+
+  /* LA PREUVE : le MÊME solveur, lancé sur les deux ordres de versement.
+     Ce n'est pas une phrase — c'est le solveur qui répond deux fois. */
+  gPreuve = ajout("ui", el("g", { "pointer-events": "none" }));
+  gPreuve.appendChild(el("rect", { x: PREUVE.x, y: PREUVE.y, width: PREUVE.w,
+    height: PREUVE.h, rx: 10, fill: "#ffffffee", stroke: LIGNE,
+    "stroke-width": 1.6 }));
+  gPreuve.appendChild(el("text", { x: PREUVE.x + 14, y: PREUVE.y + 20,
+    "font-size": 10.5, "font-weight": "bold", fill: GOLD,
+    "font-family": "Arial, Helvetica, sans-serif" },
+    "L'ORDRE DU VERSEMENT CHANGE-T-IL L'ARRIVÉE ?"));
+  preuveN = { minis: [], verdict: null };
+  [["versé eau,", "puis le second"], ["versé le second,", "puis l'eau"]
+  ].forEach(function (f, i) {
+    var mx = PREUVE.x + 84 + i * 154, my = PREUVE.y + 62, mw = 34, mh = 88;
+    gPreuve.appendChild(el("text", { x: mx, y: PREUVE.y + 40,
+      "text-anchor": "middle", "font-size": 10, fill: GRIS,
+      "font-family": "Arial, Helvetica, sans-serif" }, f[0]));
+    gPreuve.appendChild(el("text", { x: mx, y: PREUVE.y + 52,
+      "text-anchor": "middle", "font-size": 10, fill: GRIS,
+      "font-family": "Arial, Helvetica, sans-serif" }, f[1]));
+    var haut = gPreuve.appendChild(el("rect", { x: mx - mw / 2, y: my,
+      width: mw, height: mh / 2, rx: 2, fill: "#e5e9ee" }));
+    var bas = gPreuve.appendChild(el("rect", { x: mx - mw / 2, y: my + mh / 2,
+      width: mw, height: mh / 2, rx: 2, fill: "#e5e9ee" }));
+    gPreuve.appendChild(el("rect", { x: mx - mw / 2, y: my, width: mw,
+      height: mh, rx: 3, fill: "none", stroke: "#8ba3b6", "stroke-width": 1.8 }));
+    var lg = gPreuve.appendChild(el("text", { x: mx, y: my + mh + 16,
+      "text-anchor": "middle", "font-size": 10, fill: INK,
+      "font-family": "Arial, Helvetica, sans-serif" }, "—"));
+    preuveN.minis.push({ haut: haut, bas: bas, lg: lg });
+  });
+  preuveN.verdict = gPreuve.appendChild(el("text", { x: PREUVE.x + PREUVE.w / 2,
+    y: PREUVE.y + PREUVE.h - 16, "text-anchor": "middle", "font-size": 10.5,
+    "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif" }, "—"));
+
+  /* Les trois moments, révélés à la conclusion : c'est le plan même de la
+     fiche — on ne peut se prononcer qu'au troisième. */
+  [["1 · AVANT", "deux parties dans les deux tubes", GRIS, "#f2f5f8"],
+   ["2 · JUSTE APRÈS", "les deux se ressemblent : on ne peut pas trancher",
+    ORANGE, "#fdf1e7"],
+   ["3 · APRÈS REPOS", "le verdict, et lui seul", VERT, "#eef6e6"]
+  ].forEach(function (f, i) {
+    var g = ajout("ui", el("g", { opacity: 0, "pointer-events": "none" }));
+    var y = MOMENT_Y + i * (MOMENT_H + 4);
+    g.appendChild(el("rect", { x: PREUVE.x, y: y, width: PREUVE.w,
+      height: MOMENT_H, rx: 8, fill: f[3], stroke: f[2], "stroke-width": 1.6 }));
+    g.appendChild(el("text", { x: PREUVE.x + 12, y: y + 17, "font-size": 10.5,
+      "font-weight": "bold", fill: f[2],
+      "font-family": "Arial, Helvetica, sans-serif" }, f[0]));
+    g.appendChild(el("text", { x: PREUVE.x + 12, y: y + 32, "font-size": 10.5,
+      fill: INK, "font-family": "Arial, Helvetica, sans-serif" }, f[1]));
+    casesMoment.push({ g: g });
+  });
+}
+/* Les volumes présents, le dernier versé pouvant être EN COURS de versement. */
+function volumesTube(t, frac) {
+  var out = [], k;
+  for (k = 0; k < t.verses.length; k++) {
+    out.push({ cle: t.verses[k].cle,
+               v: t.verses[k].v * (k === t.verses.length - 1 ? frac : 1) });
+  }
+  return out;
+}
+function dessinerTube(i, frac) {
+  var t = ETAT.tube[i], n = TUB_N[i], x = xTube(i), j;
+  var f = (frac === undefined ? 1 : frac);
+  var vs = volumesTube(t, f), vTot = 0, k;
+  for (k = 0; k < vs.length; k++) vTot += vs[k].v;
+  var e = etatTube(t, momentAffiche());
+  var mixte = !!(t.agite && e.mis && vs.length > 1);
+  /* eau et éthanol se CONTRACTENT en se mêlant : 5 + 5 ne font pas 10 */
+  var vAff = mixte ? vTot * (1 - PHYS.CONTRACTION.v) : vTot;
+  var hTot = hLiq(vAff);
+  var hBas = 0, hMil = 0, hHaut = 0, cBas = null, cHaut = null, ord = null;
+
+  if (vs.length === 1) {
+    hBas = hTot;
+    cBas = vs[0].cle;
+  } else if (mixte) {
+    hMil = hTot;
+  } else if (vs.length > 1) {
+    ord = couches({ verses: vs });               /* du bas vers le haut */
+    var sep = t.agite ? e.sep : 1;
+    var vB = ord[0].v, vH = ord[ord.length - 1].v, vS = vB + vH;
+    cBas = cleDessous(ord.map(function (c) { return c.cle; }));
+    cHaut = cleDessus(ord.map(function (c) { return c.cle; }));
+    hBas = hTot * (vB / vS) * sep;
+    hHaut = hTot * (vH / vS) * sep;
+    hMil = Math.max(0, hTot - hBas - hHaut);
+  }
+  n.bas.setAttribute("y", (TUBE.bas - hBas).toFixed(1));
+  n.bas.setAttribute("height", Math.max(0, hBas).toFixed(1));
+  n.bas.setAttribute("fill", "url(#liq-" + (cBas || "eau") + ")");
+  n.bas.setAttribute("opacity", hBas > 0.4 ? 1 : 0);
+  n.mil.setAttribute("y", (TUBE.bas - hBas - hMil).toFixed(1));
+  n.mil.setAttribute("height", Math.max(0, hMil).toFixed(1));
+  n.mil.setAttribute("fill", mixte ? "url(#melange)" : "url(#emulsion)");
+  n.mil.setAttribute("opacity", hMil > 0.4 ? 1 : 0);
+  n.haut.setAttribute("y", (TUBE.bas - hBas - hMil - hHaut).toFixed(1));
+  n.haut.setAttribute("height", Math.max(0, hHaut).toFixed(1));
+  n.haut.setAttribute("fill", "url(#liq-" + (cHaut || "huile") + ")");
+  n.haut.setAttribute("opacity", hHaut > 0.4 ? 1 : 0);
+  n.surf.setAttribute("cy", (TUBE.bas - hTot).toFixed(1));
+  n.surf.setAttribute("opacity", hTot > 1 ? .55 : 0);
+
+  /* les gouttelettes : elles GROSSISSENT en coalesçant, et la bande où elles
+     vivent RÉTRÉCIT à mesure que la séparation avance */
+  var montre = !mixte && hMil > 5 && t.agite;
+  n.gouttes.setAttribute("opacity", montre ? .95 : 0);
+  if (montre) {
+    var d = diametreGoutte(t.second, t.tRepos);
+    var rg = borne(1.5 * Math.sqrt(d / PHYS.D_GOUTTE.v) * 1.6, 1.4, 5.2);
+    var y0 = TUBE.bas - hBas - hMil;
+    for (j = 0; j < n.gouttes.children.length; j++) {
+      n.gouttes.children[j].setAttribute("r", rg.toFixed(2));
+      n.gouttes.children[j].setAttribute("cx",
+        (x - R_TUBE + 9 + ((j * 23) % (TUBE.w - 18))).toFixed(1));
+      n.gouttes.children[j].setAttribute("cy",
+        (y0 + 4 + ((j * 13) % Math.max(1, hMil - 8))).toFixed(1));
+    }
+  }
+  n.etiq.textContent = t.verses.length ? TUBES[i].titre : "(vide)";
+  n.lect.textContent = !t.verses.length ? ""
+    : (!t.agite ? (t.bouche ? "bouché" : (t.second ? "à boucher" :
+        (TUBES[i].temoin ? "témoin" : "eau seule")))
+      : (ETAT.repos ? e.phases + " partie" + pluriel(e.phases, "s")
+                    : (e.emulsion ? "émulsion" : e.phases + " partie" +
+                       pluriel(e.phases, "s"))));
+}
+/* Le panneau de preuve : le solveur, lancé sur les DEUX ordres. */
+function majPreuve() {
+  var cle = null, i;
+  for (i = 0; i < TUBES.length; i++) {
+    if (!TUBES[i].temoin && LIQUIDES[TUBES[i].cle] &&
+        !miscible(TUBES[i].cle, REG.v)) { cle = TUBES[i].cle; break; }
+  }
+  if (!cle) {
+    preuveN.minis.forEach(function (m) {
+      m.haut.setAttribute("fill", "#e5e9ee");
+      m.bas.setAttribute("fill", "#e5e9ee");
+      m.lg.textContent = "—";
+    });
+    preuveN.verdict.textContent = "—";
+    preuveN.verdict.setAttribute("fill", GRIS);
+    return;
+  }
+  var r = memeArrivee(cle);
+  [r.direct, r.inverse].forEach(function (s, k) {
+    var o = s.split(" | ");                       /* du bas vers le haut */
+    var bas = o[0], haut = o[o.length - 1];
+    preuveN.minis[k].bas.setAttribute("fill", "url(#liq-" + bas + ")");
+    preuveN.minis[k].haut.setAttribute("fill", "url(#liq-" + haut + ")");
+    preuveN.minis[k].lg.textContent = LIQUIDES[haut].nom + " au-dessus";
+  });
+  preuveN.verdict.textContent = r.identique
+    ? "MÊME ARRIVÉE — c'est la densité qui range, pas la main qui verse"
+    : "arrivées différentes";
+  preuveN.verdict.setAttribute("fill", r.identique ? VERT : ROUGE);
+}
+function dessiner() {
+  var i;
+  for (i = 0; i < ETAT.tube.length; i++) dessinerTube(i, 1);
+  majPreuve();
+  if (ordreTxt) {
+    ordreTxt.textContent = ETAT.inverse ? "ordre INVERSÉ" : "ordre du protocole";
+  }
+  [EPROUVETTE].concat(FLACONS).forEach(function (o) {
+    if (o) COUCHES.objets.appendChild(o.g);
+  });
+  BOUCHONS.forEach(function (o) { COUCHES.objets.appendChild(o.g); });
+}
+
+/* ==================================================================
+   20. CONSIGNE, PARCOURS D'ÉTAPES, ARMEMENT
+   ================================================================== */
+function consigne() {
+  if (!toutVerse()) {
+    if (ETAT.inverse) {
+      return prochainASecond() >= 0
+        ? "Ordre inversé : verser d'abord " + nb(REG.v, 0) + " mL du second " +
+          "liquide, l'eau viendra par-dessus."
+        : "Verser maintenant les " + nb(REG.v, 0) + " mL d'eau, par-dessus.";
+    }
+    return prochainAEau() >= 0
+      ? "Verser " + nb(REG.v, 0) + " mL d'eau dans chacun des " +
+        ETAT.tube.length + " tubes — à l'éprouvette, ou d'un seul geste."
+      : "Ajouter " + nb(REG.v, 0) + " mL du second liquide dans les deux " +
+        "premiers tubes. Le troisième ne reçoit rien : c'est le témoin.";
+  }
+  if (!ETAT.vu[0]) return "Observer les trois tubes AVANT toute agitation, et " +
+    "compter les parties visibles dans chacun.";
+  if (!tousBouches()) return "Boucher les " + ETAT.tube.length + " tubes — on " +
+    "tient le bouchon avec le pouce avant d'agiter.";
+  if (!tousAgites()) return "Agiter les trois tubes " + T_AGIT + " s, de la " +
+    "même façon.";
+  if (!ETAT.vu[1]) return "Observer IMMÉDIATEMENT, sans reposer les tubes : " +
+    "c'est ce relevé-là qui montre que l'émulsion trompe l'œil.";
+  if (!ETAT.repos) return "Replacer les tubes sur le portoir et attendre " +
+    mmss(REG.t) + " sans y toucher.";
+  if (!ETAT.vu[2]) return "Observer de nouveau, après le repos : c'est ce " +
+    "moment-là qui départage les deux tubes.";
+  if (!ETAT.conclu) return "Comparer les trois moments et dire à quel moment " +
+    "on peut se prononcer.";
+  return "Deux liquides miscibles donnent un mélange homogène ; l'émulsion " +
+         "obtenue en agitant deux liquides non miscibles n'est que provisoire.";
+}
+var ETAPES = ["Verser l'eau", "Ajouter les liquides", "Observer avant",
+              "Boucher les tubes", "Agiter", "Observer aussitôt",
+              "Laisser reposer", "Comparer"];
+function faits() {
+  return [prochainSansEau() < 0,
+          prochainSansSecond() < 0,
+          ETAT.vu[0],
+          tousBouches(),
+          tousAgites(),
+          ETAT.vu[1],
+          ETAT.repos && ETAT.vu[2],
+          ETAT.conclu];
+}
+function armer() {
+  BOUTONS.remplir.armer(prochainAEau() >= 0);
+  BOUTONS.ajouter.armer(prochainASecond() >= 0);
+  BOUTONS.inverser.armer(!ETAT.tube.some(function (t) { return t.verses.length; }));
+  BOUTONS.agiter.armer(toutVerse() && ETAT.vu[0] && !tousAgites());
+  BOUTONS.observer.armer(toutVerse() && !ETAT.vu[momentAffiche()]);
+  BOUTONS.reposer.armer(tousAgites() && ETAT.vu[1] && !ETAT.repos);
+  BOUTONS.conclure.armer(ETAT.vu[2] && !ETAT.conclu);
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majLectures();
+  majProtocole();
+  majGraphe();
+  dessiner();
+  if (ETAT.conclu && ETAT.vu[2]) $("concl").classList.remove("masque");
+}
+
+/* ==================================================================
+   21. LES PANNEAUX HTML
+   ================================================================== */
+function majLectures() {
+  var nEau = 0, nSec = 0, nB = 0, i, t, e, cleNM = null;
+  for (i = 0; i < ETAT.tube.length; i++) {
+    t = ETAT.tube[i];
+    if (aDejaEau(t)) nEau++;
+    if (t.second) nSec++;
+    if (t.bouche) nB++;
+    if (t.second && !miscible(t.second, REG.v)) cleNM = t.second;
+  }
+  $("lEau").textContent = nEau + " / " + ETAT.tube.length + " tubes";
+  $("lEau").className = "v" + (nEau ? "" : " off");
+  $("lSecond").textContent = nSec + " ajouté" + pluriel(nSec, "s") + " · " +
+    nb(REG.v, 0) + " mL chacun";
+  $("lSecond").className = "v" + (nSec ? "" : " off");
+  $("lBouche").textContent = nB + " / " + ETAT.tube.length +
+    (tousAgites() ? " · agités" : "");
+  $("lBouche").className = "v" + (nB ? (tousBouches() ? " ok" : "") : " off");
+  $("lMoment").textContent = toutVerse() ? majuscule(NOM_MOMENT[momentAffiche()]) : "—";
+  $("lMoment").className = "v" + (toutVerse() ? "" : " off");
+  $("lRepos").textContent = mmss(ETAT.tube[0] ? ETAT.tube[0].tRepos : 0) +
+    " / " + mmss(REG.t);
+  $("lRepos").className = "v" + (ETAT.repos ? " ok" : " off");
+  /* la séparation en cours, LUE sur le modèle */
+  if (cleNM) {
+    e = null;
+    for (i = 0; i < ETAT.tube.length; i++) {
+      if (ETAT.tube[i].second === cleNM) { e = etatTube(ETAT.tube[i], momentAffiche()); break; }
+    }
+    $("lSep").textContent = e ? nb(e.sep * 100, 0) + " %" : "—";
+    $("lSep").className = "v" + (e && e.sep >= SEUIL_PHASE ? " ok" : (e ? " ko" : " off"));
+    $("lTsep").textContent = mmss(tempsSeparation(cleNM)) + " calculées";
+    $("lTsep").className = "v";
+    $("lGoutte").textContent = nb(diametreGoutte(cleNM,
+      ETAT.tube[0] ? ETAT.tube[0].tRepos : 0) * 1e6, 1) + " µm";
+    $("lGoutte").className = "v";
+  } else {
+    $("lSep").textContent = "—"; $("lSep").className = "v off";
+    $("lTsep").textContent = "—"; $("lTsep").className = "v off";
+    $("lGoutte").textContent = "—"; $("lGoutte").className = "v off";
+  }
+  $("lOrdre").textContent = ETAT.inverse ? "second liquide, puis eau"
+                                         : "eau, puis second liquide";
+  $("lOrdre").className = "v" + (ETAT.inverse ? " ko" : "");
+  $("etatSysteme").textContent = !toutVerse() ? "en préparation"
+    : (!tousAgites() ? "avant agitation"
+      : (!ETAT.repos ? "juste après l'agitation"
+        : (ETAT.conclu ? "conclu" : "après repos")));
+}
+function majCarnet() {
+  var t = $("carnet"), i, c, j;
+  vide(t);
+  t.appendChild(ligneTab(["Tube", "Avant", "Juste après", "Après repos",
+                          "Type"], true));
+  for (i = 0; i < TUBES.length; i++) {
+    c = ETAT.carnet[i];
+    t.appendChild(ligneTab([TUBES[i].titre,
+      c && c.m[0] ? c.m[0].phases + " partie" + pluriel(c.m[0].phases, "s") : "—",
+      c && c.m[1] ? (c.m[1].phases === 1 && !c.m[1].mis ? "émulsion"
+                     : c.m[1].phases + " partie" + pluriel(c.m[1].phases, "s")) : "—",
+      c && c.m[2] ? c.m[2].phases + " partie" + pluriel(c.m[2].phases, "s") +
+                    " · " + nb(c.m[2].sep * 100, 0) + " %" : "—",
+      c ? c.type : "—"]));
+  }
+}
+/* Quand le modèle et la fiche divergent, on le DIT (SKILL §11.5). */
+function verifierContreFiche(k) {
+  var c = ETAT.carnet[k], f;
+  if (!c || ETAT.horsProto) return;
+  f = cel(k, C_TYPE);
+  if (f && c.type && c.type !== "—" &&
+      sansAccent(f).indexOf(sansAccent(c.type).split(" —")[0]) < 0 &&
+      sansAccent(c.type).indexOf("melange") < 0) {
+    signalerDivergence("t" + k, "<b>" + TUBES[k].titre + ".</b> Le modèle " +
+      "classe « " + c.type + " », la fiche écrit « " + f + " ».");
+  }
+  f = depouille(cel(k, C_REPOS));
+  if (f && c.m[2] && /deux|2 parties/i.test(f) && c.m[2].phases !== 2) {
+    signalerDivergence("r" + k, "<b>" + TUBES[k].titre + ".</b> La fiche relève " +
+      "deux parties après le repos ; le modèle n'en trouve que " +
+      c.m[2].phases + " — la séparation n'est accomplie qu'à " +
+      nb(c.m[2].sep * 100, 0) + " %.");
+  }
+}
+/* Le graphe : la séparation en fonction du temps, INTÉGRÉE — jamais tracée
+   d'après une formule fermée qu'on aurait devinée. */
+var gCourbe = null;
+function construireGraphe() { gCourbe = $("gSep"); }
+function majGraphe() {
+  if (!gCourbe) return;
+  vide(gCourbe);
+  var Wg = 360, Hg = 150, x0 = 34, y0 = 118, xM = Wg - 12, hM = 96;
+  var cle = null, i, j;
+  for (i = 0; i < ETAT.tube.length; i++) {
+    if (ETAT.tube[i].second && !miscible(ETAT.tube[i].second, REG.v)) {
+      cle = ETAT.tube[i].second;
+      break;
+    }
+  }
+  gCourbe.appendChild(el("line", { x1: x0, y1: y0, x2: xM, y2: y0,
+    stroke: LIGNE, "stroke-width": 1.4 }));
+  gCourbe.appendChild(el("line", { x1: x0, y1: y0, x2: x0, y2: y0 - hM,
+    stroke: LIGNE, "stroke-width": 1.4 }));
+  gCourbe.appendChild(el("text", { x: x0 - 6, y: y0 - hM + 4, "text-anchor": "end",
+    "font-size": 9, fill: GRIS }, "100 %"));
+  gCourbe.appendChild(el("text", { x: x0 - 6, y: y0 + 4, "text-anchor": "end",
+    "font-size": 9, fill: GRIS }, "0"));
+  if (!cle) {
+    gCourbe.appendChild(el("text", { x: Wg / 2, y: y0 - 40, "text-anchor": "middle",
+      "font-size": 10.5, fill: "#b7bfca" },
+      "aucun couple non miscible dans les tubes"));
+    return;
+  }
+  /* le SEUIL de lecture, et l'instant prescrit par la fiche */
+  var yS = y0 - hM * SEUIL_PHASE;
+  gCourbe.appendChild(el("line", { x1: x0, y1: yS, x2: xM, y2: yS,
+    stroke: VERT, "stroke-width": 1.2, "stroke-dasharray": "5 4" }));
+  gCourbe.appendChild(el("text", { x: xM, y: yS - 4, "text-anchor": "end",
+    "font-size": 9, fill: VERT }, "seuil de lecture — deux couches franches"));
+  var tMax = Math.max(REG.t, 60), pts = [], n = 48;
+  for (j = 0; j <= n; j++) {
+    var tt = tMax * j / n;
+    pts.push(pt(x0 + (xM - x0) * (j / n), y0 - hM * avanceSeparation(cle, tt)));
+  }
+  gCourbe.appendChild(el("polyline", { points: pts.join(" "), fill: "none",
+    stroke: "#2f7fb5", "stroke-width": 2.4, "stroke-linejoin": "round" }));
+  /* où l'on en est */
+  var tc = ETAT.tube[0] ? ETAT.tube[0].tRepos : 0;
+  if (tc > 0) {
+    var xc = x0 + (xM - x0) * borne(tc / tMax, 0, 1);
+    gCourbe.appendChild(el("line", { x1: xc, y1: y0, x2: xc, y2: y0 - hM,
+      stroke: ORANGE, "stroke-width": 1.6 }));
+    gCourbe.appendChild(el("circle", { cx: xc,
+      cy: y0 - hM * avanceSeparation(cle, tc), r: 3.6, fill: ORANGE }));
+  }
+  gCourbe.appendChild(el("text", { x: xM, y: y0 + 13, "text-anchor": "end",
+    "font-size": 9.5, fill: GRIS }, mmss(tMax)));
+  gCourbe.appendChild(el("text", { x: x0, y: y0 + 13, "font-size": 9.5,
+    fill: GRIS }, "0"));
+  gCourbe.appendChild(el("text", { x: x0 + 4, y: 12, "font-size": 10,
+    fill: GRIS }, "part de colonne parcourue par " + LIQUIDES[cle].nom));
+}
+function construireCapot() {
+  $("eqModele").textContent =
+    "miscible ? ..... capacité = S(liquide) × V   comparée à   masse versée\n" +
+    "                 miscible si capacité ≥ masse versée\n" +
+    "ordre des couches  TRI des liquides par masse volumique décroissante\n" +
+    "                 vers le bas — l'ordre du VERSEMENT n'y entre pas\n" +
+    "remontée ....... v = |ρ_eau − ρ_liq|·g·d² / (18·η)          [Stokes]\n" +
+    "coalescence .... d(t) = d₀ · (1 + t / τ)   avec τ = " +
+      nb(PHYS.TAU_COAL.v, 0) + " s\n" +
+    "séparation ..... z(t) = ∫ v(t) dt   au pas de " + nb(PAS_SIM, 1) + " s\n" +
+    "                 sep = z / h   avec h = " + nb(H_COLONNE * 1000, 0) + " mm\n" +
+    "phases ......... 2 si sep ≥ " + nb(SEUIL_PHASE, 2) + " , 1 sinon";
+  var l = [], i;
+  TUBES.forEach(function (tb) {
+    if (tb.temoin || !LIQUIDES[tb.cle]) return;
+    var mis = miscible(tb.cle, PROTO.v);
+    l.push("  " + (tb.nom + "          ").slice(0, 10) + " ρ = " +
+      nb(LIQUIDES[tb.cle].rho, 1) + " kg/m³ · " +
+      (mis ? "MISCIBLE — pas de gouttelettes, donc rien à séparer"
+           : "NON MISCIBLE\n" +
+             "             séparation complète en " +
+             mmss(tempsSeparation(tb.cle)) + " ; la fiche laisse " +
+             mmss(PROTO.t) + "\n" +
+             "             au moment du relevé : sep = " +
+             nb(avanceSeparation(tb.cle, PROTO.t) * 100, 0) + " %"));
+  });
+  $("eqMatiere").textContent = "aux réglages du protocole (" + nb(PROTO.v, 0) +
+    " mL + " + nb(PROTO.v, 0) + " mL, repos " + mmss(PROTO.t) +
+    ", gouttelettes de " + nb(PROTO.d * 1e6, 0) + " µm) :\n" + l.join("\n");
+  /* La preuve, chiffrée, que l'ordre du versement ne compte pas. */
+  var cle = null;
+  for (i = 0; i < TUBES.length; i++) {
+    if (!TUBES[i].temoin && LIQUIDES[TUBES[i].cle] &&
+        !miscible(TUBES[i].cle, PROTO.v)) { cle = TUBES[i].cle; break; }
+  }
+  var r = cle ? memeArrivee(cle) : null;
+  $("eqOrdre").textContent = !r ? "aucun couple non miscible à comparer" :
+    "on lance LE MÊME solveur sur les deux ordres de versement :\n" +
+    "  versé eau puis " + LIQUIDES[cle].nom + "   → du bas vers le haut : " +
+      r.direct.replace(/\|/g, "puis") + "\n" +
+    "  versé " + LIQUIDES[cle].nom + " puis eau   → du bas vers le haut : " +
+      r.inverse.replace(/\|/g, "puis") + "\n" +
+    "  " + (r.identique ? "IDENTIQUE" : "DIFFÉRENT") + " — et ce n'est pas " +
+      "une phrase : `couches()` TRIE par masse volumique,\n" +
+    "  et la liste `verses`, qui garde l'ordre du versement, n'entre nulle " +
+      "part dans ce tri.\n\n" +
+    "  écart de masse volumique : " +
+      nb(Math.abs(PHYS.RHO_EAU.v - LIQUIDES[cle].rho), 1) + " kg/m³, soit " +
+      nb(100 * Math.abs(PHYS.RHO_EAU.v - LIQUIDES[cle].rho) / PHYS.RHO_EAU.v, 1) +
+      " % — c'est LUI qui range les couches.";
+  $("eqLimite").textContent =
+    "ce que la vigueur de l'agitation change, et la fiche ne le dit pas :\n" +
+    [10e-6, 20e-6, 30e-6, 40e-6, 50e-6].map(function (d) {
+      var g = REG.d, s;
+      REG.d = d;
+      s = "  gouttelettes de " + nb(d * 1e6, 0) + " µm → séparation en " +
+          mmss(cle ? tempsSeparation(cle) : 0) +
+          (cle && tempsSeparation(cle) > PROTO.t ? "   ⚠ AU-DELÀ des " +
+           mmss(PROTO.t) + " de la fiche" : "");
+      REG.d = g;
+      return s;
+    }).join("\n") + "\n\n" +
+    "« agiter énergiquement » n'est donc pas une formule de style : agiter\n" +
+    "PLUS fort fait des gouttelettes PLUS fines, et l'émulsion tient PLUS\n" +
+    "longtemps. À 10 µm elle survit aux trois minutes de la fiche, et le\n" +
+    "tube d'huile se lirait encore « une seule partie ».";
+  construireConstantes();
+}
+
+/* ==================================================================
+   22. LES CURSEURS
+   ==================================================================
+   ⚠ Un curseur qui ne fait rien est pire qu'un curseur absent (§12.5) : les
+   trois changent un nombre affiché, d'un bout à l'autre de leur course.     */
+function brancherCurseurs() {
+  var rv = $("rV"), rt = $("rT"), rd = $("rD");
+  rv.min = 1; rv.max = 10; rv.step = 0.5; rv.value = PROTO.v;
+  rt.min = 0; rt.max = 600; rt.step = 10; rt.value = PROTO.t;
+  rd.min = 10; rd.max = 50; rd.step = 2; rd.value = Math.round(PROTO.d * 1e6);
+  function lire() {
+    REG.v = +rv.value; REG.t = +rt.value; REG.d = (+rd.value) * 1e-6;
+    $("oV").textContent = nb(REG.v, 1) + " mL";
+    $("oT").textContent = mmss(REG.t);
+    $("oD").textContent = nb(REG.d * 1e6, 0) + " µm";
+    $("regV").className = "reg" + (REG.v !== PROTO.v ? " hp" : "");
+    $("regT").className = "reg" + (REG.t !== PROTO.t ? " hp" : "");
+    $("regD").className = "reg" + (REG.d !== PROTO.d ? " hp" : "");
+    ETAT.horsProto = horsProtocole();
+    $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  }
+  function changer() { lire(); perimer(); }
+  rv.addEventListener("input", changer);
+  rt.addEventListener("input", changer);
+  rd.addEventListener("input", changer);
+  $("bProto").addEventListener("click", function () {
+    revenirAuProtocole();
+    rv.value = PROTO.v; rt.value = PROTO.t; rd.value = Math.round(PROTO.d * 1e6);
+    changer();
+    noter("Réglages du protocole rétablis : " + nb(PROTO.v, 0) + " mL de " +
+          "chaque liquide, repos " + mmss(PROTO.t) + ", gouttelettes de " +
+          nb(PROTO.d * 1e6, 0) + " µm.", true);
+  });
+  lire();
+}
+/* Un réglage périme l'essai : les volumes et les temps changent (§12.19). */
+function perimer() {
+  var avait = ETAT.nCell > 0 || ETAT.vu[0] || ETAT.vu[1] || ETAT.vu[2];
+  remettre(true);
+  if (avait) {
+    noter("Un réglage a changé : les tubes sont vidés et le tableau redevient " +
+          "vierge. Le carnet, lui, continue de calculer.", false);
+  }
+}
+
+/* ==================================================================
+   26. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages. Le minuteur de séance
+   SURVIT — la séance ne se rembobine pas (SKILL §11.6).                     */
+function remettre(silencieux) {
+  var seance = ETAT.tSeance || 0;
+  var ordre = ETAT.inverse || false;
+  var faits2 = ETAT.faitDansLOrdre || [false, false];
+  succes();
+  purger();
+  ANIM_ON = true;
+  effacerCibles();
+  effacerGuide();
+  prise = null;
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  ETAT.inverse = ordre;
+  ETAT.faitDansLOrdre = faits2;
+  ETAT.horsProto = horsProtocole();
+  placer(EPROUVETTE, REPOS.eprouvette.x, REPOS.eprouvette.y);
+  FLACONS.forEach(function (o) { placer(o, REPOS[o.cle].x, REPOS[o.cle].y); });
+  BOUCHONS.forEach(function (o) {
+    o.surTube = null;
+    placer(o, REPOS["b" + o.i].x, REPOS["b" + o.i].y);
+  });
+  TUB_N.forEach(function (n) {
+    n.g.setAttribute("transform", "translate(0,0)");
+    n.gouttes.setAttribute("opacity", 0);
+  });
+  gFilet.setAttribute("opacity", 0);
+  gLoupe.setAttribute("opacity", 0);
+  gOrdre.setAttribute("opacity", ETAT.inverse ? 1 : .35);
+  fOrdre.setAttribute("width", ETAT.inverse ? ORDRE.w - 6 : 18);
+  casesMoment.forEach(function (c) { c.g.setAttribute("opacity", 0); });
+  ACTES.forEach(function (a) { BOUTONS[a].neuf(); });
+  viderTableau();
+  $("diverge").style.display = "none";
+  $("diverge").innerHTML = "";
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  majCarnet();
+  majJaugeRepos();
+  majSeance();
+  if (INCONNUS.length && !silencieux) {
+    noter("⚠ La fiche cite un liquide que la page ne connaît pas : " +
+          INCONNUS.join(", ") + ". Rien n'est deviné.", false);
+  } else if (!silencieux) {
+    noter("Poste remis en état : " + TUBES.length + " tubes vides sur le " +
+          "portoir, les flacons et les bouchons rangés.", false);
+  }
+  armer();
+  avancer();
+}
+function recommencer() {
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  remettre(false);
+}
+
+/* ==================================================================
+   27. LE GUIDE — une entrée par étape du protocole
+   ==================================================================
+   ⚠ Une étape NON FAITE doit toujours montrer quelque chose (§12bis.4).     */
+var GUIDE = [
+  /* 1 — verser environ 5 mL d'eau dans chacun des trois tubes, et étiqueter */
+  { fait: function () { return prochainSansEau() < 0; },
+    aide: function () {
+      var n = ETAT.tube.filter(function (t) { return !aDejaEau(t); }).length;
+      return "Faire glisser l'<b>éprouvette</b> sur un tube — ou presser " +
+        "<b>« Verser " + nb(REG.v, 0) + " mL d'eau »</b>. Il en reste <b>" + n +
+        "</b> à remplir." + (ETAT.inverse ? " <b>Ordre inversé</b> : le second " +
+        "liquide entre d'abord." : "");
+    },
+    montre: function () {
+      surlignerObjet(EPROUVETTE, 6);
+      if (prochainAEau() >= 0) surlignerZone(zoneTube(prochainAEau(), ""));
+      surlignerBouton("remplir");
+    } },
+  /* 2 — ajouter le second liquide dans les deux premiers tubes ; le troisième
+     ne reçoit rien, c'est le témoin */
+  { fait: function () { return prochainSansSecond() < 0; },
+    aide: function () {
+      var i = prochainSansSecond();
+      if (i < 0) return "Les deux seconds liquides sont versés, et le témoin " +
+        "n'a rien reçu.";
+      return "Faire glisser le flacon <b>" + (LIQUIDES[TUBES[i].cle]
+        ? LIQUIDES[TUBES[i].cle].nom : TUBES[i].nom) + "</b> sur le tube « " +
+        TUBES[i].titre + " ». Le témoin, lui, ne reçoit rien.";
+    },
+    montre: function () {
+      var i = prochainSansSecond();
+      if (i < 0) { surlignerBouton("ajouter"); return; }
+      surlignerObjet(flaconDe(TUBES[i].cle) || FLACONS[0], 6);
+      surlignerZone(zoneTube(i, ""));
+      surlignerBouton("ajouter");
+    } },
+  /* 3 — observer les trois tubes AVANT toute agitation */
+  { fait: function () { return ETAT.vu[0]; },
+    aide: "Presser <b>« Observer »</b> — ou cliquer chaque tube pour le lire. " +
+          "Avant d'agiter, les deux mélanges montrent <b>deux parties</b>, le " +
+          "liquide le plus léger au-dessus.",
+    montre: function () {
+      surlignerBouton("observer");
+      surlignerZone(zoneTube(0, ""));
+    } },
+  /* 4 — boucher les trois tubes et les agiter une dizaine de secondes */
+  { fait: function () { return tousAgites(); },
+    aide: function () {
+      var i = prochainSansBouchon();
+      if (i >= 0) return "Faire glisser un <b>bouchon</b> sur le tube « " +
+        TUBES[i].titre + " » — on tient le bouchon avec le pouce avant " +
+        "d'agiter.";
+      return "Presser <b>« Boucher et agiter »</b> : les trois tubes, " +
+        T_AGIT + " s, de la <b>même façon</b>.";
+    },
+    montre: function () {
+      var i = prochainSansBouchon();
+      if (i >= 0) {
+        surlignerObjet(bouchonLibre() || BOUCHONS[0], 6);
+        surlignerZone(zoneTube(i, ""));
+      }
+      surlignerBouton("agiter");
+    } },
+  /* 5 — observer IMMÉDIATEMENT après l'agitation, sans reposer les tubes */
+  { fait: function () { return ETAT.vu[1]; },
+    aide: "Presser <b>« Observer »</b> tout de suite, <b>sans reposer les " +
+          "tubes</b> : c'est le moment où l'émulsion trompe l'œil, et où l'on " +
+          "ne peut PAS encore se prononcer.",
+    montre: function () {
+      surlignerBouton("observer");
+      surlignerZone(zoneTube(Math.max(0, ETAT.tube.length - 2), ""));
+    } },
+  /* 6 — replacer les tubes, attendre trois minutes, observer de nouveau */
+  { fait: function () { return ETAT.repos && ETAT.vu[2]; },
+    aide: function () {
+      return ETAT.repos
+        ? "Presser <b>« Observer »</b> : le repos est passé, et c'est ce " +
+          "relevé-là qui départage les deux tubes."
+        : "Presser <b>« Laisser reposer »</b> : " + mmss(REG.t) + " sans y " +
+          "toucher, le temps courant à × " + ACCEL.toFixed(0) + ".";
+    },
+    montre: function () {
+      surlignerBouton(ETAT.repos ? "observer" : "reposer");
+    } },
+  /* 7 — comparer les trois moments et dire quand on peut se prononcer */
+  { fait: function () { return ETAT.conclu; },
+    aide: "Presser <b>« Comparer les trois moments »</b> : c'est <b>après " +
+          "agitation puis repos</b> qu'on juge un mélange, jamais pendant.",
+    montre: function () { surlignerBouton("conclure"); } }
+];
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire. C'est le §1.1 : un bouton qui rejoue le YAML est le refus
+      explicite de l'enseignant.                                              */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+/* ⚠ On vise par `data-act`, jamais par un `id` : un `id` de `<defs>` volerait
+   le sélecteur et rendrait un dégradé, qui n'a pas de boîte (§12bis.3-4). */
+function surlignerActe(act, marge) {
+  var n = svg.querySelector('[data-act="' + act + '"]'), b = boiteSVG(n), m = marge || 8;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return false;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+  return true;
+}
+function surlignerZone(z, m) {
+  if (!z) return false;
+  m = m === undefined ? 8 : m;
+  halo(z.x - z.hw - m, z.y - z.hh - m, 2 * (z.hw + m), 2 * (z.hh + m), 14);
+  return true;
+}
+function surlignerObjet(o, m) {
+  if (!o) return false;
+  var b = boiteSVG(o.g);
+  m = m === undefined ? 8 : m;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. verser environ 5 mL d'eau dans chacun des trois tubes. Le bouton
+     double le glisser de l'éprouvette et passe par la MÊME `verserEau()` :
+     un tube par pression, comme à la main. */
+  function () { presserBouton("remplir"); return 1150; },
+
+  /* 2. ajouter 5 mL du second liquide dans les deux premiers tubes ; le
+     troisième ne reçoit rien, c'est le témoin. On passe par `deposer()`,
+     celui du glisser-déposer, et la cible est la zone qu'`emplacements()`
+     propose DANS L'ÉTAT COURANT — jamais une position écrite en dur. */
+  function () {
+    var i = prochainASecond();
+    if (i < 0) return 0;
+    var o = flaconDe(TUBES[i].cle);
+    if (!o) return 0;
+    deposer(o, zoneTube(i, ""));
+    return 1200;
+  },
+
+  /* 3. observer les trois tubes AVANT toute agitation. Deux parties dans les
+     deux mélanges, le liquide le plus léger au-dessus — et c'est le solveur
+     qui le range, pas la main qui a versé. */
+  function () { presserBouton("observer"); return 1150; },
+
+  /* 4. boucher les trois tubes, puis les agiter une dizaine de secondes de la
+     même façon. Le geste pose un bouchon par pression tant qu'il en manque,
+     et n'agite qu'une fois les trois posés : c'est l'ordre que la sécurité de
+     la fiche impose, et la page refuse l'inverse. */
+  function () {
+    var i = prochainSansBouchon();
+    if (i >= 0) {
+      deposer(bouchonLibre() || BOUCHONS[i], zoneTube(i, ""));
+      /* approche (520 ms) + enfoncement (320 ms) : on attend les deux */
+      return 1050;
+    }
+    if (tousAgites()) return 0;
+    agiterTous();
+    return 1150;
+  },
+
+  /* 5. observer IMMÉDIATEMENT après l'agitation, sans reposer les tubes.
+     C'est le relevé qui montre que l'émulsion trompe l'œil : les deux tubes
+     n'ont qu'UNE partie, et l'on ne peut pas encore se prononcer. */
+  function () { presserBouton("observer"); return 1150; },
+
+  /* 6. replacer les tubes, attendre trois minutes, observer de nouveau. Le
+     temps se JOUE, il ne se saute pas : la remontée des gouttelettes est
+     intégrée par tranches de 0,5 s de temps simulé, quel que soit le facteur
+     de compression. Deux pressions : le repos, puis le relevé. */
+  function () {
+    if (!ETAT.repos) {
+      presserBouton("reposer");
+      /* ⚠ DÉLAI NÉGATIF : « j'attends », et ce n'est pas un blocage
+         (SKILL §12bis.6). Le déroulé repasse aussi souvent qu'il le faut. */
+      return -(REG.t / ACCEL * 1000 + 700);
+    }
+    /* ⚠ ET L'ON N'OBSERVE PAS AVANT LE TERME. Une phase minutée va à son
+       terme (SKILL §12.39) : relever à mi-repos consignerait une séparation
+       partielle, donc UNE partie là où la fiche en compte deux. */
+    if (ETAT.tube[0].tRepos < REG.t - 1e-6) return -(REG.t / ACCEL * 1000);
+    presserBouton("observer");
+    return 1150;
+  },
+
+  /* 7. comparer les trois moments et dire à quel moment on peut se prononcer.
+     C'est le geste qui démasque la conclusion. */
+  function () { presserBouton("conclure"); return 1050; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+/* Les écouteurs du guide et du cadre. Ils sont posés une fois, au démarrage. */
+function brancherGuide() {
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("rezero").addEventListener("click", recommencer);
+}
+
+/* ==================================================================
+   28. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  defsCommunes();
+  defsPage();
+  ajouterCouches();
+  ETAT = neufEtat();
+
+  construireDecor();
+  construireTubes();
+  construireEffets();
+  construireLecture();
+  construireObjets();
+  construireBoutons();
+  brancherPrise();
+
+  construireHTMLBase("miscibilité, densité et loi de Stokes calculées");
+  construireEtapes(ETAPES);
+  construireProtocole();
+  construireSeance("repos de " + mmss(T_REPOS) + " prescrit");
+  construireGraphe();
+  construireCapot();
+  brancherCurseurs();
+  brancherGuide();
+  remettre(false);
+  demarrerHorloge();
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

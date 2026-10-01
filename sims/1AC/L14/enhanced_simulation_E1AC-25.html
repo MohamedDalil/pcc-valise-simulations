@@ -1,0 +1,3926 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-25 · Le palier d'ebullition</title>
+
+<!--
+  ============================================================================
+  PAILLASSE VIRTUELLE — E1AC-25 · 1AC / U1 / L14
+  « L'ébullition de l'eau distillée et celle de l'eau salée »
+  ============================================================================
+
+  CE QUE CETTE PAGE N'EST PAS (SKILL_PAILLASSES §1.3)
+
+  * Elle est AUTONOME : ni generer.py, ni moteur.js, ni simulation.html.j2, ni
+    icones.js, et elle ne s'ouvre pas depuis index.html. Elle DOUBLE
+    simulation_E1AC-25.html, elle ne la remplace pas.
+  * Elle n'a pas de vue 3D.
+  * Elle s'écarte volontairement du §5 du SKILL principal.
+  * Le dessin est un SCHÉMA HABILLÉ. À l'échelle : la colonne du thermomètre,
+    qui suit sa propre graduation de -10 à 110 °C, et le niveau du liquide, qui
+    suit la masse d'eau restante. Pas à l'échelle : le diamètre du ballon, la
+    verrerie, la potence.
+
+  CE QUE LE MODÈLE CALCULE — une seule ÉDO, deux ballons
+
+  Les deux postes passent par la MÊME équation, avec la même puissance et le
+  même verre : seul le sel change. C'est ce qui fait de l'eau distillée un
+  TÉMOIN, et la fiche le dit dans son interprétation.
+
+    - sous l'ébullition : C·dT/dt = P − pertes(T), intégré en Runge-Kutta
+      d'ordre 4 au pas de 0,25 s. Les pertes sont la convection, le
+      rayonnement, et surtout l'ÉVAPORATION, qui est ce qui ralentit la montée
+      à l'approche de 100 °C ;
+    - à l'ébullition : la température ne bouge plus d'elle-même, toute la
+      puissance nette vaporise, la masse d'eau diminue — et pour une solution
+      salée non saturée, la molalité monte, donc la température d'ébullition
+      avec elle, par la loi de Raoult.
+
+  ⚠ LE RÉGIME SE VERROUILLE PAR UN DRAPEAU EXPLICITE. Écrit comme un simple
+  test « si T < T_eb alors chauffer », le passage à l'ébullition ne se faisait
+  JAMAIS : l'évaporation de surface fait baisser la masse d'eau à chaque pas,
+  T_eb remonte de quelques centièmes, le test restait vrai indéfiniment, la
+  température était recalée sur T_eb à chaque pas — et les 430 W restants
+  partaient au NÉANT. Sans erreur, et avec une courbe d'allure parfaitement
+  juste. Payé sur le modèle Python avant d'écrire une ligne de page.
+
+  LA CONFRONTATION AVEC LA FICHE, chiffrée
+
+    t (min)   EAU DISTILLÉE            EAU SALÉE
+              modèle  fiche  écart     modèle  fiche  écart
+      0        20,0     20    +0,0       41,0     41    +0,0
+      2        42,3     45    −2,7       62,9     64    −1,1
+      4        62,7     60    +2,7       81,9     88    −6,1
+      6        80,6     75    +5,6       97,4    103    −5,6
+     12       100,0    100    +0,0      102,0    104    −2,0
+     18       100,0    100    +0,0      102,3    105    −2,7
+
+    écart maximal : 5,6 °C sur l'eau distillée, 6,1 °C sur l'eau salée. Le
+    thermomètre de la fiche est gradué en degrés : la demi-division vaut
+    0,5 °C.
+
+  ET LE PALIER — c'est LUI, la leçon — est retrouvé EXACTEMENT :
+
+    eau distillée : ébullition à 8:48, palier à 100,00 °C, et à 18 min encore
+                    100,00 °C. Dérive : 0,000 °C.
+    eau salée     : ébullition à 6:42 à 101,8 °C, puis 102,3 °C à 18 min. Elle
+                    MONTE, et sa courbe n'a pas de partie horizontale.
+
+  CE QUI EST DOUTEUX DANS LA FICHE, et qui n'est PAS corrigé
+
+  1. SA RAMPE SE CONTREDIT. Les trois premiers intervalles montent de 25, 15 et
+     15 °C en deux minutes chacun, ce qui réclame 146 W, puis 87, puis 87
+     encore. Or les pertes croissent avec la température : la puissance nette
+     DOIT décroître d'un intervalle au suivant. Aucune puissance constante ne
+     passe par ces quatre points. C'est le §12.31 du contrat, mot pour mot, et
+     la page affiche l'écart au lieu d'ajuster une constante.
+
+  2. LA MONTÉE DU PALIER SALÉ RÉCLAME DEUX FOIS LA PUISSANCE PRESCRITE. Pour
+     passer de 103 à 105 °C il faut évaporer 97 g d'eau sur 150, soit 219 kJ en
+     douze minutes : 304 W. La fiche prescrit un chauffe-ballon de 250 mL, donc
+     150 W nominaux. Le rapport est de deux, et le curseur de puissance permet
+     de le vérifier.
+
+  3. LA FICHE APPELLE « SATURÉE » UNE SOLUTION QUI NE L'EST PAS. Trois
+     cuillerées de sel pour 150 mL font 100 g/L ; la solubilité du chlorure de
+     sodium est de 359 g/L. Et c'est heureux pour la leçon : une solution
+     vraiment saturée garde un excès solide au fond, sa molalité est plafonnée,
+     et son palier redevient PLAT — le contraire de ce que la fiche montre. Le
+     curseur de sel le rend visible : au-delà de 54 g, des cristaux se déposent
+     dans le ballon et la courbe s'aplatit.
+
+  4. LES DEUX BALLONS PARTENT À 21 °C D'ÉCART (20 et 41 °C), côte à côte, dans
+     la même salle. La page prend ces deux valeurs comme CONDITIONS INITIALES —
+     ce sont des relevés, pas des résultats — et le signale ici.
+
+  CE QUI EST DÉCLARÉ, et qui n'est pas dans la fiche
+
+  * la puissance nominale d'un chauffe-ballon de 250 mL : 150 W, plaque
+    signalétique, et le couplage d'un manchon : 0,90 ;
+  * la masse d'une cuillerée à café de sel fin : 5,0 g ;
+  * la masse d'un ballon de 250 mL en borosilicate : 90 g.
+
+  LES PIÈGES DU CONTRAT PAYÉS ICI
+
+  * §12.37 — une course a UNE horloge : `ETAT.t`, et les deux trajectoires y
+    sont lues.
+  * §12.43 — l'horloge se RECALE sur l'instant prescrit.
+  * §12.6 — un drapeau explicite pour le changement de régime, jamais une
+    valeur sentinelle.
+  * §12.24 / §12.21 — le seuil qui décide si un palier est « plat » est celui
+    de l'INSTRUMENT : la demi-division du thermomètre, 0,5 °C.
+  * §12.40 — la première ligne du tableau n'est pas un relevé de chauffage :
+    c'est l'état de départ, relevé avant de brancher.
+  * §12.52 — le temps est comprimé à × 120 : les intervalles de 2 min passent
+    en 1 s, ceux de 6 min en 3 s, et le protocole entier en 9 secondes.
+  ============================================================================
+-->
+
+<script>
+/* L'écouteur d'erreurs est posé AVANT le script de la page, dans le <head> :
+   posé en fin de <body>, il ne voit AUCUNE erreur de démarrage — celles-ci ont
+   déjà eu lieu (SKILL §12.47, corollaire de méthode). Il n'écrit PAS dans la
+   console : un `console.error` serait compté comme une erreur par le pilote. */
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message || e));
+  var n = document.getElementById("errjs");
+  if (n) { n.textContent = "Erreur JS : " + window.__ERR.join(" · "); n.style.display = "block"; }
+});
+</script>
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+#errjs{display:none;background:#b03030;color:#fff;font-family:var(--mono);
+       font-size:12px;padding:6px 20px}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.hp output{color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.ko{color:var(--orange)}
+.lect .v.ok{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-25 · 1AC · L14</span>
+</div>
+<div id="errjs"></div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de la fiche n'est plus renseigné : il consigne le résultat de
+        l'expérience prescrite — 135 W, 15 g de sel, 150 mL par ballon —, pas
+        celui d'une variante. Le carnet de mesures, lui, continue de calculer,
+        et le palier reste là où la physique le met.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ces deux ballons-ci</b> donnent. Chaque température sort de
+        l'intégration en <b>Runge-Kutta d'ordre 4</b> d'un bilan d'énergie —
+        puissance utile moins convection, rayonnement et évaporation —, et
+        chaque état physique du franchissement de la température d'ébullition,
+        elle-même calculée par la <b>loi de Raoult</b> à partir de la masse
+        d'eau qui reste.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Ce que le modèle voit <span class="note" id="etatSysteme">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Chronomètre</div><div class="v off" id="lChrono">—</div></div>
+        <div><div class="k">Eau restante (dist. / salée)</div><div class="v off" id="lEau">—</div></div>
+        <div><div class="k">Eau distillée</div><div class="v off" id="lTd">—</div></div>
+        <div><div class="k">Eau salée</div><div class="v off" id="lTs">—</div></div>
+        <div><div class="k">T d'ébullition — distillée</div><div class="v" id="lEbD">—</div></div>
+        <div><div class="k">T d'ébullition — salée</div><div class="v" id="lEbS">—</div></div>
+        <div><div class="k">Molalité de la solution</div><div class="v" id="lMolal">—</div></div>
+        <div><div class="k">Palier — distillée</div><div class="v off" id="lPalD">—</div></div>
+        <div><div class="k">Palier — salée</div><div class="v off" id="lPalS">—</div></div>
+        <div><div class="k">Écart max au tableau</div><div class="v off" id="lEcart">—</div></div>
+      </div>
+      <div style="margin-top:11px"><span class="lbl">L'enregistrement continu</span></div>
+      <svg id="gCourbes" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src">Ce graphe se trace <b>pendant</b> le chauffage, pas à la
+      fin : c'est la trajectoire complète que le solveur intègre, tandis que le
+      papier millimétré de la paillasse ne porte que les six points de la
+      fiche. Les deux disent la même chose, à deux résolutions. Le trait doré
+      est la ligne des 100 °C.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages <span class="note">le protocole, et ce qu'on peut en écarter</span></h2>
+      <div class="reg" id="regP">
+        <label for="rP">Puissance utile du chauffage</label>
+        <output id="oP">135 W</output>
+        <input type="range" id="rP" min="60" max="400" step="5" value="135">
+        <div class="aide">135 W, c'est la plaque signalétique d'un
+        chauffe-ballon de 250 mL (150 W) multipliée par le couplage d'un
+        manchon (0,90). <b>Rien n'a été ajusté.</b> Bougez-le : l'instant où le
+        palier commence se déplace, mais sa <b>valeur</b> ne bouge pas d'un
+        dixième — c'est exactement ce que la fiche affirme dans son
+        interprétation, et la page le retrouve.</div>
+      </div>
+      <div class="reg" id="regS">
+        <label for="rS">Masse de sel dans le second ballon</label>
+        <output id="oS">15 g · 100 g/L</output>
+        <input type="range" id="rS" min="0" max="80" step="1" value="15">
+        <div class="aide">À 0 g, les deux courbes se superposent : c'est la
+        contre-épreuve. À 15 g — les trois cuillerées de la fiche — la solution
+        n'est qu'au quart de la saturation, elle se concentre en bouillant, et
+        son palier monte. Au-delà de 54 g elle est <b>vraiment</b> saturée :
+        l'excès de sel reste solide au fond, la molalité est plafonnée, et le
+        palier redevient PLAT.</div>
+      </div>
+      <div class="reg" id="regV">
+        <label for="rV">Volume dans chaque ballon</label>
+        <output id="oV">150 mL</output>
+        <input type="range" id="rV" min="100" max="250" step="10" value="150">
+        <div class="aide">Plus d'eau, c'est plus de capacité thermique : le
+        palier arrive plus tard. Sa valeur, elle, ne change pas pour l'eau
+        distillée — et elle change pour l'eau salée, puisque la même masse de
+        sel y est plus diluée.</div>
+      </div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle : un bilan d'énergie, intégré en Runge-Kutta</h3>
+      <p>Les deux ballons passent par la <b>même</b> équation, avec la même
+      puissance et le même verre : seul le sel change. C'est ce qui fait de
+      l'eau distillée un <b>témoin</b> — sans elle, on ne saurait pas si
+      l'absence de palier vient du sel ou du dispositif de chauffage.</p>
+      <p>Tant que le liquide n'a pas atteint sa température d'ébullition, la
+      puissance qui reste après les pertes l'échauffe. À partir de là, la
+      température ne bouge plus d'elle-même : <b>toute</b> la puissance nette
+      part en vaporisation, la masse d'eau diminue, et c'est cette masse qui
+      décide de la suite.</p>
+      <div class="eq" id="eqModele"></div>
+      <h3>2 · Ce que devient la matière, relevé par relevé</h3>
+      <div class="eq" id="eqMatiere"></div>
+      <h3>3 · Ce que le palier doit à la puissance, et ce qu'il doit au sel</h3>
+      <div class="eq" id="eqLimite"></div>
+      <h3>4 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src">Aucune de ces valeurs n'a été retouchée pour faire tomber
+      le résultat de la fiche. La puissance est une <b>plaque signalétique</b>,
+      la capacité thermique se compose des <b>masses</b> (eau et verre) et
+      n'est pas ajustée du tout, le coefficient de transfert de masse sort
+      d'une <b>corrélation</b> de convection libre. Le seul seuil est celui de
+      la <b>lecture</b> : le thermomètre de la fiche est gradué en degrés, donc
+      un palier est « plat » si sa dérive reste sous une demi-division.</p>
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>La rampe de la fiche n'est pas cohérente avec elle-même, et le
+        modèle ne peut pas la suivre.</b> Ses trois premiers intervalles
+        montent de 25, 15 et 15 °C en deux minutes chacun. Avec une capacité
+        thermique de 700 J/K, cela réclame 146 W, puis 87, puis 87 encore. Or
+        les pertes <b>croissent</b> avec la température : la puissance nette
+        doit décroître à chaque intervalle, et elle ne le fait pas entre le
+        deuxième et le troisième. Aucune puissance constante ne passe par ces
+        quatre points. La page affiche l'écart, relevé par relevé, et il monte
+        à 5,6 °C au sixième relevé. C'est la fiche qui se contredit, pas le
+        modèle — et la page ne corrige rien.</li>
+        <li><b>La montée du palier salé est sous-estimée d'un facteur quatre.</b>
+        La fiche lit 103, 104 puis 105 °C ; le modèle, à la puissance de la
+        plaque signalétique, obtient une montée de 0,5 °C au lieu de 2. Pour
+        évaporer assez d'eau pour atteindre 105 °C en dix-huit minutes, il
+        faudrait environ 300 W au ballon — le double de ce que la fiche
+        prescrit. Le curseur de puissance permet de le vérifier en trois
+        secondes.</li>
+        <li><b>La fiche appelle « saturée » une solution qui ne l'est pas.</b>
+        Trois cuillerées de sel pour 150 mL font 100 g/L, quand la solubilité
+        du chlorure de sodium est de 359 g/L à 20 °C : la solution est au quart
+        de la saturation. Et c'est heureux pour la leçon — une solution
+        <b>vraiment</b> saturée garde un excès de sel solide au fond, sa
+        molalité est plafonnée, et son palier redevient PLAT. Ce serait le
+        contraire de ce que la fiche veut montrer. Le curseur de sel permet de
+        le voir : au-delà de 54 g, des cristaux se déposent dans le ballon et
+        la courbe s'aplatit.</li>
+        <li><b>Il ne sait pas ce qui se passe dans une bulle.</b> La
+        nucléation, la surchauffe locale, les soubresauts que la sécurité de la
+        fiche redoute : rien de tout cela n'est modélisé. Les bulles du dessin
+        naissent au fond et montent parce que c'est ce qu'on voit, pas parce
+        que le modèle les calcule.</li>
+        <li><b>Il traite le liquide comme une seule température.</b> Dans un
+        vrai ballon, le fond est plus chaud que la surface, et c'est pour cela
+        que la fiche interdit au thermomètre de toucher le fond. La page
+        respecte la consigne et la met en scène, mais elle ne calcule pas le
+        gradient qui la justifie.</li>
+        <li><b>La pression atmosphérique est celle du niveau de la mer.</b> À
+        Ifrane, à 1 650 m, l'eau bout vers 94,5 °C : le palier existe toujours,
+        mais il n'est plus à 100. Le modèle ne le sait pas, et une classe de
+        montagne le verrait immédiatement.</li>
+        <li><b>La chaleur latente est prise à 100 °C, constante.</b> Elle varie
+        de quelques pour cent avec la température, ce qui est négligeable ici
+        mais ne le serait pas sur une plage plus large.</li>
+        <li><b>Le ballon ne peut pas aller à sec.</b> Sous 5 g d'eau, le modèle
+        s'arrête et le déclare — la sécurité de la fiche impose de couper le
+        chauffage avant. Sans ce garde-fou, la température d'ébullition d'une
+        masse nulle vaudrait 100 °C et la courbe REDESCENDRAIT de 106 à 100,
+        c'est-à-dire un dessin faux sur le point même que la leçon établit.</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-25.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-25",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L14",
+  "titre": "L'ébullition de l'eau distillée et celle de l'eau salée",
+  "axe": "La température d'ébullition, caractéristique d'un corps pur",
+  "objectif": "Comparer l'évolution de la température au cours de l'ébullition d'un corps pur et d'un mélange, et dégager le palier de température comme critère de pureté.",
+  "duree": 17,
+  "modalite": "groupes de 4 — 8 postes, la moitié sur l'eau distillée, l'autre sur l'eau salée",
+  "materiel": [
+    "1 ballon ou bécher de 250 mL par poste",
+    "1 chauffe-ballon ou bec électrique par poste",
+    "1 thermomètre gradué de −10 °C à 110 °C",
+    "1 chronomètre",
+    "Eau distillée (bidon de pharmacie ou du laboratoire)",
+    "Eau salée saturée préparée à l'avance (3 cuillerées de sel pour 150 mL)",
+    "Support, pince et grille",
+    "Papier millimétré pour le tracé des courbes"
+  ],
+  "securite": [
+    "Ne jamais laisser le thermomètre toucher le fond ni la paroi du récipient.",
+    "Ne pas se pencher au-dessus du récipient : la vapeur d'eau brûle.",
+    "Ne pas remplir le ballon à plus des deux tiers, pour éviter les débordements par soubresauts.",
+    "Couper le chauffage avant de retirer le thermomètre, et attendre le refroidissement avant de ranger.",
+    "Ne goûter aucun des deux liquides : l'eau distillée n'est pas une eau de boisson."
+  ],
+  "protocole": [
+    "Verser 150 mL d'eau distillée dans le ballon du premier poste, et 150 mL d'eau salée saturée dans celui du second.",
+    "Fixer le thermomètre de façon que son réservoir soit bien immergé, sans toucher le fond.",
+    "Relever la température initiale, puis déclencher simultanément le chauffage et le chronomètre.",
+    "Noter la température toutes les 2 minutes, et noter à chaque fois l'état physique observé (liquide seul, ou liquide et vapeur).",
+    "Poursuivre les relevés pendant 6 minutes au moins après l'apparition des premières bulles.",
+    "Tracer, sur un même papier millimétré, les deux courbes de la température en fonction du temps.",
+    "Repérer sur chaque courbe le moment où l'ébullition commence, et dire si la température cesse ou non d'augmenter ensuite."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Instant t (min)",
+      "T de l'eau distillée (°C)",
+      "État de l'eau distillée",
+      "T de l'eau salée (°C)",
+      "État de l'eau salée"
+    ],
+    "lignes": [
+      [
+        "0",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "2",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "4",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "6",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "12",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "18",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "0",
+        "20",
+        "liquide",
+        "41",
+        "liquide"
+      ],
+      [
+        "2",
+        "45",
+        "liquide",
+        "64",
+        "liquide"
+      ],
+      [
+        "4",
+        "60",
+        "liquide",
+        "88",
+        "liquide"
+      ],
+      [
+        "6",
+        "75",
+        "liquide",
+        "103",
+        "liquide"
+      ],
+      [
+        "12",
+        "100",
+        "liquide + gaz",
+        "104",
+        "liquide + gaz"
+      ],
+      [
+        "18",
+        "100",
+        "liquide + gaz",
+        "105",
+        "liquide + gaz"
+      ]
+    ]
+  },
+  "observation": "L'eau distillée s'arrête à 100 °C et y reste pendant toute son ébullition, alors que la température de l'eau salée continue de monter au-delà de 100 °C.",
+  "conclusion": "La température reste constante pendant le changement d'état d'un corps pur et varie pendant celui d'un mélange : le palier de température est un critère de pureté.",
+  "oheric": {
+    "observation": "Tout le monde répète que l'eau bout à 100 °C. Pourtant, quand on met à chauffer l'eau salée du couscous et qu'on y plonge un thermomètre, l'aiguille dépasse 100 °C et continue de monter alors que l'eau bouillonne déjà. Pourquoi la même règle ne s'applique-t-elle pas aux deux récipients ?",
+    "hypothese": "Si la température d'ébullition est une **caractéristique du corps lui-même**, alors elle doit garder la même valeur tant que le corps reste le même : l'eau distillée, qui ne contient qu'une seule sorte de matière, devrait s'arrêter à une température fixe pendant toute son ébullition, tandis que l'eau salée, qui est un mélange, ne devrait pas se comporter de la même façon.",
+    "experience": "Chauffer côte à côte, dans le même dispositif, 150 mL d'eau distillée et 150 mL d'eau salée saturée, en relevant la température toutes les 2 minutes et en notant à chaque relevé l'état physique du liquide, puis tracer les deux courbes température-temps sur le même graphique.",
+    "resultats": "Les deux températures montent d'abord régulièrement. L'eau distillée atteint **100 °C** : les premières bulles apparaissent et, à partir de cet instant, la température **ne bouge plus** — 100 °C à 12 min, 100 °C encore à 18 min, alors que le chauffage n'a pas été coupé. La courbe présente une partie horizontale, un **palier de température**. L'eau salée, elle, passe 103 °C, puis 104 °C, puis 105 °C : elle bouillonne mais sa température **continue de monter**. Sa courbe **ne présente aucun palier**.",
+    "interpretation": "Pendant le palier, le chauffage continue de fournir de la chaleur, et pourtant la température reste fixe : toute cette chaleur sert à faire **changer d'état** l'eau, pas à l'échauffer. C'est la marque d'un **corps pur** : l'eau distillée ne contient qu'une seule sorte de matière, et son changement d'état se fait à une température unique, 100 °C. L'eau salée est un **mélange** de deux corps ; à mesure que l'eau s'évapore, le liquide restant devient de plus en plus salé, sa composition change sans cesse, et la température de son ébullition change avec elle. L'hypothèse est validée. **Le rôle de l'eau distillée est celui du témoin** : sans elle, on ne saurait pas si l'absence de palier vient du sel ou du dispositif de chauffage. À noter : l'instant où le palier commence dépend de la puissance du chauffage, mais sa **valeur**, elle, n'en dépend pas.",
+    "conclusion": "La température d'un **corps pur** reste **constante** pendant tout son changement d'état : sa courbe température-temps présente un **palier**. Celle d'un **mélange** varie pendant le changement d'état : sa courbe ne présente pas de palier. Le palier d'ébullition de l'eau pure vaut **100 °C** — c'est sa **température d'ébullition**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline. Et
+   l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function sansAccent(s) {
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i")
+    .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+    .replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+}
+function du(nom) {
+  return (/^[haeiouyàâäéèêëîïôöùûü]/i.test(nom) ? "d'" : "de ") + nom;
+}
+function pluriel(n, s) { return n > 1 ? s : ""; }
+/* Un générateur pseudo-aléatoire DÉTERMINISTE. Le désordre d'un modèle doit
+   se rejouer à l'identique, sans quoi la manipulation à la main et le déroulé
+   ne donneraient pas le même carnet (SKILL §12bis.6). */
+function graine(s) {
+  /* ⚠ MINSTD, et PAS un congruentiel a gros multiplicateur : en JS, un
+     produit de 1103515245 par un entier de 31 bits dépasse 2^53 et le
+     résultat n'est plus exact. Le tirage divergeait alors du modèle validé
+     en Python, sans lever la moindre erreur. 16807 × 2147483646 tient
+     largement dans un double. */
+  var e = (s % 2147483646) + 1;
+  return function () { e = (e * 16807) % 2147483647; return e / 2147483647; };
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var TEXTE_PROTO = PROTOCOLE.join("\n");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var i;
+  for (i = 0; i < PROTOCOLE.length; i++) if (motif.test(PROTOCOLE[i])) return PROTOCOLE[i];
+  return "";
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+function citerSecu(motif) {
+  var t = secu(motif);
+  return t ? " « " + t + " »" : "";
+}
+/* Lire un NOMBRE suivi de son unité dans le protocole. Trois règles payées
+   sur E3AC-19 (SKILL §12.29) : le nombre commence par un chiffre, l'unité est
+   sensible à la casse, et elle n'est pas suivie d'une lettre. */
+function lireProto(unite, defaut, sensible) {
+  var re = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-zÀ-ÿ])",
+                      sensible === false ? "i" : "");
+  var m = re.exec(TEXTE_PROTO);
+  return m ? parseFloat(m[1].replace(",", ".")) : defaut;
+}
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20, trentaine: 30, dizaine: 10 };
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* ==================================================================
+   3 bis. LES DURÉES VIENNENT DE LA FICHE — jamais du code (SKILL §5)
+   ================================================================== */
+function secondesProto(motif, defaut) {
+  var i, m, t, n;
+  for (i = 0; i < PROTOCOLE.length; i++) {
+    if (!motif.test(PROTOCOLE[i])) continue;
+    t = PROTOCOLE[i].toLowerCase();
+    m = /(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trentaine|dizaine)\s+(secondes?|minutes?)/.exec(t);
+    if (!m) continue;
+    n = isNaN(+m[1]) ? MOTS_NB[m[1]] : +m[1];
+    if (!n) continue;
+    return m[2].indexOf("minute") === 0 ? n * 60 : n;
+  }
+  return defaut;
+}
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   MINUTERIES ET ANIMATION
+   ==================================================================
+   ⚠ `setTimeout` + `Date.now()`, JAMAIS `requestAnimationFrame` (SKILL
+   §13.5 bis) : sous le pilote, rAF n'est pas appelé, et toute l'animation —
+   avec le résultat qu'elle porte — disparaîtrait SANS lever d'erreur.
+
+   ⚠ ET L'ANIMATION NE DÉCIDE DE RIEN. Le solveur a déjà calculé l'état
+   d'arrivée quand elle commence ; elle ne fait que le rejoindre. Un résultat
+   qui dépendrait du nombre d'images serait un résultat faux (§12.37). */
+var MINUTEURS = [], HORLOGE = null, ANIM_ON = true;
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+/* `sur(u)` reçoit une avance u de 0 à 1, lissée. `fin()` est rappelée à
+   l'arrivée. Une animation coupée (« Recommencer », arrêt du déroulé) ne
+   laisse rien derrière elle : `purger()` efface ses minuteries. */
+function anim(ms, sur, fin) {
+  var PAS = 14, i;
+  for (i = 1; i <= PAS; i++) (function (k) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = k / PAS;
+      sur(t * t * (3 - 2 * t), t);
+      if (k === PAS && fin) fin();
+    }, Math.round(ms * k / PAS));
+  })(i);
+  if (!ms && fin) fin();
+}
+
+/* ==================================================================
+   LES COUCHES SVG — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE tout le reste
+     poste   le mobilier fixe : portoirs, balance, plaque, étagère
+     arriere l'intérieur de la verrerie, l'eau, et les zones de dépôt
+     objets  ce qui se manipule
+     avant   les parois de verre, les étiquettes, la vapeur
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout            */
+var svg = null, DEFS = null, COUCHES = {};
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+/* Les dégradés et filtres communs à toutes les paillasses du lot.
+   ⚠ AUCUN dégradé n'est jamais posé sur le CONTOUR d'un trait (SKILL §10.1) :
+   en `objectBoundingBox`, la boîte d'un segment horizontal ou vertical est
+   plate, le dégradé est dégénéré, et le navigateur NE PEINT RIEN — sans
+   erreur, et sans que le pilotage puisse le voir. Les traits fins sont donc
+   peints en couleur PLEINE. */
+function defsCommunes() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* la bande de bois CLAIRE du plateau : c'est la seule zone sombre-libre où
+     une étiquette se lit (SKILL §12.7) */
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e6d5b4" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9b189" }));
+  DEFS.appendChild(g);
+
+  /* l'eau — dégradé vertical, et la surface se dessine en ELLIPSE */
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+
+  /* le verre : voile de teinte + reflet net + arête sombre (SKILL §10.2) */
+  g = el("linearGradient", { id: "verre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c6d6e3", "stop-opacity": .55 }));
+  g.appendChild(el("stop", { offset: .17, "stop-color": "#ffffff", "stop-opacity": .78 }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#dce8f1", "stop-opacity": .28 }));
+  g.appendChild(el("stop", { offset: .88, "stop-color": "#a9b8c8", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7f93a6", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flouFin", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 1.6 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+  DEFS.appendChild(f);
+}
+/* Sans elle, tout flotte (SKILL §10.3). */
+function ombreAuSol(cx, y, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: y + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Un bécher : intérieur et liquide AVANT la paroi, bourrelet du bord,
+   bec verseur et graduations — c'est le bourrelet, plus que la paroi, qui
+   fait reconnaître un bécher (SKILL §10.2). */
+function paroiVerre(couche, x, y, w, h, r) {
+  var g = ajout(couche, el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "url(#verre)" }));
+  g.appendChild(el("rect", { x: x + w * .1, y: y + 8, width: Math.max(3, w * .07),
+    height: h - 20, rx: 2.5, fill: "#ffffff", opacity: .66 }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3 }));
+  g.appendChild(el("ellipse", { cx: x + w / 2, cy: y, rx: w / 2 + 2.5, ry: 4.5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3.2 }));
+  return g;
+}
+
+/* ==================================================================
+   LE MOTEUR DE GLISSER-DÉPOSER (SKILL §9)
+   ==================================================================
+   ⚠ Le pointeur est capturé sur le SVG, PAS sur l'objet : sans cela, un
+   mouvement rapide sort de l'objet et le glissement s'arrête net au milieu du
+   geste, sans erreur.
+
+   La page fournit `emplacements(o)`, `deposer(o, zone, depart)` et
+   `replacer(o)`. Les zones sont rendues de la plus PETITE à la plus GRANDE
+   (§12.16) : c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du
+   tableau.                                                                  */
+var prise = null, ptSVG = null, surbrillance = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function placer(o, x, y) {
+  o.x = x; o.y = y;
+  o.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ")");
+}
+/* L'objet PARCOURT son trajet : c'est la troisième exigence du §1.2 bis.
+   L'état, lui, est posé AVANT (SKILL §6.2) — l'animation ne décide de rien. */
+function volerVers(o, x1, y1, ms) {
+  var x0 = o.x, y0 = o.y;
+  anim(ms || 520, function (u) {
+    o.g.setAttribute("transform", "translate(" +
+      (x0 + (x1 - x0) * u).toFixed(1) + "," + (y0 + (y1 - y0) * u).toFixed(1) + ")");
+  });
+  o.x = x1; o.y = y1;
+}
+function montrerCibles(o) {
+  effacerCibles();
+  if (!o) return;
+  emplacements(o).forEach(function (z) {
+    if (z.discret) return;
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 10,
+      fill: GOLD, opacity: .18, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* ⚠ TOUT OBJET MANIPULABLE REÇOIT UNE PLAQUE DE PRÉHENSION transparente aux
+   cotes de sa silhouette, insérée EN PREMIER dans son groupe (SKILL §12.38) :
+   un objet fin n'offre au pointeur presque rien, et le glisser ne démarrerait
+   pas — sans erreur, sans refus, sans rien. */
+function prehension(g, x, y, w, h) {
+  var r = el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "#ffffff",
+                       "fill-opacity": 0.001 });
+  if (g.firstChild) g.insertBefore(r, g.firstChild); else g.appendChild(r);
+  return r;
+}
+function brancherObjet(o) {
+  o.g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                        /* verrou en PREMIÈRE ligne */
+    if (o.fige) return;
+    e.preventDefault();
+    var p = versSVG(e);
+    prise = { o: o, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+              x0: p.x, y0: p.y, bouge: false, depart: { x: o.x, y: o.y } };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    o.g.setAttribute("filter", "url(#ombrePrise)");
+    o.g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(o.g);
+    montrerCibles(o);
+  });
+}
+function brancherPrise() {
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    /* Le seuil de 5 px sépare le CLIC du GLISSEMENT (SKILL §9.3). */
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    placer(prise.o, p.x + prise.dx, p.y + prise.dy);
+    if (typeof pendantGlisser === "function") pendantGlisser(prise.o);
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var o = prise.o, bouge = prise.bouge, depart = prise.depart;
+    o.g.removeAttribute("filter");
+    o.g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(o.g);
+    effacerCibles();
+    prise = null;
+    if (!bouge) {
+      placer(o, depart.x, depart.y);
+      if (typeof cliquerObjet === "function") cliquerObjet(o);
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(o).forEach(function (z) {
+      var d = Math.hypot(o.x - z.x, o.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposer(o, best, depart);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);        /* ne PAS l'oublier */
+}
+/* La zone qu'`emplacements()` propose DANS L'ÉTAT COURANT — jamais une
+   position écrite en dur. Un bouton ne vise donc jamais `emplacements(o)[0]`
+   au hasard : il vise celle que `deposer` accepterait (SKILL §12.16). */
+function zoneVoulue(o, type) {
+  var z = emplacements(o) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+
+/* ==================================================================
+   LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                            */
+var BOUTONS = {}, ACTES = [];
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", "fill-opacity": 0.001 }));
+  var r = g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht, noeud: g,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function rangeeBoutons(W, y, libelles, actes) {
+  var n = actes.length, marge = 22, gap = 10;
+  var w = (W - 2 * marge - gap * (n - 1)) / n, i;
+  for (i = 0; i < n; i++) {
+    boutonScene(marge + w / 2 + i * (w + gap), y, w, 42,
+                libelles[i][0], libelles[i][1], actes[i]);
+  }
+}
+
+/* ==================================================================
+   CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  if (!c) return;
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  if (!o) return;
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+var N_CELL = 0;
+function compterCellules() {
+  var i, j, n = 0;
+  for (i = 0; i < N_LIG; i++) {
+    for (j = 0; j < (VAL[i] || []).length; j++) {
+      if (!(LIG[i] || [])[j] && (VAL[i] || [])[j]) n++;
+    }
+  }
+  return n;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t ? t.querySelectorAll("tr")[k + 1] : null;
+  var v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "mes";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerLigne(k) {
+  var j;
+  for (j = 0; j < (VAL[k] || []).length; j++) {
+    if (!(LIG[k] || [])[j]) revelerCellule(k, j);
+  }
+}
+function majCompteurCellules() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t ? t.querySelectorAll("tr") : [], i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  if ($("concl")) $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre, dans l'unité de la grandeur.           */
+function signalerDivergence(cle, texte) {
+  if (ETAT.horsProto) return;
+  if (ETAT.diverge.indexOf(cle) >= 0) return;
+  ETAT.diverge.push(cle);
+  var d = $("diverge");
+  d.innerHTML += (d.innerHTML ? "<br>" : "") + texte;
+  d.style.display = "block";
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.innerHTML = md(cells[i]);
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireEtapes(noms) {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < noms.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + noms[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+/* Les panneaux communs : titre, objectif, observation, conclusion, matériel,
+   sécurité, tableau de la fiche. Tout vient du YAML, rien n'est retapé.     */
+function construireHTMLBase(soustitre) {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · " + soustitre;
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  N_CELL = compterCellules();
+  majCompteurCellules();
+}
+/* Le tableau des constantes du capot se RÉGÉNÈRE depuis `PHYS` — il n'est
+   jamais retapé dans le HTML (SKILL §7.3). */
+function construireConstantes() {
+  var ct = $("capotConst"), c;
+  if (!ct) return;
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  for (c in PHYS) {
+    ct.appendChild(ligneTab([PHYS[c].n,
+      (typeof PHYS[c].v === "number"
+        ? (Math.abs(PHYS[c].v) < 0.01 ? sci(PHYS[c].v, 2)
+                                      : nb(PHYS[c].v, PHYS[c].d === undefined ? 2 : PHYS[c].d))
+        : PHYS[c].v) + " " + PHYS[c].u, PHYS[c].s]));
+  }
+}
+
+/* ==================================================================
+   L'HORLOGE DE LA SÉANCE — et elle seule court en temps RÉEL
+   ==================================================================
+   Elle mesure ce que la manipulation coûte à l'enseignant, pas ce que le
+   modèle simule : elle ne s'accélère JAMAIS, et elle SURVIT à
+   « Recommencer » — la séance ne se rembobine pas (SKILL §5.4, §11.6).      */
+var DERNIER = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tickSeance, 250);
+}
+function tickSeance() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  if (!n) return;
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance(complement) {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    (complement ? " · " + complement : "");
+  majSeance();
+}
+
+/* ==================================================================
+   LE PLEIN ÉCRAN — c'est par lui qu'on projette la scène au tableau
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Chaque nombre porte sa provenance, et le tableau du capot se RÉGÉNÈRE
+   depuis cet objet : il n'est jamais retapé dans le HTML (SKILL §7.3).
+
+   Ce bloc est PARTAGÉ par les quatre paillasses du lot, comme les trois
+   pages de 3AC/L06 partagent la précipitation. Une famille d'expériences se
+   traite avec une famille de modèles, pas avec quatre modèles séparés.     */
+var PHYS = {
+  G: { v: 9.81, u: "m·s⁻²", d: 2, n: "intensité de la pesanteur",
+       s: "valeur standard" },
+  RHO_EAU: { v: 998.2, u: "kg·m⁻³", d: 1,
+             n: "masse volumique de l'eau à 20 °C", s: "tables de l'eau pure" },
+  ETA_EAU: { v: 1.002e-3, u: "Pa·s", d: 2,
+             n: "viscosité dynamique de l'eau à 20 °C",
+             s: "tables de l'eau pure ; c'est elle qui freine la chute des " +
+                "particules, et elle DOUBLE si l'eau descend à 8 °C" },
+  RHO_SOL: { v: 2650, u: "kg·m⁻³", d: 0,
+             n: "masse volumique des particules d'un sol",
+             s: "quartz, feldspaths, argiles : les minéraux d'un sol tournent " +
+                "tous autour de 2 650" },
+  D_KAOLIN: { v: 3.0, u: "µm", d: 1,
+              n: "diamètre médian du kaolin normalisé",
+              s: "1 mg/L de ce kaolin vaut 1 NTU par définition de l'unité ; " +
+                 "la surface projetée par unité de masse variant en 1/d, la " +
+                 "turbidité d'un mg/L vaut 3 µm / d" },
+  TAU_VISIBLE: { v: 3.0, u: "", d: 1,
+                 n: "épaisseur optique au seuil de visibilité",
+                 s: "on voit encore à travers tant que la transmission " +
+                    "dépasse 5 %, soit e⁻³. Seuil d'INSTRUMENT — l'œil et le " +
+                    "verre du bécher —, pas seuil de calcul (SKILL §12.24)" },
+  PART_DISPERSIBLE: { v: 0.75, u: "% de l'argile", d: 2,
+                      n: "part de l'argile qui reste dispersée",
+                      s: "dans l'eau du robinet, riche en Ca²⁺, les feuillets " +
+                         "d'argile FLOCULENT et tombent. La part qui reste " +
+                         "dispersée — « argile dispersible à l'eau » — va de " +
+                         "moins de 1 % pour un sol calcaire à 30 % pour un " +
+                         "sol sodique. Les sols marocains cultivés sont " +
+                         "calcaires : c'est la constante la moins bien connue " +
+                         "de la page, et c'est pour cela qu'elle est au bout " +
+                         "d'un curseur" },
+  D_FLOC: { v: 30, u: "µm", d: 0, n: "taille des flocs d'argile en eau calcique",
+            s: "agrégats formés par le calcium de l'eau du robinet ; ils " +
+               "tombent en moins d'une minute, et c'est pourquoi la " +
+               "décantation marche" },
+  D_ARGILE: { v: 1.2, u: "µm", d: 1, n: "diamètre d'un feuillet d'argile",
+              s: "la fraction argileuse d'un sol est définie par « moins de " +
+                 "2 µm » ; 1,2 µm est sa médiane en masse" },
+  D_PORE_PAPIER: { v: 11, u: "µm", d: 0,
+                   n: "rétention nominale d'un papier filtre courant",
+                   s: "la boîte le dit : « fin » 2,5 µm · « moyen » 8 · " +
+                      "« courant » 11 · « rapide » 20 à 25. Les laboratoires " +
+                      "scolaires emploient le courant" },
+  ETA_FEUTRE: { v: 55, u: "%", d: 0,
+                n: "capture en profondeur dans le feutre de cellulose",
+                s: "un papier filtre n'est pas un tamis : c'est un feutre de " +
+                   "200 µm d'épaisseur, qui retient encore la moitié des " +
+                   "particules d'un micromètre — sous son seuil de pore" },
+  D_PORE_SABLE: { v: 6, u: "µm", d: 0,
+                  n: "interstice effectif d'un sable fin garni de coton",
+                  s: "l'interstice d'un empilement vaut environ le cinquième " +
+                     "du grain ; le coton resserre encore" },
+  ETA_LIT: { v: 90, u: "%", d: 0,
+             n: "capture en profondeur d'un lit de sable de 5 cm",
+             s: "théorie du lit propre : une couche de sable de 0,3 mm garnie " +
+                "de coton retient 90 à 98 % des particules d'une eau déjà " +
+                "décantée. On retient le BAS de la fourchette" },
+  CAP_SABLE: { v: 1.5, u: "kg·m⁻²", d: 2,
+               n: "charge de fines qu'un lit accepte avant de colmater",
+               s: "au-delà, l'eau se creuse des chemins préférentiels et le " +
+                  "rendement s'écroule : c'est pour cela qu'une station " +
+                  "décante AVANT de filtrer" },
+  CAP_DEBRIS: { v: 0.30, u: "kg·m⁻²", d: 2,
+                n: "charge de déchets flottants avant colmatage",
+                s: "des herbes mouillées s'étalent EN NAPPE sur le dessus et " +
+                   "bouchent cinq fois plus vite que des fines rangées dans " +
+                   "les interstices" },
+  ETA_CHARBON_C: { v: 90, u: "%", d: 0,
+                   n: "couleur et odeurs retenues par le charbon actif",
+                   s: "le charbon actif en grains retire 70 à 95 % des " +
+                      "substances humiques, qui sont la couleur d'une eau " +
+                      "de surface" },
+  ETA_CHARBON_T: { v: 25, u: "%", d: 0,
+                   n: "turbidité retenue par le charbon actif",
+                   s: "il ne fait sur les particules que de la filtration en " +
+                      "profondeur ; ce n'est pas son rôle" },
+  OMS_TURB: { v: 1.0, u: "NTU", d: 1,
+              n: "turbidité maximale d'une eau de boisson",
+              s: "recommandation de l'OMS en sortie de traitement. C'est une " +
+                 "valeur RÉGLEMENTAIRE, et c'est pour cela que la page peut " +
+                 "CALCULER « non potable » au lieu de l'affirmer" },
+  OMS_COULEUR: { v: 15, u: "Pt-Co", d: 0,
+                 n: "couleur maximale d'une eau de boisson",
+                 s: "échelle platine-cobalt des laboratoires d'eau" },
+  C_EAU: { v: 4185, u: "J·kg⁻¹·K⁻¹", d: 0,
+           n: "capacité thermique massique de l'eau", s: "tables, à 20 °C" },
+  C_VERRE: { v: 800, u: "J·kg⁻¹·K⁻¹", d: 0,
+             n: "capacité thermique massique du verre borosilicate",
+             s: "tables ; le ballon compte dans la capacité, et il n'est PAS " +
+                "ajusté (SKILL §12.31)" },
+  L_VAP: { v: 2257e3, u: "J·kg⁻¹", d: 0,
+           n: "chaleur latente de vaporisation de l'eau à 100 °C",
+           s: "tables. C'est elle qui absorbe toute la chaleur pendant le " +
+              "palier, et c'est pourquoi la température n'y monte plus" },
+  K_EB: { v: 0.512, u: "K·kg·mol⁻¹", d: 3,
+          n: "constante ébullioscopique de l'eau",
+          s: "loi de Raoult : ΔT = K·b·i, avec b la molalité" },
+  I_NACL: { v: 2.0, u: "", d: 1, n: "facteur de van't Hoff du chlorure de sodium",
+            s: "un NaCl dissous donne deux ions : Na⁺ et Cl⁻" },
+  S_NACL: { v: 359, u: "g·L⁻¹", d: 0,
+            n: "solubilité du chlorure de sodium à 20 °C",
+            s: "35,9 g pour 100 mL d'eau. Au-delà, l'excédent reste SOLIDE — " +
+               "et le palier redevient plat" },
+  P_NOM: { v: 150, u: "W", d: 0,
+           n: "puissance nominale d'un chauffe-ballon de 250 mL",
+           s: "plaque signalétique : 100 W pour 100 mL, 150 pour 250, 250 " +
+              "pour 500. AUCUN AJUSTEMENT n'a été fait sur ce nombre" },
+  ETA_MANCHON: { v: 90, u: "%", d: 0,
+                 n: "part de la puissance qui entre dans le ballon",
+                 s: "un manchon chauffant enveloppe le ballon : le couplage " +
+                    "est bon, le reste part dans la carcasse" },
+  H_CONV: { v: 9.0, u: "W·m⁻²·K⁻¹", d: 1,
+            n: "convection libre du ballon vers l'air", s: "air calme" },
+  K_MASSE: { v: 9.0e-3, u: "m·s⁻¹", d: 2,
+             n: "transfert de masse au-dessus du liquide",
+             s: "il ne se devine pas : Sh = 0,15·Ra^(1/3) sur une surface " +
+                "horizontale chauffée vers le haut. Avec D = 2,5·10⁻⁵ m²/s, " +
+                "ν = 1,9·10⁻⁵ et L = 67 mm, Ra = 4,2·10⁶ et Sh = 24" },
+  R_BECHER: { v: 0.0335, u: "m", d: 4,
+              n: "rayon intérieur d'un bécher de 250 mL",
+              s: "diamètre intérieur 67 mm, hauteur 95 mm. C'est lui qui donne " +
+                 "la HAUTEUR d'eau, donc la distance qu'une particule doit " +
+                 "parcourir pour être au fond" }
+};
+
+var G = PHYS.G.v, RHO_EAU = PHYS.RHO_EAU.v, ETA_EAU = PHYS.ETA_EAU.v;
+var RHO_SOL = PHYS.RHO_SOL.v, D_KAOLIN = PHYS.D_KAOLIN.v;
+var TAU_VISIBLE = PHYS.TAU_VISIBLE.v, D_FLOC = PHYS.D_FLOC.v;
+var R_BECHER = PHYS.R_BECHER.v;
+var L_BECHER = 2 * R_BECHER;              /* le chemin optique en travers */
+var L_MM = L_BECHER * 1000;               /* 67 mm */
+var PAS_SIM = 0.5;                        /* le pas de l'intégration, en s */
+
+/* ⚠ LES SEUILS D'ASPECT — déclarés comme tels (SKILL §4.B.5) et réglés sur
+   l'INSTRUMENT (§12.24). L'instrument, ici, c'est l'œil ET les 67 mm de verre
+   qu'il traverse : « limpide » veut dire que la profondeur de visibilité
+   atteint la largeur du bécher, autrement dit qu'on voit au travers.
+   Il n'y a donc qu'UNE grandeur physique — la profondeur de visibilité — et
+   chaque page nomme ses bandes AVEC LES MOTS DE SA PROPRE FICHE.            */
+/* ⚠ CES TROIS SEUILS ONT ÉTÉ FAUX, ET C'EST LA CAPTURE QUI L'A DIT. Réglés
+   d'abord à 0,06 · 0,50 · 1,00 fois la largeur du bécher, ils appelaient
+   « limpide » une eau que le dessin — qui relit la même extinction — peignait
+   franchement brune. Les deux ne pouvaient pas avoir raison ensemble.
+
+   Ce qui manquait, c'est que L'ŒIL NE PERD PAS TOUTE LA LUMIÈRE DIFFUSÉE. Des
+   particules d'un micromètre, peu contrastées dans l'eau, diffusent surtout
+   VERS L'AVANT : une bonne part du flux reste dans le cône d'acceptance de
+   l'œil et continue de former l'image. La perte de contraste utile vaut donc
+   κ ≈ 0,40 fois l'extinction géométrique. En reportant ce facteur sur les
+   seuils — « limpide » quand l'épaisseur optique UTILE tombe sous 1,15 sur la
+   largeur du bécher —, on obtient les trois valeurs ci-dessous, et le mot
+   s'accorde enfin avec le dessin.                                            */
+var KAPPA_OEIL = 0.40;
+var SEUIL_BANDE = [0.048, 0.273, 1.043];  /* × L_MM */
+
+/* ==================================================================
+   2. LA POPULATION DE PARTICULES D'UNE TERRE DE JARDIN
+   ==================================================================
+   Classes granulométriques USDA / Wentworth, aux fractions massiques d'un
+   LIMON SABLEUX — la texture la plus courante des sols cultivés : 55 % de
+   sable, 30 % de limon, 15 % d'argile.                                     */
+var TEXTURE = [
+  { n: "sable grossier", d: 700, f: 0.20, c: "#c8a464" },
+  { n: "sable moyen",    d: 300, f: 0.20, c: "#c19a58" },
+  { n: "sable fin",      d: 120, f: 0.15, c: "#b58c4c" },
+  { n: "limon grossier", d: 40,  f: 0.15, c: "#a67d42" },
+  { n: "limon moyen",    d: 15,  f: 0.10, c: "#96703c" },
+  { n: "limon fin",      d: 5,   f: 0.05, c: "#856234" },
+  { n: "argile",         d: 1.2, f: 0.15, c: "#6b4a2a" }
+];
+
+/* Rend [{n, d, C}] en mg/L, après floculation. La masse est conservée : la
+   page le vérifie, et l'écrit dans « Sous le capot ». */
+function classesTerre(masse_g, volume_mL, partDisp, dArgile) {
+  var out = [], mFloc = 0, i, t;
+  if (partDisp === undefined) partDisp = PHYS.PART_DISPERSIBLE.v / 100;
+  if (dArgile === undefined) dArgile = PHYS.D_ARGILE.v;
+  for (i = 0; i < TEXTURE.length; i++) {
+    t = TEXTURE[i];
+    if (t.n === "argile") {
+      out.push({ n: "argile dispersée", d: dArgile, m: masse_g * t.f * partDisp,
+                 c: t.c });
+      mFloc += masse_g * t.f * (1 - partDisp);
+    } else {
+      out.push({ n: t.n, d: t.d, m: masse_g * t.f, c: t.c });
+    }
+  }
+  out.push({ n: "flocs d'argile", d: D_FLOC, m: mFloc, c: "#7d5636" });
+  return out.map(function (o) {
+    return { n: o.n, d: o.d, c: o.c, C: o.m * 1e6 / volume_mL };
+  });
+}
+function masseTotale(cl, volume_mL) {          /* en grammes */
+  var s = 0, i;
+  for (i = 0; i < cl.length; i++) s += cl[i].C;
+  return s * volume_mL / 1e6;
+}
+
+/* ==================================================================
+   3. LA SÉDIMENTATION — loi de Stokes, colonne idéalisée
+   ================================================================== */
+function stokes(d_um) {
+  var d = d_um * 1e-6;
+  return (RHO_SOL - RHO_EAU) * G * d * d / (18 * ETA_EAU);
+}
+/* La hauteur d'eau, en mètres. ⚠ LE DESSIN LA RELIT, il ne la recopie pas
+   (SKILL §12.18) : un curseur de volume déplace donc le niveau à l'écran ET
+   la distance qu'une particule doit parcourir. */
+function hauteurEau(volume_mL, rayon) {
+  var r = rayon === undefined ? R_BECHER : rayon;
+  return volume_mL * 1e-6 / (Math.PI * r * r);
+}
+/* Part d'une classe encore présente dans la couche SUPÉRIEURE.
+   Dans une colonne uniformément mélangée puis laissée au repos, toutes les
+   particules d'une classe tombent à la même vitesse v : au bout de t, le haut
+   de la colonne est vide de cette classe sur une hauteur v·t. */
+function resteDansCouche(d_um, t_s, h_m) {
+  if (h_m <= 0) return 0;
+  return borne(1 - stokes(d_um) * t_s / h_m, 0, 1);
+}
+function depotFraction(d_um, t_s, h_m) {
+  if (h_m <= 0) return 1;
+  return borne(stokes(d_um) * t_s / h_m, 0, 1);
+}
+function surnageant(cl, t_s, volume_mL, partVersee, rayon) {
+  var h = hauteurEau(volume_mL, rayon) * (partVersee === undefined ? 0.60
+                                                                   : partVersee);
+  return cl.map(function (o) {
+    return { n: o.n, d: o.d, c: o.c, C: o.C * resteDansCouche(o.d, t_s, h) };
+  });
+}
+function masseDeposee(cl, t_s, volume_mL, rayon) {   /* en grammes */
+  var h = hauteurEau(volume_mL, rayon), s = 0, i;
+  for (i = 0; i < cl.length; i++) s += cl[i].C * depotFraction(cl[i].d, t_s, h);
+  return s * volume_mL / 1e6;
+}
+/* Un dépôt n'est pas compact : il enferme de l'eau, et sa porosité en vrac
+   tourne autour de 45 %. */
+var POROSITE_DEPOT = 0.45;
+function hauteurDepot(cl, t_s, volume_mL, rayon) {   /* en mm */
+  var r = rayon === undefined ? R_BECHER : rayon;
+  var m = masseDeposee(cl, t_s, volume_mL, rayon) / 1000;      /* kg */
+  var v = m / (RHO_SOL * (1 - POROSITE_DEPOT));
+  return v / (Math.PI * r * r) * 1000;
+}
+
+/* ==================================================================
+   4. LA TURBIDITÉ ET LA PROFONDEUR DE VISIBILITÉ
+   ==================================================================
+   Une seule grandeur physique, deux lectures. La turbidité est ce que
+   mesurerait un turbidimètre ; la profondeur de visibilité est ce que voit
+   l'œil, et c'est elle qui décide des mots.                                 */
+function turbidite(cl) {
+  var s = 0, i;
+  for (i = 0; i < cl.length; i++) s += cl[i].C * (D_KAOLIN / cl[i].d);
+  return s;
+}
+/* Coefficient d'extinction, en m⁻¹. Pour des sphères grandes devant la
+   longueur d'onde, la section efficace par unité de masse vaut 3·Q/(2·ρ·d)
+   avec Q = 2, soit 3/(ρ·d). */
+function extinction(cl) {
+  var s = 0, i;
+  for (i = 0; i < cl.length; i++) {
+    s += 3 * (cl[i].C * 1e-3) / (RHO_SOL * cl[i].d * 1e-6);
+  }
+  return s;
+}
+function visibilite(cl) {                       /* en mm */
+  var e = extinction(cl);
+  return e <= 1e-9 ? 1e6 : TAU_VISIBLE / e * 1000;
+}
+/* L'épaisseur optique UTILE sur la largeur d'un bécher — celle que l'œil perd
+   vraiment. C'est elle qui décide des mots, et c'est elle que le dessin relit :
+   les deux ne peuvent pas se contredire, puisqu'ils lisent le même nombre. */
+function epaisseurOptique(cl) { return KAPPA_OEIL * extinction(cl) * L_BECHER; }
+/* L'opacité du voile de trouble. Ce n'est PAS la transmission : une suspension
+   diffuse la lumière, elle ne l'avale pas, et un aplat opaque au-dessus de
+   τ = 1 ferait de toute eau un peu trouble une eau noire. On étale donc
+   l'échelle — la grandeur physique reste l'épaisseur optique, affichée à côté
+   en toutes lettres. */
+function voile(cl) { return 1 - Math.exp(-epaisseurOptique(cl) / 2.5); }
+function bandeAspect(cl) {
+  var z = visibilite(cl) / L_MM;
+  if (z < SEUIL_BANDE[0]) return 0;
+  if (z < SEUIL_BANDE[1]) return 1;
+  if (z < SEUIL_BANDE[2]) return 2;
+  return 3;
+}
+/* La marge qui sépare la visibilité du seuil le plus proche. SKILL §12.3
+   exige au moins 25 %, soit un facteur 1,25 — et la page l'AFFICHE. */
+function margeBande(cl) {
+  var z = visibilite(cl) / L_MM, m = 1e9, i, e;
+  for (i = 0; i < SEUIL_BANDE.length; i++) {
+    e = Math.abs(Math.log(z / SEUIL_BANDE[i]));
+    if (e < m) m = e;
+  }
+  return Math.exp(m);
+}
+/* Deux phases dès qu'il reste de la matière visible : c'est ce qui répond à
+   « le mélange est-il homogène ? ». Le seuil est celui de la visibilité, pas
+   un seuil de masse. */
+function homogene(cl, depot_mm) {
+  return bandeAspect(cl) >= 3 && (depot_mm === undefined || depot_mm < 0.2);
+}
+
+/* ⚠ UNE DIVERGENCE SE SIGNALE SUR LES MOTS, PAS SUR LA PONCTUATION. La fiche
+   écrit « brune et trouble » à une ligne et « moins trouble, un peu jaunâtre »
+   à la suivante : la même page composait « brune, trouble » et se dénonçait
+   elle-même pour un « et » manquant. Un panneau de divergence qui crie pour
+   une virgule apprend à la classe à ne plus le lire. On compare donc les mots
+   PORTEURS, dans n'importe quel ordre, et rien d'autre. */
+var MOTS_VIDES = ["et", "de", "du", "des", "la", "le", "les", "un", "une",
+                  "au", "aux", "en", "encore", "peu", "tres", "assez", "plus",
+                  "toujours", "pas"];
+function motsPorteurs(t) {
+  var m = sansAccent(t).replace(/[.,;:!?()«»’']/g, " ").split(/\s+/);
+  var out = [], i;
+  for (i = 0; i < m.length; i++) {
+    if (m[i] && MOTS_VIDES.indexOf(m[i]) < 0) out.push(m[i]);
+  }
+  return out.sort();
+}
+function memesMots(a, b) {
+  var x = motsPorteurs(a), y = motsPorteurs(b), i;
+  if (x.length !== y.length) return false;
+  for (i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+  return true;
+}
+
+/* ==================================================================
+   5. LE CRIBLE — seuil de pore, capture en profondeur, et le GÂTEAU
+   ==================================================================
+   Deux mécanismes, et il en faut deux : le CRIBLE, qui a un seuil de taille
+   de pore, et la CAPTURE EN PROFONDEUR dans le feutre de cellulose, qui n'en
+   a pas. Un papier filtre n'est pas un tamis.                               */
+var N_CRIBLE = 4;                  /* raideur du seuil : un crible n'est pas net */
+var COMPACITE_GATEAU = 0.60;
+var PORE_SUR_GRAIN = 0.20;         /* l'interstice d'un empilement vaut ~ d/5 */
+var AIRE_FILTRE = 3.0e-3;          /* m² — cône de papier dans un entonnoir */
+
+function passeCrible(d_um, dPore_um) {
+  return 1 / (1 + Math.pow(d_um / dPore_um, N_CRIBLE));
+}
+/* Nombre de MONOCOUCHES déposées. Une monocouche de particules de diamètre d
+   pèse ρ·d·compacité par unité de surface : c'est ce nombre, et lui seul, qui
+   dit si un gâteau existe. */
+function couverture(mGateau_kg, aire_m2, d_um) {
+  if (aire_m2 <= 0 || d_um <= 0) return 0;
+  return (mGateau_kg / aire_m2) / (RHO_SOL * d_um * 1e-6 * COMPACITE_GATEAU);
+}
+/* ⚠ LE GÂTEAU FILTRE MIEUX QUE LE PAPIER — quand il existe. Les particules
+   retenues forment un dépôt dont les interstices valent le cinquième de leur
+   taille : c'est pourquoi, au laboratoire, les premières gouttes sont troubles
+   et les suivantes claires. Mais tant qu'il n'y a pas UNE monocouche, il n'y a
+   pas de gâteau, et le papier filtre seul. */
+function poreEffectif(dPore_um, mGateau_kg, aire_m2, dGateau_um) {
+  var f = Math.min(1, couverture(mGateau_kg, aire_m2, dGateau_um));
+  return dPore_um * (1 - f) + dGateau_um * PORE_SUR_GRAIN * f;
+}
+function dMedianMasse(cl) {
+  var tot = 0, s = 0, i;
+  for (i = 0; i < cl.length; i++) { tot += cl[i].C; s += cl[i].C * Math.log(cl[i].d); }
+  return tot <= 0 ? 1 : Math.exp(s / tot);
+}
+/* Filtration par tranches : le gâteau s'épaissit à mesure qu'on verse.
+   Rend { filtrat, residu_g, suite:[{dp, ntu, cv}] } — la suite montre les
+   premières gouttes troubles et les dernières claires, et c'est elle que la
+   page ANIME goutte à goutte. */
+function filtrer(cl, volume_mL, dPore_um, nTranches, aire, etaFeutre) {
+  var mG = 0, dg = dMedianMasse(cl), cum = [], suite = [], i, k, dp, p, tr;
+  var vT, eta;
+  nTranches = nTranches || 24;
+  aire = aire || AIRE_FILTRE;
+  eta = etaFeutre === undefined ? PHYS.ETA_FEUTRE.v / 100 : etaFeutre;
+  vT = volume_mL / nTranches;
+  for (i = 0; i < cl.length; i++) cum.push(0);
+  for (k = 0; k < nTranches; k++) {
+    dp = poreEffectif(dPore_um, mG, aire, dg);
+    tr = [];
+    for (i = 0; i < cl.length; i++) {
+      p = passeCrible(cl[i].d, dp) * (1 - eta);
+      tr.push({ n: cl[i].n, d: cl[i].d, c: cl[i].c, C: cl[i].C * p });
+      mG += cl[i].C * (1 - p) * (vT / 1000) * 1e-6;      /* kg */
+      cum[i] += cl[i].C * p * vT;
+    }
+    suite.push({ dp: dp, ntu: turbidite(tr), cv: couverture(mG, aire, dg) });
+  }
+  var filtrat = cl.map(function (o, i) {
+    return { n: o.n, d: o.d, c: o.c, C: cum[i] / volume_mL };
+  });
+  var residu = (masseTotale(cl, volume_mL) - masseTotale(filtrat, volume_mL));
+  return { filtrat: filtrat, residu: residu, suite: suite,
+           dGateau: dg, mGateau: mG };
+}
+/* La part RETENUE d'une classe, pour la courbe de rétention de la page. */
+function retenu(d_um, dPore_um, etaFeutre) {
+  var eta = etaFeutre === undefined ? PHYS.ETA_FEUTRE.v / 100 : etaFeutre;
+  return 1 - passeCrible(d_um, dPore_um) * (1 - eta);
+}
+
+/* ==================================================================
+   6. L'ÉBULLITION — une ÉDO intégrée en RK4, évaporation comprise
+   ================================================================== */
+var C_EAU = PHYS.C_EAU.v, C_VERRE = PHYS.C_VERRE.v, L_VAP = PHYS.L_VAP.v;
+var K_EB = PHYS.K_EB.v, I_NACL = PHYS.I_NACL.v, S_NACL = PHYS.S_NACL.v;
+var M_NACL = 58.44e-3, R_VAP = 461.5, T_AMB = 20, HR_AMB = 0.50;
+var M_BALLON = 0.090, A_EXT = 0.020, EMISS = 0.90, SIGMA = 5.670e-8;
+var A_SURF = 0.0035, H_CONV = PHYS.H_CONV.v, K_MASSE = PHYS.K_MASSE.v;
+var M_SEC = 5.0;            /* g — fond de liquide sous lequel on est à sec */
+
+/* Pression de vapeur saturante — formule de Magnus, à mieux que 0,4 %. */
+function pSat(T) { return 610.94 * Math.exp(17.625 * T / (T + 243.04)); }
+/* La capacité thermique massique d'une saumure DESCEND avec la salinité :
+   4185 pour l'eau pure, environ 3400 à saturation. */
+function cSolution(wSel) { return C_EAU * (1 - 0.75 * wSel); }
+/* ⚠ SI LE SEL DÉPASSE LA SOLUBILITÉ, l'excédent reste SOLIDE au fond : la
+   molalité est plafonnée, et le palier redevient PLAT. C'est ce qui distingue
+   une solution vraiment saturée d'une solution qui se concentre — et c'est
+   pour cela que le mot « saturée » de la fiche mérite d'être vérifié. */
+function tEbullition(mSel_g, mEau_g) {
+  if (mEau_g <= 1e-9) return 100;
+  var mDis = Math.min(mSel_g, S_NACL * mEau_g / 1000);
+  var b = (mDis * 1e-3 / M_NACL) / (mEau_g * 1e-3);
+  return 100 + K_EB * b * I_NACL;
+}
+function molalite(mSel_g, mEau_g) {
+  if (mEau_g <= 1e-9) return 0;
+  return (Math.min(mSel_g, S_NACL * mEau_g / 1000) * 1e-3 / M_NACL) /
+         (mEau_g * 1e-3);
+}
+function sature(mSel_g, mEau_g) {
+  return mSel_g > S_NACL * mEau_g / 1000 + 1e-9;
+}
+/* Les pertes, en W : convection, rayonnement, évaporation. C'est
+   l'évaporation qui pèse le plus à l'approche de 100 °C, et c'est elle qui
+   rend la montée de plus en plus lente. Rend { p, mdot }. */
+function pertesBallon(T, mEau_g, mSel_g) {
+  var conv = H_CONV * A_EXT * (T - T_AMB);
+  var ray = EMISS * SIGMA * A_EXT *
+            (Math.pow(T + 273.15, 4) - Math.pow(T_AMB + 273.15, 4));
+  var rhoS = pSat(Math.min(T, 100)) / (R_VAP * (T + 273.15));
+  var rhoA = HR_AMB * pSat(T_AMB) / (R_VAP * (T_AMB + 273.15));
+  var aEau = 1, nE, nI;
+  if (mEau_g > 0) {                     /* la salinité abaisse l'activité */
+    nE = mEau_g / 18; nI = mSel_g / (M_NACL * 1000) * I_NACL;
+    aEau = nE / (nE + nI);
+  }
+  var mdot = Math.max(0, K_MASSE * A_SURF * (aEau * rhoS - rhoA));
+  return { p: conv + ray + L_VAP * mdot, mdot: mdot };
+}
+/* ⚠ LE RÉGIME SE VERROUILLE PAR UN DRAPEAU EXPLICITE, jamais par un test sur
+   la température (SKILL §12.6). Écrit « si T < T_eb alors chauffer », le
+   passage à l'ébullition ne se faisait JAMAIS : l'évaporation de surface fait
+   baisser la masse d'eau à chaque pas, T_eb remonte donc de quelques
+   centièmes, le test restait vrai indéfiniment, la température était recalée
+   sur T_eb — et les 430 W restants partaient au NÉANT. Sans erreur, et avec
+   une courbe d'allure parfaitement juste. Payé sur le modèle Python.        */
+function rk4Chauffage(mEau0_g, mSel_g, T0, duree_s, P, pas) {
+  pas = pas || 0.25;
+  var t = 0, T = T0, mEau = mEau0_g, bouillante = false, sec = false;
+  var traj = [{ t: 0, T: T, m: mEau, Teb: tEbullition(mSel_g, mEau),
+                bou: false, sec: false }];
+  var n = Math.round(duree_s / pas), i, Teb, w, C, k1, k2, k3, k4, Tn;
+  var pc, pr, pn, dm, r;
+  function f(TT, m, C) { return (P - pertesBallon(TT, m, mSel_g).p) / C; }
+  for (i = 0; i < n; i++) {
+    Teb = tEbullition(mSel_g, mEau);
+    w = mSel_g / Math.max(1e-9, mEau + mSel_g);
+    C = mEau * 1e-3 * cSolution(w) + M_BALLON * C_VERRE;
+    if (!bouillante && T < Teb - 1e-6) {
+      k1 = f(T, mEau, C);
+      k2 = f(T + pas * k1 / 2, mEau, C);
+      k3 = f(T + pas * k2 / 2, mEau, C);
+      k4 = f(T + pas * k3, mEau, C);
+      Tn = T + pas * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+      mEau -= pertesBallon(T, mEau, mSel_g).mdot * pas * 1000;
+      if (Tn >= Teb) {
+        /* ⚠ ON RECALE SUR LA VALEUR PRESCRITE (SKILL §12.43) : laissée à
+           100,000 000 01, elle ferait mentir l'affichage d'un dixième. */
+        Tn = Teb; bouillante = true;
+      }
+      T = Tn;
+    } else {
+      bouillante = true;
+      pc = H_CONV * A_EXT * (T - T_AMB);
+      pr = EMISS * SIGMA * A_EXT *
+           (Math.pow(T + 273.15, 4) - Math.pow(T_AMB + 273.15, 4));
+      pn = Math.max(0, P - pc - pr);
+      dm = pn / L_VAP * pas * 1000;
+      /* ⚠ UN BALLON À SEC N'A PLUS DE TEMPÉRATURE D'ÉBULLITION. Laissée
+         tomber à zéro, la masse faisait rendre 100 °C et la courbe
+         REDESCENDAIT de 106 à 100 — un dessin faux sur le point même que la
+         leçon établit. On s'arrête au fond de liquide que la sécurité de la
+         fiche impose de garder. */
+      if (mEau - dm <= M_SEC) { mEau = M_SEC; sec = true; }
+      else { mEau -= dm; T = tEbullition(mSel_g, mEau); }
+    }
+    t += pas;
+    traj.push({ t: t, T: T, m: mEau, Teb: tEbullition(mSel_g, mEau),
+                bou: bouillante, sec: sec });
+  }
+  return traj;
+}
+function lireTraj(traj, t_s) {
+  var i, a, b, u;
+  if (t_s <= 0) return traj[0];
+  for (i = 1; i < traj.length; i++) {
+    if (traj[i].t >= t_s) {
+      a = traj[i - 1]; b = traj[i];
+      u = b.t > a.t ? (t_s - a.t) / (b.t - a.t) : 0;
+      return { t: t_s, T: a.T + (b.T - a.T) * u, m: a.m + (b.m - a.m) * u,
+               Teb: a.Teb + (b.Teb - a.Teb) * u, bou: b.bou, sec: b.sec };
+    }
+  }
+  return traj[traj.length - 1];
+}
+function instantEbullition(traj) {
+  var i;
+  for (i = 0; i < traj.length; i++) if (traj[i].bou) return traj[i].t;
+  return -1;
+}
+
+/* ==================================================================
+   7. LA CHAÎNE D'ÉTAGES — le résultat est le PRODUIT des rendements
+   ==================================================================
+   Chaque étage transforme l'eau, et rien d'autre. La limpidité finale est le
+   produit des étages, et la page l'écrit comme un produit : c'est ce qui
+   permet de CHIFFRER ce qu'on perd en retirant un étage.                    */
+var ETA_LIT = PHYS.ETA_LIT.v / 100, D_PORE_SABLE = PHYS.D_PORE_SABLE.v;
+var CAP_SABLE = PHYS.CAP_SABLE.v, CAP_DEBRIS = PHYS.CAP_DEBRIS.v;
+var AIRE_SABLE = 3.0e-3;
+var ETA_CHARBON_C = PHYS.ETA_CHARBON_C.v / 100;
+var ETA_CHARBON_T = PHYS.ETA_CHARBON_T.v / 100;
+var ETA_SABLE_C = 0.10;
+
+function copieEau(e) {
+  var o = {}, k;
+  for (k in e) o[k] = e[k];
+  o.classes = e.classes.map(function (c) {
+    return { n: c.n, d: c.d, c: c.c, C: c.C };
+  });
+  return o;
+}
+function etageDegrillage(e) {
+  var o = copieEau(e);
+  o.retenu = "herbes, papier, gros déchets";
+  o.flottants = 0;
+  return o;
+}
+function etageDecantation(e, t_s, partVersee) {
+  var o = copieEau(e);
+  o.depot = masseDeposee(e.classes, t_s, e.volume);
+  o.classes = surnageant(e.classes, t_s, e.volume, partVersee);
+  o.volume = e.volume * (partVersee === undefined ? 0.60 : partVersee);
+  o.retenu = "boue déposée au fond";
+  return o;
+}
+/* ⚠ L'ORDRE COMPTE, ET VOICI POURQUOI. La charge de solides qui arrive sur le
+   lit se compare à sa capacité. Une eau non décantée la dépasse : le lit
+   colmate, l'eau se creuse des chemins préférentiels, et le rendement
+   s'écroule. C'est pour cela qu'une station décante AVANT de filtrer. Et les
+   déchets flottants comptent à part : une nappe d'herbes mouillées bouche un
+   entonnoir cinq fois plus vite que des fines. */
+function etageSable(e) {
+  var o = copieEau(e), i, by;
+  var fines = masseTotale(e.classes, e.volume) * 1e-3;          /* kg */
+  var debris = (e.flottants || 0) * 1e-3;
+  o.surcharge = fines / (CAP_SABLE * AIRE_SABLE) +
+                debris / (CAP_DEBRIS * AIRE_SABLE);
+  o.colmate = o.surcharge > 1;
+  if (!o.colmate) {
+    for (i = 0; i < o.classes.length; i++) {
+      o.classes[i].C *= passeCrible(o.classes[i].d, D_PORE_SABLE) * (1 - ETA_LIT);
+    }
+  } else {
+    by = Math.min(0.85, 1 - 1 / o.surcharge);
+    for (i = 0; i < o.classes.length; i++) {
+      o.classes[i].C *= by + (1 - by) *
+        passeCrible(o.classes[i].d, D_PORE_SABLE) * (1 - ETA_LIT);
+    }
+  }
+  o.couleur = e.couleur * (1 - ETA_SABLE_C);
+  o.retenu = "particules fines en suspension";
+  return o;
+}
+function etageCharbon(e) {
+  var o = copieEau(e), i;
+  for (i = 0; i < o.classes.length; i++) o.classes[i].C *= 1 - ETA_CHARBON_T;
+  o.couleur = e.couleur * (1 - ETA_CHARBON_C);
+  o.odeur = e.odeur * (1 - ETA_CHARBON_C);
+  o.retenu = "couleur et odeurs";
+  return o;
+}
+/* Les critères de POTABILITÉ sont RÉGLEMENTAIRES, pas des seuils d'aspect :
+   c'est pour cela que la page peut CALCULER la réponse « non » au lieu de
+   l'affirmer. Rend la liste des raisons — vide si l'eau est potable. */
+function raisonsNonPotable(e) {
+  var r = [];
+  if (turbidite(e.classes) > PHYS.OMS_TURB.v) {
+    r.push("turbidité " + nb(turbidite(e.classes), 1) + " NTU au-dessus de " +
+           nb(PHYS.OMS_TURB.v, 1));
+  }
+  if (e.couleur > PHYS.OMS_COULEUR.v) {
+    r.push("couleur " + nb(e.couleur, 0) + " au-dessus de " +
+           nb(PHYS.OMS_COULEUR.v, 0) + " Pt-Co");
+  }
+  if (e.microbes > 0) r.push(nb(e.microbes, 0) + " germes pour 100 mL");
+  if (e.sel > 0) r.push(nb(e.sel, 0) + " mg/L de sel dissous");
+  return r;
+}
+
+/* ==================================================================
+   3 ter. CE QUE LA FICHE DONNE — lu, jamais retapé
+   ================================================================== */
+function colonne(motif, defaut) {
+  var i;
+  for (i = 0; i < ENTETES.length; i++) {
+    if (motif.test(depouille(ENTETES[i]))) return i;
+  }
+  return defaut;
+}
+var C_T = 0;                                     /* la colonne « Instant t » */
+/* Les quatre colonnes de relevé, visées par ce qu'elles DISENT. La distillée
+   avant la salée, la température avant l'état — mais on ne le suppose pas. */
+var C_TD = colonne(/T .*distill/i, 1);
+var C_ED = colonne(/[ÉE]tat .*distill/i, 2);
+var C_TS = colonne(/T .*sal/i, 3);
+var C_ES = colonne(/[ÉE]tat .*sal/i, 4);
+
+/* Les instants du tableau : ils sont dans la PREMIÈRE COLONNE de chaque ligne,
+   en minutes. Jamais écrits en dur. */
+var INSTANTS = (function () {
+  var out = [], i, v;
+  for (i = 0; i < N_LIG; i++) {
+    v = parseFloat(depouille((LIG[i] || [])[C_T]).replace(",", "."));
+    out.push({ k: i, min: isFinite(v) ? v : 0, t: (isFinite(v) ? v : 0) * 60 });
+  }
+  return out;
+})();
+var T_FIN = INSTANTS.length ? INSTANTS[INSTANTS.length - 1].t : 1080;
+
+/* ⚠ LES DEUX ÉTAPES DE RELEVÉ DE LA FICHE NE COUVRENT PAS LES MÊMES LIGNES.
+   L'étape 4 note « toutes les 2 minutes » ; l'étape 5 « poursuit pendant
+   6 minutes au moins APRÈS l'apparition des premières bulles ». Le partage se
+   DÉDUIT des instants du tableau — la première série est celle qui garde le
+   pas régulier —, il ne se compte pas à la main (SKILL §12.40 : demander de
+   chaque ligne à quel moment la fiche la renseigne). */
+var N_ETAPE4 = (function () {
+  var i, g, pas = 1e9;
+  for (i = 1; i < INSTANTS.length; i++) {
+    g = INSTANTS[i].t - INSTANTS[i - 1].t;
+    if (g > 0 && g < pas) pas = g;
+  }
+  for (i = 1; i < INSTANTS.length; i++) {
+    if (INSTANTS[i].t - INSTANTS[i - 1].t > pas + 1e-6) return i;
+  }
+  return INSTANTS.length;
+})();
+
+/* Les températures initiales sont des CONDITIONS INITIALES, pas des résultats :
+   la fiche les relève au moment où l'on plonge le thermomètre, avant de
+   brancher (SKILL §12.40 — la première ligne d'un tableau n'est pas toujours
+   un relevé de la grandeur qu'on étudie). On les lit donc dans la fiche, et
+   tout le reste en découle par intégration. */
+function nombreCel(k, c) {
+  var v = parseFloat(depouille(cel(k, c)).replace(",", "."));
+  return isFinite(v) ? v : null;
+}
+var T0_DIST = nombreCel(0, C_TD);
+var T0_SALE = nombreCel(0, C_TS);
+if (T0_DIST === null) T0_DIST = 20;
+if (T0_SALE === null) T0_SALE = 20;
+
+/* Les mots d'état, tels que la fiche les écrit. */
+var MOT_LIQ = cel(0, C_ED) || "liquide";
+var MOT_GAZ = (function () {
+  var i, v;
+  for (i = N_LIG - 1; i >= 0; i--) { v = cel(i, C_ED); if (v && v !== MOT_LIQ) return v; }
+  return "liquide + gaz";
+})();
+
+/* « Verser 150 mL d'eau distillée » · « 3 cuillerées de sel pour 150 mL » */
+var V_FICHE = lireProto("mL", 150, false);
+var N_CUILL_SEL = (function () {
+  var m = /(\d+|un|une|deux|trois|quatre|cinq|six)\s+cuiller[ée]*e?s?\s+de\s+sel/i
+          .exec((DONNEES.materiel || []).join(" · ") + " · " + TEXTE_PROTO);
+  if (!m) return 3;
+  return isNaN(+m[1]) ? (MOTS_NB[m[1].toLowerCase()] || 3) : +m[1];
+})();
+/* Une cuillerée à café de sel fin pèse 5 g — déclaré, la fiche ne le pèse pas. */
+var M_CUILL_SEL = 5.0;
+var M_SEL_FICHE = N_CUILL_SEL * M_CUILL_SEL;
+
+/* ⚠ LA PUISSANCE NE S'AJUSTE PAS : c'est la PLAQUE SIGNALÉTIQUE. Les
+   chauffe-ballons de laboratoire sont calibrés 100 W pour 100 mL, 150 W pour
+   250 mL, 250 W pour 500 mL ; un manchon enveloppe le ballon, et le couplage
+   au contenu vaut 0,90. Aucun de ces deux nombres n'a été touché pour faire
+   tomber le résultat de la fiche (SKILL §4.B.4). */
+var P_UTILE = PHYS.P_NOM.v * PHYS.ETA_MANCHON.v / 100;      /* 135 W */
+
+/* ⚠ LA COMPRESSION DU TEMPS (SKILL §12.52). Les intervalles de la fiche sont
+   de 2 min, puis de 6 : à × 120 ils passent en 1,0 s et 3,0 s, et le protocole
+   entier de 18 minutes en 9 secondes. Le facteur est AFFICHÉ dans la scène, et
+   l'intégration garde son pas — le résultat n'en dépend pas. */
+var ACCEL = 120;
+var PAS_RK4 = 0.25;         /* s — le pas de l'intégration, jamais l'image */
+
+/* ==================================================================
+   4. RÉGLAGES
+   ==================================================================
+   ⚠ Chaque `value` tombe sur la grille des pas (SKILL §12.12).              */
+var PROTO = { p: P_UTILE, s: M_SEL_FICHE, v: V_FICHE };
+var REG = { p: PROTO.p, s: PROTO.s, v: PROTO.v };
+function horsProtocole() {
+  return Math.abs(REG.p - PROTO.p) > 1e-9 || REG.s !== PROTO.s ||
+         REG.v !== PROTO.v;
+}
+function revenirAuProtocole() { REG.p = PROTO.p; REG.s = PROTO.s; REG.v = PROTO.v; }
+
+/* ==================================================================
+   5. LE SOLVEUR — deux trajectoires, une seule ÉDO
+   ==================================================================
+   Le rôle de l'eau distillée est celui du TÉMOIN : sans elle, on ne saurait
+   pas si l'absence de palier vient du sel ou du dispositif de chauffage. Les
+   deux ballons passent donc par la MÊME fonction, avec la même puissance et le
+   même verre — seul le sel change.                                          */
+function trajectoires() {
+  return {
+    d: rk4Chauffage(REG.v, 0, T0_DIST, T_FIN + 120, REG.p, PAS_RK4),
+    s: rk4Chauffage(REG.v, REG.s, T0_SALE, T_FIN + 120, REG.p, PAS_RK4)
+  };
+}
+/* L'état physique : ce que la fiche appelle « liquide » ou « liquide + gaz ».
+   Il sort du drapeau d'ébullition du solveur, jamais d'une étiquette. */
+function motEtat(p) { return p.bou ? MOT_GAZ : MOT_LIQ; }
+
+/* Le PALIER — c'est lui, la leçon. Sa valeur, et sa DÉRIVE entre le début de
+   l'ébullition et la fin du relevé. Une dérive nulle, c'est un corps pur. */
+function palier(tr) {
+  var t0 = instantEbullition(tr);
+  if (t0 < 0) return null;
+  var a = lireTraj(tr, t0), b = lireTraj(tr, T_FIN);
+  return { t0: t0, T0: a.T, T1: b.T, derive: b.T - a.T,
+           mFin: b.m, sec: b.sec };
+}
+/* Le seuil de lecture du thermomètre : il est gradué en degrés, donc la
+   demi-division vaut 0,5 °C. C'est l'INSTRUMENT qui décide si un palier est
+   plat, pas le calcul (SKILL §12.24, §12.21). */
+var DIVISION = 1.0;
+var DEMI_DIV = DIVISION / 2;
+function platAuThermometre(derive) { return Math.abs(derive) < DEMI_DIV; }
+/* Le nombre de décimales suit la division : 1 °C par graduation → un chiffre
+   après la virgule au jugé, pas deux (SKILL §12.21). */
+function nbT(x) { return nb(x, 1); }
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   ⚠ TOUTE CLÉ LUE DANS LE CODE FIGURE ICI (SKILL §12.17).                   */
+var ETAT = {};
+function neufEtat() {
+  return {
+    tSeance: 0, horsProto: false, nCell: 0, diverge: [],
+    rempli: { d: false, s: false },
+    thermo: { d: false, s: false },
+    demarre: false,
+    t: 0,                        /* ⚠ UNE COURSE A UNE HORLOGE (SKILL §12.37) */
+    enCours: false,
+    releves: [],                 /* les indices de LIGNES déjà relevées */
+    carnet: [],
+    traj: null,                  /* les deux trajectoires, calculées d'avance */
+    courbe: { d: [], s: [] },    /* ce qui est tracé au fur et à mesure */
+    trace: false,
+    nTraces: 0,                  /* points posés sur le papier millimétré */
+    repere: false
+  };
+}
+
+/* ==================================================================
+   8. GÉOMÉTRIE
+   ================================================================== */
+var W = 1120, H = 760;
+var BANC = 596, BOIS = 648, Y_R1 = 682, Y_R2 = 728;
+var POSTES = [
+  { k: "d", x: 150, nom: "eau distillée", sel: false },
+  { k: "s", x: 330, nom: "eau salée", sel: true }
+];
+var BAL = { r: 52, ycol: 396, yc: 486, col: 20 };  /* le ballon et son col */
+var MAN = { w: 118, h: 74 };                       /* le chauffe-ballon */
+var THE = { top: 214, bot: 520, w: 15, bulbe: 9 }; /* le thermomètre en place */
+var T_MIN = -10, T_MAX = 110;                      /* la graduation de la fiche */
+var PAP = { x: 596, y: 156, w: 500, h: 384 };      /* le papier millimétré */
+/* ⚠ TOUTES LES HAUTEURS D'ÉTIQUETTE DANS UN SEUL OBJET (SKILL §12.7) ; aucune
+   sur le meuble sombre, seule la bande de bois claire en accepte. */
+/* ⚠ MESURÉ SUR LA CAPTURE (SKILL §12.7, §12.9). Trois collisions au premier
+   réglage : les bidons rangés à l'aplomb de leur poste passaient DERRIÈRE le
+   thermomètre une fois celui-ci en place ; la lecture posée au-dessus du col
+   tombait sur le tube ; et la légende, alignée à gauche, disparaissait sous le
+   journal — qui descend bien plus bas qu'on ne l'estime. Les rangements sont
+   donc dans la colonne libre entre les postes et le papier, la légende est à
+   DROITE, et la lecture est passée sous le bécher, sur la bande de bois — la
+   seule zone claire qui accepte une étiquette. */
+var Y_ETIQ = { poste: 616, mesure: 634, legende: 132, temps: 148 };
+var REPOS_OBJ = {
+  bidonD: { x: 556, y: 208 }, bidonS: { x: 556, y: 432 },
+  thermoD: { x: 436, y: 320 }, thermoS: { x: 500, y: 320 }
+};
+function yColonne(T) {
+  return THE.bot - (THE.bot - THE.top) * borne((T - T_MIN) / (T_MAX - T_MIN), 0, 1);
+}
+
+/* ==================================================================
+   9. LES DÉGRADÉS
+   ================================================================== */
+function defsPage() {
+  var g;
+  g = el("linearGradient", { id: "manchon", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#8b93a0" }));
+  g.appendChild(el("stop", { offset: 0.5, "stop-color": "#5d6675" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#39404c" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "acier", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#6b7480" }));
+  g.appendChild(el("stop", { offset: 0.4, "stop-color": "#c2cbd6" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5a636e" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "saumure", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#cfe4ee" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7fa8bd" }));
+  DEFS.appendChild(g);
+  var f = el("filter", { id: "chaud", x: "-60%", y: "-60%",
+                         width: "220%", height: "220%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 7 }));
+  DEFS.appendChild(f);
+}
+
+/* ==================================================================
+   11. LE DÉCOR ET LE PAPIER MILLIMÉTRÉ
+   ================================================================== */
+var gPapier = null, gTraces = null, gPalier = null;
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4,
+                             fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: BOIS - BANC,
+                             fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: BOIS, width: W, height: H - BOIS,
+                             fill: "url(#banc)" }));
+  txt("fond", W - 26, Y_ETIQ.legende,
+      "schéma habillé — la colonne du thermomètre est à l'échelle de sa " +
+      "graduation ; la verrerie est agrandie",
+      { ancre: "end", taille: 10.5, couleur: "#8391a1" });
+  txt("fond", W - 26, Y_ETIQ.temps, "temps × " + ACCEL + " pendant le chauffage",
+      { ancre: "end", taille: 11.5, couleur: ORANGE, gras: true });
+  /* ---- le papier millimétré, punaisé au mur ---- */
+  gPapier = ajout("poste", el("g", {}));
+  gPapier.appendChild(el("rect", { x: PAP.x, y: PAP.y, width: PAP.w,
+    height: PAP.h, rx: 3, fill: "#fdfbf3", stroke: "#c9b189",
+    "stroke-width": 2, filter: "url(#ombreDouce)" }));
+  var i;
+  for (i = 1; i * 20 < PAP.w; i++) {
+    gPapier.appendChild(el("line", { x1: PAP.x + i * 20, y1: PAP.y,
+      x2: PAP.x + i * 20, y2: PAP.y + PAP.h, stroke: "#e3c9a8",
+      "stroke-width": i % 5 === 0 ? 1.1 : 0.5 }));
+  }
+  for (i = 1; i * 20 < PAP.h; i++) {
+    gPapier.appendChild(el("line", { x1: PAP.x, y1: PAP.y + i * 20,
+      x2: PAP.x + PAP.w, y2: PAP.y + i * 20, stroke: "#e3c9a8",
+      "stroke-width": i % 5 === 0 ? 1.1 : 0.5 }));
+  }
+  gTraces = ajout("avant", el("g", { "pointer-events": "none" }));
+  gPalier = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  dessinerAxes();
+}
+/* Les axes du papier : t de 0 au dernier instant de la fiche, T de 0 à 120 —
+   ⚠ LES BORNES SE CALCULENT SUR L'ÉCHELLE, jamais l'inverse (SKILL §12.22). */
+var GX0 = PAP.x + 54, GY0 = PAP.y + PAP.h - 46;
+var GX1 = PAP.x + PAP.w - 22, GY1 = PAP.y + 30;
+var G_TMAX = 120;
+function gX(t) { return GX0 + (GX1 - GX0) * borne(t / T_FIN, 0, 1); }
+function gY(T) { return GY0 - (GY0 - GY1) * borne(T / G_TMAX, 0, 1); }
+function dessinerAxes() {
+  var i;
+  gPapier.appendChild(el("line", { x1: GX0, y1: GY0, x2: GX1, y2: GY0,
+    stroke: INK, "stroke-width": 1.8 }));
+  gPapier.appendChild(el("line", { x1: GX0, y1: GY0, x2: GX0, y2: GY1,
+    stroke: INK, "stroke-width": 1.8 }));
+  for (i = 0; i <= G_TMAX; i += 20) {
+    gPapier.appendChild(el("line", { x1: GX0 - 4, y1: gY(i), x2: GX0,
+      y2: gY(i), stroke: INK, "stroke-width": 1.4 }));
+    gPapier.appendChild(el("text", { x: GX0 - 7, y: gY(i) + 4,
+      "text-anchor": "end", "font-size": 10, fill: INK,
+      "font-family": "Arial, Helvetica, sans-serif" }, i + ""));
+  }
+  INSTANTS.forEach(function (o) {
+    gPapier.appendChild(el("line", { x1: gX(o.t), y1: GY0, x2: gX(o.t),
+      y2: GY0 + 4, stroke: INK, "stroke-width": 1.4 }));
+    gPapier.appendChild(el("text", { x: gX(o.t), y: GY0 + 16,
+      "text-anchor": "middle", "font-size": 10, fill: INK,
+      "font-family": "Arial, Helvetica, sans-serif" }, nb(o.min, 0)));
+  });
+  gPapier.appendChild(el("text", { x: GX0 - 7, y: GY1 - 8, "text-anchor": "end",
+    "font-size": 10.5, "font-weight": "bold", fill: INK,
+    "font-family": "Arial, Helvetica, sans-serif" }, "T (°C)"));
+  gPapier.appendChild(el("text", { x: GX1, y: GY0 + 30, "text-anchor": "end",
+    "font-size": 10.5, "font-weight": "bold", fill: INK,
+    "font-family": "Arial, Helvetica, sans-serif" }, "t (min)"));
+  gPapier.appendChild(el("text", { x: PAP.x + PAP.w / 2, y: PAP.y + 20,
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold",
+    fill: "#5b4a2c", "font-family": "Arial, Helvetica, sans-serif" },
+    "papier millimétré — les deux courbes, à la même échelle"));
+  /* la ligne des 100 °C : le repère de la leçon */
+  gPapier.appendChild(el("line", { x1: GX0, y1: gY(100), x2: GX1, y2: gY(100),
+    stroke: GOLD, "stroke-width": 1.2, "stroke-dasharray": "5 4",
+    opacity: 0.8 }));
+  gPapier.appendChild(el("text", { x: GX1 - 4, y: gY(100) - 5,
+    "text-anchor": "end", "font-size": 9.5, fill: GOLD,
+    "font-family": "Arial, Helvetica, sans-serif" }, "100 °C"));
+}
+
+/* ==================================================================
+   12. LES DEUX POSTES — support, manchon, ballon, thermomètre
+   ==================================================================
+   ⚠ UN APPAREIL SE DESSINE ENTIER, du socle au crochet (SKILL §12.53) : un
+   thermomètre dont le tube commencerait sous la pince flotterait dans le vide.
+   ⚠ ET L'INTÉRIEUR AVANT LA PAROI (SKILL §8).                               */
+var NP = {};
+function construirePoste(p) {
+  var x = p.x, g = ajout("poste", el("g", {})), j;
+  /* le support et la pince */
+  ombreAuSol(x + 92, BANC, 48, 0.26);
+  g.appendChild(el("rect", { x: x + 52, y: BANC - 12, width: 88, height: 14,
+    rx: 4, fill: "url(#acier)", stroke: "#4a525c", "stroke-width": 1.5 }));
+  g.appendChild(el("rect", { x: x + 88, y: 196, width: 12, height: BANC - 208,
+    fill: "url(#acier)", stroke: "#4a525c", "stroke-width": 1.1 }));
+  /* ⚠ LA PINCE DOIT TOUCHER CE QU'ELLE TIENT (SKILL §12.49) : son bras va de
+     la tige à l'AXE du poste, là où le thermomètre se place, et sa mâchoire
+     s'y referme. Réglé à l'œil, il restait quatre-vingts unités de vide entre
+     les deux, et l'on voyait un thermomètre suspendu à rien. */
+  g.appendChild(el("rect", { x: x + 6, y: 254, width: 84, height: 11, rx: 4,
+    fill: "url(#acier)", stroke: "#4a525c", "stroke-width": 1.1 }));
+  g.appendChild(el("path", { d: "M" + pt(x + 8, 248) + " q-16,11 0,23",
+    fill: "none", stroke: "#7d8794", "stroke-width": 6 }));
+  /* le chauffe-ballon : une cuvette sombre posée sur la paillasse */
+  ombreAuSol(x, BANC, MAN.w / 2, 0.3);
+  g.appendChild(el("path", { d: "M" + pt(x - MAN.w / 2, BANC - MAN.h) +
+    " Q" + pt(x, BANC + 22) + " " + pt(x + MAN.w / 2, BANC - MAN.h) + " Z",
+    fill: "url(#manchon)", stroke: "#2b313b", "stroke-width": 2 }));
+  var voyant = g.appendChild(el("circle", { cx: x + MAN.w / 2 - 16,
+    cy: BANC - MAN.h + 16, r: 5.5, fill: "#6b7480", stroke: "#2b313b",
+    "stroke-width": 1.2 }));
+  var halo = ajout("fils", el("circle", { cx: x, cy: BAL.yc + 26, r: 0,
+    fill: "#ff8a2b", opacity: 0, filter: "url(#chaud)",
+    "pointer-events": "none" }));
+  /* le ballon : l'intérieur, le liquide, les bulles, PUIS la paroi */
+  var clip = el("clipPath", { id: "clipBal-" + p.k });
+  clip.appendChild(el("circle", { cx: x, cy: BAL.yc, r: BAL.r - 3 }));
+  DEFS.appendChild(clip);
+  ajout("arriere", el("circle", { cx: x, cy: BAL.yc, r: BAL.r - 3,
+    fill: "#f7fbfd", "pointer-events": "none" }));
+  var gInt = ajout("arriere", el("g", { "clip-path": "url(#clipBal-" + p.k + ")",
+                                        "pointer-events": "none" }));
+  var liq = gInt.appendChild(el("rect", { x: x - BAL.r, y: BAL.yc + BAL.r,
+    width: 2 * BAL.r, height: 0,
+    fill: p.sel ? "url(#saumure)" : "url(#eau)", opacity: 0.9 }));
+  var surf = gInt.appendChild(el("ellipse", { cx: x, cy: BAL.yc + BAL.r,
+    rx: BAL.r - 6, ry: 5, fill: "#cfe6f3", opacity: 0 }));
+  var bulles = gInt.appendChild(el("g", { opacity: 0 }));
+  for (j = 0; j < 14; j++) {
+    bulles.appendChild(el("circle", { cx: x - 34 + (j * 17) % 68, cy: 0,
+      r: 2.2 + (j % 3) * 1.1, fill: "#ffffff", opacity: 0.85 }));
+  }
+  var cristaux = gInt.appendChild(el("g", { opacity: 0 }));
+  for (j = 0; j < 10; j++) {
+    cristaux.appendChild(el("rect", { x: x - 28 + j * 6.4,
+      y: BAL.yc + BAL.r - 16, width: 4.4, height: 4.4, rx: 1,
+      fill: "#f2f5f8", stroke: "#c2cbd6", "stroke-width": 0.7 }));
+  }
+  /* la paroi de verre, PAR-DESSUS */
+  /* ⚠ SUR UNE SPHÈRE, le voile de verre pleine face LAVE le liquide : le
+     dégradé porte un reflet blanc à 78 % qui recouvre toute la boule. On le
+     laisse à 55 % et l'on rend le reflet par l'ellipse dédiée, plus bas —
+     c'est ce que le §10.2 demande de toute façon : un reflet NET, pas un
+     voile général. */
+  ajout("avant", el("circle", { cx: x, cy: BAL.yc, r: BAL.r,
+    fill: "url(#verre)", "fill-opacity": 0.55, stroke: "#7f93a6",
+    "stroke-width": 3, "pointer-events": "none" }));
+  ajout("avant", el("path", { d: "M" + pt(x - BAL.col / 2, BAL.yc - BAL.r + 12) +
+    " L" + pt(x - BAL.col / 2, BAL.ycol) + " L" + pt(x + BAL.col / 2, BAL.ycol) +
+    " L" + pt(x + BAL.col / 2, BAL.yc - BAL.r + 12) + " Z",
+    fill: "url(#verre)", stroke: "#7f93a6", "stroke-width": 3,
+    "pointer-events": "none" }));
+  ajout("avant", el("ellipse", { cx: x, cy: BAL.ycol, rx: BAL.col / 2 + 3,
+    ry: 4, fill: "none", stroke: "#7f93a6", "stroke-width": 3,
+    "pointer-events": "none" }));
+  ajout("avant", el("ellipse", { cx: x - BAL.r * 0.42, cy: BAL.yc - BAL.r * 0.4,
+    rx: 9, ry: 15, fill: "#ffffff", opacity: 0.5, transform: "rotate(-24 " +
+    (x - BAL.r * 0.42) + " " + (BAL.yc - BAL.r * 0.4) + ")",
+    "pointer-events": "none" }));
+  /* la vapeur qui sort du col */
+  var vap = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  for (j = 0; j < 3; j++) {
+    vap.appendChild(el("ellipse", { cx: x, cy: BAL.ycol - 20 - j * 22,
+      rx: 15 + j * 5, ry: 11 + j * 3, fill: "#dfe9f0", filter: "url(#flou)" }));
+  }
+  txt("avant", x, Y_ETIQ.poste, p.nom,
+      { taille: 12, gras: true, couleur: "#5b4a2c", halo: "#e6d5b4" });
+  var lect = txt("avant", x, Y_ETIQ.mesure, "",
+                 { taille: 11, gras: true, couleur: "#6b5433",
+                   halo: "#e6d5b4" });
+  NP[p.k] = { g: g, liq: liq, surf: surf, bulles: bulles, cristaux: cristaux,
+              vap: vap, halo: halo, voyant: voyant, lect: lect, x: x,
+              tube: null, col: null, grad: null };
+  var z = ajout("arriere", el("circle", { cx: x, cy: BAL.yc, r: BAL.r,
+    fill: "#ffffff", "fill-opacity": 0.001, "data-act": "ballon-" + p.k,
+    cursor: "pointer" }));
+  z.addEventListener("click", function () { lireBallon(p.k); });
+}
+function construirePostes() { POSTES.forEach(construirePoste); }
+
+/* ==================================================================
+   13. CE QUI SE MANIPULE — les bidons et les thermomètres
+   ================================================================== */
+var BIDONS = {}, THERMOS = {};
+function etiquetteObjet(g, y, s, taille) {
+  return g.appendChild(el("text", { x: 0, y: y, "text-anchor": "middle",
+    "font-size": taille || 11.5, "font-weight": "bold", fill: "#41586b",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none",
+    "paint-order": "stroke", stroke: "#f4f7fa", "stroke-width": 3.4 }, s));
+}
+function construireObjets() {
+  POSTES.forEach(function (p) {
+    var g = ajout("objets", el("g", { cursor: "grab",
+                                      "data-act": "bidon-" + p.k }));
+    prehension(g, -32, -50, 64, 104);
+    g.appendChild(el("rect", { x: -25, y: -26, width: 50, height: 72, rx: 7,
+      fill: p.sel ? "#e8eef2" : "#eef6fb", stroke: "#7f93a6",
+      "stroke-width": 2.2 }));
+    g.appendChild(el("rect", { x: -21, y: -8, width: 42, height: 50, rx: 4,
+      fill: p.sel ? "url(#saumure)" : "url(#eau)", opacity: 0.85,
+      "pointer-events": "none" }));
+    g.appendChild(el("rect", { x: -9, y: -40, width: 18, height: 16, rx: 3,
+      fill: "#8ba3b6", "pointer-events": "none" }));
+    g.appendChild(el("rect", { x: -19, y: 4, width: 38, height: 15, rx: 2,
+      fill: "#ffffff", opacity: 0.9, "pointer-events": "none" }));
+    g.appendChild(el("text", { x: 0, y: 15, "text-anchor": "middle",
+      "font-size": 8.5, "font-weight": "bold", fill: "#41586b",
+      "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+      p.sel ? "EAU SALÉE" : "DISTILLÉE"));
+    etiquetteObjet(g, 62, nb(PROTO.v, 0) + " mL");
+    var o = { type: "bidon", k: p.k, g: g, fige: false,
+              x: REPOS_OBJ["bidon" + p.k.toUpperCase()].x,
+              y: REPOS_OBJ["bidon" + p.k.toUpperCase()].y };
+    BIDONS[p.k] = o;
+    brancherObjet(o); placer(o, o.x, o.y);
+
+    /* ---- le thermomètre : dessiné ENTIER, du sommet au réservoir ---- */
+    g = ajout("objets", el("g", { cursor: "grab",
+                                  "data-act": "thermo-" + p.k }));
+    var hT = THE.bot - THE.top;
+    prehension(g, -THE.w, -hT / 2 - 10, 2 * THE.w, hT + 30);
+    g.appendChild(el("rect", { x: -THE.w / 2, y: -hT / 2, width: THE.w,
+      height: hT, rx: THE.w / 2, fill: "#eef4f8", stroke: "#7f93a6",
+      "stroke-width": 1.8 }));
+    var col = g.appendChild(el("rect", { x: -2.6, y: hT / 2 - 10, width: 5.2,
+      height: 0, fill: "#b03030", "pointer-events": "none" }));
+    var bulbe = g.appendChild(el("circle", { cx: 0, cy: hT / 2 + 2,
+      r: THE.bulbe, fill: "#b03030", stroke: "#7d1f1f", "stroke-width": 1.2,
+      "pointer-events": "none" }));
+    var grad = g.appendChild(el("g", { "pointer-events": "none" }));
+    var t2;
+    for (t2 = T_MIN; t2 <= T_MAX; t2 += 10) {
+      var yy = hT / 2 - hT * (t2 - T_MIN) / (T_MAX - T_MIN);
+      grad.appendChild(el("line", { x1: -THE.w / 2 + 1, y1: yy,
+        x2: -THE.w / 2 + (t2 % 50 === 0 ? 9 : 5), y2: yy, stroke: "#41586b",
+        "stroke-width": t2 % 50 === 0 ? 1.3 : 0.8 }));
+      if (t2 % 50 === 0) {
+        grad.appendChild(el("text", { x: THE.w / 2 + 3, y: yy + 3.4,
+          "font-size": 8.5, fill: "#41586b",
+          "font-family": "Arial, Helvetica, sans-serif" }, t2 + ""));
+      }
+    }
+    etiquetteObjet(g, hT / 2 + (p.sel ? 44 : 30), "thermomètre", 11);
+    var th = { type: "thermo", k: p.k, g: g, col: col, bulbe: bulbe, hT: hT,
+               fige: false, x: REPOS_OBJ["thermo" + p.k.toUpperCase()].x,
+               y: REPOS_OBJ["thermo" + p.k.toUpperCase()].y };
+    THERMOS[p.k] = th;
+    brancherObjet(th); placer(th, th.x, th.y);
+  });
+}
+
+/* ==================================================================
+   14. LES EFFETS ANIMÉS
+   ================================================================== */
+var gFilet = null;
+function construireEffets() {
+  gFilet = ajout("avant", el("rect", { x: 0, y: 0, width: 7, height: 0,
+    fill: "#9ecbe4", opacity: 0, rx: 3.5, "pointer-events": "none" }));
+}
+function filetVers(x, y0, y1f, ms, couleur, fin) {
+  gFilet.setAttribute("x", x - 3.5);
+  gFilet.setAttribute("fill", couleur || "#9ecbe4");
+  gFilet.setAttribute("opacity", 0.92);
+  anim(ms, function (u) {
+    gFilet.setAttribute("y", y0);
+    gFilet.setAttribute("height",
+      Math.max(0, (y1f() - y0) * Math.min(1, u * 1.4)));
+  }, function () { gFilet.setAttribute("opacity", 0); if (fin) fin(); });
+}
+
+/* ==================================================================
+   16. LES BOUTONS DE SCÈNE — deux rangées (SKILL §10.5)
+   ================================================================== */
+function deuxRangees(libelles, actes) {
+  var n = Math.ceil(actes.length / 2), marge = 22, gap = 9, i, k, y, w, j;
+  w = (W - 2 * marge - gap * (n - 1)) / n;
+  for (i = 0; i < actes.length; i++) {
+    k = i < n ? i : i - n;
+    j = i < n ? 0 : 1;
+    y = j === 0 ? Y_R1 : Y_R2;
+    boutonScene(marge + w / 2 + k * (w + gap), y, w, 40,
+                libelles[i][0], libelles[i][1], actes[i]);
+  }
+}
+function construireBoutons() {
+  ACTES = ["verserD", "verserS", "thermos", "demarrer",
+           "chauffer", "relever", "tracer", "reperer"];
+  deuxRangees([
+    ["Verser l'eau", "distillée"],
+    ["Verser l'eau", "salée"],
+    ["Placer les deux", "thermomètres"],
+    ["Relever T initiale", "et démarrer"],
+    ["Chauffer jusqu'au", "relevé suivant"],
+    ["Relever T", "et l'état"],
+    ["Tracer les deux", "courbes"],
+    ["Repérer le", "palier"]
+  ], ACTES);
+  ACTES.forEach(function (a) {
+    BOUTONS[a].noeud.addEventListener("click", function () { agir(a); });
+  });
+}
+
+/* ==================================================================
+   17. LES ZONES DE DÉPÔT
+   ================================================================== */
+function zoneBallon(k, quoi) {
+  var p = k === "d" ? POSTES[0] : POSTES[1];
+  return { type: "ballon", k: k, x: p.x, y: BAL.yc - 20, r: BAL.r * 1.4,
+           hw: BAL.r + 8, hh: BAL.r + 46, quoi: quoi };
+}
+function emplacements(o) {
+  var z = [];
+  if (o.type === "bidon") {
+    if (!ETAT.rempli[o.k]) z.push(zoneBallon(o.k, "le liquide dans son ballon"));
+  } else if (o.type === "thermo") {
+    if (ETAT.rempli[o.k] && !ETAT.thermo[o.k]) {
+      z.push(zoneBallon(o.k, "le thermomètre dans le ballon, réservoir immergé"));
+    }
+  }
+  z.sort(function (a, b) { return a.r - b.r; });
+  return z;
+}
+function refusDe(o) {
+  if (o.type === "bidon") {
+    if (ETAT.rempli[o.k]) return "Ce ballon a déjà ses " + nb(REG.v, 0) + " mL.";
+    return "Verser le liquide DANS son propre ballon : l'eau distillée dans " +
+      "le premier, l'eau salée dans le second. Les intervertir détruirait le " +
+      "témoin, et c'est lui qui permet de conclure.";
+  }
+  if (o.type === "thermo") {
+    if (!ETAT.rempli[o.k]) return "Verser le liquide d'abord : un thermomètre " +
+      "dans un ballon vide ne mesure rien.";
+    return "Ce thermomètre est déjà en place.";
+  }
+  return "Reposer l'objet sur la paillasse.";
+}
+function deposer(o, z, depart) {
+  if (!z) {
+    volerVers(o, REPOS_OBJ[o.type + o.k.toUpperCase()].x,
+              REPOS_OBJ[o.type + o.k.toUpperCase()].y, 420);
+    signaler(refusDe(o));
+    return;
+  }
+  if (o.type === "bidon") { verser(o.k); return; }
+  if (o.type === "thermo") { poserThermo(o.k); return; }
+}
+function lireBallon(k) {
+  var p = etatCourant(k);
+  if (!ETAT.rempli[k]) {
+    noter("Ballon « " + nomPoste(k) + " » : vide. Il attend ses " +
+          nb(REG.v, 0) + " mL.", null);
+  } else if (!ETAT.thermo[k]) {
+    noter("Ballon « " + nomPoste(k) + " » : " + nb(REG.v, 0) + " mL" +
+          (k === "s" ? " et " + nb(REG.s, 1) + " g de sel" : "") +
+          ". Pas encore de thermomètre.", null);
+  } else {
+    noter("Ballon « " + nomPoste(k) + " » à " + mmss(ETAT.t) + " : " +
+          nbT(p.T) + " °C, " + motEtat(p) + ". Son ébullition se ferait à " +
+          nbT(p.Teb) + " °C, et il reste " + nb(p.m, 0) + " g d'eau.", null);
+  }
+  succes(); avancer();
+}
+function nomPoste(k) { return k === "d" ? POSTES[0].nom : POSTES[1].nom; }
+
+/* ==================================================================
+   18. LES GESTES
+   ==================================================================
+   ⚠ L'ÉTAT EST POSÉ TOUT DE SUITE, l'image ensuite (SKILL §6.2).            */
+function verser(k) {
+  var o = BIDONS[k], p = k === "d" ? POSTES[0] : POSTES[1];
+  ETAT.rempli[k] = true;                             /* l'état d'abord */
+  perimerCourse();
+  volerVers(o, p.x, BAL.ycol - 62, 460);
+  tard(function () {
+    filetVers(p.x, BAL.ycol - 44, function () { return BAL.yc; }, 700,
+              k === "s" ? "#a9c8d8" : "#9ecbe4", function () {
+      volerVers(o, REPOS_OBJ["bidon" + k.toUpperCase()].x,
+                REPOS_OBJ["bidon" + k.toUpperCase()].y, 400);
+      armer(); avancer();
+    });
+    /* le NIVEAU MONTE dans le ballon — jamais d'un saut */
+    anim(700, function (u) { dessinerBallon(k, u); },
+         function () { dessinerBallon(k, 1); });
+  }, 460);
+  noter(nb(REG.v, 0) + " mL " + du(nomPoste(k)) + " versés" +
+        (k === "s" ? " — " + nb(REG.s, 1) + " g de sel dedans, soit " +
+         nb(REG.s / (REG.v / 1000), 0) + " g/L" : "") + ".", true);
+  succes();
+}
+function poserThermo(k) {
+  var o = THERMOS[k], p = k === "d" ? POSTES[0] : POSTES[1];
+  ETAT.thermo[k] = true;                             /* l'état d'abord */
+  /* ⚠ LE RÉSERVOIR DOIT ÊTRE IMMERGÉ SANS TOUCHER LE FOND : la sécurité de la
+     fiche le dit, et la place se DÉDUIT du dessin du ballon, elle ne se règle
+     pas à l'œil (SKILL §12.49). */
+  var yFin = (THE.top + THE.bot) / 2;
+  volerVers(o, p.x, yFin, 640);
+  tard(function () { armer(); avancer(); }, 680);
+  noter("Thermomètre placé dans « " + nomPoste(k) + " » : son réservoir est " +
+        "immergé, à " + nb((BAL.yc + BAL.r - 3 - (yFin + o.hT / 2 + 2)) /
+        BAL.r * 100, 0) + " % du rayon au-dessus du fond." +
+        citerSecu(/toucher le fond/i), true);
+  succes();
+}
+function demarrer2() {
+  ETAT.traj = trajectoires();                        /* le solveur d'abord */
+  ETAT.demarre = true;
+  ETAT.t = 0;
+  ETAT.courbe = { d: [], s: [] };
+  noterCourbe();
+  relever(true);
+  POSTES.forEach(function (p) {
+    NP[p.k].voyant.setAttribute("fill", "#ff6a2b");
+    /* le manchon s'allume : le halo GRANDIT, il n'apparaît pas d'un bloc */
+    anim(560, function (u) {
+      NP[p.k].halo.setAttribute("r", (u * 46).toFixed(1));
+      NP[p.k].halo.setAttribute("opacity", (u * 0.42).toFixed(2));
+    });
+  });
+  /* ⚠ `relever(true)` ne rafraîchit rien : il est appelé en silence. C'est ici
+     que la scène se remet à jour, une fois le halo posé. */
+  tard(function () { armer(); avancer(); }, 620);
+  noter("Chauffage et chronomètre déclenchés au même instant, sur les DEUX " +
+        "postes. Puissance utile : " + nb(REG.p, 0) + " W par ballon.", true);
+  succes();
+}
+/* ⚠ UNE COURSE A UNE HORLOGE (SKILL §12.37) : `ETAT.t` est la seule, et les
+   deux trajectoires y sont lues. Deux compteurs parallèles finiraient par
+   diverger, et le carnet contredirait le tableau.
+   ⚠ ET LE TEMPS SE JOUE : la trajectoire est intégrée AVANT que l'animation ne
+   commence ; celle-ci ne fait que la parcourir (SKILL §1.2 bis, règle 2).    */
+function butoirSuivant() {
+  var i;
+  for (i = 0; i < INSTANTS.length; i++) {
+    if (INSTANTS[i].t > ETAT.t + 1e-6) return INSTANTS[i].t;
+  }
+  return -1;
+}
+function ligneDu(t) {
+  var i;
+  for (i = 0; i < INSTANTS.length; i++) if (Math.abs(INSTANTS[i].t - t) < 1) return i;
+  return -1;
+}
+function releveEnAttente() {
+  var k = ligneDu(ETAT.t);
+  return ETAT.demarre && k >= 0 && ETAT.releves.indexOf(k) < 0;
+}
+function chauffer() {
+  var but = butoirSuivant();
+  if (but < 0) { signaler("Le dernier relevé de la fiche est passé."); return; }
+  var t0 = ETAT.t, duree = but - t0;
+  var ms = Math.round(duree / ACCEL * 1000);
+  var tics = Math.max(1, Math.round(duree / PAS_SIM));
+  ETAT.enCours = true;
+  anim(ms, function (u) {
+    var n = Math.round(u * tics);
+    ETAT.t = t0 + n * PAS_SIM;
+    noterCourbe();
+    dessinerBallon("d", 1); dessinerBallon("s", 1);
+    majLectures(); majGraphe();
+  }, function () {
+    /* ⚠ ON RECALE L'HORLOGE SUR L'INSTANT PRESCRIT (SKILL §12.43) : laissée à
+       719,999 999 9, elle afficherait 11:59 sous une ligne qui dit « 12 ». */
+    ETAT.t = but;
+    ETAT.enCours = false;
+    noterCourbe();
+    dessinerBallon("d", 1); dessinerBallon("s", 1);
+    armer(); avancer();
+  });
+  noter("Chauffage de " + mmss(t0) + " à " + mmss(but) + " — le temps court " +
+        "à × " + ACCEL + ".", true);
+  succes();
+}
+function noterCourbe() {
+  var kk = ["d", "s"], i, c, p;
+  for (i = 0; i < 2; i++) {
+    c = ETAT.courbe[kk[i]];
+    if (c.length && c[c.length - 1].t >= ETAT.t - 1e-9) continue;
+    p = etatCourant(kk[i]);
+    c.push({ t: ETAT.t, T: p.T, bou: p.bou });
+  }
+}
+function etatCourant(k) {
+  if (!ETAT.traj) {
+    return { T: k === "d" ? T0_DIST : T0_SALE, m: REG.v, bou: false,
+             Teb: tEbullition(k === "s" ? REG.s : 0, REG.v), sec: false };
+  }
+  return lireTraj(ETAT.traj[k], ETAT.t);
+}
+function relever(silencieux) {
+  var k = ligneDu(ETAT.t), pd, ps;
+  if (k < 0) {
+    signaler("La fiche relève à " + INSTANTS.map(function (o) {
+      return nb(o.min, 0) + " min"; }).join(", ") + " — pas à " +
+      mmss(ETAT.t) + ".");
+    return;
+  }
+  if (ETAT.releves.indexOf(k) >= 0) {
+    signaler("Le relevé de " + nb(INSTANTS[k].min, 0) + " min est déjà fait.");
+    return;
+  }
+  pd = etatCourant("d"); ps = etatCourant("s");
+  ETAT.releves.push(k);
+  ETAT.carnet.push({ k: k, t: ETAT.t, Td: pd.T, Ts: ps.T,
+                     ed: motEtat(pd), es: motEtat(ps),
+                     md: pd.m, ms: ps.m, Tebs: ps.Teb });
+  revelerCellule(k, C_TD); revelerCellule(k, C_ED);
+  revelerCellule(k, C_TS); revelerCellule(k, C_ES);
+  verifierContreFiche(k);
+  majCarnet();
+  if (!silencieux) {
+    /* la loupe balaie les deux thermomètres : on voit qu'on relève */
+    anim(720, function (u) {
+      gLoupe.setAttribute("opacity", (u < 0.5 ? u * 2 : 2 - u * 2).toFixed(2));
+      gLoupe.setAttribute("transform", "translate(" +
+        (POSTES[0].x + u * (POSTES[1].x - POSTES[0].x)).toFixed(1) + ",0)");
+    }, function () { gLoupe.setAttribute("opacity", 0); armer(); avancer(); });
+  }
+  noter("Relevé à " + nb(INSTANTS[k].min, 0) + " min : eau distillée " +
+        nbT(pd.T) + " °C (" + motEtat(pd) + "), eau salée " + nbT(ps.T) +
+        " °C (" + motEtat(ps) + ").", true);
+  succes();
+}
+/* ⚠ LA COURBE SE TRACE POINT PAR POINT, elle n'apparaît pas d'un bloc : les
+   points de la fiche se posent l'un après l'autre sur le papier millimétré,
+   puis les segments les relient. Ce sont les RELEVÉS qu'on trace, pas la
+   trajectoire continue — c'est ce que la fiche demande de faire à la main. */
+function tracer() {
+  var n = ETAT.carnet.length;
+  ETAT.trace = true;
+  ETAT.nTraces = 0;
+  anim(Math.max(700, n * 260), function (u) {
+    ETAT.nTraces = Math.round(u * n * 2);
+    dessinerTraces();
+  }, function () {
+    ETAT.nTraces = n * 2;
+    dessinerTraces();
+    armer(); avancer();
+  });
+  noter("Les " + (2 * n) + " points se posent sur le papier millimétré, à la " +
+        "même échelle, puis les deux courbes les relient.", true);
+  succes();
+}
+function reperer() {
+  var pd = palier(ETAT.traj.d), ps = palier(ETAT.traj.s);
+  ETAT.repere = true;
+  anim(820, function (u) {
+    gPalier.setAttribute("opacity", borne(u * 1.6, 0, 1).toFixed(2));
+    gPalier.setAttribute("transform", "translate(0," +
+      ((1 - u) * 14).toFixed(1) + ")");
+  }, function () { armer(); avancer(); });
+  dessinerPalier();
+  noter("Eau distillée : ébullition à " + mmss(pd.t0) + ", palier à " +
+        nbT(pd.T0) + " °C, et à " + mmss(T_FIN) + " encore " + nbT(pd.T1) +
+        " °C — dérive " + nb(pd.derive, 2) + " °C, soit " +
+        (platAuThermometre(pd.derive) ? "MOINS" : "PLUS") + " que la " +
+        "demi-division du thermomètre. Eau salée : ébullition à " +
+        mmss(ps.t0) + " à " + nbT(ps.T0) + " °C, puis " + nbT(ps.T1) +
+        " °C — elle MONTE de " + nb(ps.derive, 2) + " °C.", true);
+  succes();
+  if (ETAT.trace) $("concl").classList.remove("masque");
+}
+function agir(a) {
+  if (ETAT.enCours && a !== "relever") {
+    signaler("Le chauffage est en cours — la fiche relève à intervalles " +
+             "réguliers. Prochain relevé à " + mmss(butoirSuivant()) + ".");
+    return;
+  }
+  if (a === "verserD") {
+    if (ETAT.rempli.d) { signaler(refusDe(BIDONS.d)); return; }
+    verser("d"); return;
+  }
+  if (a === "verserS") {
+    if (ETAT.rempli.s) { signaler(refusDe(BIDONS.s)); return; }
+    verser("s"); return;
+  }
+  if (a === "thermos") {
+    if (!ETAT.rempli.d || !ETAT.rempli.s) {
+      signaler("Remplir les DEUX ballons d'abord : les deux postes partent " +
+               "ensemble, sans quoi la comparaison ne vaut rien.");
+      return;
+    }
+    if (!ETAT.thermo.d) { poserThermo("d"); return; }
+    if (!ETAT.thermo.s) { poserThermo("s"); return; }
+    signaler("Les deux thermomètres sont en place.");
+    return;
+  }
+  if (a === "demarrer") {
+    if (!ETAT.thermo.d || !ETAT.thermo.s) {
+      signaler("Placer les deux thermomètres d'abord :" +
+               citerProto(/fixer le thermom/i));
+      return;
+    }
+    if (ETAT.demarre) { signaler("Le chronomètre tourne déjà."); return; }
+    demarrer2(); return;
+  }
+  if (a === "chauffer") {
+    if (!ETAT.demarre) {
+      signaler("Déclencher le chauffage et le chronomètre d'abord :" +
+               citerProto(/d[ée]clencher/i));
+      return;
+    }
+    if (releveEnAttente()) {
+      signaler("Relever d'abord à " + nb(INSTANTS[ligneDu(ETAT.t)].min, 0) +
+               " min : la fiche note la température À CET instant, et il ne " +
+               "revient pas.");
+      return;
+    }
+    chauffer(); return;
+  }
+  if (a === "relever") {
+    if (!ETAT.demarre) { signaler("Il n'y a rien à relever : rien ne chauffe."); return; }
+    relever(false); return;
+  }
+  if (a === "tracer") {
+    if (ETAT.releves.length < INSTANTS.length) {
+      signaler("La fiche trace les courbes APRÈS les " + INSTANTS.length +
+               " relevés — il en manque " +
+               (INSTANTS.length - ETAT.releves.length) + ".");
+      return;
+    }
+    tracer(); return;
+  }
+  if (a === "reperer") {
+    if (!ETAT.trace) {
+      signaler("Tracer les deux courbes d'abord :" + citerProto(/tracer/i) +
+               " — c'est sur la courbe que le palier se repère.");
+      return;
+    }
+    reperer(); return;
+  }
+}
+function perimerCourse() {
+  ETAT.demarre = false; ETAT.t = 0; ETAT.releves = []; ETAT.carnet = [];
+  ETAT.traj = null; ETAT.courbe = { d: [], s: [] };
+  ETAT.trace = false; ETAT.nTraces = 0; ETAT.repere = false;
+}
+
+/* ==================================================================
+   19. LE RENDU
+   ================================================================== */
+var gLoupe = null;
+function construireLecture() {
+  gLoupe = ajout("ui", el("g", { opacity: 0, "pointer-events": "none" }));
+  gLoupe.appendChild(el("rect", { x: -34, y: THE.top - 8, width: 68,
+    height: THE.bot - THE.top + 26, rx: 14, fill: "none", stroke: GOLD,
+    "stroke-width": 3.4 }));
+}
+function dessinerBallon(k, u) {
+  var n = NP[k], p = etatCourant(k), j, y, hh, f, cy;
+  var plein = (u === undefined ? 1 : u);
+  var rempli = ETAT.rempli[k];
+  /* le niveau suit la MASSE d'eau restante : elle diminue à l'ébullition */
+  var mRel = rempli ? (ETAT.demarre ? p.m / REG.v : 1) * plein : 0;
+  var yBas = BAL.yc + BAL.r - 3;
+  hh = (2 * BAL.r - 12) * borne(mRel, 0, 1);
+  y = yBas - hh;
+  n.liq.setAttribute("y", y); n.liq.setAttribute("height", hh);
+  n.liq.setAttribute("opacity", mRel > 0.005 ? 0.9 : 0);
+  n.surf.setAttribute("cy", y);
+  n.surf.setAttribute("rx", Math.max(4, Math.sqrt(Math.max(0,
+    BAL.r * BAL.r - Math.pow(y - BAL.yc, 2)))));
+  n.surf.setAttribute("opacity", mRel > 0.005 ? 0.85 : 0);
+  /* ⚠ LES BULLES NAISSENT AU FOND ET MONTENT — elles ne paraissent pas d'un
+     bloc. Leur phase suit l'horloge du modèle, pas le nombre d'images. */
+  f = p.bou ? 1 : 0;
+  n.bulles.setAttribute("opacity", f && mRel > 0.02 ? 1 : 0);
+  if (f) {
+    for (j = 0; j < n.bulles.children.length; j++) {
+      var w = ((ETAT.t * ACCEL / 60 * 1.6 + j / n.bulles.children.length) % 1);
+      cy = yBas - 4 - (yBas - 4 - y) * w;
+      n.bulles.children[j].setAttribute("cy", cy.toFixed(1));
+      n.bulles.children[j].setAttribute("opacity", (0.9 * (1 - w * 0.5)).toFixed(2));
+    }
+  }
+  /* la vapeur au col, et le halo du manchon */
+  n.vap.setAttribute("opacity", f ? 0.8 : 0);
+  n.halo.setAttribute("opacity", ETAT.demarre ? 0.42 : 0);
+  n.halo.setAttribute("r", ETAT.demarre ? 46 : 0);
+  n.voyant.setAttribute("fill", ETAT.demarre ? "#ff6a2b" : "#6b7480");
+  /* ⚠ LE SEL QUI NE PEUT PLUS SE DISSOUDRE RESTE SOLIDE AU FOND, et cela se
+     VOIT : c'est ce qui distingue une solution saturée d'une solution qui se
+     concentre, et c'est ce qui rend son palier plat. */
+  n.cristaux.setAttribute("opacity",
+    (k === "s" && ETAT.demarre && sature(REG.s, p.m)) ? 0.95 : 0);
+  /* la colonne du thermomètre, si le thermomètre est en place */
+  var th = THERMOS[k];
+  if (ETAT.thermo[k]) {
+    var hCol = th.hT * borne((p.T - T_MIN) / (T_MAX - T_MIN), 0, 1);
+    th.col.setAttribute("y", th.hT / 2 - 10 - hCol + 10);
+    th.col.setAttribute("height", hCol);
+  } else {
+    th.col.setAttribute("height", 0);
+  }
+  n.lect.textContent = !rempli ? "" : (ETAT.thermo[k]
+    ? nbT(p.T) + " °C · " + motEtat(p) : nb(REG.v, 0) + " mL");
+}
+function dessinerTraces() {
+  vide(gTraces);
+  var kk = ["d", "s"], coul = { d: "#2f7fb5", s: "#b4530f" }, i, j, c, dd, n;
+  for (i = 0; i < 2; i++) {
+    dd = [];
+    n = 0;
+    for (j = 0; j < ETAT.carnet.length; j++) {
+      if (i * ETAT.carnet.length + j >= ETAT.nTraces) break;
+      c = ETAT.carnet[j];
+      dd.push(pt(gX(c.t), gY(i === 0 ? c.Td : c.Ts)));
+      n++;
+    }
+    if (dd.length > 1) {
+      gTraces.appendChild(el("polyline", { points: dd.join(" "), fill: "none",
+        stroke: coul[kk[i]], "stroke-width": 2.4, "stroke-linejoin": "round" }));
+    }
+    for (j = 0; j < n; j++) {
+      c = ETAT.carnet[j];
+      gTraces.appendChild(el("circle", { cx: gX(c.t),
+        cy: gY(i === 0 ? c.Td : c.Ts), r: 3.6, fill: "#fff",
+        stroke: coul[kk[i]], "stroke-width": 2.2 }));
+    }
+  }
+  if (ETAT.nTraces > 0) {
+    gTraces.appendChild(el("text", { x: GX0 + 8, y: GY1 + 12, "font-size": 10.5,
+      "font-weight": "bold", fill: "#2f7fb5",
+      "font-family": "Arial, Helvetica, sans-serif" }, "— eau distillée"));
+    gTraces.appendChild(el("text", { x: GX0 + 8, y: GY1 + 26, "font-size": 10.5,
+      "font-weight": "bold", fill: "#b4530f",
+      "font-family": "Arial, Helvetica, sans-serif" }, "— eau salée"));
+  }
+}
+function dessinerPalier() {
+  vide(gPalier);
+  if (!ETAT.traj) return;
+  var pd = palier(ETAT.traj.d), ps = palier(ETAT.traj.s);
+  if (pd) {
+    gPalier.appendChild(el("rect", { x: gX(pd.t0) - 4, y: gY(pd.T0) - 11,
+      width: gX(T_FIN) - gX(pd.t0) + 8, height: 22, rx: 6, fill: "none",
+      stroke: "#2f7fb5", "stroke-width": 2.4, "stroke-dasharray": "7 4" }));
+    gPalier.appendChild(el("text", { x: gX(pd.t0) + 6, y: gY(pd.T0) - 16,
+      "font-size": 10.5, "font-weight": "bold", fill: "#2f7fb5",
+      "font-family": "Arial, Helvetica, sans-serif" },
+      "PALIER " + nbT(pd.T0) + " °C — dérive " + nb(pd.derive, 2) + " °C"));
+  }
+  if (ps) {
+    gPalier.appendChild(el("text", { x: gX(ps.t0) + 6, y: gY(ps.T1) + 22,
+      "font-size": 10.5, "font-weight": "bold", fill: "#b4530f",
+      "font-family": "Arial, Helvetica, sans-serif" },
+      "pas de palier : +" + nb(ps.derive, 2) + " °C"));
+  }
+}
+function dessiner() {
+  dessinerBallon("d", 1); dessinerBallon("s", 1);
+  dessinerTraces();
+  POSTES.forEach(function (p) {
+    if (BIDONS[p.k]) COUCHES.objets.appendChild(BIDONS[p.k].g);
+    if (THERMOS[p.k]) COUCHES.objets.appendChild(THERMOS[p.k].g);
+  });
+}
+
+/* ==================================================================
+   20. CONSIGNE, PARCOURS, ARMEMENT
+   ================================================================== */
+function consigne() {
+  if (!ETAT.rempli.d || !ETAT.rempli.s) return "Verser " + nb(REG.v, 0) +
+    " mL d'eau distillée dans le premier ballon et " + nb(REG.v, 0) +
+    " mL d'eau salée dans le second.";
+  if (!ETAT.thermo.d || !ETAT.thermo.s) return "Fixer les thermomètres, " +
+    "réservoir bien immergé, sans toucher le fond.";
+  if (!ETAT.demarre) return "Relever la température initiale, puis déclencher " +
+    "le chauffage et le chronomètre au même instant.";
+  if (releveEnAttente()) return "Relever la température des deux ballons à " +
+    nb(INSTANTS[ligneDu(ETAT.t)].min, 0) + " min, et noter l'état physique.";
+  if (ETAT.enCours) return "Chauffage en cours — prochain relevé à " +
+    mmss(butoirSuivant()) + ".";
+  if (butoirSuivant() >= 0) return "Chauffer jusqu'à " + mmss(butoirSuivant()) +
+    ", puis relever.";
+  if (!ETAT.trace) return "Tracer les deux courbes sur le papier millimétré, " +
+    "à la même échelle.";
+  if (!ETAT.repere) return "Repérer sur chaque courbe le moment où " +
+    "l'ébullition commence, et dire si la température cesse d'augmenter.";
+  return "La température d'un corps PUR reste constante pendant son " +
+         "changement d'état : sa courbe présente un PALIER. Celle d'un " +
+         "mélange varie.";
+}
+var ETAPES = ["Verser les liquides", "Placer les thermomètres",
+              "Démarrer", "Relever toutes les 2 min",
+              "Poursuivre après les bulles", "Tracer les courbes",
+              "Repérer le palier", "Conclure"];
+function faits() {
+  var n4 = 0, i;
+  for (i = 0; i < N_ETAPE4; i++) if (ETAT.releves.indexOf(i) >= 0) n4++;
+  return [ETAT.rempli.d && ETAT.rempli.s,
+          ETAT.thermo.d && ETAT.thermo.s,
+          ETAT.demarre,
+          n4 >= N_ETAPE4,
+          ETAT.releves.length >= INSTANTS.length,
+          ETAT.trace,
+          ETAT.repere,
+          ETAT.repere && ETAT.trace];
+}
+function armer() {
+  BOUTONS.verserD.armer(!ETAT.rempli.d);
+  BOUTONS.verserS.armer(ETAT.rempli.d && !ETAT.rempli.s);
+  BOUTONS.thermos.armer(ETAT.rempli.d && ETAT.rempli.s &&
+                        (!ETAT.thermo.d || !ETAT.thermo.s));
+  BOUTONS.demarrer.armer(ETAT.thermo.d && ETAT.thermo.s && !ETAT.demarre);
+  BOUTONS.chauffer.armer(ETAT.demarre && !releveEnAttente() &&
+                         butoirSuivant() >= 0 && !ETAT.enCours);
+  BOUTONS.relever.armer(releveEnAttente());
+  BOUTONS.tracer.armer(ETAT.releves.length >= INSTANTS.length && !ETAT.trace);
+  BOUTONS.reperer.armer(ETAT.trace && !ETAT.repere);
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes(); majLectures(); majProtocole(); majGraphe();
+  dessiner();
+  if (ETAT.repere && ETAT.trace) $("concl").classList.remove("masque");
+}
+
+/* ==================================================================
+   21. LES PANNEAUX HTML
+   ================================================================== */
+function majLectures() {
+  var pd = etatCourant("d"), ps = etatCourant("s");
+  var qd = ETAT.traj ? palier(ETAT.traj.d) : null;
+  var qs = ETAT.traj ? palier(ETAT.traj.s) : null;
+  $("lChrono").textContent = ETAT.demarre ? mmss(ETAT.t) + " / " + mmss(T_FIN)
+                                          : "—";
+  $("lChrono").className = "v" + (ETAT.demarre ? "" : " off");
+  $("lTd").textContent = ETAT.thermo.d ? nbT(pd.T) + " °C · " + motEtat(pd)
+                                       : "—";
+  $("lTd").className = "v" + (ETAT.thermo.d ? (pd.bou ? " ok" : "") : " off");
+  $("lTs").textContent = ETAT.thermo.s ? nbT(ps.T) + " °C · " + motEtat(ps)
+                                       : "—";
+  $("lTs").className = "v" + (ETAT.thermo.s ? (ps.bou ? " ko" : "") : " off");
+  $("lEbD").textContent = nbT(tEbullition(0, REG.v)) + " °C";
+  $("lEbD").className = "v";
+  $("lEbS").textContent = nbT(ps.Teb) + " °C" +
+    (sature(REG.s, ps.m) ? " · saturée" : "");
+  $("lEbS").className = "v";
+  $("lMolal").textContent = nb(molalite(REG.s, ps.m), 2) + " mol/kg" +
+    (sature(REG.s, ps.m) ? " (plafonnée)" : "");
+  $("lMolal").className = "v";
+  $("lEau").textContent = ETAT.demarre
+    ? nb(pd.m, 0) + " g / " + nb(ps.m, 0) + " g" : "—";
+  $("lEau").className = "v" + (ETAT.demarre ? "" : " off");
+  $("lPalD").textContent = qd
+    ? nbT(qd.T0) + " °C · dérive " + nb(qd.derive, 2) + " °C" : "—";
+  $("lPalD").className = "v" + (qd ? (platAuThermometre(qd.derive) ? " ok"
+                                                                   : " ko")
+                                   : " off");
+  $("lPalS").textContent = qs
+    ? nbT(qs.T0) + " → " + nbT(qs.T1) + " °C · +" + nb(qs.derive, 2) + " °C"
+    : "—";
+  $("lPalS").className = "v" + (qs ? " ko" : " off");
+  $("lEcart").textContent = ETAT.carnet.length ? nb(ecartMax(), 1) + " °C" : "—";
+  $("lEcart").className = "v" + (ETAT.carnet.length ? " ko" : " off");
+  $("etatSysteme").textContent = !ETAT.demarre ? "montage en cours"
+    : (ETAT.repere ? "conclu" : (ETAT.enCours ? "chauffage en cours"
+      : (ETAT.trace ? "courbes tracées" : "en relevé")));
+}
+function ecartMax() {
+  var m = 0, i, c, f;
+  for (i = 0; i < ETAT.carnet.length; i++) {
+    c = ETAT.carnet[i];
+    f = nombreCel(c.k, C_TD);
+    if (f !== null) m = Math.max(m, Math.abs(c.Td - f));
+    f = nombreCel(c.k, C_TS);
+    if (f !== null) m = Math.max(m, Math.abs(c.Ts - f));
+  }
+  return m;
+}
+function majCarnet() {
+  var t = $("carnet"), i, c;
+  vide(t);
+  t.appendChild(ligneTab(["t", "T distillée", "état", "T salée", "état",
+                          "eau restante"], true));
+  if (!ETAT.carnet.length) {
+    t.appendChild(ligneTab(["—", "—", "—", "—", "—", "aucun relevé"]));
+    return;
+  }
+  for (i = 0; i < ETAT.carnet.length; i++) {
+    c = ETAT.carnet[i];
+    t.appendChild(ligneTab([nb(INSTANTS[c.k].min, 0) + " min",
+      nbT(c.Td) + " °C", c.ed, nbT(c.Ts) + " °C", c.es,
+      nb(c.md, 0) + " / " + nb(c.ms, 0) + " g"]));
+  }
+}
+/* ⚠ QUAND LE MODÈLE ET LA FICHE DIVERGENT, ON LE DIT (SKILL §11.5), et l'écart
+   se chiffre EN UNITÉS D'INSTRUMENT : le thermomètre est gradué en degrés,
+   donc en demi-divisions de 0,5 °C.                                          */
+function verifierContreFiche(k) {
+  var c = ETAT.carnet[ETAT.carnet.length - 1], f, e;
+  if (!c || ETAT.horsProto) return;
+  f = nombreCel(k, C_TD);
+  if (f !== null) {
+    e = c.Td - f;
+    if (Math.abs(e) > DEMI_DIV) {
+      signalerDivergence("d" + k, "<b>" + nb(INSTANTS[k].min, 0) +
+        " min, eau distillée.</b> Le modèle obtient " + nbT(c.Td) +
+        " °C, la fiche écrit " + nb(f, 0) + " °C — écart " + nb(e, 1) +
+        " °C, soit " + nb(Math.abs(e) / DEMI_DIV, 0) + " demi-divisions.");
+    }
+  }
+  f = nombreCel(k, C_TS);
+  if (f !== null) {
+    e = c.Ts - f;
+    if (Math.abs(e) > DEMI_DIV) {
+      signalerDivergence("s" + k, "<b>" + nb(INSTANTS[k].min, 0) +
+        " min, eau salée.</b> Le modèle obtient " + nbT(c.Ts) +
+        " °C, la fiche écrit " + nb(f, 0) + " °C — écart " + nb(e, 1) +
+        " °C, soit " + nb(Math.abs(e) / DEMI_DIV, 0) + " demi-divisions.");
+    }
+  }
+  f = cel(k, C_ED);
+  if (f && !memesMots(f, c.ed)) {
+    signalerDivergence("ed" + k, "<b>" + nb(INSTANTS[k].min, 0) +
+      " min.</b> Le modèle voit l'eau distillée « " + c.ed +
+      " », la fiche écrit « " + f + " ».");
+  }
+}
+/* ==================================================================
+   23. LE GRAPHE DU PANNEAU — l'enregistrement CONTINU, tracé en direct
+   ==================================================================
+   Le papier millimétré de la scène porte les six points de la fiche ; ce
+   graphe-ci porte la trajectoire complète, et il se trace pendant le
+   chauffage. Les deux disent la même chose, à deux résolutions.             */
+var gG = null;
+function construireGraphe() { gG = $("gCourbes"); }
+function majGraphe() {
+  if (!gG) return;
+  vide(gG);
+  var Wg = 360, x0 = 34, y0 = 156, x1 = Wg - 10, y1 = 16, i, c, dd;
+  var Tmax = 120;
+  function X(t) { return x0 + (x1 - x0) * borne(t / T_FIN, 0, 1); }
+  function Y(T) { return y0 - (y0 - y1) * borne(T / Tmax, 0, 1); }
+  gG.appendChild(el("line", { x1: x0, y1: y0, x2: x1, y2: y0,
+    stroke: LIGNE, "stroke-width": 1.4 }));
+  gG.appendChild(el("line", { x1: x0, y1: y0, x2: x0, y2: y1,
+    stroke: LIGNE, "stroke-width": 1.4 }));
+  [0, 50, 100].forEach(function (v) {
+    gG.appendChild(el("text", { x: x0 - 4, y: Y(v) + 3, "text-anchor": "end",
+      "font-size": 9, fill: GRIS }, v + ""));
+  });
+  gG.appendChild(el("line", { x1: x0, y1: Y(100), x2: x1, y2: Y(100),
+    stroke: GOLD, "stroke-width": 1, "stroke-dasharray": "4 3", opacity: 0.8 }));
+  INSTANTS.forEach(function (o) {
+    gG.appendChild(el("text", { x: X(o.t), y: y0 + 12, "text-anchor": "middle",
+      "font-size": 8.5, fill: GRIS }, nb(o.min, 0)));
+  });
+  gG.appendChild(el("text", { x: x0 + 2, y: 11, "font-size": 9.5, fill: GRIS },
+    "T (°C) en fonction de t (min) — tracé pendant le chauffage"));
+  [["d", "#2f7fb5"], ["s", "#b4530f"]].forEach(function (f) {
+    dd = [];
+    for (i = 0; i < ETAT.courbe[f[0]].length; i++) {
+      c = ETAT.courbe[f[0]][i];
+      dd.push(pt(X(c.t), Y(c.T)));
+    }
+    if (dd.length > 1) {
+      gG.appendChild(el("polyline", { points: dd.join(" "), fill: "none",
+        stroke: f[1], "stroke-width": 2.2, "stroke-linejoin": "round" }));
+    }
+  });
+  ETAT.carnet.forEach(function (c) {
+    gG.appendChild(el("circle", { cx: X(c.t), cy: Y(c.Td), r: 3, fill: "#fff",
+      stroke: "#2f7fb5", "stroke-width": 2 }));
+    gG.appendChild(el("circle", { cx: X(c.t), cy: Y(c.Ts), r: 3, fill: "#fff",
+      stroke: "#b4530f", "stroke-width": 2 }));
+  });
+}
+function construireCapot() {
+  var tr = trajectoires(), pd = palier(tr.d), ps = palier(tr.s), l = [];
+  $("eqModele").textContent =
+    "sous l'ébullition ... C·dT/dt = P − pertes(T)        [RK4, pas " +
+      nb(PAS_RK4, 2) + " s]\n" +
+    "capacité ............ C = m_eau·c(w) + m_ballon·c_verre   (des MASSES,\n" +
+    "                        jamais ajustée)\n" +
+    "pertes .............. convection + rayonnement + ÉVAPORATION\n" +
+    "évaporation ......... ṁ = k·A·(a_eau·ρ_sat(T) − φ·ρ_sat(T_amb))\n" +
+    "à l'ébullition ...... T = T_eb, et toute la puissance nette vaporise :\n" +
+    "                        dm/dt = (P − pertes) / L_vap\n" +
+    "T d'ébullition ...... T_eb = 100 + K_eb · b · i        [Raoult]\n" +
+    "molalité ............ b = n_sel dissous / m_eau, PLAFONNÉE à la\n" +
+    "                        solubilité : au-delà, le sel reste solide";
+  ["d", "s"].forEach(function (k) {
+    var t = tr[k], q = k === "d" ? pd : ps, i;
+    l.push((k === "d" ? "EAU DISTILLÉE" : "EAU SALÉE (" + nb(REG.s, 1) +
+            " g de sel)") + " :");
+    for (i = 0; i < INSTANTS.length; i++) {
+      var p = lireTraj(t, INSTANTS[i].t);
+      var f = nombreCel(i, k === "d" ? C_TD : C_TS);
+      l.push("  " + ("      " + nb(INSTANTS[i].min, 0)).slice(-4) + " min : " +
+        ("      " + nbT(p.T)).slice(-6) + " °C  " +
+        (p.bou ? "liquide+gaz" : "liquide   ") +
+        (f !== null ? "   fiche " + ("   " + nb(f, 0)).slice(-3) + " °C  écart " +
+         (p.T - f >= 0 ? "+" : "") + nb(p.T - f, 1) : ""));
+    }
+    l.push("  ébullition à " + (q ? mmss(q.t0) : "jamais") +
+           (q ? ", palier " + nbT(q.T0) + " °C → " + nbT(q.T1) +
+                " °C (dérive " + (q.derive >= 0 ? "+" : "") +
+                nb(q.derive, 2) + " °C)" : ""));
+    l.push("");
+  });
+  $("eqMatiere").textContent = l.join("\n") +
+    "le thermomètre de la fiche est gradué en degrés : la DEMI-DIVISION vaut " +
+    nb(DEMI_DIV, 1) + " °C.\n" +
+    "un palier est donc « plat » si sa dérive reste sous " + nb(DEMI_DIV, 1) +
+    " °C — c'est l'instrument\nqui en décide, pas le calcul.";
+  $("eqLimite").textContent =
+    "LE PALIER NE DÉPEND PAS DE LA PUISSANCE — la fiche le dit, le modèle le\n" +
+    "retrouve. Eau distillée, quatre puissances :\n" +
+    [80, 135, 250, 400].map(function (P) {
+      var t = rk4Chauffage(REG.v, 0, T0_DIST, T_FIN + 120, P, PAS_RK4);
+      var q = palier(t);
+      return "  " + ("     " + P).slice(-4) + " W : " +
+        (q ? "ébullition à " + ("      " + mmss(q.t0)).slice(-6) +
+             ", palier " + nbT(q.T0) + " °C"
+           : "n'a pas bouilli en " + mmss(T_FIN + 120));
+    }).join("\n") + "\n\n" +
+    "ET LE SEL DÉCIDE DU RESTE. Même puissance, six salinités :\n" +
+    [0, 5, 15, 30, 54, 80].map(function (S) {
+      var t = rk4Chauffage(REG.v, S, T0_DIST, T_FIN + 120, REG.p, PAS_RK4);
+      var q = palier(t);
+      return "  " + ("     " + nb(S, 0)).slice(-4) + " g : " +
+        (q ? "ébullition " + nbT(q.T0) + " °C → " + nbT(q.T1) +
+             " °C  (" + (q.derive >= 0 ? "+" : "") + nb(q.derive, 2) + " °C)" +
+             (S > PHYS.S_NACL.v * REG.v / 1000
+              ? "  SATURÉE : excès solide, palier PLAT" : "")
+           : "n'a pas bouilli");
+    }).join("\n") + "\n\n" +
+    "une solution VRAIMENT saturée garde un palier plat : l'excès de sel reste\n" +
+    "solide au fond, la molalité est plafonnée, et T_eb ne bouge plus. Celle de\n" +
+    "la fiche — " + nb(M_SEL_FICHE, 0) + " g dans " + nb(V_FICHE, 0) +
+    " mL, soit " + nb(M_SEL_FICHE / (V_FICHE / 1000), 0) + " g/L — n'est " +
+    "qu'à " + nb(100 * (M_SEL_FICHE / (V_FICHE / 1000)) / PHYS.S_NACL.v, 0) +
+    " %\nde la saturation : elle se concentre, donc son palier MONTE.";
+  construireConstantes();
+}
+
+/* ==================================================================
+   24. LES CURSEURS
+   ==================================================================
+   ⚠ Chaque `value` tombe sur la grille des pas (§12.12), et chacun change un
+   nombre affiché d'un bout à l'autre de sa course (§12.5).                  */
+function brancherCurseurs() {
+  var rp = $("rP"), rs = $("rS"), rv = $("rV");
+  rp.min = 60; rp.max = 400; rp.step = 5; rp.value = PROTO.p;
+  rs.min = 0; rs.max = 80; rs.step = 1; rs.value = PROTO.s;
+  rv.min = 100; rv.max = 250; rv.step = 10; rv.value = PROTO.v;
+  function lire() {
+    REG.p = +rp.value; REG.s = +rs.value; REG.v = +rv.value;
+    $("oP").textContent = nb(REG.p, 0) + " W";
+    $("oS").textContent = nb(REG.s, 0) + " g · " +
+      nb(REG.s / (REG.v / 1000), 0) + " g/L";
+    $("oV").textContent = nb(REG.v, 0) + " mL";
+    $("regP").className = "reg" + (Math.abs(REG.p - PROTO.p) > 1e-9 ? " hp" : "");
+    $("regS").className = "reg" + (REG.s !== PROTO.s ? " hp" : "");
+    $("regV").className = "reg" + (REG.v !== PROTO.v ? " hp" : "");
+    ETAT.horsProto = horsProtocole();
+    $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  }
+  function changer() { lire(); perimer(); }
+  [rp, rs, rv].forEach(function (r) { r.addEventListener("input", changer); });
+  $("bProto").addEventListener("click", function () {
+    revenirAuProtocole();
+    rp.value = PROTO.p; rs.value = PROTO.s; rv.value = PROTO.v;
+    changer();
+    noter("Réglages du protocole rétablis : " + nb(PROTO.p, 0) + " W, " +
+          nb(PROTO.s, 0) + " g de sel, " + nb(PROTO.v, 0) + " mL.", true);
+  });
+  lire();
+}
+/* Un curseur périme la COURSE — les deux trajectoires changent — mais pas le
+   MONTAGE : les ballons restent remplis, les thermomètres restent en place
+   (SKILL §12.19 et §12.32, qui se répondent).                               */
+function perimer() {
+  var avait = ETAT.demarre;
+  purger();
+  ANIM_ON = true;
+  perimerCourse();
+  vide(gTraces); vide(gPalier);
+  gPalier.setAttribute("opacity", 0);
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  ["demarrer", "chauffer", "relever", "tracer", "reperer"].forEach(function (a) {
+    BOUTONS[a].neuf();
+  });
+  majCarnet();
+  if (avait) {
+    noter("Un réglage a changé : la course repart de zéro et le tableau " +
+          "redevient vierge. Le montage, lui, reste en place.", false);
+  }
+  armer(); avancer();
+}
+
+/* ==================================================================
+   26. RECOMMENCER
+   ================================================================== */
+function remettre(silencieux) {
+  var seance = ETAT.tSeance || 0;
+  succes(); purger();
+  ANIM_ON = true;
+  effacerCibles(); effacerGuide();
+  prise = null;
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  ETAT.horsProto = horsProtocole();
+  POSTES.forEach(function (p) {
+    placer(BIDONS[p.k], REPOS_OBJ["bidon" + p.k.toUpperCase()].x,
+           REPOS_OBJ["bidon" + p.k.toUpperCase()].y);
+    placer(THERMOS[p.k], REPOS_OBJ["thermo" + p.k.toUpperCase()].x,
+           REPOS_OBJ["thermo" + p.k.toUpperCase()].y);
+    NP[p.k].halo.setAttribute("opacity", 0);
+    NP[p.k].halo.setAttribute("r", 0);
+    NP[p.k].voyant.setAttribute("fill", "#6b7480");
+    NP[p.k].vap.setAttribute("opacity", 0);
+    NP[p.k].bulles.setAttribute("opacity", 0);
+    NP[p.k].cristaux.setAttribute("opacity", 0);
+  });
+  vide(gTraces); vide(gPalier);
+  gPalier.setAttribute("opacity", 0);
+  gPalier.removeAttribute("transform");
+  gFilet.setAttribute("opacity", 0);
+  gLoupe.setAttribute("opacity", 0);
+  ACTES.forEach(function (a) { BOUTONS[a].neuf(); });
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  majCarnet(); majSeance();
+  if (!silencieux) {
+    noter("Postes remis en état : deux ballons vides, les thermomètres sur " +
+          "la paillasse, le papier millimétré effacé.", false);
+  }
+  armer(); avancer();
+}
+function recommencer() {
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  remettre(false);
+}
+
+/* ==================================================================
+   27. LE GUIDE
+   ================================================================== */
+var GUIDE = [
+  /* 1 — verser 150 mL dans chacun des deux ballons */
+  { fait: function () { return ETAT.rempli.d && ETAT.rempli.s; },
+    aide: function () {
+      var k = !ETAT.rempli.d ? "d" : "s";
+      return "Faire glisser le bidon <b>" + nomPoste(k) + "</b> sur son " +
+        "ballon — ou presser le bouton. Les deux postes doivent partir " +
+        "ensemble.";
+    },
+    montre: function () {
+      var k = !ETAT.rempli.d ? "d" : "s";
+      surlignerObjet(BIDONS[k], 6); surlignerZone(zoneBallon(k, ""));
+      surlignerBouton(k === "d" ? "verserD" : "verserS");
+    } },
+  /* 2 — fixer les thermomètres, réservoir immergé sans toucher le fond */
+  { fait: function () { return ETAT.thermo.d && ETAT.thermo.s; },
+    aide: "Faire glisser chaque <b>thermomètre</b> dans son ballon : le " +
+          "réservoir doit être immergé, sans toucher le fond ni la paroi.",
+    montre: function () {
+      var k = !ETAT.thermo.d ? "d" : "s";
+      surlignerObjet(THERMOS[k], 8); surlignerZone(zoneBallon(k, ""));
+      surlignerBouton("thermos");
+    } },
+  /* 3 — relever la température initiale, puis déclencher chauffage et chrono */
+  { fait: function () { return ETAT.demarre; },
+    aide: "Presser <b>« Relever T initiale et démarrer »</b> : le chauffage " +
+          "et le chronomètre partent au MÊME instant, sur les deux postes.",
+    montre: function () {
+      surlignerBouton("demarrer");
+      surlignerActe("ballon-d", 10); surlignerActe("ballon-s", 10);
+    } },
+  /* 4 — noter la température toutes les 2 minutes, et l'état physique */
+  { fait: function () {
+      var i, n = 0;
+      for (i = 0; i < N_ETAPE4; i++) if (ETAT.releves.indexOf(i) >= 0) n++;
+      return n >= N_ETAPE4;
+    },
+    aide: function () {
+      if (releveEnAttente()) return "Presser <b>« Relever T et l'état »</b> — " +
+        "instant <b>" + nb(INSTANTS[ligneDu(ETAT.t)].min, 0) + " min</b>. On " +
+        "note la température ET l'état physique.";
+      return "Presser <b>« Chauffer jusqu'au relevé suivant »</b> : le temps " +
+        "court à × " + ACCEL + " jusqu'à <b>" + mmss(Math.max(0,
+        butoirSuivant())) + "</b>.";
+    },
+    montre: function () {
+      if (releveEnAttente()) { surlignerBouton("relever"); surlignerHtml("tab"); }
+      else surlignerBouton("chauffer");
+    } },
+  /* 5 — poursuivre 6 min au moins après les premières bulles */
+  { fait: function () { return ETAT.releves.length >= INSTANTS.length; },
+    aide: function () {
+      return "Il reste <b>" + (INSTANTS.length - ETAT.releves.length) +
+        "</b> relevé(s). C'est APRÈS les premières bulles que le palier se " +
+        "voit : sans ces relevés-là, il n'y a rien à conclure.";
+    },
+    montre: function () {
+      if (releveEnAttente()) surlignerBouton("relever");
+      else surlignerBouton("chauffer");
+      surlignerHtml("tab");
+    } },
+  /* 6 — tracer les deux courbes sur le même papier millimétré */
+  { fait: function () { return ETAT.trace; },
+    aide: "Presser <b>« Tracer les deux courbes »</b> : les points se posent " +
+          "un par un sur le papier millimétré, à la même échelle — c'est " +
+          "cette échelle commune qui rend les deux courbes comparables.",
+    montre: function () { surlignerBouton("tracer"); halo(PAP.x - 6, PAP.y - 6,
+      PAP.w + 12, PAP.h + 12, 8); } },
+  /* 7 — repérer le début de l'ébullition, et dire si T cesse d'augmenter */
+  { fait: function () { return ETAT.repere; },
+    aide: "Presser <b>« Repérer le palier »</b> : la page encadre la partie " +
+          "horizontale de la courbe de l'eau distillée, et chiffre la dérive " +
+          "de chacune des deux.",
+    montre: function () { surlignerBouton("reperer"); halo(PAP.x - 6, PAP.y - 6,
+      PAP.w + 12, PAP.h + 12, 8); } }
+];
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire. C'est le §1.1 : un bouton qui rejoue le YAML est le refus
+      explicite de l'enseignant.                                              */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+/* ⚠ On vise par `data-act`, jamais par un `id` : un `id` de `<defs>` volerait
+   le sélecteur et rendrait un dégradé, qui n'a pas de boîte (§12bis.3-4). */
+function surlignerActe(act, marge) {
+  var n = svg.querySelector('[data-act="' + act + '"]'), b = boiteSVG(n), m = marge || 8;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return false;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+  return true;
+}
+function surlignerZone(z, m) {
+  if (!z) return false;
+  m = m === undefined ? 8 : m;
+  halo(z.x - z.hw - m, z.y - z.hh - m, 2 * (z.hw + m), 2 * (z.hh + m), 14);
+  return true;
+}
+function surlignerObjet(o, m) {
+  if (!o) return false;
+  var b = boiteSVG(o.g);
+  m = m === undefined ? 8 : m;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. « Verser 150 mL d'eau distillée dans le ballon du premier poste, et
+     150 mL d'eau salée dans celui du second. » Deux gestes pour une étape ;
+     on passe par `deposer()` du glisser-déposer (SKILL §13.6.10), jamais par
+     un état posé à la main. */
+  function () {
+    if (!ETAT.rempli.d) {
+      deposer(BIDONS.d, zoneDe(BIDONS.d, "ballon"));
+      return 1280;
+    }
+    deposer(BIDONS.s, zoneDe(BIDONS.s, "ballon"));
+    return 1280;
+  },
+
+  /* 2. « Fixer le thermomètre de façon que son réservoir soit bien immergé,
+     sans toucher le fond. » Un thermomètre par poste. */
+  function () {
+    if (!ETAT.thermo.d) {
+      deposer(THERMOS.d, zoneDe(THERMOS.d, "ballon"));
+      return 780;
+    }
+    deposer(THERMOS.s, zoneDe(THERMOS.s, "ballon"));
+    return 780;
+  },
+
+  /* 3. « Relever la température initiale, puis déclencher simultanément le
+     chauffage et le chronomètre. » Le relevé de t = 0 est une CONDITION
+     INITIALE, pas un résultat : il se fait au même geste, et c'est pour cela
+     que la page le dévoile là. */
+  function () { presserBouton("demarrer"); return 760; },
+
+  /* 4. « Noter la température toutes les 2 minutes, et l'état physique. »
+     Plusieurs relevés séparés par des phases de chauffage : l'étape reste
+     courante entre-temps, et c'est normal. Le geste relève quand un relevé est
+     dû — la page REFUSE de chauffer sinon, et elle a raison : l'instant ne
+     revient pas — et relance le chauffage sinon. Le temps se JOUE, à × 120. */
+  function () {
+    if (releveEnAttente()) { presserBouton("relever"); return 820; }
+    presserBouton("chauffer");
+    return Math.round(Math.max(0, butoirSuivant() - ETAT.t) / ACCEL * 1000) + 300;
+  },
+
+  /* 5. « Poursuivre les relevés pendant 6 minutes au moins après l'apparition
+     des premières bulles. » Même geste, autres instants — et ce sont ces
+     relevés-là, et eux seuls, qui montrent le palier. */
+  function () {
+    if (releveEnAttente()) { presserBouton("relever"); return 820; }
+    presserBouton("chauffer");
+    return Math.round(Math.max(0, butoirSuivant() - ETAT.t) / ACCEL * 1000) + 300;
+  },
+
+  /* 6. « Tracer, sur un même papier millimétré, les deux courbes. » Les points
+     se posent un par un : la courbe ne paraît pas d'un bloc. */
+  function () { presserBouton("tracer"); return 1400; },
+
+  /* 7. « Repérer sur chaque courbe le moment où l'ébullition commence, et dire
+     si la température cesse ou non d'augmenter ensuite. » */
+  function () { presserBouton("reperer"); return 980; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+/* Les écouteurs du guide et du cadre. Ils sont posés une fois, au démarrage. */
+function brancherGuide() {
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("rezero").addEventListener("click", recommencer);
+}
+
+/* ==================================================================
+   28. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent =
+      "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  defsCommunes();
+  defsPage();
+  ajouterCouches();
+  ETAT = neufEtat();
+
+  construireDecor();
+  construirePostes();
+  construireEffets();
+  construireLecture();
+  construireObjets();
+  construireBoutons();
+  brancherPrise();
+
+  construireHTMLBase("bilan d'énergie intégré en RK4, évaporation comprise");
+  construireEtapes(ETAPES);
+  construireProtocole();
+  construireSeance("relevés jusqu'à " + mmss(T_FIN));
+  construireGraphe();
+  construireCapot();
+  brancherCurseurs();
+  brancherGuide();
+  remettre(false);
+  demarrerHorloge();
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3245 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-16 · Source primaire ou source secondaire ? le test de l'obscurité</title>
+<!-- L'ECOUTEUR D'ERREURS EST ICI, ET PAS EN FIN DE BODY (SKILL §12.47) :
+     pose apres le script de la page, il ne verrait aucune erreur de
+     demarrage — celles-ci ont deja eu lieu. -->
+<script>
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message) + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<!--
+  ===================================================================
+  E2AC-16 · 2AC · U2 · L10 — PAILLASSE VIRTUELLE
+  « Source primaire ou source secondaire ? le test de l'obscurité »
+  ===================================================================
+
+  CE QUE CETTE PAGE CALCULE PLUTÔT QUE DE LE REJOUER
+  --------------------------------------------------
+  Les six cases du tableau — « Lampe visible ? » et « Balle visible ? » pour
+  les trois situations — ne sont écrites nulle part dans le code. Chacune est
+  un VERDICT, pris au terme de quatre calculs enchaînés :
+
+    1. ÉCLAIREMENT REÇU.  E = I/d², avec l'occultation géométrique RÉELLE du
+       carton : on teste si le segment lampe → corps traverse la feuille. Le
+       pinceau lui-même est un cône d'angle solide Ω = Φ/I, c'est-à-dire le
+       quotient des deux nombres du constructeur ; hors de ce cône, le corps
+       ne reçoit que le débordement.
+    2. LUMINANCE RENVOYÉE.  L = ρ·E/π pour un diffuseur lambertien — la
+       balle, le carton. Pour un corps SPÉCULAIRE — la bouteille, le miroir —
+       ce n'est pas la surface qu'on voit mais l'IMAGE de la source, et la
+       luminance se conserve à la réflexion près : L = ρ·L_source.
+    3. LUMINANCE D'ADAPTATION DE L'ŒIL.  L_a = E_œil/π, où E_œil est la somme
+       des L·Ω de tout ce que la scène met dans le champ. C'est ce terme qui
+       fait disparaître la balle en situation 3 : la face éclairée du carton
+       éblouit, et l'œil ne descend plus jusqu'aux 0,15 cd/m² que les parois
+       renvoient encore sur la balle.
+    4. SEUIL DE VISION.  Au-dessus de la frontière mésopique, la loi de Weber
+       suffit — l'adaptation à PLUS de lumière prend quelques secondes. En
+       dessous, c'est le PLANCHER D'ACCOUTUMANCE qui commande, et lui ne
+       descend qu'avec le temps : deux branches exponentielles calées sur les
+       trois repères mesurés de la courbe d'accoutumance.
+
+    Verdict : visible ⇔ L > seuil.
+
+  Et trois résultats que la fiche ne donne pas, que le modèle rend visibles :
+   · sous la lumière parasite d'une salle bien obscurcie (0,002 lx), la balle
+     REDEVIENT VISIBLE au bout de 11,5 minutes d'obscurité — c'est pourquoi
+     la fiche fait observer au bout d'UNE minute, et c'est ce qui la sauve ;
+   · le témoin cesse d'être concluant dès que les parois de l'enceinte
+     dépassent ρ = 0,09 : une boîte grise ne prouve rien ;
+   · le miroir désaligné cesse de renvoyer l'image de la lampe et ne montre
+     plus que l'intérieur sombre de la boîte, quatre mille fois moins
+     lumineux. C'est la SECONDE condition de la conclusion de la fiche —
+     « que la lumière qu'il diffuse entre dans notre œil » — obtenue au lieu
+     d'être énoncée.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau, durée, modalité et conclusion
+    viennent de `valise/curriculum/experiences.yaml`, entrée E2AC-16. Ils ne
+    sont PAS recopiés : le bloc `DONNEES` est régénéré par `_sync_donnees.py`.
+  · Les constantes physiques sont sourcées une par une dans `PHYS` et
+    réaffichées dans « Sous le capot » avec leur provenance.
+  · Le modèle a été écrit et validé en Python AVANT la page :
+    `_outils_faire/_modeles_2AC/modele_L10.py`. Les nombres du solveur JS
+    reproduisent ceux du modèle Python situation par situation.
+  · Trois grandeurs ne sont PAS dans la fiche et la page le dit à l'écran :
+    le NIVEAU de la lampe de poche (la fiche dit seulement « à pile »), la
+    LUMIÈRE PARASITE qui subsiste dans une salle obscurcie, et la
+    RÉFLECTANCE des parois de l'enceinte. Les trois sont des curseurs.
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome : elle ne passe pas par `generer.py`, n'utilise ni `moteur.js`
+    ni `simulation.html.j2` ni `icones.js`, et ne s'ouvre pas depuis
+    `index.html`. Elle DOUBLE `simulation_E2AC-16.html`, elle ne la remplace
+    pas.
+  · Pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL : on
+    cherche ici qu'un objet se reconnaisse comme un objet et donne envie d'y
+    porter la main.
+  · LA SCÈNE SE REGARDE DE DESSUS, et c'est écrit dans le dessin (§12.20).
+    Un faisceau rasant la table se déploie DANS LE PLAN de la table : vu de
+    côté, l'ombre du carton et le décalage latéral de la bouteille et du
+    miroir — qui est justement ce qui les laisse éclairés quand la balle
+    s'éteint — seraient tous deux invisibles.
+  · L'OBSCURITÉ EST BORNÉE, comme dans la vue à plat de la même expérience :
+    on éteint une ZONE — l'intérieur de l'enceinte — et non la page. C'est
+    la solution du manuel lui-même, un rectangle noir sur une page blanche.
+  · Le dessin est un SCHÉMA HABILLÉ. Sont à l'échelle (1 000 px par mètre)
+    l'enceinte, la position de chaque corps, le diamètre de la balle,
+    l'ouverture du pinceau et la largeur du carton — c'est-à-dire tout ce
+    dont le modèle dépend. Ne le sont pas : l'épaisseur des parois, le
+    corps de la lampe et la flamme de la bougie, grossis pour être saisis.
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §6.2   aucun état ne dépend de la fin d'une animation ; verrous en PREMIÈRE
+         ligne ; horloge en `setInterval` lisant `Date.now()`, aucun
+         `requestAnimationFrame` (§13.5 bis).
+  §6.11  rien ne passe par `style.transform` : tout par l'ATTRIBUT.
+  §6.12  toute cible saisissable porte une plaque de préhension pleine et
+         transparente ; tout le reste porte `pointer-events:none` (§12.15).
+  §12.2  les attributs `points` et `d` passent par `pt()`, jamais par `nb()`.
+  §12.3  les seuils laissent au moins 25 % de marge de part et d'autre de
+         CHAQUE observation de la fiche — la plus courte est un facteur 2,3.
+  §12.5  chaque curseur bouge un nombre affiché sur TOUTE sa course.
+  §12.12 chaque `value` de curseur est un multiple du `step` depuis `min`.
+  §12.16 `emplacements()` rend les zones de la plus PETITE à la plus GRANDE.
+  §12.17 toute clé lue est initialisée dans `neufEtat()`.
+  §12.18 le dessin RELIT ce que le modèle calcule : le cône dessiné est celui
+         du solveur, l'ombre portée est celle de l'occultation testée.
+  §12.21 le nombre de décimales suit ce que la grandeur justifie.
+  §12.38 les objets fins — le carton, le miroir — portent une plaque de
+         préhension aux cotes de leur silhouette.
+  §12.46 les intitulés qui croisent un trait portent un liseré de fond.
+  §12.47 l'écouteur d'erreurs est dans le `<head>`, et `nb()` teste le TYPE
+         avant la finitude.
+  §12.48 aucun littéral d'expression régulière dans un commentaire de bloc.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --rouge:#b03030; --violet:#6b4b9a;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #00000077;
+          pointer-events:none;max-width:52%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(244px,22%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #00000055}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0006}
+.rezero:hover{filter:brightness(1.09)}
+
+.secubande{margin-top:10px;border-radius:9px;padding:10px 14px;
+           border-left:6px solid var(--rouge);background:var(--redbg);
+           display:flex;gap:12px;align-items:flex-start}
+.secubande .pic{font-size:22px;line-height:1.1}
+.secubande .co{flex:1;min-width:0}
+.secubande .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+              font-weight:700;color:var(--rouge);display:block;margin-bottom:2px}
+.secubande .t{font-size:13.5px;color:#4a1f1f;line-height:1.45}
+.secubande.refus{background:#f7d9d9;border-left-color:#8c1c1c}
+.secubande.refus .k{color:#8c1c1c}
+.secubande.ok{background:var(--greenbg);border-left-color:var(--green)}
+.secubande.ok .k{color:var(--green)}
+.secubande.ok .t{color:#22380f}
+
+.checks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.checks div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted);
+            position:relative;min-width:120px}
+.checks div .n{font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+               font-weight:700;color:#c0a0a0;display:block}
+.checks div.non{border-color:#e6b9b9;background:#fdf4f4}
+.checks div.non .n{color:var(--rouge)}
+.checks div.oui{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.checks div.oui .n{color:var(--green)}
+.checks div.oui::after{content:"✓";position:absolute;right:7px;top:5px;
+                       font-weight:700;color:var(--green)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.src{font-size:10.5px;color:var(--muted);line-height:1.45}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:92px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.vit{display:flex;gap:5px;align-items:center;margin-top:9px;flex-wrap:wrap}
+.vit span{font-size:11px;color:var(--muted)}
+.vit button{padding:4px 10px;font-size:12px}
+
+.proto{margin:0;padding-left:20px;font-size:12.5px;line-height:1.5;
+       max-height:230px;overflow:auto}
+.proto li{margin-bottom:5px;color:var(--muted)}
+.proto li.actif{color:var(--ink);font-weight:600}
+.proto li.faite{color:var(--green);text-decoration:line-through;
+                text-decoration-color:#b6c9a4}
+.guide{display:flex;gap:8px;margin-top:9px;align-items:center;flex-wrap:wrap}
+.guide .aide{font-size:11px;color:var(--muted);flex:1;min-width:120px}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect div.ajout{background:#f4f0fa}
+.lect div.ajout .k{color:var(--violet)}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:var(--rouge);background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.box.secu li{margin-bottom:4px}
+.box.secu li.actif{background:#f7d9d9;border-radius:4px;padding:2px 4px;
+                   margin-left:-4px;font-weight:600}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:10px 14px;font-size:12.5px}
+.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+               cursor:pointer;font-weight:700}
+.capot h3{font-size:12px;color:var(--gold);letter-spacing:.09em;
+          text-transform:uppercase;margin:14px 0 5px}
+.capot .eq{font-family:var(--mono);font-size:12px;background:var(--bluebg);
+           border-radius:6px;padding:8px 10px;line-height:1.7;
+           overflow-x:auto;white-space:pre}
+.capot table{font-size:11px}
+.capot ul{padding-left:17px;margin:4px 0}
+.capot li{margin-bottom:5px}
+
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-16 · 2AC · L10</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="secubande" id="secuBande">
+      <span class="pic" id="secuPic">⚠</span>
+      <span class="co">
+        <span class="k" id="secuTitre">Consigne de sécurité du geste en cours</span>
+        <span class="t" id="secuTexte">…</span>
+      </span>
+    </div>
+    <div class="checks" id="checks"></div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div id="bilan" style="margin-top:7px;font-size:12.5px"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeCarnet"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:var(--rouge)">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <!-- Le protocole de la fiche, MOT POUR MOT, en tête de colonne : posé
+         sous la scène il commencerait à y ≈ 950 px, donc invisible sans
+         dérouler. L'étape courante s'y déduit de l'état, jamais d'un
+         compteur : le panneau avance de lui-même dès que le geste est fait,
+         et il recule si on le défait. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <!-- LES INSTRUMENTS AVANT LES RÉGLAGES (§6.1) : rangés après, ils
+         sortent du champ dès qu'on descend régler un curseur. -->
+    <div class="carte">
+      <h2>L'échelle des luminances <span class="note">calculée, pas dessinée</span></h2>
+      <svg id="gEchelle" viewBox="0 0 360 214" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Une échelle <b>logarithmique</b> : de la nuit sans lune au filament
+        d'une lampe, la vision couvre onze décades, et une échelle linéaire
+        n'en montrerait qu'une. Le trait rouge est le <b>seuil</b> de l'œil
+        dans l'état où la scène le met ; un corps se voit si sa barre le
+        dépasse. C'est ce dépassement, et rien d'autre, qui remplit le
+        tableau.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La sonde photométrique <span class="note">ajout — non citée par la fiche</span></h2>
+      <div class="lect">
+        <div><div class="k">Corps visé</div><div class="v" id="lCorps">—</div></div>
+        <div><div class="k">Éclairement reçu</div><div class="v" id="lE">—</div></div>
+        <div><div class="k">Luminance renvoyée</div><div class="v" id="lL">—</div></div>
+        <div><div class="k">Verdict</div><div class="v" id="lVerdict">—</div></div>
+        <div class="ajout"><div class="k">Adaptation de l'œil</div><div class="v" id="lAdapt">—</div></div>
+        <div class="ajout"><div class="k">Seuil de vision</div><div class="v" id="lSeuil">—</div></div>
+      </div>
+      <div class="src" style="margin-top:6px">
+        Cliquer un corps de la scène pour le viser. La fiche ne cite aucun
+        appareil de mesure : sans la sonde, le test reste binaire et l'élève
+        ne voit pas que la balle, en situation 3, n'est pas à zéro — elle est
+        <b>dix mille fois plus sombre</b>, ce qui n'est pas la même chose et
+        c'est tout le sujet.
+      </div>
+      <div class="vit" id="vit"><span>Vitesse du temps</span></div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg"><label for="rFuite">Lumière parasite dans la salle</label><output id="oFuite"></output>
+        <input type="range" id="rFuite" min="0" max="3" step="0.002" value="0.002">
+        <div class="aide" id="aideFuite"></div></div>
+      <div class="reg"><label for="rParois">Réflectance des parois</label><output id="oParois"></output>
+        <input type="range" id="rParois" min="0.02" max="0.8" step="0.02" value="0.04">
+        <div class="aide" id="aideParois"></div></div>
+      <div class="reg"><label for="rFlux">Niveau de la lampe de poche</label><output id="oFlux"></output>
+        <input type="range" id="rFlux" min="18" max="270" step="18" value="18">
+        <div class="aide" id="aideFlux"></div></div>
+      <div class="reg"><label for="rMiroir">Orientation du miroir</label><output id="oMiroir"></output>
+        <input type="range" id="rMiroir" min="-20" max="20" step="1" value="0">
+        <div class="aide" id="aideMiroir"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="eqModele"></div>
+      <p>Rien n'est « affiché parce que la fiche le dit ». Les six cases du
+      tableau sont six comparaisons entre une luminance calculée et un seuil
+      calculé.</p>
+      <h3>2 · Ce que devient la lumière</h3>
+      <div class="eq" id="eqBilan"></div>
+      <p>Aucun corps de la scène ne crée de lumière, sauf la lampe et la
+      bougie. Tous les autres redistribuent ce qu'ils reçoivent : c'est la
+      définition même d'une source secondaire, et le bilan ci-dessus est la
+      forme quantitative de la conclusion de la fiche.</p>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul id="capotLimites"></ul>
+      <h3>5 · Ce que la fiche dit de l'expérience</h3>
+      <p id="capotInterp" style="font-size:12.5px"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-16.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-16",
+  "niveau": "2AC",
+  "unite": "U2",
+  "lecon": "L10",
+  "titre": "Source primaire ou source secondaire ? le test de l'obscurité",
+  "axe": "Les sources lumineuses : sources primaires et sources secondaires",
+  "objectif": "Distinguer expérimentalement un corps qui **produit** la lumière qu'il émet d'un corps qui ne fait que **renvoyer** celle qu'il reçoit, et dégager les deux conditions de visibilité d'un objet diffusant.",
+  "duree": 22,
+  "modalite": "groupes de 4 — 6 postes, salle obscurcie",
+  "materiel": [
+    "Une salle obscurcie, ou une **boîte noire** percée d'un judas",
+    "Une lampe de poche à pile (source primaire)",
+    "Une **balle de ping-pong blanche** et une bouteille en verre",
+    "Un petit miroir de poche",
+    "Une feuille de **carton opaque** (le cache du témoin)",
+    "Une bougie et des allumettes (source primaire de secours)"
+  ],
+  "securite": [
+    "Ne jamais diriger le faisceau de la lampe vers les yeux d'un camarade.",
+    "Ne pas regarder une source intense — Soleil, laser, arc de soudure — même brièvement : la brûlure de la rétine est définitive.",
+    "Attacher les cheveux longs et éloigner tout papier de la bougie allumée.",
+    "Se déplacer lentement dans l'obscurité et laisser les cartables sous les tables."
+  ],
+  "protocole": [
+    "Poser sur la table, côte à côte, la lampe de poche **éteinte**, la balle de ping-pong, la bouteille et le miroir.",
+    "**Situation 1** — obscurcir complètement la salle, attendre une minute, puis observer et noter ce que l'on voit.",
+    "**Situation 2** — allumer la lampe de poche et la diriger vers la balle ; observer de nouveau et noter.",
+    "**Situation 3 — témoin** — la lampe restant **allumée**, glisser le carton opaque entre la lampe et la balle.",
+    "Observer une dernière fois : dire ce qui reste visible et ce qui a disparu.",
+    "Rallumer la salle, ranger le poste et compléter le tableau."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Situation",
+      "Lampe visible ?",
+      "Balle visible ?"
+    ],
+    "lignes": [
+      [
+        "1 · Obscurité, lampe éteinte",
+        "",
+        ""
+      ],
+      [
+        "2 · Lampe allumée vers la balle",
+        "",
+        ""
+      ],
+      [
+        "3 · Témoin : carton entre les deux",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "1 · Obscurité, lampe éteinte",
+        "non",
+        "non"
+      ],
+      [
+        "2 · Lampe allumée vers la balle",
+        "oui",
+        "oui"
+      ],
+      [
+        "3 · Témoin : carton entre les deux",
+        "oui",
+        "non"
+      ]
+    ]
+  },
+  "observation": "Dans l'obscurité totale, rien n'est visible. Dès que la lampe est allumée, elle est visible et la balle le devient. Le carton opaque interposé entre la lampe et la balle fait disparaître la balle, la lampe restant visible.",
+  "conclusion": "Une source primaire produit la lumière qu'elle émet ; une source secondaire, ou objet diffusant, ne fait que renvoyer la lumière qu'elle reçoit. Un objet diffusant n'est visible que s'il est éclairé et si la lumière qu'il diffuse parvient à l'œil.",
+  "oheric": {
+    "observation": "En plein jour, nous voyons aussi bien la lampe du plafond que la balle posée sur la table, et il nous semble que toutes deux « éclairent ». La nuit, dans le désert, la **Lune** paraît elle aussi éclairer la dune. Une lampe et une balle de ping-pong sont-elles des sources de lumière de même type ?",
+    "hypothese": "**Si** la balle produisait elle-même sa lumière, **alors** on devrait la voir dans l'obscurité totale, exactement comme la lampe allumée. **Si** au contraire elle ne fait que **renvoyer** la lumière qu'elle reçoit, **alors** elle ne sera visible qu'éclairée par une autre source.",
+    "experience": "Dans une salle obscurcie, observer les mêmes objets dans trois situations : lampe éteinte, lampe allumée dirigée vers la balle, puis — **témoin** — lampe toujours allumée mais séparée de la balle par un carton opaque. Un seul paramètre change d'une situation à la suivante.",
+    "resultats": "Situation 1 : on ne voit **rien du tout**, ni la lampe, ni la balle, ni le miroir. Situation 2 : la lampe est visible, et la balle, la bouteille et le miroir le deviennent aussi. Situation 3 : la lampe reste parfaitement visible, mais la balle a **disparu**.",
+    "interpretation": "La lampe allumée est visible dès qu'elle fonctionne, sans rien devoir à personne : elle **produit** la lumière qu'elle émet, c'est une **source primaire**. La balle, elle, n'est visible que lorsqu'elle est éclairée. Le **témoin** est décisif : en situation 3, la salle est toujours éclairée par la lampe et pourtant la balle a disparu — ce n'est donc pas « la lumière allumée » qui la rend visible, c'est bien la lumière **qu'elle reçoit** et qu'elle **renvoie** vers notre œil. La balle est une **source secondaire**, ou **objet diffusant**. L'hypothèse est validée.",
+    "conclusion": "Une **source primaire** produit la lumière qu'elle émet : le Soleil, une flamme, une lampe allumée, une luciole. Une **source secondaire** (objet diffusant) ne produit rien : elle **diffuse dans toutes les directions** une partie de la lumière qu'elle reçoit — la Lune, un miroir, une page blanche, un écran de cinéma. Pour voir un objet diffusant, **deux conditions** sont nécessaires : qu'il soit **éclairé** par une source primaire, et que la lumière qu'il diffuse **entre dans notre œil**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Chacune vit ici avec sa provenance EN CLAIR, et le tableau de « Sous le
+   capot » se régénère depuis cet objet : aucune valeur n'est retapée dans
+   le HTML. Le modèle Python `_modeles_2AC/modele_L10.py` porte les mêmes. */
+var PHYS = {
+  PHI_FORT:   { v: 270,     u: "lm",    n: "flux de la lampe de poche, mode fort",
+                s: "Streamlight ProTac 2AA-X sur piles alcalines AA, fiche constructeur" },
+  I_FORT:     { v: 5000,    u: "cd",    n: "intensité au centre du pinceau, mode fort",
+                s: "même fiche ; portée ANSI FL1 de 141 m, cohérente avec √(I/0,25)" },
+  PHI_FAIBLE: { v: 18,      u: "lm",    n: "flux de la lampe, mode faible",
+                s: "même fiche, mode « Low » — c'est le mode prescrit ici" },
+  I_FAIBLE:   { v: 400,     u: "cd",    n: "intensité au centre, mode faible",
+                s: "même fiche, mode « Low » ; portée 40 m" },
+  D_LENTILLE: { v: 0.022,   u: "m",     n: "diamètre de la tête de la lampe",
+                s: "lampe 2 AA courante ; donne la luminance apparente de la tête" },
+  SPILL:      { v: 0.10,    u: "—",     n: "part du flux hors du pinceau",
+                s: "VALEUR ASSUMÉE, non mesurée — ANSI FL1 place le bord du pinceau à 10 % de l'intensité maximale, ce qui en borne l'ordre de grandeur" },
+  I_BOUGIE:   { v: 1.0,     u: "cd",    n: "intensité lumineuse d'une bougie",
+                s: "définition historique de la candela ; une bougie ordinaire en produit à peu près une (NIST)" },
+  RHO_BALLE:  { v: 0.80,    u: "—",     n: "réflectance diffuse de la balle blanche",
+                s: "balle ITTF en ABS mat blanc ; tables de LRV, blanc mat 0,80 à 0,85" },
+  D_BALLE:    { v: 0.040,   u: "m",     n: "diamètre de la balle de ping-pong",
+                s: "règlement ITTF : 40 mm (39,5 à 40,5), matière plastique mate" },
+  RHO_CARTON: { v: 0.25,    u: "—",     n: "réflectance du carton kraft",
+                s: "encadrée par ANSI/ASHRAE/IES 90.1 : 0,20 (sombre) à 0,50 (moyen)" },
+  RHO_BOITIER:{ v: 0.35,    u: "—",     n: "réflectance du boîtier de la lampe éteinte",
+                s: "gris moyen, même encadrement normalisé 0,20 à 0,50" },
+  N_VERRE:    { v: 1.52,    u: "—",     n: "indice du verre sodocalcique",
+                s: "valeur usuelle du verre à vitre et à bouteille" },
+  RHO_MIROIR: { v: 0.90,    u: "—",     n: "réflectance spéculaire d'un miroir aluminié",
+                s: "miroir de ménage à couche d'aluminium : 90 % (argenté : 95 %)" },
+  RHO_BOITE:  { v: 0.04,    u: "—",     n: "réflectance intérieure de la boîte noire",
+                s: "peinture noire mate : LRV de 4 %, borne basse des tables" },
+  E_SALLE:    { v: 300,     u: "lx",    n: "éclairement de la salle allumée",
+                s: "valeur prescrite pour une salle de classe (EN 12464-1)" },
+  E_FUITE:    { v: 0.002,   u: "lx",    n: "lumière parasite d'une salle bien obscurcie",
+                s: "repère : ciel nocturne sans lune, avec luminescence du ciel, 0,002 lx" },
+  L_ABS:      { v: 1e-5,    u: "cd/m²", n: "seuil absolu de vision, œil accoutumé",
+                s: "Webvision (Kalloniatis et Luu) : environ 1e−5 cd/m² après 40 min" },
+  L_CONE:     { v: 1e-2,    u: "cd/m²", n: "plateau des cônes",
+                s: "Webvision : les trois dernières décades sont purement scotopiques, soit mille fois le seuil absolu" },
+  W_CONE:     { v: 0.02,    u: "—",     n: "constante de Weber, cônes",
+                s: "Webvision : 0,02 à 0,03 pour les cônes" },
+  W_BATON:    { v: 0.14,    u: "—",     n: "constante de Weber, bâtonnets",
+                s: "Webvision : 0,14 pour les bâtonnets" },
+  L_MESO:     { v: 0.03,    u: "cd/m²", n: "frontière photopique / scotopique",
+                s: "Webvision : au-dessus d'environ 0,03 cd/m², les cônes prennent la main" },
+  TAU_CONE:   { v: 1.5,     u: "min",   n: "constante de temps des cônes",
+                s: "calée sur le plateau des cônes atteint en 5 à 7 min (Webvision)" },
+  TAU_BATON:  { v: 9.0,     u: "min",   n: "constante de temps des bâtonnets",
+                s: "calée sur la rupture cônes/bâtonnets à 5–8 min et le plateau à 40 min (Webvision)" },
+  BOITE_L:    { v: 0.60,    u: "m",     n: "longueur de la boîte noire",
+                s: "caisse de démonstration ; l'enceinte est celle de la 1re ligne du matériel" },
+  BOITE_l:    { v: 0.40,    u: "m",     n: "largeur de la boîte noire", s: "idem" },
+  BOITE_h:    { v: 0.40,    u: "m",     n: "hauteur de la boîte noire", s: "idem" }
+};
+function K(k) { return PHYS[k].v; }
+
+/* Ce qui se DÉDUIT des constantes — jamais une valeur de plus. */
+var OMEGA_PINCEAU = K("PHI_FORT") / K("I_FORT");        /* 0,054 sr */
+var DEMI_ANGLE = Math.acos(1 - OMEGA_PINCEAU / (2 * Math.PI));
+var A_LENTILLE = Math.PI * Math.pow(K("D_LENTILLE") / 2, 2);
+var R_BALLE = K("D_BALLE") / 2;
+/* réflexion de Fresnel du verre sous incidence normale */
+var RHO_VERRE = Math.pow((K("N_VERRE") - 1) / (K("N_VERRE") + 1), 2);
+var A_BOITE = 2 * (K("BOITE_L") * K("BOITE_l") + K("BOITE_L") * K("BOITE_h")
+                   + K("BOITE_l") * K("BOITE_h"));
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+function el(nom, attrs, texte) {
+  var e = document.createElementNS(NS, nom), k;
+  for (k in attrs) if (attrs.hasOwnProperty(k)) e.setAttribute(k, attrs[k]);
+  if (texte !== undefined) e.textContent = texte;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+function $(id) { return document.getElementById(id); }
+/* ⚠ §12.47 : `isFinite(null)` vaut TRUE — Number(null) vaut 0. Le TYPE se
+   teste donc AVANT la finitude, sans quoi `null.toFixed` lève pendant le
+   démarrage et la page reste sur « Chargement… » sans un mot. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+/* Une luminance couvre onze décades : au-delà de mille, on passe à la
+   notation scientifique, et en dessous du centième aussi. */
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var a = Math.abs(x);
+  if (a >= 1000 || a < 0.01) {
+    var e = Math.floor(Math.log(a) / Math.LN10);
+    var m = x / Math.pow(10, e);
+    return nb(m, d === undefined ? 1 : d) + "·10" + exposant(e);
+  }
+  return nb(x, a < 1 ? 3 : (a < 10 ? 2 : 1));
+}
+var CHIFFRES_HAUT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
+                      "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
+                      "-": "⁻" };
+function exposant(e) {
+  return String(e).split("").map(function (c) {
+    return CHIFFRES_HAUT[c] || c;
+  }).join("");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.2 : l'attribut `points` attend le POINT décimal. Utilitaire dédié. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(h) {
+  h = String(h).replace("#", "");
+  return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16),
+          parseInt(h.substr(4, 2), 16)];
+}
+function vHex(c) {
+  return "#" + c.map(function (v) {
+    var s = Math.max(0, Math.min(255, Math.round(v))).toString(16);
+    return s.length < 2 ? "0" + s : s;
+  }).join("");
+}
+function melange(a, b, t) {
+  var A = hexV(a), B = hexV(b);
+  return vHex([A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t,
+               A[2] + (B[2] - A[2]) * t]);
+}
+/* Le YAML écrit en gras avec des paires d'astérisques. On les rend en HTML,
+   ou on les retire pour le texte d'un nœud SVG. */
+var MOTIF_GRAS = new RegExp("[*]{2}([^*]+)[*]{2}", "g");
+function md(t) {
+  return String(t === undefined || t === null ? "" : t)
+    .replace(MOTIF_GRAS, "<b>$1</b>");
+}
+function depouille(t) {
+  return String(t === undefined || t === null ? "" : t).replace(MOTIF_GRAS, "$1");
+}
+function court(t, n) {
+  t = String(t);
+  return t.length > n ? t.slice(0, n - 1) + "…" : t;
+}
+function maj(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+/* ==================================================================
+   3. LE YAML — lecture du tableau
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [];
+var LIGNES = TM.lignes || [];
+var VAL = TM.valeurs || [];
+var NSIT = Math.max(LIGNES.length, VAL.length);
+function cel(k, c) { var l = VAL[k] || []; return depouille(l[c] || ""); }
+function intitule(k) {
+  var l = LIGNES[k] || VAL[k] || [];
+  return depouille(l[0]) || ("Situation " + (k + 1));
+}
+function estOui(t) { return /^\s*oui/i.test(t); }
+/* La colonne du tableau qui suit un corps : « Lampe visible ? » ne contient
+   pas « de poche », d'où la recherche par mot-clé. */
+function colonneDe(mot) {
+  var i;
+  for (i = 1; i < ENTETES.length; i++) {
+    if (new RegExp(mot, "i").test(depouille(ENTETES[i]))) return i;
+  }
+  return -1;
+}
+var C_LAMPE = -1, C_BALLE = -1;
+/* Le NOM d'un corps se lit dans `materiel`, jamais retapé ici. */
+function nomMateriel(motif, repli) {
+  var m = DONNEES.materiel || [], i, s, r, bout;
+  for (i = 0; i < m.length; i++) {
+    s = depouille(m[i]); r = s.match(motif);
+    if (!r) continue;
+    bout = s.slice(r.index).split(/\s+et\s+|,|\.|\(|\)/)[0].trim();
+    if (bout) return bout;
+  }
+  return repli;
+}
+/* Un fragment VERBATIM du protocole, pour un libellé de commande. */
+function fragment(motif, repli) {
+  var p = DONNEES.protocole || [], i, r;
+  for (i = 0; i < p.length; i++) {
+    r = depouille(p[i]).match(motif);
+    if (r && r[0].trim()) return maj(r[0].trim());
+  }
+  return repli;
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i;
+  for (i = 0; i < s.length; i++) {
+    if (new RegExp(motif, "i").test(depouille(s[i]))) return depouille(s[i]);
+  }
+  return depouille(s[0] || "");
+}
+
+/* ==================================================================
+   3bis. LES DURÉES — elles viennent de la fiche, jamais du code (§5)
+   ================================================================== */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, quinze: 15, vingt: 20 };
+/* ⚠ §12.29 : le nombre doit COMMENCER par un chiffre, l'unité ne doit pas
+   être suivie d'une lettre, et pas de drapeau d'insensibilité à la casse sur
+   une unité. « Verser 100 mL » ne doit pas donner des minutes. */
+function minutesReleve() {
+  var p = (DONNEES.protocole || []).map(depouille).join(" · "), m;
+  m = p.match(/(\d[\d,]*)\s*min(?![A-Za-zÀ-ÿ])/);
+  if (m) return parseFloat(m[1].replace(",", "."));
+  m = p.match(/\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt)\s+minutes?\b/i);
+  if (m) return MOTS_NB[m[1].toLowerCase()];
+  return 1;
+}
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+var T_ACCOUTUMANCE = minutesReleve();          /* 1 minute, lue dans la fiche */
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO porte les valeurs prescrites, REG les courantes
+   ================================================================== */
+var PROTO = {
+  fuite:  K("E_FUITE"),
+  parois: K("RHO_BOITE"),
+  flux:   K("PHI_FAIBLE"),
+  miroir: 0
+};
+var REG = { fuite: PROTO.fuite, parois: PROTO.parois,
+            flux: PROTO.flux, miroir: PROTO.miroir };
+function horsProtocole() {
+  return Math.abs(REG.fuite - PROTO.fuite) > 1e-9
+      || Math.abs(REG.parois - PROTO.parois) > 1e-9
+      || Math.abs(REG.flux - PROTO.flux) > 1e-9
+      || Math.abs(REG.miroir - PROTO.miroir) > 1e-9;
+}
+
+/* ==================================================================
+   5. LE SOLVEUR — la photométrie, en unités du système international
+   ==================================================================
+   Toutes les longueurs sont en MÈTRES dans le modèle. Le dessin les relit
+   par `sx()` et `sy()` (§12.18) : il n'y a qu'un seul jeu de coordonnées. */
+
+/* L'intensité au centre du pinceau, pour le flux courant. Le constructeur
+   donne deux couples (flux, intensité) ; l'angle solide qui les relie est le
+   même dans les deux modes, à 20 % près, et c'est lui qu'on garde. */
+function intensiteLampe() { return REG.flux / OMEGA_PINCEAU; }
+function intensiteDebord() { return K("SPILL") * REG.flux / (2 * Math.PI); }
+
+/* Éclairement moyen dû à l'INTERRÉFLEXION des parois — formule de la sphère
+   intégrante. C'est ce terme qui empêche la balle d'être à luminance NULLE
+   quand le carton coupe le faisceau : elle n'est pas éteinte, elle est dix
+   mille fois plus sombre, ce qui n'est pas la même chose. */
+function retourParois(phi) {
+  return phi * REG.parois / (A_BOITE * (1 - REG.parois));
+}
+function fluxAllume() {
+  var phi = 0;
+  if (ETAT.lampe) phi += REG.flux;
+  if (ETAT.bougie) phi += 4 * Math.PI * K("I_BOUGIE");
+  return phi;
+}
+function eclairementAmbiant() {
+  if (!ETAT.noir) return K("E_SALLE");
+  return REG.fuite + retourParois(fluxAllume());
+}
+
+/* Le PLANCHER D'ACCOUTUMANCE : la plus faible luminance détectable après t
+   minutes d'obscurité, l'œil venant d'un champ de luminance L_pre. Deux
+   branches exponentielles en logarithme du seuil. Les constantes de temps ne
+   sont pas choisies : elles sont calées sur les trois repères mesurés —
+   plateau des cônes, rupture cônes/bâtonnets entre 5 et 8 min, plateau des
+   bâtonnets vers 40 min. */
+function plancher(tMin, Lpre) {
+  if (!(Lpre > 0)) Lpre = K("L_MESO");
+  var lc0 = Math.log(Math.max(K("W_CONE") * Lpre, K("L_CONE"))) / Math.LN10;
+  var lb0 = Math.log(Math.max(K("W_BATON") * Lpre, K("L_ABS"))) / Math.LN10;
+  var lcInf = Math.log(K("L_CONE")) / Math.LN10;
+  var lbInf = Math.log(K("L_ABS")) / Math.LN10;
+  var lc = lcInf + (lc0 - lcInf) * Math.exp(-tMin / K("TAU_CONE"));
+  var lb = lbInf + (lb0 - lbInf) * Math.exp(-tMin / K("TAU_BATON"));
+  return Math.pow(10, Math.min(lc, lb));
+}
+
+/* ---- géométrie du modèle, en mètres -------------------------------------
+   x le long du pinceau, y en travers. La lampe est en (0,0) et vise +x ;
+   l'œil regarde par le JUDAS percé dans la paroi avant. */
+var OEIL = { x: 0.15, y: -0.20 };
+var X_FOND = 0.55;                     /* la paroi que le pinceau atteint */
+var CARTON_L = 0.12, CARTON_H = 0.10;
+var R_BOUTEILLE = 0.030, H_BOUTEILLE = 0.16, L_MIROIR = 0.06;
+
+function dist(a, b) { return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)); }
+
+/* Le point p est-il dans le cône du pinceau issu de la lampe ? */
+function dansPinceau(p) {
+  var v = ETAT.vise, vx = v.x, vy = v.y, n = Math.sqrt(vx * vx + vy * vy);
+  if (n < 1e-9) return false;
+  vx /= n; vy /= n;
+  var leLong = p.x * vx + p.y * vy;
+  if (leLong <= 0) return false;
+  var enTravers = Math.abs(-p.x * vy + p.y * vx);
+  return enTravers <= leLong * Math.tan(DEMI_ANGLE);
+}
+function orient(a, b, c) {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+function croise(p1, p2, p3, p4) {
+  var d1 = orient(p3, p4, p1), d2 = orient(p3, p4, p2);
+  var d3 = orient(p1, p2, p3), d4 = orient(p1, p2, p4);
+  return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0));
+}
+/* Le segment src → p traverse-t-il la feuille de carton ? La feuille est
+   perpendiculaire à l'axe du pinceau, de largeur CARTON_L. */
+function coupeCarton(src, p) {
+  if (!ETAT.carton) return false;
+  var c = POSE.carton;
+  return croise(src, p,
+                { x: c.x, y: c.y - CARTON_L / 2 },
+                { x: c.x, y: c.y + CARTON_L / 2 });
+}
+
+/* Éclairement reçu par un corps, en lux — somme des sources, occultation
+   comprise, plus le retour des parois et la lumière parasite. */
+function eclairement(cible, nom) {
+  if (!ETAT.noir) return K("E_SALLE");
+  var E = eclairementAmbiant(), src, dd, I;
+  if (ETAT.lampe && nom !== "lampe") {
+    src = { x: 0, y: 0 };
+    /* ⚠ un corps ne se fait pas d'ombre à lui-même : le carton est le seul
+       écran, et il ne s'écrante pas. */
+    if (nom === "carton" || !coupeCarton(src, cible)) {
+      dd = dist(src, cible);
+      if (dd > 1e-6) {
+        I = dansPinceau(cible) ? intensiteLampe() : intensiteDebord();
+        E += I / (dd * dd);
+      }
+    }
+  }
+  if (ETAT.bougie && nom !== "bougie") {
+    src = POSE.bougie;
+    if (nom === "carton" || !coupeCarton(src, cible)) {
+      dd = dist(src, cible);
+      if (dd > 1e-6) E += K("I_BOUGIE") / (dd * dd);
+    }
+  }
+  return E;
+}
+/* Fraction éclairée du disque apparent d'une sphère — (1 + cos g)/2. C'est
+   pourquoi l'on observe DEPUIS LA LAMPE : de là, la balle est presque
+   pleinement éclairée. */
+function phase(cible, source) {
+  var ax = source.x - cible.x, ay = source.y - cible.y;
+  var bx = OEIL.x - cible.x, by = OEIL.y - cible.y;
+  var na = Math.sqrt(ax * ax + ay * ay), nbb = Math.sqrt(bx * bx + by * by);
+  if (na < 1e-9 || nbb < 1e-9) return 1;
+  return Math.max(0, (1 + (ax * bx + ay * by) / (na * nbb)) / 2);
+}
+/* La luminance apparente de la tête de la lampe, vue depuis un point. */
+function sourceApparente(depuis) {
+  if (!ETAT.lampe) return 0;
+  return (dansPinceau(depuis) ? intensiteLampe() : intensiteDebord()) / A_LENTILLE;
+}
+function cosFace(p, nx, ny, vers) {
+  var vx = vers.x - p.x, vy = vers.y - p.y, n = Math.sqrt(vx * vx + vy * vy);
+  if (n < 1e-9) return 1;
+  return (nx * vx + ny * vy) / n;
+}
+/* Le miroir renvoie-t-il l'image de la lampe DANS l'œil ? Le miroir est plat :
+   sa demi-largeur angulaire, vue de l'œil, est la tolérance. Le curseur
+   d'orientation la fait franchir. */
+function miroirAligne() {
+  var p = POSE.miroir;
+  var tolerance = Math.atan((L_MIROIR / 2) / dist(p, OEIL)) * 180 / Math.PI;
+  return Math.abs(REG.miroir) <= tolerance;
+}
+
+/* LE SOLVEUR PROPREMENT DIT. Rend, pour chaque corps de la scène,
+   l'éclairement reçu, la luminance renvoyée vers l'œil et l'angle solide
+   sous lequel l'œil le voit. */
+function corps() {
+  var out = {}, p, E, L, Om, Ls, k, larg, dd, aire;
+  var Lamb = eclairementAmbiant() / Math.PI;
+
+  /* --- la lampe : source PRIMAIRE. Sa luminance est la sienne propre, et
+     c'est exactement ce que « produire la lumière » veut dire. --- */
+  p = { x: 0, y: 0 };
+  E = eclairement(p, "lampe");
+  if (ETAT.lampe) {
+    L = sourceApparente(OEIL);
+    Om = A_LENTILLE * Math.abs(cosFace(p, 1, 0, OEIL)) / Math.pow(dist(p, OEIL), 2);
+  } else {
+    L = K("RHO_BOITIER") * E / Math.PI;
+    Om = 0.0045 / Math.pow(dist(p, OEIL), 2);
+  }
+  out.lampe = { E: E, L: L, Om: Om, primaire: true, nom: NOMS.lampe };
+
+  /* --- la balle : diffuseur lambertien. C'est LE corps de la leçon. --- */
+  p = POSE.balle;
+  E = eclairement(p, "balle");
+  var direct = ETAT.lampe && !coupeCarton({ x: 0, y: 0 }, p);
+  k = direct ? phase(p, { x: 0, y: 0 }) : 1;
+  L = K("RHO_BALLE") * E * k / Math.PI;
+  Om = Math.PI * R_BALLE * R_BALLE / Math.pow(dist(p, OEIL), 2);
+  out.balle = { E: E, L: L, Om: Om, primaire: false, nom: NOMS.balle };
+
+  /* --- la bouteille : du verre. On n'en voit pas la surface, on en voit le
+     REFLET de la source — et la luminance se conserve à la réflexion près.
+     Le corps est CONVEXE : il existe toujours un point de sa surface qui
+     renvoie la source vers l'œil, quelle que soit la position de l'œil. --- */
+  p = POSE.bouteille;
+  E = eclairement(p, "bouteille");
+  Ls = sourceApparente(p);
+  if (ETAT.lampe && !coupeCarton({ x: 0, y: 0 }, p) && Ls > 0) {
+    L = RHO_VERRE * Ls;
+    larg = R_BOUTEILLE * (K("D_LENTILLE") / dist({ x: 0, y: 0 }, p)) / 2;
+    Om = larg * H_BOUTEILLE / Math.pow(dist(p, OEIL), 2);
+  } else {
+    L = RHO_VERRE * Lamb;
+    Om = 2 * R_BOUTEILLE * H_BOUTEILLE / Math.pow(dist(p, OEIL), 2);
+  }
+  out.bouteille = { E: E, L: L, Om: Om, primaire: false, nom: NOMS.bouteille };
+
+  /* --- le miroir : SPÉCULAIRE. Il ne montre que ce qu'il réfléchit, et
+     désaligné il ne montre que l'intérieur sombre de l'enceinte. --- */
+  p = POSE.miroir;
+  E = eclairement(p, "miroir");
+  Ls = sourceApparente(p);
+  if (ETAT.lampe && miroirAligne() && !coupeCarton({ x: 0, y: 0 }, p) && Ls > 0) {
+    L = K("RHO_MIROIR") * Ls;
+    Om = A_LENTILLE / Math.pow(dist({ x: 0, y: 0 }, p) + dist(p, OEIL), 2);
+  } else {
+    L = K("RHO_MIROIR") * Lamb;
+    Om = L_MIROIR * 0.12 / Math.pow(dist(p, OEIL), 2);
+  }
+  out.miroir = { E: E, L: L, Om: Om, primaire: false, nom: NOMS.miroir };
+
+  /* --- le carton posé : sa face éclairée ÉBLOUIT, et c'est elle qui tient
+     l'œil au niveau photopique pendant que la balle s'éteint. --- */
+  if (ETAT.carton) {
+    p = POSE.carton;
+    E = eclairement(p, "carton");
+    L = K("RHO_CARTON") * E / Math.PI;
+    Om = CARTON_L * CARTON_H * Math.abs(cosFace(p, -1, 0, OEIL))
+         / Math.pow(dist(p, OEIL), 2);
+    out.carton = { E: E, L: L, Om: Om, primaire: false, nom: NOMS.carton };
+  }
+
+  /* --- la tache du pinceau sur la paroi du fond --- */
+  if (ETAT.lampe && ETAT.noir) {
+    p = { x: X_FOND, y: ETAT.vise.y * X_FOND / Math.max(1e-6, ETAT.vise.x) };
+    if (!coupeCarton({ x: 0, y: 0 }, p)) {
+      dd = dist({ x: 0, y: 0 }, p);
+      E = intensiteLampe() / (dd * dd);
+      aire = OMEGA_PINCEAU * dd * dd;
+      out.fond = { E: E, L: REG.parois * E / Math.PI,
+                   Om: aire / Math.pow(dist(p, OEIL), 2),
+                   primaire: false, nom: "paroi du fond" };
+    }
+  }
+
+  /* --- la bougie, si elle brûle : l'autre source primaire --- */
+  if (ETAT.bougie) {
+    p = POSE.bougie;
+    var A_FLAMME = 0.010 * 0.030;
+    out.bougie = { E: 0, L: K("I_BOUGIE") / A_FLAMME,
+                   Om: A_FLAMME / Math.pow(dist(p, OEIL), 2),
+                   primaire: true, nom: NOMS.bougie };
+  }
+  return out;
+}
+
+/* La luminance d'ADAPTATION de l'œil : E_œil / π, où E_œil est la somme des
+   L·Ω de tout ce que la scène met dans le champ. */
+function adaptation(cps) {
+  if (!ETAT.noir) return K("E_SALLE") / Math.PI;
+  var E = eclairementAmbiant(), k;
+  for (k in cps) if (cps.hasOwnProperty(k)) E += cps[k].L * cps[k].Om;
+  return E / Math.PI;
+}
+/* ⚠ L'ASYMÉTRIE DES DEUX ADAPTATIONS. S'adapter à PLUS de lumière prend
+   quelques secondes ; s'adapter à MOINS en prend quarante minutes. Tant que
+   le champ reste au-dessus de la frontière mésopique, l'œil suit donc en
+   direct et la loi de Weber suffit. En dessous, c'est le plancher
+   d'accoutumance qui commande, et il ne descend qu'avec le temps. */
+function seuilVision(La, tObscur) {
+  if (La >= K("L_MESO")) return K("W_CONE") * La;
+  return Math.max(K("W_BATON") * La, plancher(tObscur, K("E_SALLE") / Math.PI));
+}
+/* La résolution complète, dans l'état courant. */
+function resoudre() {
+  var cps = corps(), La = adaptation(cps), S = seuilVision(La, ETAT.tObscur), k;
+  for (k in cps) if (cps.hasOwnProperty(k)) {
+    cps[k].visible = cps[k].L > S;
+    cps[k].marge = S > 0 ? cps[k].L / S : Infinity;
+  }
+  return { corps: cps, La: La, seuil: S };
+}
+/* Rejouer le solveur pour une situation ENREGISTRÉE. Une mesure se fait dans
+   des conditions données : on rejoue ces conditions-là, sous les réglages
+   courants — ainsi un curseur déplace un nombre du carnet (§12.5) sans
+   effacer une observation faite (§12.19). */
+function resoudreEtat(cond) {
+  var garde = { noir: ETAT.noir, lampe: ETAT.lampe, carton: ETAT.carton,
+                bougie: ETAT.bougie, tObscur: ETAT.tObscur, vise: ETAT.vise };
+  var gardePose = { carton: POSE.carton, bougie: POSE.bougie };
+  ETAT.noir = cond.noir; ETAT.lampe = cond.lampe; ETAT.carton = cond.carton;
+  ETAT.bougie = cond.bougie; ETAT.tObscur = cond.tObscur; ETAT.vise = cond.vise;
+  POSE.carton = cond.posCarton; POSE.bougie = cond.posBougie;
+  var r = resoudre();
+  ETAT.noir = garde.noir; ETAT.lampe = garde.lampe; ETAT.carton = garde.carton;
+  ETAT.bougie = garde.bougie; ETAT.tObscur = garde.tObscur; ETAT.vise = garde.vise;
+  POSE.carton = gardePose.carton; POSE.bougie = gardePose.bougie;
+  return r;
+}
+
+/* ==================================================================
+   6. LES NOMS — lus dans le matériel de la fiche
+   ================================================================== */
+var NOMS = {
+  lampe:     nomMateriel(/lampe de poche/i, "lampe de poche"),
+  balle:     nomMateriel(/balle de ping-pong/i, "balle de ping-pong"),
+  bouteille: nomMateriel(/bouteille/i, "bouteille en verre"),
+  miroir:    nomMateriel(/miroir/i, "miroir de poche"),
+  carton:    nomMateriel(/carton opaque/i, "carton opaque"),
+  bougie:    nomMateriel(/bougie/i, "bougie"),
+  boite:     nomMateriel(/bo[iî]te noire/i, "boîte noire")
+};
+var F_NOIR    = fragment(/obscurcir[^,.;]*/i, "Obscurcir la salle");
+var F_ATTENDRE= fragment(/attendre une minute/i, "attendre une minute");
+var F_LAMPE   = fragment(/allumer la lampe de poche/i, "Allumer la lampe de poche");
+var F_CARTON  = fragment(/glisser le carton opaque[^;.]*/i, "Glisser le carton opaque");
+var F_RALLUME = fragment(/rallumer la salle/i, "Rallumer la salle");
+var F_OBSERVE = fragment(/observer et noter/i, "Observer et noter");
+
+/* ==================================================================
+   7. L'ÉTAT — et les places des objets
+   ==================================================================
+   ⚠ §12.17 : TOUTE clé lue dans le code figure ici. Une clé oubliée rend une
+   branche entière morte, sans une seule erreur JS. */
+var PLACES = {
+  lampe:     { x: 0.00, y: 0.00 },
+  balle:     { x: 0.34, y: 0.00 },
+  bouteille: { x: 0.12, y: 0.10 },
+  miroir:    { x: 0.20, y: -0.10 },
+  carton:    { x: 0.22, y: 0.00 },
+  bougie:    { x: 0.34, y: -0.11 }
+};
+var POSE = {}, ETAT = {}, MINUTEURS = [];
+function neufPose() {
+  return { lampe: { x: PLACES.lampe.x, y: PLACES.lampe.y },
+           balle: { x: PLACES.balle.x, y: PLACES.balle.y },
+           bouteille: { x: PLACES.bouteille.x, y: PLACES.bouteille.y },
+           miroir: { x: PLACES.miroir.x, y: PLACES.miroir.y },
+           carton: { x: PLACES.carton.x, y: PLACES.carton.y },
+           bougie: { x: PLACES.bougie.x, y: PLACES.bougie.y } };
+}
+function neufEtat() {
+  return {
+    poses: { lampe: false, balle: false, bouteille: false, miroir: false },
+    carton: false, bougie: false, bougieLa: false,
+    noir: false, lampe: false,
+    vise: { x: PLACES.balle.x, y: PLACES.balle.y },
+    t: 0, tObscur: 0, tSeance: 0,
+    vues: [], releves: [],
+    cible: "balle",
+    devoile: false, occupe: false, refus: 0, horsProto: false,
+    accelere: false, ditRetour: false
+  };
+}
+function purger() {
+  while (MINUTEURS.length) clearTimeout(MINUTEURS.pop());
+}
+function tard(fn, ms) {
+  var id = setTimeout(function () {
+    var i = MINUTEURS.indexOf(id);
+    if (i >= 0) MINUTEURS.splice(i, 1);
+    fn();
+  }, ms);
+  MINUTEURS.push(id);
+  return id;
+}
+function tousPoses() {
+  return ETAT.poses.lampe && ETAT.poses.balle && ETAT.poses.bouteille
+      && ETAT.poses.miroir;
+}
+/* Le carton est-il en place, c'est-à-dire coupe-t-il bien la lumière de la
+   BALLE — et d'elle seule ? C'est ce que la fiche demande, et c'est une
+   propriété géométrique, pas une étiquette. */
+function cartonEnPlace() {
+  return ETAT.carton && coupeCarton({ x: 0, y: 0 }, POSE.balle);
+}
+/* Quelle ligne du tableau décrit l'état actuel ? Salle allumée = aucune
+   situation : on n'invente pas de résultat pour un état que la fiche ne
+   prévoit pas. */
+function situation() {
+  if (!ETAT.noir) return -1;
+  if (!ETAT.lampe) return 0;
+  return cartonEnPlace() ? 2 : 1;
+}
+function toutVu() {
+  var i;
+  if (!NSIT) return false;
+  for (i = 0; i < NSIT; i++) if (!ETAT.vues[i]) return false;
+  return true;
+}
+
+/* ==================================================================
+   8. GÉOMÉTRIE DE LA SCÈNE — toutes les cotes, en constantes nommées
+   ==================================================================
+   Le dessin RELIT le modèle : `sx` et `sy` sont la seule conversion, et il
+   n'existe pas d'autre jeu de coordonnées (§12.18, §12.20). */
+var VB_W = 1120, VB_H = 760;
+var S_PX = 1000;                       /* 1000 px par mètre */
+var X0 = 120, Y0 = 185;                /* coin (x = −0,05 ; y = +0,20) */
+function sx(x) { return X0 + (x + 0.05) * S_PX; }
+function sy(y) { return Y0 + (0.20 - y) * S_PX; }
+var BOITE = { x: sx(-0.05), y: sy(0.20), w: 0.60 * S_PX, h: 0.40 * S_PX };
+var ETAG = { x: 762, y: 200, w: 328, h: 385 };
+var BANDE_Y = 664;                     /* le bandeau sombre des commandes */
+var Y_BOUTONS = 706;
+var H_BOIS = 68;                       /* la bande de bois, sous l'enceinte */
+/* ⚠ §12.7 : TOUTES les hauteurs d'étiquette déclarées dans un seul objet.
+   Dispersées dans le code, elles ne se comparent pas — et c'est la
+   comparaison, pas le calcul, qui montre la collision. */
+var Y_ETIQ = {
+  titreBoite: 172,      /* au-dessus de la boîte, à gauche */
+  etatBoite:  172,      /* au-dessus de la boîte, à droite */
+  titreEtag:  190,      /* au-dessus de l'étagère */
+  legendeT:   612,      /* « SUR LA TABLE », bande de bois, à gauche */
+  legende1:   634,      /* la légende, 1re rangée */
+  legende2:   656,      /* la légende, 2e rangée */
+  oeil:       641,      /* l'intitulé du judas, au milieu */
+  vue:        614,      /* « vue de dessus », à droite, sous l'étagère */
+  bandeau:    719       /* la ligne de commentaire du bandeau */
+};
+
+/* ---- la palette : celle du projet, plus la nuit et le jaune de lampe ---- */
+var INK = "#12203a", GRIS = "#6b7686", LIGNE = "#cfd6de", FOND = "#f5f7fa",
+    GOLD = "#c8912a", VERT = "#375623", ORANGE = "#b4530f",
+    JAUNE = "#ffd21e", LISERE = "#7a5c10",
+    NUIT = "#0e1524", JOUR = "#f7f9fc",
+    CLAIR = "#f6e6ae", SCHEMA = "#8ea0bb", MEUBLE = "#7d8794";
+function chaud(hex) { return melange(hex, "#ffe6a0", 0.5); }
+
+/* ==================================================================
+   9. LE SVG, SES DÉFS ET SES COUCHES (§8 : l'ordre est la moitié du dessin)
+   ================================================================== */
+var svg = el("svg", {
+  viewBox: "0 0 " + VB_W + " " + VB_H,
+  preserveAspectRatio: "xMidYMid meet",
+  "font-family": "Arial, Helvetica, sans-serif"
+});
+$("paillasse").appendChild(svg);
+
+var defs = el("defs");
+svg.appendChild(defs);
+(function () {
+  var g = el("radialGradient", { id: "halo" });
+  g.appendChild(el("stop", { offset: "0%", "stop-color": JAUNE, "stop-opacity": ".85" }));
+  g.appendChild(el("stop", { offset: "100%", "stop-color": JAUNE, "stop-opacity": "0" }));
+  defs.appendChild(g);
+  var f = el("filter", { id: "flou", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: "6" }));
+  defs.appendChild(f);
+  var o = el("filter", { id: "ombrePrise", x: "-40%", y: "-40%", width: "190%", height: "190%" });
+  o.appendChild(el("feDropShadow", { dx: "0", dy: "6", stdDeviation: "6",
+                                     "flood-color": "#000", "flood-opacity": ".38" }));
+  defs.appendChild(o);
+  var v = el("linearGradient", { id: "verre", x1: "0", y1: "0", x2: "1", y2: "0" });
+  ["#b6c4d2", "#dfe7ef", "#ffffff", "#d3dde7", "#a9b8c8"].forEach(function (c, i) {
+    v.appendChild(el("stop", { offset: (i * 25) + "%", "stop-color": c }));
+  });
+  defs.appendChild(v);
+  var m = el("linearGradient", { id: "metal", x1: "0", y1: "0", x2: "0", y2: "1" });
+  ["#727c8a", "#aab4c0", "#f4f7fa", "#9aa5b2", "#6b7480"].forEach(function (c, i) {
+    m.appendChild(el("stop", { offset: (i * 25) + "%", "stop-color": c }));
+  });
+  defs.appendChild(m);
+}());
+
+var COUCHES = {};
+["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+  .forEach(function (n) { COUCHES[n] = el("g"); svg.appendChild(COUCHES[n]); });
+
+/* ==================================================================
+   10. LE DÉCOR — le mur, le plan de travail, le bandeau de commandes
+   ================================================================== */
+(function () {
+  COUCHES.fond.appendChild(el("rect", {
+    x: 0, y: 0, width: VB_W, height: VB_H, fill: "#eef1f5"
+  }));
+  COUCHES.fond.appendChild(el("rect", {
+    x: 34, y: 150, width: VB_W - 68, height: BANDE_Y - 150 + 6, rx: 12,
+    fill: "#e6ebf1", stroke: "#d3dbe4", "stroke-width": 2
+  }));
+  /* la bande de bois du plateau — la seule zone claire qui accepte un
+     intitulé en bas (§12.7) */
+  COUCHES.fond.appendChild(el("rect", {
+    x: 34, y: BANDE_Y - H_BOIS, width: VB_W - 68, height: H_BOIS,
+    fill: "#e0d3bb"
+  }));
+  COUCHES.fond.appendChild(el("rect", {
+    x: 34, y: BANDE_Y, width: VB_W - 68, height: VB_H - BANDE_Y - 12, rx: 10,
+    fill: MEUBLE
+  }));
+  /* ⚠ MESURÉ SUR LA CAPTURE, PAS DEVINÉ. Posée à gauche, cette mention
+     tombait pile sur l'œil de l'observateur — « schéma habillé » se lisait
+     barré par la paupière. Les trois inscriptions de la bande de bois se
+     partagent donc la largeur : la mention de vue à DROITE, sous l'étagère ;
+     l'œil et son intitulé au milieu ; la légende « sur la table » à gauche. */
+  COUCHES.fond.appendChild(el("text", {
+    x: ETAG.x + 4, y: Y_ETIQ.vue, "font-size": 13, fill: GRIS,
+    "font-style": "italic"
+  }, "la paillasse, vue de DESSUS — schéma habillé"));
+}());
+
+/* ==================================================================
+   11. L'ENCEINTE — le cadre qui s'éteint (l'obscurité est BORNÉE)
+   ================================================================== */
+var fondBoite = el("rect", {
+  x: BOITE.x, y: BOITE.y, width: BOITE.w, height: BOITE.h, rx: 10,
+  fill: JOUR, stroke: INK, "stroke-width": 3,
+  cursor: "pointer", "data-act": "noir"
+});
+COUCHES.poste.appendChild(fondBoite);
+var titreBoite = el("text", {
+  x: BOITE.x + 4, y: Y_ETIQ.titreBoite, "font-size": 14.5,
+  "font-weight": "bold", fill: INK
+}, "");
+COUCHES.avant.appendChild(titreBoite);
+var etatBoite = el("text", {
+  x: BOITE.x + BOITE.w, y: Y_ETIQ.etatBoite, "text-anchor": "end",
+  "font-size": 13, fill: ORANGE
+}, "");
+COUCHES.avant.appendChild(etatBoite);
+
+/* le pinceau, l'ombre portée et la tache du fond : tous RELUS du modèle */
+/* ⚠ LA LUMIÈRE RESTE DANS LA BOÎTE. Le pinceau est tracé « jusqu'au fond »
+   (L = 0,72) et l'ombre portée est étirée d'un facteur 3,4 : les deux sont
+   volontairement plus longs que la scène, à charge pour un découpage de les
+   arrêter. Il n'y en avait aucun — le cône jaune sortait de la boîte noire à
+   x = 720 et courait jusqu'à x = 890 en travers du panneau « L'ÉTAGÈRE », et
+   l'ombre du carton jusqu'à x = 918 en un grand coin sombre par-dessus.
+   Une boîte percée d'un seul judas ne laisse pas la lumière sortir par la
+   paroi : on la découpe sur la boîte. */
+var clipBoite = el("clipPath", { id: "clipBoite" });
+clipBoite.appendChild(el("rect", { x: BOITE.x, y: BOITE.y,
+  width: BOITE.w, height: BOITE.h, rx: 10 }));
+defs.appendChild(clipBoite);
+var gLumiere = el("g", { "pointer-events": "none", "clip-path": "url(#clipBoite)" });
+COUCHES.arriere.appendChild(gLumiere);
+var gRayons = el("g", { "pointer-events": "none" });
+COUCHES.avant.appendChild(gRayons);
+
+/* ==================================================================
+   12. L'ÉTAGÈRE — d'où partent les corps
+   ================================================================== */
+(function () {
+  COUCHES.poste.appendChild(el("rect", {
+    x: ETAG.x, y: ETAG.y, width: ETAG.w, height: ETAG.h, rx: 9,
+    fill: FOND, stroke: LIGNE, "stroke-width": 2
+  }));
+  COUCHES.avant.appendChild(el("text", {
+    x: ETAG.x + 4, y: Y_ETIQ.titreEtag, "font-size": 13,
+    "letter-spacing": "1.1", "font-weight": "bold", fill: GOLD
+  }, "L'ÉTAGÈRE — À POSER SUR LA TABLE"));
+  var i;
+  for (i = 1; i < 3; i++) {
+    COUCHES.poste.appendChild(el("line", {
+      x1: ETAG.x + 8, y1: ETAG.y + i * ETAG.h / 3,
+      x2: ETAG.x + ETAG.w - 8, y2: ETAG.y + i * ETAG.h / 3,
+      stroke: LIGNE, "stroke-width": 2
+    }));
+  }
+}());
+/* Les cases de l'étagère, dans l'ordre où le protocole les cite. */
+var CASES = {
+  lampe:     { x: ETAG.x + 84,  y: ETAG.y + 62 },
+  balle:     { x: ETAG.x + 240, y: ETAG.y + 62 },
+  bouteille: { x: ETAG.x + 84,  y: ETAG.y + 190 },
+  miroir:    { x: ETAG.x + 240, y: ETAG.y + 190 },
+  carton:    { x: ETAG.x + 84,  y: ETAG.y + 318 },
+  bougie:    { x: ETAG.x + 240, y: ETAG.y + 318 }
+};
+
+/* ==================================================================
+   13. LES CORPS — un groupe par objet, avec sa plaque de préhension
+   ==================================================================
+   ⚠ §12.38 : tout objet manipulable reçoit une plaque transparente aux
+   cotes de sa silhouette, insérée EN PREMIER dans son groupe. Un miroir de
+   six centimètres vu de dessus n'est qu'un trait : viser son centre ne
+   saisirait rien du tout.
+   ⚠ §12.15 : toute décoration porte `pointer-events:none`. */
+var G = {}, PIECES = {}, ETIQ = {};
+function piece(cle, noeud, remplissage, trait) {
+  if (!PIECES[cle]) PIECES[cle] = [];
+  PIECES[cle].push({ n: noeud, f: remplissage === undefined ? null : remplissage,
+                     s: trait === undefined ? INK : trait });
+  return noeud;
+}
+function peindre(cle, eclaire) {
+  (PIECES[cle] || []).forEach(function (p) {
+    if (p.f !== null) p.n.setAttribute("fill", eclaire ? chaud(p.f) : p.f);
+    if (p.s !== null) p.n.setAttribute("stroke", eclaire ? CLAIR : p.s);
+  });
+}
+function groupe(cle, larg, haut) {
+  var g = el("g", { "data-act": cle, cursor: "grab" });
+  g.appendChild(el("rect", {
+    x: -larg / 2, y: -haut / 2, width: larg, height: haut,
+    fill: "#fff", "fill-opacity": "0.001"
+  }));
+  COUCHES.objets.appendChild(g);
+  G[cle] = g;
+  return g;
+}
+function etiquette(cle, texte) {
+  var t = el("text", {
+    "text-anchor": "middle", "font-size": 12.5, fill: GRIS,
+    "pointer-events": "none",
+    /* §12.46 : un liseré de la couleur du fond, pour rester lisible
+       par-dessus n'importe quel trait — cordon, rayon, paroi. */
+    "paint-order": "stroke", stroke: "#eef1f5", "stroke-width": 3.2
+  }, texte);
+  COUCHES.avant.appendChild(t);
+  ETIQ[cle] = t;
+  return t;
+}
+
+/* --- la lampe de poche, vue de dessus, tournée vers +x --- */
+(function () {
+  var g = groupe("lampe", 190, 74);
+  g.appendChild(piece("lampe", el("rect", {
+    x: -78, y: -21, width: 118, height: 42, rx: 9, "stroke-width": 2.6
+  }), "#b9c0c8"));
+  [-52, -34, -16].forEach(function (gx) {
+    g.appendChild(piece("lampe", el("line", {
+      x1: gx, y1: -16, x2: gx, y2: 16, "stroke-width": 2.2
+    }), null, "#7d858f"));
+  });
+  g.appendChild(piece("lampe", el("rect", {
+    x: 2, y: -8, width: 24, height: 16, rx: 3, "stroke-width": 1.8
+  }), "#e2b13a"));
+  g.appendChild(piece("lampe", el("path", {
+    d: "M 40 -21 L 74 -30 L 74 30 L 40 21 Z",
+    "stroke-width": 2.6, "stroke-linejoin": "round"
+  }), "#9aa3ad"));
+  var verre = piece("lampe", el("ellipse", {
+    cx: 74, cy: 0, rx: 7, ry: 29, "stroke-width": 2.4
+  }), "#eef2f7");
+  g.appendChild(verre);
+  G.lampeVerre = verre;
+  var halo = el("circle", { cx: 78, cy: 0, r: 62, fill: "url(#halo)",
+                            opacity: 0, "pointer-events": "none" });
+  g.appendChild(halo);
+  G.lampeHalo = halo;
+  etiquette("lampe", "");
+}());
+
+/* --- la balle de ping-pong : 40 mm, à l'échelle --- */
+(function () {
+  var r = R_BALLE * S_PX, g = groupe("balle", r * 2.6, r * 2.6);
+  g.appendChild(piece("balle", el("circle", {
+    cx: 0, cy: 0, r: r, "stroke-width": 2.6
+  }), "#fdfdf7"));
+  g.appendChild(piece("balle", el("path", {
+    d: "M " + pt(-r * 0.55, -r * 0.45) + " A " + r * 0.95 + " " + r * 0.95
+       + " 0 0 1 " + pt(r * 0.05, -r * 0.86),
+    "stroke-width": 2, fill: "none"
+  }), null, "#b9bcb2"));
+  etiquette("balle", "");
+}());
+
+/* --- la bouteille en verre, vue de dessus : un disque --- */
+(function () {
+  var r = R_BOUTEILLE * S_PX, g = groupe("bouteille", r * 2.6, r * 2.6);
+  g.appendChild(piece("bouteille", el("circle", {
+    cx: 0, cy: 0, r: r, "stroke-width": 2.6
+  }), "#dfe7ef"));
+  g.appendChild(piece("bouteille", el("circle", {
+    cx: 0, cy: 0, r: r * 0.42, "stroke-width": 2
+  }), "#c8912a"));
+  etiquette("bouteille", "");
+}());
+
+/* --- le miroir de poche, debout, vu de dessus : un trait épais --- */
+(function () {
+  var L = L_MIROIR * S_PX, g = groupe("miroir", L * 1.5, 46);
+  g.appendChild(piece("miroir", el("rect", {
+    x: -L / 2, y: -7, width: L, height: 14, rx: 2, "stroke-width": 2.4
+  }), "#cdd9e4"));
+  var face = piece("miroir", el("rect", {
+    x: -L / 2, y: -7, width: L, height: 4
+  }), "#eaf3fb", null);
+  g.appendChild(face);
+  etiquette("miroir", "");
+}());
+
+/* --- le carton opaque : une feuille, vue de dessus --- */
+(function () {
+  var L = CARTON_L * S_PX, g = groupe("carton", 46, L * 1.25);
+  g.appendChild(piece("carton", el("rect", {
+    x: -7, y: -L / 2, width: 14, height: L, rx: 2, "stroke-width": 2.6
+  }), "#d9c99a", "#8a7742"));
+  /* la face tournée vers la lampe prend la lumière : un liseré à gauche */
+  g.appendChild(piece("carton", el("rect", {
+    x: -7, y: -L / 2, width: 5, height: L
+  }), "#efe3bd", null));
+  etiquette("carton", "");
+}());
+
+/* --- la bougie (l'AJOUT, étiqueté comme tel §11.4) --- */
+(function () {
+  var g = groupe("bougie", 54, 54);
+  g.appendChild(piece("bougie", el("circle", {
+    cx: 0, cy: 0, r: 16, "stroke-width": 2.4
+  }), "#f2e7d2"));
+  var fl = el("circle", { cx: 0, cy: 0, r: 9, fill: JAUNE, opacity: 0,
+                          "pointer-events": "none" });
+  g.appendChild(fl);
+  G.bougieFlamme = fl;
+  var hl = el("circle", { cx: 0, cy: 0, r: 42, fill: "url(#halo)", opacity: 0,
+                          "pointer-events": "none" });
+  g.appendChild(hl);
+  G.bougieHalo = hl;
+  etiquette("bougie", "");
+}());
+
+/* --- le repère de visée : c'est LUI qu'on glisse pour « diriger vers la
+   balle ». Le pinceau dessiné le relit, donc le curseur ne peut pas mentir
+   silencieusement (§12.18). --- */
+(function () {
+  var g = groupe("vise", 52, 52);
+  g.setAttribute("cursor", "grab");
+  g.appendChild(el("circle", { cx: 0, cy: 0, r: 15, fill: "none",
+                               stroke: ORANGE, "stroke-width": 2.6,
+                               "stroke-dasharray": "5 4", "pointer-events": "none" }));
+  g.appendChild(el("line", { x1: -21, y1: 0, x2: 21, y2: 0, stroke: ORANGE,
+                             "stroke-width": 2.2, "pointer-events": "none" }));
+  g.appendChild(el("line", { x1: 0, y1: -21, x2: 0, y2: 21, stroke: ORANGE,
+                             "stroke-width": 2.2, "pointer-events": "none" }));
+  etiquette("vise", "visée");
+}());
+
+/* --- l'ŒIL DE L'OBSERVATEUR : du SCHÉMA, jamais de la matière. Il ne
+   s'éteint pas : sans lui, la seconde condition de visibilité de la
+   conclusion n'a aucun support graphique. --- */
+var gOeil = el("g", { "pointer-events": "none" });
+COUCHES.avant.appendChild(gOeil);
+(function () {
+  var ox = sx(OEIL.x), oy = sy(OEIL.y) + 32;
+  gOeil.appendChild(el("path", {
+    d: "M " + pt(ox - 34, oy) + " Q " + pt(ox, oy - 24) + " " + pt(ox + 34, oy)
+       + " Q " + pt(ox, oy + 24) + " " + pt(ox - 34, oy) + " Z",
+    fill: "none", stroke: SCHEMA, "stroke-width": 2.8, "stroke-linejoin": "round"
+  }));
+  gOeil.appendChild(el("circle", { cx: ox, cy: oy, r: 11, fill: "none",
+                                   stroke: SCHEMA, "stroke-width": 2.6 }));
+  gOeil.appendChild(el("circle", { cx: ox, cy: oy, r: 5, fill: SCHEMA }));
+  gOeil.appendChild(el("line", { x1: ox, y1: oy - 32, x2: ox, y2: sy(OEIL.y),
+                                 stroke: SCHEMA, "stroke-width": 2,
+                                 "stroke-dasharray": "4 4" }));
+  gOeil.appendChild(el("text", {
+    x: ox + 44, y: Y_ETIQ.oeil, "font-size": 12.5, fill: SCHEMA,
+    "paint-order": "stroke", stroke: "#e0d3bb", "stroke-width": 3.2
+  }, "l'œil de l'observateur, au judas"));
+}());
+
+/* ---- LA LÉGENDE VIT DEHORS -------------------------------------------
+   Elle porte le nom de chaque corps posé sur la table, avec une pastille
+   PLEINE (on le voit) ou CREUSE (on ne le voit plus). C'est elle qui permet
+   de faire le noir sans que la classe perde de vue CE QUI EST LÀ : un objet
+   présent et invisible, c'est tout le propos de la leçon. Elle compte
+   double en plein écran, où la colonne des instruments a disparu et où la
+   scène obscurcie serait, sans elle, un rectangle noir et muet. */
+var LEGENDE = ["lampe", "balle", "bouteille", "miroir"];
+var gLegende = el("g", { "pointer-events": "none" });
+COUCHES.avant.appendChild(gLegende);
+var PASTILLES = {}, TEXTES_LEG = {};
+(function () {
+  gLegende.appendChild(el("text", {
+    x: 46, y: Y_ETIQ.legendeT, "font-size": 10.5, "letter-spacing": "1.1",
+    "font-weight": "bold", fill: GOLD
+  }, "SUR LA TABLE"));
+  LEGENDE.forEach(function (cle, i) {
+    var col = i % 2, rang = (i - col) / 2;
+    var x = 46 + col * 126;
+    var y = rang === 0 ? Y_ETIQ.legende1 : Y_ETIQ.legende2;
+    var p = el("circle", { cx: x + 8, cy: y - 4, r: 7, fill: GOLD,
+                           stroke: INK, "stroke-width": 1.4 });
+    gLegende.appendChild(p);
+    PASTILLES[cle] = p;
+    /* Le nom vient du matériel de la fiche : on n'en garde que le premier
+       mot, faute de place, mais on ne le retape pas. */
+    var t = el("text", { x: x + 22, y: y, "font-size": 12, fill: INK },
+                maj(String(NOMS[cle]).split(/[\s,]/)[0]));
+    gLegende.appendChild(t);
+    TEXTES_LEG[cle] = t;
+  });
+}());
+function majLegende(r) {
+  LEGENDE.forEach(function (cle) {
+    var sur = surTable(cle);
+    var vu = !sur ? false : (!ETAT.noir || (r.corps[cle] && r.corps[cle].visible));
+    PASTILLES[cle].setAttribute("fill", vu ? GOLD : "#ffffff");
+    PASTILLES[cle].setAttribute("stroke", vu ? INK : LIGNE);
+    PASTILLES[cle].setAttribute("opacity", sur ? 1 : 0.35);
+    TEXTES_LEG[cle].setAttribute("fill", sur ? (vu ? INK : "#98a3b3") : "#b7bfca");
+  });
+}
+
+/* ==================================================================
+   14. LES BOUTONS DE SCÈNE — dans le bandeau sombre du meuble
+   ================================================================== */
+/* ⚠ LES ACTES DES BOUTONS NE DOIVENT PAS PORTER LE NOM D'UN OBJET.
+   `presserBouton(act)` prend le PREMIER nœud qui porte l'attribut dans
+   l'ordre du document, et les objets manipulables sont peints avant la
+   couche des commandes : un bouton nommé « lampe » aurait rendu le groupe
+   de la lampe, dont le clic ne déclenche rien. Aucune erreur, aucun refus,
+   simplement un geste qui ne prend pas. */
+var BOUTONS = [
+  { act: "faireNoir",     l: function () { return ETAT.noir ? F_RALLUME : F_NOIR; }, w: 246 },
+  { act: "allumer",       l: function () { return ETAT.lampe ? "Éteindre la lampe" : F_LAMPE; }, w: 246 },
+  { act: "observer",      l: function () { return maj(F_OBSERVE); }, w: 196 },
+  { act: "allumerBougie", l: function () { return ETAT.bougie ? "Souffler la bougie" : "Allumer la bougie"; }, w: 206 }
+];
+var NOEUDS_BOUTON = {};
+(function () {
+  var x = 62, i;
+  for (i = 0; i < BOUTONS.length; i++) {
+    (function (b) {
+      var g = el("g", { "data-act": b.act, cursor: "pointer" });
+      var r = el("rect", { x: x, y: Y_BOUTONS - 22, width: b.w, height: 40,
+                           rx: 8, fill: "#ffffff", stroke: "#c3ccd6",
+                           "stroke-width": 1.6 });
+      g.appendChild(r);
+      var t = el("text", { x: x + b.w / 2, y: Y_BOUTONS + 4,
+                           "text-anchor": "middle", "font-size": 14,
+                           fill: INK, "pointer-events": "none" }, "");
+      g.appendChild(t);
+      COUCHES.ui.appendChild(g);
+      NOEUDS_BOUTON[b.act] = { g: g, r: r, t: t, cfg: b };
+      x += b.w + 14;
+    }(BOUTONS[i]));
+  }
+  COUCHES.ui.appendChild(el("text", {
+    x: 62, y: Y_ETIQ.bandeau + 26, "font-size": 11.5, fill: "#f0f4f8"
+  }, "Les objets se prennent à la souris ; les quatre gestes ci-dessus sont ceux que le protocole fait d'un seul coup."));
+}());
+
+/* ==================================================================
+   15. PRENDRE ET DÉPOSER (§9)
+   ==================================================================
+   La capture du pointeur se fait sur le SVG, jamais sur l'objet : un
+   mouvement rapide sortirait du bâtonnet et le glissement s'arrêterait net
+   au milieu du geste, sans erreur. */
+var prise = null, ptSVG = null;
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+/* Où l'objet se trouve À L'ÉCRAN, dans son état courant. */
+/* ⚠ §12.30 : LA ZONE QUI ACCEPTE ET LA PLACE OÙ L'OBJET SE POSE SONT DEUX
+   POINTS DISTINCTS. Le repère de visée se DESSINE 34 unités sous sa cible,
+   sans quoi il recouvre la balle qu'il désigne et l'on ne voit plus ni l'un
+   ni l'autre ; sa zone, elle, reste centrée sur la cible. L'écart est très
+   inférieur au rayon de la zone, donc on repose toujours au même endroit ce
+   qu'on vient d'y prendre. */
+var DECAL_VISE = 34;
+function placeEcran(cle) {
+  if (cle === "vise") return { x: sx(ETAT.vise.x), y: sy(ETAT.vise.y) + DECAL_VISE };
+  if (cle === "carton") {
+    return ETAT.carton ? { x: sx(POSE.carton.x), y: sy(POSE.carton.y) }
+                       : { x: CASES.carton.x, y: CASES.carton.y };
+  }
+  if (cle === "bougie") {
+    return ETAT.bougieLa ? { x: sx(POSE.bougie.x), y: sy(POSE.bougie.y) }
+                         : { x: CASES.bougie.x, y: CASES.bougie.y };
+  }
+  return ETAT.poses[cle] ? { x: sx(POSE[cle].x), y: sy(POSE[cle].y) }
+                         : { x: CASES[cle].x, y: CASES[cle].y };
+}
+/* ⚠ §12.16 : les zones sont rendues de la plus PETITE à la plus GRANDE.
+   C'est `accepte()` qui dit laquelle est la bonne, jamais l'ordre du
+   tableau — et le bouton équivalent vise `zoneVoulue()`, pas la première. */
+function emplacements(cle) {
+  var z = [];
+  if (cle === "vise") {
+    z.push({ type: "balle", x: sx(PLACES.balle.x), y: sy(PLACES.balle.y), r: 92,
+             mx: PLACES.balle.x, my: PLACES.balle.y });
+    z.push({ type: "bouteille", x: sx(PLACES.bouteille.x), y: sy(PLACES.bouteille.y),
+             r: 92, mx: PLACES.bouteille.x, my: PLACES.bouteille.y });
+    z.push({ type: "fond", x: sx(X_FOND), y: sy(0.15), r: 92,
+             mx: X_FOND, my: 0.15 });
+    return z;
+  }
+  if (cle === "carton") {
+    /* entre la lampe et la balle — la position que la fiche demande */
+    z.push({ type: "entre", x: sx(PLACES.carton.x), y: sy(PLACES.carton.y), r: 86,
+             mx: PLACES.carton.x, my: PLACES.carton.y });
+    /* derrière la balle : le carton n'y coupe plus rien */
+    z.push({ type: "derriere", x: sx(0.44), y: sy(0), r: 86, mx: 0.44, my: 0 });
+    /* de côté, hors du pinceau */
+    z.push({ type: "cote", x: sx(0.22), y: sy(0.15), r: 86, mx: 0.22, my: 0.15 });
+    z.push({ type: "etagere", x: CASES.carton.x, y: CASES.carton.y, r: 110 });
+    return z;
+  }
+  if (cle === "bougie") {
+    z.push({ type: "pres", x: sx(PLACES.bougie.x), y: sy(PLACES.bougie.y), r: 86,
+             mx: PLACES.bougie.x, my: PLACES.bougie.y });
+    z.push({ type: "bord", x: sx(0.05), y: sy(-0.15), r: 86, mx: 0.05, my: -0.15 });
+    z.push({ type: "etagere", x: CASES.bougie.x, y: CASES.bougie.y, r: 110 });
+    return z;
+  }
+  z.push({ type: "poste", x: sx(PLACES[cle].x), y: sy(PLACES[cle].y), r: 96,
+           mx: PLACES[cle].x, my: PLACES[cle].y });
+  z.push({ type: "etagere", x: CASES[cle].x, y: CASES[cle].y, r: 110 });
+  return z;
+}
+function zoneVoulue(cle) {
+  var z = emplacements(cle), i;
+  for (i = 0; i < z.length; i++) if (accepte(cle, z[i]).ok) return z[i];
+  return null;
+}
+/* Un dépôt se refuse EN EXPLIQUANT. Le refus est l'information la plus
+   instructive de la page : c'est lui qui dit ce que le protocole exige. */
+function accepte(cle, zone) {
+  if (!zone) return { ok: false, txt: "" };
+  if (zone.type === "etagere") {
+    return { ok: true, txt: "" };
+  }
+  if (cle === "carton" && !tousPoses()) {
+    return { ok: false, txt: "Poser d'abord les quatre corps que le protocole aligne sur la table." };
+  }
+  if (cle === "vise" && !ETAT.poses.lampe) {
+    return { ok: false, txt: "La lampe n'est pas encore sur la table : rien à diriger." };
+  }
+  return { ok: true, txt: "" };
+}
+function montrerCibles(cle) {
+  vide(COUCHES.fils);
+  emplacements(cle).forEach(function (z) {
+    if (!accepte(cle, z).ok) return;
+    COUCHES.fils.appendChild(el("circle", {
+      cx: z.x, cy: z.y, r: z.r * 0.62, fill: GOLD, "fill-opacity": ".14",
+      stroke: GOLD, "stroke-width": 2.4, "stroke-dasharray": "8 6",
+      "pointer-events": "none"
+    }));
+  });
+}
+function cacherCibles() { vide(COUCHES.fils); }
+
+function brancherPrise(cle) {
+  var g = G[cle];
+  g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                       /* verrou en PREMIÈRE ligne */
+    if (ETAT.occupe) return;
+    e.preventDefault();
+    var p = versSVG(e), a = placeEcran(cle);
+    prise = { quoi: cle, id: e.pointerId, dx: a.x - p.x, dy: a.y - p.y,
+              x0: p.x, y0: p.y, bouge: false };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) { /* sans objet */ }
+    g.setAttribute("filter", "url(#ombrePrise)");
+    g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(g);
+    montrerCibles(cle);
+  });
+}
+svg.addEventListener("pointermove", function (e) {
+  if (!prise || e.pointerId !== prise.id) return;
+  var p = versSVG(e);
+  if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+  G[prise.quoi].setAttribute("transform",
+    "translate(" + (p.x + prise.dx).toFixed(1) + "," + (p.y + prise.dy).toFixed(1) + ")");
+});
+function relacher(e) {
+  if (!prise || (e && e.pointerId !== prise.id)) return;
+  var cle = prise.quoi, bouge = prise.bouge, p = versSVG(e);
+  var cx = p.x + prise.dx, cy = p.y + prise.dy;
+  prise = null;
+  cacherCibles();
+  var g = G[cle];
+  g.removeAttribute("filter");
+  g.setAttribute("cursor", "grab");
+  COUCHES.objets.appendChild(g);
+  if (!bouge) {                              /* §9.3 : un clic SÉLECTIONNE */
+    ETAT.cible = (cle === "vise") ? ETAT.cible : cle;
+    rendre();
+    return;
+  }
+  var z = emplacements(cle), i, best = null, bd = Infinity, d;
+  for (i = 0; i < z.length; i++) {
+    d = Math.sqrt(Math.pow(z[i].x - cx, 2) + Math.pow(z[i].y - cy, 2));
+    if (d <= z[i].r && d < bd) { bd = d; best = z[i]; }
+  }
+  if (!best) {
+    signaler("Rien à cet endroit : reposer l'objet sur une zone surlignée.");
+    rendre();
+    return;
+  }
+  deposer(cle, best);
+}
+svg.addEventListener("pointerup", relacher);
+svg.addEventListener("pointercancel", relacher);      /* ne PAS l'oublier */
+
+/* ==================================================================
+   16. CE QUI SE PASSE QUAND ON DÉPOSE
+   ==================================================================
+   ⚠ §12.13 : la logique d'état vit sur le chemin COMMUN. Le bouton, quand
+   il en existe un, boucle sur cette même fonction — sans quoi l'élève qui
+   manipule à la souris obtiendrait une scène juste et un carnet vide. */
+function deposer(cle, zone) {
+  var av = accepte(cle, zone);
+  if (!av.ok) { signaler(av.txt); rendre(); return false; }
+  if (zone.type === "etagere") {
+    if (cle === "carton") ETAT.carton = false;
+    else if (cle === "bougie") { ETAT.bougieLa = false; ETAT.bougie = false; }
+    else if (cle === "vise") { /* la visée ne se range pas */ }
+    else ETAT.poses[cle] = false;
+    succes();
+    noter("« " + NOMS[cle] + " » remis sur l'étagère.", false);
+    apres();
+    return true;
+  }
+  if (cle === "vise") {
+    ETAT.vise = { x: zone.mx, y: zone.my };
+    succes();
+    noter("Le pinceau est dirigé vers " + (zone.type === "fond"
+      ? "la paroi du fond" : NOMS[zone.type]) + ".",
+      zone.type === "balle");
+    apres();
+    return true;
+  }
+  if (cle === "carton") {
+    POSE.carton = { x: zone.mx, y: zone.my };
+    ETAT.carton = true;
+    succes();
+    noter(cartonEnPlace()
+      ? "Le carton coupe la lumière de la balle — le témoin est en place."
+      : "Le carton est posé, mais il ne coupe pas la lumière de la balle.",
+      cartonEnPlace());
+    apres();
+    return true;
+  }
+  if (cle === "bougie") {
+    POSE.bougie = { x: zone.mx, y: zone.my };
+    ETAT.bougieLa = true;
+    succes();
+    noter("La bougie est posée à " + nb(dist(POSE.bougie, POSE.balle) * 100, 0)
+      + " cm de la balle.", false);
+    apres();
+    return true;
+  }
+  POSE[cle] = { x: zone.mx, y: zone.my };
+  ETAT.poses[cle] = true;
+  succes();
+  noter("« " + NOMS[cle] + " » est sur la table.", true);
+  apres();
+  return true;
+}
+
+/* ==================================================================
+   17. LES GESTES COLLECTIFS — ce que le protocole fait d'un seul coup
+   ================================================================== */
+function basculerNoir() {
+  if (ETAT.occupe) return;                   /* verrou en PREMIÈRE ligne */
+  ETAT.occupe = true;
+  ETAT.noir = !ETAT.noir;
+  if (ETAT.noir) {
+    ETAT.tObscur = 0;
+    noter(maj(F_NOIR) + " — " + F_ATTENDRE + " avant d'observer.", false);
+  } else {
+    noter("La salle est rallumée.", false);
+  }
+  succes();
+  apres();
+  tard(function () { ETAT.occupe = false; }, 120);
+}
+function basculerLampe() {
+  if (ETAT.occupe) return;
+  if (!ETAT.poses.lampe) {
+    signaler("La lampe n'est pas encore posée sur la table.");
+    return;
+  }
+  ETAT.occupe = true;
+  ETAT.lampe = !ETAT.lampe;
+  noter(ETAT.lampe ? maj(F_LAMPE) + "." : "La lampe est éteinte.", ETAT.lampe);
+  succes();
+  apres();
+  tard(function () { ETAT.occupe = false; }, 120);
+}
+function basculerBougie() {
+  if (ETAT.occupe) return;
+  if (!ETAT.bougieLa) {
+    signaler("La bougie est encore sur l'étagère — la poser d'abord sur la table.");
+    return;
+  }
+  ETAT.occupe = true;
+  ETAT.bougie = !ETAT.bougie;
+  noter(ETAT.bougie
+    ? "La bougie brûle — c'est une seconde source primaire."
+    : "La bougie est soufflée.", false);
+  succes();
+  apres();
+  tard(function () { ETAT.occupe = false; }, 120);
+}
+/* « Observer et noter » — le geste qui produit une ligne du tableau. Il se
+   REFUSE, et le refus dit pourquoi : c'est ce refus qui enseigne le rôle de
+   l'accoutumance. */
+function observer() {
+  if (ETAT.occupe) return;
+  var i = situation();
+  if (i < 0) {
+    signaler("Il n'y a rien à observer en pleine lumière : " + F_NOIR.toLowerCase() + ".");
+    return;
+  }
+  if (i >= NSIT) { signaler("Cette situation n'est pas au tableau de la fiche."); return; }
+  if (ETAT.vues[i]) {
+    signaler("Cette situation est déjà consignée — passer à la suivante.");
+    return;
+  }
+  /* ⚠ L'ACCOUTUMANCE N'EST EXIGÉE QU'À LA PREMIÈRE SITUATION, parce que
+     c'est là — et là seulement — que la fiche l'écrit : « obscurcir
+     complètement la salle, ATTENDRE UNE MINUTE, puis observer ». Aux deux
+     suivantes la lampe est allumée : le champ repasse au-dessus de la
+     frontière mésopique, l'accoutumance est perdue en quelques secondes, et
+     l'exiger rendrait les situations 2 et 3 définitivement inatteignables
+     (§12.4 : vérifier que chaque étape reste atteignable). */
+  if (i === 0 && ETAT.tObscur < T_ACCOUTUMANCE) {
+    signaler("Les yeux ne sont pas accoutumés : la fiche demande d'"
+      + F_ATTENDRE + " (il reste "
+      + nb(Math.max(0, (T_ACCOUTUMANCE - ETAT.tObscur) * 60), 0) + " s).");
+    return;
+  }
+  ETAT.occupe = true;
+  var r = resoudre();
+  /* Ce qu'on enregistre, c'est la MESURE et ses CONDITIONS — pas un verdict
+     figé : les curseurs rejoueront le modèle sur ces conditions-là. */
+  ETAT.releves[i] = {
+    noir: ETAT.noir, lampe: ETAT.lampe, carton: ETAT.carton,
+    bougie: ETAT.bougie, tObscur: ETAT.tObscur,
+    vise: { x: ETAT.vise.x, y: ETAT.vise.y },
+    posCarton: { x: POSE.carton.x, y: POSE.carton.y },
+    posBougie: { x: POSE.bougie.x, y: POSE.bougie.y }
+  };
+  ETAT.vues[i] = true;
+  /* §6.3 : cellule par cellule, et seulement au protocole (§11.3). */
+  revelerCellule(i, C_LAMPE);
+  revelerCellule(i, C_BALLE);
+  verifierAccord(i, r);
+  noter(noteDe(i, r), r.corps.balle.visible || r.corps.lampe.visible);
+  succes();
+  apres();
+  tard(function () { ETAT.occupe = false; }, 120);
+}
+/* §11.5 : quand le modèle et la fiche divergent, on le DIT. Le contrôle ne
+   vaut qu'au protocole : hors protocole, la fiche n'est plus la référence. */
+function verifierAccord(i, r) {
+  if (horsProtocole()) return;
+  var att = [[C_LAMPE, r.corps.lampe.visible, NOMS.lampe],
+             [C_BALLE, r.corps.balle.visible, NOMS.balle]], j;
+  for (j = 0; j < att.length; j++) {
+    if (att[j][0] < 0) continue;
+    if (estOui(cel(i, att[j][0])) !== att[j][1]) {
+      noter("⚠ Le modèle et la fiche divergent sur « " + att[j][2]
+        + " » en " + intitule(i) + " — vérifier les constantes.", false);
+      return;
+    }
+  }
+}
+
+/* ==================================================================
+   18. LE CALCUL DU TEMPS — pas fixe, jamais le pas d'affichage
+   ==================================================================
+   ⚠ Le résultat ne doit dépendre ni du sélecteur de vitesse ni du temps de
+   réaction : la simulation avance par pas de PAS_SIM, et `tick()` comme
+   l'accéléré passent tous deux par ici. */
+var PAS_SIM = 0.05;
+function avancerSimulation(dtSim) {
+  var reste = dtSim, pas;
+  while (reste > 1e-9) {
+    pas = Math.min(PAS_SIM, reste);
+    reste -= pas;
+    ETAT.t += pas;
+    /* L'accoutumance ne court que dans l'obscurité, et elle se PERD dès que
+       le champ repasse au-dessus de la frontière mésopique — allumer une
+       lampe de poche ruine une nuit d'accoutumance, et c'est bien ce qui se
+       passe entre la situation 1 et la situation 2. */
+    if (ETAT.noir && adaptationCourante() < K("L_MESO")) {
+      /* ⚠ LE RELEVÉ SE FAIT À L'INSTANT PRESCRIT, PAS QUAND L'OPÉRATEUR
+         PENSE À APPUYER. La fiche écrit « attendre une minute, PUIS
+         observer » : la minute est du protocole, les secondes que met la
+         main à presser le bouton n'en sont pas. Tant que la situation 1
+         n'est pas consignée, l'horloge d'accoutumance se RECALE donc sur la
+         durée prescrite au lieu de la dépasser — sans quoi le seuil inscrit
+         au carnet dépendrait du temps de réaction, et le déroulé n'écrirait
+         pas le même carnet que la manipulation à la main.
+         Une fois le relevé fait, elle repart : c'est ce qui permet de voir
+         que la balle finit par RÉAPPARAÎTRE si l'on attend assez longtemps,
+         et c'est précisément ce que la fiche évite en n'attendant qu'une
+         minute. Les deux ne se contredisent pas : le relevé dit ce qu'on
+         voit à une minute, pas ce qu'on verrait à onze. */
+      if (!ETAT.vues[0] && ETAT.tObscur + pas / 60 >= T_ACCOUTUMANCE) {
+        ETAT.tObscur = T_ACCOUTUMANCE;
+      } else {
+        ETAT.tObscur += pas / 60;
+      }
+    } else {
+      ETAT.tObscur = 0;
+    }
+  }
+}
+var _cacheAdapt = 0;
+function adaptationCourante() { return _cacheAdapt; }
+
+/* ==================================================================
+   19. LE RENDU — tout se redessine depuis l'état, jamais depuis un cache
+   ================================================================== */
+function rendre() {
+  var i = situation(), nuit = ETAT.noir, r = resoudre();
+  _cacheAdapt = r.La;
+
+  fondBoite.setAttribute("fill", nuit ? NUIT : JOUR);
+  titreBoite.textContent = maj(NOMS.boite) + " — " + (nuit ? "obscurcie" : "éclairée");
+  etatBoite.textContent = nuit
+    ? "yeux accoutumés depuis " + nb(ETAT.tObscur, 1) + " min"
+    : "cliquer l'enceinte pour faire le noir";
+  etatBoite.setAttribute("fill", nuit ? SCHEMA : ORANGE);
+
+  /* --- chaque corps : place, visibilité, registre de trait --- */
+  ["lampe", "balle", "bouteille", "miroir", "carton", "bougie", "vise"]
+    .forEach(function (cle) {
+      var g = G[cle], a = placeEcran(cle), sur = surTable(cle);
+      g.setAttribute("transform", "translate(" + a.x.toFixed(1) + "," + a.y.toFixed(1) + ")");
+      var vu = true, c = r.corps[cle];
+      if (cle === "vise") {
+        vu = nuit && ETAT.lampe;
+        g.setAttribute("opacity", ETAT.poses.lampe ? (vu ? 1 : 0.5) : 0.25);
+      } else if (!sur) {
+        vu = true;                                   /* sur l'étagère, éclairé */
+        peindre(cle, false);
+        g.setAttribute("opacity", 1);
+      } else if (!nuit) {
+        peindre(cle, false);
+        g.setAttribute("opacity", 1);
+      } else {
+        /* ⚠ un objet invisible n'est PAS un objet grisé : il n'est PLUS
+           dessiné. « On ne voit rien du tout » ne se montre pas avec un
+           fantôme en pointillés. */
+        vu = c ? c.visible : false;
+        peindre(cle, vu);
+        g.setAttribute("opacity", vu ? 1 : 0);
+      }
+      var e = ETIQ[cle];
+      if (e) {
+        e.setAttribute("x", a.x.toFixed(1));
+        e.setAttribute("y", (a.y + etiqDy(cle)).toFixed(1));
+        e.textContent = (cle === "vise") ? "visée" : court(maj(NOMS[cle]), 22);
+        e.setAttribute("fill", sur && nuit ? (vu ? CLAIR : NUIT) : GRIS);
+        e.setAttribute("stroke", sur && nuit ? NUIT : "#eef1f5");
+        e.setAttribute("opacity", (cle === "vise")
+          ? (nuit && ETAT.lampe ? 1 : 0.35)
+          : (sur && nuit && !vu ? 0 : 1));
+      }
+    });
+  /* l'étiquette d'ajout suit la bougie (§12.18) */
+  if (ETIQ.bougie) {
+    ETIQ.bougie.textContent = court(maj(NOMS.bougie), 22)
+      + (surTable("bougie") ? "  (ajout — non cité par le protocole)" : "");
+  }
+
+  /* --- la lampe allumée : verre, halo --- */
+  G.lampeVerre.setAttribute("fill",
+    ETAT.lampe ? JAUNE : (nuit ? chaud("#eef2f7") : "#eef2f7"));
+  G.lampeHalo.setAttribute("opacity", ETAT.lampe && nuit ? 0.85 : 0);
+  G.bougieFlamme.setAttribute("opacity", ETAT.bougie ? 1 : 0);
+  G.bougieHalo.setAttribute("opacity", ETAT.bougie && nuit ? 0.9 : 0);
+
+  /* Une observation faite à la minute prescrite ne vaut que pour cette
+     minute-là : si la classe reste dans le noir, l'accoutumance reprend et
+     la balle finit par RÉAPPARAÎTRE sous la seule lumière parasite. On le
+     dit, une fois, plutôt que de laisser le carnet et la scène se
+     contredire en silence. */
+  if (ETAT.vues[0] && ETAT.noir && !ETAT.lampe && !ETAT.ditRetour
+      && r.corps.balle.visible) {
+    ETAT.ditRetour = true;
+    noter("Après " + nb(ETAT.tObscur, 1) + " min d'obscurité, « " + NOMS.balle
+      + " » redevient visible sous la seule lumière parasite : le relevé de la"
+      + " fiche vaut pour " + motDuree(T_ACCOUTUMANCE) + " minute, pas au-delà.",
+      false);
+  }
+  dessinerLumiere(r);
+  majLegende(r);
+  majBoutons();
+  majParcours();
+  majChecks();
+  majLectures(r);
+  majCarnet();
+  majEchelle(r);
+  majSecurite();
+  majProtocole();
+}
+function surTable(cle) {
+  if (cle === "vise") return true;
+  if (cle === "carton") return ETAT.carton;
+  if (cle === "bougie") return ETAT.bougieLa;
+  return !!ETAT.poses[cle];
+}
+function etiqDy(cle) {
+  if (cle === "carton") return CARTON_L * S_PX / 2 + 20;
+  if (cle === "lampe") return 48;
+  if (cle === "vise") return -30;
+  return 44;
+}
+
+/* Le pinceau, l'ombre portée, la tache du fond et les rayons de vision :
+   TOUS relus du modèle. Le cône dessiné est celui qu'utilise `dansPinceau`,
+   l'ombre est celle que teste `coupeCarton`. */
+function dessinerLumiere(r) {
+  vide(gLumiere); vide(gRayons);
+  if (!ETAT.noir || !ETAT.lampe || !ETAT.poses.lampe) return;
+  var v = ETAT.vise, n = Math.sqrt(v.x * v.x + v.y * v.y);
+  if (n < 1e-9) return;
+  var ux = v.x / n, uy = v.y / n, t = Math.tan(DEMI_ANGLE);
+  var L = 0.72;                                   /* on trace jusqu'au fond */
+  var ax = ux * L - uy * t * L, ay = uy * L + ux * t * L;
+  var bx = ux * L + uy * t * L, by = uy * L - ux * t * L;
+  gLumiere.appendChild(el("path", {
+    d: "M " + pt(sx(0), sy(0)) + " L " + pt(sx(ax), sy(ay))
+       + " L " + pt(sx(bx), sy(by)) + " Z",
+    fill: JAUNE, opacity: 0.26, "pointer-events": "none"
+  }));
+  /* L'OMBRE PORTÉE est le VIDE : on la peint de la couleur de la nuit
+     par-dessus le pinceau. Jamais de hachures, jamais de croix. */
+  if (ETAT.carton) {
+    var c = POSE.carton, dc = Math.sqrt(c.x * c.x + c.y * c.y);
+    if (dc > 1e-6) {
+      var e1 = { x: c.x, y: c.y - CARTON_L / 2 }, e2 = { x: c.x, y: c.y + CARTON_L / 2 };
+      var k1 = 3.4, k2 = 3.4;
+      gLumiere.appendChild(el("path", {
+        d: "M " + pt(sx(e1.x), sy(e1.y)) + " L " + pt(sx(e1.x * k1), sy(e1.y * k1))
+           + " L " + pt(sx(e2.x * k2), sy(e2.y * k2)) + " L " + pt(sx(e2.x), sy(e2.y)) + " Z",
+        fill: NUIT, opacity: 0.96, "pointer-events": "none"
+      }));
+    }
+  }
+  /* le trajet de la lumière jusqu'à l'œil : la lampe est vue DIRECTEMENT ;
+     la balle, elle, n'est vue que si elle diffuse vers l'œil. */
+  rayon(sx(0), sy(0), sx(OEIL.x), sy(OEIL.y) + 24, true, 2.6);
+  if (r.corps.balle.visible && ETAT.noir) {
+    var b = POSE.balle;
+    rayon(sx(b.x), sy(b.y), sx(OEIL.x), sy(OEIL.y) + 24, true, 2.2);
+  }
+}
+function rayon(x1, y1, x2, y2, pointe, epais) {
+  var e = epais || 2.6;
+  gRayons.appendChild(el("line", {
+    x1: x1.toFixed(1), y1: y1.toFixed(1), x2: x2.toFixed(1), y2: y2.toFixed(1),
+    stroke: LISERE, "stroke-width": e + 2, "stroke-linecap": "round", opacity: 0.55
+  }));
+  gRayons.appendChild(el("line", {
+    x1: x1.toFixed(1), y1: y1.toFixed(1), x2: x2.toFixed(1), y2: y2.toFixed(1),
+    stroke: JAUNE, "stroke-width": e, "stroke-linecap": "round"
+  }));
+  if (!pointe) return;
+  var an = Math.atan2(y2 - y1, x2 - x1);
+  var px = x1 + (x2 - x1) * 0.58, py = y1 + (y2 - y1) * 0.58, s = 10;
+  gRayons.appendChild(el("path", {
+    d: "M " + pt(px + Math.cos(an) * s, py + Math.sin(an) * s)
+       + " L " + pt(px + Math.cos(an + 2.45) * s * 0.85, py + Math.sin(an + 2.45) * s * 0.85)
+       + " L " + pt(px + Math.cos(an - 2.45) * s * 0.85, py + Math.sin(an - 2.45) * s * 0.85)
+       + " Z",
+    fill: JAUNE, stroke: LISERE, "stroke-width": 1, "stroke-linejoin": "round"
+  }));
+}
+function majBoutons() {
+  var a;
+  for (a in NOEUDS_BOUTON) if (NOEUDS_BOUTON.hasOwnProperty(a)) {
+    var n = NOEUDS_BOUTON[a], on = (a === "faireNoir" && ETAT.noir)
+      || (a === "allumer" && ETAT.lampe) || (a === "allumerBougie" && ETAT.bougie);
+    n.t.textContent = court(n.cfg.l(), 30);
+    n.r.setAttribute("fill", on ? "#fdf3dc" : "#ffffff");
+    n.r.setAttribute("stroke", on ? GOLD : "#c3ccd6");
+  }
+}
+
+/* ==================================================================
+   20. CONSIGNE, JOURNAL
+   ==================================================================
+   ⚠ §12.10 : un refus tient tant qu'il n'est pas résolu, et pas une seconde
+   de plus. Toute action qui ABOUTIT lève la retenue. */
+function dire(txt, fini) {
+  if (ETAT.refus > Date.now()) return;
+  var n = $("consigne");
+  n.textContent = txt;
+  n.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(txt) {
+  var n = $("consigne");
+  ETAT.refus = Date.now() + 4000;
+  n.textContent = txt;
+  n.className = "consigne";
+}
+function succes() { ETAT.refus = 0; }
+function noter(txt, positif) {
+  var n = $("obs");
+  n.textContent = txt;
+  n.className = "obs" + (positif ? " pos" : "");
+}
+/* La consigne est une cascade sur l'état : UNE SEULE VÉRITÉ, et elle décrit
+   toujours un geste que la page accepte (§11.2). */
+function consigne() {
+  if (ETAT.devoile) return "Les " + NSIT + " situations sont observées — voir la conclusion.";
+  if (!tousPoses()) return "Poser sur la table les quatre corps de l'étagère.";
+  if (!ETAT.noir && !toutVu()) return maj(F_NOIR) + ".";
+  if (toutVu() && ETAT.noir) return maj(F_RALLUME) + " pour terminer.";
+  var i = situation();
+  if (i === 0 && !ETAT.vues[0] && ETAT.tObscur < T_ACCOUTUMANCE) {
+    return F_ATTENDRE.charAt(0).toUpperCase() + F_ATTENDRE.slice(1)
+      + " — il reste " + nb((T_ACCOUTUMANCE - ETAT.tObscur) * 60, 0) + " s.";
+  }
+  if (i >= 0 && !ETAT.vues[i]) return maj(F_OBSERVE) + " — " + intitule(i) + ".";
+  if (!ETAT.vues[1]) return maj(F_LAMPE) + " et la diriger vers la balle.";
+  if (!ETAT.vues[2]) return maj(F_CARTON) + ".";
+  return maj(F_RALLUME) + ".";
+}
+function noteDe(i, r) {
+  var b = [];
+  if (C_LAMPE > 0) b.push("lampe " + (r.corps.lampe.visible ? "vue" : "pas vue"));
+  if (C_BALLE > 0) b.push("balle " + (r.corps.balle.visible ? "vue" : "pas vue"));
+  return court(intitule(i), 34) + " — " + b.join(" · ")
+    + " (seuil " + sci(r.seuil, 2) + " cd/m²)";
+}
+
+/* ==================================================================
+   21. LES DEUX TABLEAUX
+   ==================================================================
+   Le premier est la vérité de la FICHE, le second celle de l'expérience
+   qu'on vient de faire. Les confondre serait réécrire la fiche (§6.2). */
+function construireTableau() {
+  var t = $("tab"), tr, i, j;
+  vide(t);
+  tr = document.createElement("tr");
+  for (j = 0; j < ENTETES.length; j++) {
+    var th = document.createElement("th");
+    th.innerHTML = md(ENTETES[j]);
+    tr.appendChild(th);
+  }
+  t.appendChild(tr);
+  for (i = 0; i < NSIT; i++) {
+    tr = document.createElement("tr");
+    for (j = 0; j < ENTETES.length; j++) {
+      var td = document.createElement("td");
+      if (j === 0) td.innerHTML = md(intitule(i));
+      else { td.textContent = "—"; td.className = "vide"; }
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+}
+/* §6.3 : cellule par cellule, avec les valeurs du YAML, et rien ne se
+   dévoile hors protocole (§11.3). */
+function revelerCellule(k, c) {
+  if (c < 0) return;
+  if (horsProtocole()) return;
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = cel(k, c);
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+function cellulesRemplies() {
+  var t = $("tab"), n = 0, i, j, trs = t.querySelectorAll("tr");
+  for (i = 1; i < trs.length; i++) {
+    for (j = 1; j < trs[i].children.length; j++) {
+      if (trs[i].children[j].className !== "vide") n++;
+    }
+  }
+  return n;
+}
+function majCarnet() {
+  var t = $("carnet"), i, tr, td;
+  vide(t);
+  var cols = ["Situation", "Éclairement de la balle", "Luminance de la balle",
+              "Seuil de vision", NOMS.lampe, NOMS.balle];
+  tr = document.createElement("tr");
+  cols.forEach(function (c) {
+    var th = document.createElement("th");
+    th.textContent = maj(c);
+    tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < NSIT; i++) {
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.innerHTML = md(intitule(i));
+    tr.appendChild(td);
+    if (!ETAT.releves[i]) {
+      td = document.createElement("td");
+      td.colSpan = 5; td.className = "vide";
+      td.textContent = "pas encore observée";
+      tr.appendChild(td);
+    } else {
+      var r = resoudreEtat(ETAT.releves[i]);
+      [sci(r.corps.balle.E, 2) + " lx",
+       sci(r.corps.balle.L, 2) + " cd/m²",
+       sci(r.seuil, 2) + " cd/m²",
+       r.corps.lampe.visible ? "oui" : "non",
+       r.corps.balle.visible ? "oui" : "non"].forEach(function (v) {
+        var c = document.createElement("td");
+        c.className = "mes"; c.textContent = v;
+        tr.appendChild(c);
+      });
+    }
+    t.appendChild(tr);
+  }
+  $("legendeCarnet").innerHTML =
+    "Les deux dernières colonnes ne sont pas recopiées de la fiche : ce sont "
+    + "les <b>verdicts du modèle</b>, chacun la comparaison de la luminance "
+    + "au seuil de la même ligne. Une mesure garde les conditions dans "
+    + "lesquelles elle a été faite ; déplacer un curseur rejoue le modèle sur "
+    + "ces conditions-là.";
+}
+
+/* ==================================================================
+   22. L'ÉCHELLE DES LUMINANCES — le graphe qui porte tout le modèle
+   ================================================================== */
+function majEchelle(r) {
+  var g = $("gEchelle"), W = 360, H = 214, x0 = 96, x1 = 348, y0 = 30, y1 = 176;
+  vide(g);
+  var lo = -6, hi = 7;                     /* décades affichées */
+  function px(L) {
+    var l = (typeof L === "number" && L > 0)
+      ? Math.log(L) / Math.LN10 : lo;
+    return x0 + (borne(l, lo, hi) - lo) / (hi - lo) * (x1 - x0);
+  }
+  var d;
+  for (d = lo; d <= hi; d += 2) {
+    g.appendChild(el("line", { x1: px(Math.pow(10, d)), y1: y0 - 6,
+                               x2: px(Math.pow(10, d)), y2: y1 + 4,
+                               stroke: "#e8ecf1", "stroke-width": 1 }));
+    g.appendChild(el("text", { x: px(Math.pow(10, d)), y: y1 + 16,
+                               "text-anchor": "middle", "font-size": 8.5,
+                               fill: GRIS }, "10" + exposant(d)));
+  }
+  g.appendChild(el("text", { x: (x0 + x1) / 2, y: y1 + 30, "text-anchor": "middle",
+                             "font-size": 9, fill: GRIS },
+                   "luminance (cd/m²) — échelle logarithmique"));
+  var ordre = ["lampe", "bougie", "carton", "miroir", "bouteille", "balle", "fond"];
+  var n = 0, i;
+  for (i = 0; i < ordre.length; i++) {
+    var c = r.corps[ordre[i]];
+    if (!c) continue;
+    var y = y0 + n * 19;
+    g.appendChild(el("text", { x: x0 - 6, y: y + 4, "text-anchor": "end",
+                               "font-size": 9.5, fill: INK },
+                     court(maj(c.nom), 15)));
+    g.appendChild(el("rect", { x: x0, y: y - 5, width: Math.max(1.5, px(c.L) - x0),
+                               height: 11, rx: 2,
+                               fill: c.visible ? GOLD : "#c3ccd6" }));
+    g.appendChild(el("text", { x: Math.min(x1 - 2, px(c.L) + 4), y: y + 4,
+                               "font-size": 8.5,
+                               fill: c.visible ? VERT : GRIS,
+                               "text-anchor": px(c.L) > x1 - 46 ? "end" : "start" },
+                     c.visible ? "vu" : "pas vu"));
+    n++;
+  }
+  var xs = px(r.seuil);
+  g.appendChild(el("line", { x1: xs, y1: y0 - 12, x2: xs, y2: y1,
+                             stroke: "#b03030", "stroke-width": 2.4 }));
+  g.appendChild(el("text", { x: borne(xs, x0 + 2, x1 - 60), y: y0 - 16,
+                             "font-size": 9, fill: "#b03030",
+                             "font-weight": "bold" },
+                   "seuil " + sci(r.seuil, 1)));
+}
+
+/* ==================================================================
+   23. LES LECTURES, LES CASES, LA SÉCURITÉ
+   ================================================================== */
+function majLectures(r) {
+  var c = r.corps[ETAT.cible] || r.corps.balle;
+  $("lCorps").textContent = maj(c.nom);
+  $("lE").textContent = c.primaire && ETAT.lampe && ETAT.cible === "lampe"
+    ? "source" : sci(c.E, 2) + " lx";
+  $("lL").textContent = sci(c.L, 2) + " cd/m²";
+  $("lVerdict").textContent = c.visible
+    ? "visible (×" + sci(c.marge, 1) + ")"
+    : "invisible (÷" + sci(1 / c.marge, 1) + ")";
+  $("lVerdict").className = "v" + (c.visible ? "" : " off");
+  $("lAdapt").textContent = sci(r.La, 2) + " cd/m²";
+  $("lSeuil").textContent = sci(r.seuil, 2) + " cd/m²";
+}
+var CASES_CHECK = [
+  { k: "Enceinte obscurcie", f: function () { return ETAT.noir; } },
+  { k: "Yeux accoutumés (situation 1)",
+    f: function () { return !!ETAT.vues[0] || ETAT.tObscur >= T_ACCOUTUMANCE; } },
+  { k: "Lampe allumée sur la balle",
+    f: function () { return ETAT.lampe && dansPinceau(POSE.balle); } },
+  { k: "Témoin en place", f: function () { return cartonEnPlace(); } }
+];
+function majChecks() {
+  var n = $("checks"), i;
+  if (!n.children.length) {
+    for (i = 0; i < CASES_CHECK.length; i++) {
+      var d = document.createElement("div");
+      d.innerHTML = '<span class="n"></span><span class="t"></span>';
+      n.appendChild(d);
+    }
+  }
+  for (i = 0; i < CASES_CHECK.length; i++) {
+    var ok = CASES_CHECK[i].f();
+    n.children[i].className = ok ? "oui" : "non";
+    n.children[i].children[0].textContent = ok ? "fait" : "à faire";
+    n.children[i].children[1].textContent = CASES_CHECK[i].k;
+  }
+}
+/* §12.14 : la plaque de sécurité vise la ligne par ce qu'elle DIT, jamais
+   par le premier mot qui correspond. */
+function majSecurite() {
+  var b = $("secuBande"), t, k;
+  if (ETAT.lampe) {
+    t = secu("faisceau de la lampe vers les yeux"); k = "Lampe allumée";
+    b.className = "secubande";
+  } else if (ETAT.bougie) {
+    t = secu("cheveux longs"); k = "Bougie allumée";
+    b.className = "secubande";
+  } else if (ETAT.noir) {
+    t = secu("se d[ée]placer lentement"); k = "Salle obscurcie";
+    b.className = "secubande";
+  } else {
+    t = secu("source intense"); k = "Avant de commencer";
+    b.className = "secubande ok";
+  }
+  $("secuTitre").textContent = k;
+  $("secuTexte").innerHTML = md(t);
+}
+
+/* ==================================================================
+   24. LES COMMANDES HTML — les curseurs
+   ==================================================================
+   ⚠ §12.12 : chaque `value` est un multiple du `step` depuis `min`, sans
+   quoi le navigateur la ramène silencieusement sur la grille, `REG` ne vaut
+   jamais `PROTO`, et le tableau de la fiche reste vide sans une erreur. */
+function brancherCurseurs() {
+  function lie(id, cle, fmt, aide) {
+    var e = $(id);
+    function maj2() {
+      REG[cle] = parseFloat(e.value);
+      $(id.replace("r", "o")).textContent = fmt(REG[cle]);
+      $(id.replace("r", "aide")).innerHTML = aide(REG[cle]);
+      majAlerte();
+      apres();
+    }
+    e.addEventListener("input", maj2);
+    maj2();
+  }
+  lie("rFuite", "fuite",
+    function (v) { return sci(v, 2) + " lx"; },
+    function (v) {
+      return v <= PROTO.fuite * 1.0001
+        ? "Valeur prescrite : une salle bien obscurcie n'est pas plus claire qu'un <b>ciel nocturne sans lune</b>."
+        : "Une fente de rideau, une veilleuse, un écran allumé. Au-delà de <b>"
+          + sci(seuilFuite(), 2) + " lx</b>, la situation 1 cesse d'être concluante.";
+    });
+  lie("rParois", "parois",
+    function (v) { return nb(v * 100, 0) + " %"; },
+    function (v) {
+      return "De la <b>boîte noire</b> (4 %) à une caisse claire. Ce sont les "
+        + "parois qui renvoient sur la balle, en situation 3, les "
+        + sci(retourParois(REG.flux), 2) + " lx qu'elle reçoit encore.";
+    });
+  lie("rFlux", "flux",
+    function (v) { return nb(v, 0) + " lm"; },
+    function (v) {
+      return "Les deux modes de la lampe sourcée : <b>18 lm</b> (mode faible, "
+        + "prescrit ici) et <b>270 lm</b> (mode fort). Intensité au centre du "
+        + "pinceau : <b>" + nb(intensiteLampe(), 0) + " cd</b>.";
+    });
+  lie("rMiroir", "miroir",
+    function (v) { return nb(v, 0) + "°"; },
+    function (v) {
+      return miroirAligne()
+        ? "Le miroir renvoie l'<b>image de la lampe</b> dans l'œil."
+        : "Désaligné : le miroir est toujours éclairé, mais il ne renvoie plus "
+          + "rien vers l'œil. C'est la <b>seconde condition</b> de la conclusion.";
+    });
+  $("bProto").addEventListener("click", function () {
+    $("rFuite").value = PROTO.fuite;
+    $("rParois").value = PROTO.parois;
+    $("rFlux").value = PROTO.flux;
+    $("rMiroir").value = PROTO.miroir;
+    ["rFuite", "rParois", "rFlux", "rMiroir"].forEach(function (id) {
+      $(id).dispatchEvent(new Event("input"));
+    });
+    noter("Réglages ramenés à ceux du protocole.", true);
+  });
+}
+/* À partir de quelle lumière parasite la situation 1 cesse-t-elle de
+   conclure ? On le CHERCHE, on ne l'annonce pas : dichotomie sur le modèle. */
+function seuilFuite() {
+  var lo = 0, hi = 50, i, mi, garde = REG.fuite;
+  var cond = { noir: true, lampe: false, carton: false, bougie: false,
+               tObscur: T_ACCOUTUMANCE, vise: ETAT.vise,
+               posCarton: POSE.carton, posBougie: POSE.bougie };
+  for (i = 0; i < 40; i++) {
+    mi = (lo + hi) / 2;
+    REG.fuite = mi;
+    if (resoudreEtat(cond).corps.balle.visible) hi = mi; else lo = mi;
+  }
+  REG.fuite = garde;
+  return hi;
+}
+function majAlerte() {
+  var h = horsProtocole();
+  ETAT.horsProto = h;
+  $("alerte").className = "alerte" + (h ? " on" : "");
+}
+
+/* ==================================================================
+   25. L'HORLOGE — `setInterval` + `Date.now()`, jamais `requestAnimationFrame`
+   ==================================================================
+   §13.5 bis : Chrome sans tête, lancé avec un budget de temps virtuel,
+   n'appelle jamais `requestAnimationFrame`. Une animation dont dépend un
+   résultat se pilote donc au minuteur. */
+var VITESSES = [1, 10, 30, 60], vitesse = 10, tPrec = 0;
+function brancherVitesse() {
+  var n = $("vit"), i;
+  for (i = 0; i < VITESSES.length; i++) {
+    (function (v) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "sec" + (v === vitesse ? " on" : "");
+      b.setAttribute("data-v", v);
+      b.textContent = "×" + v;
+      b.addEventListener("click", function () {
+        vitesse = v;
+        var bs = n.querySelectorAll("button[data-v]"), j;
+        for (j = 0; j < bs.length; j++) {
+          bs[j].className = "sec" + (+bs[j].getAttribute("data-v") === v ? " on" : "");
+        }
+      });
+      n.appendChild(b);
+    }(VITESSES[i]));
+  }
+}
+function tick() {
+  var now = Date.now(), dtReel = (now - tPrec) / 1000;
+  tPrec = now;
+  if (dtReel <= 0 || dtReel > 2) dtReel = 0.2;
+  /* Le minuteur de séance mesure le TEMPS RÉEL — il ne s'accélère jamais :
+     il dit ce que la manipulation coûte à l'enseignant, pas ce que le
+     modèle simule (§5.4). */
+  ETAT.tSeance += dtReel;
+  avancerSimulation(dtReel * vitesse);
+  majSeance();
+  rendre();
+  dire(consigne(), ETAT.devoile);
+}
+function majSeance() {
+  var s = Math.floor(ETAT.tSeance), m = Math.floor(s / 60);
+  $("seanceT").textContent = m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
+  $("seanceM").textContent = DUREE_SEANCE + " min · "
+    + depouille(DONNEES.modalite || "");
+  var f = borne(ETAT.tSeance / (DUREE_SEANCE * 60), 0, 1);
+  $("seanceJ").style.width = (f * 100).toFixed(1) + "%";
+  $("seanceT").parentNode.className = "seance"
+    + (ETAT.tSeance > DUREE_SEANCE * 60 ? " deborde" : "");
+}
+
+/* ==================================================================
+   26. APRÈS UN GESTE, ET « RECOMMENCER »
+   ================================================================== */
+function apres() {
+  rendre();
+  /* La conclusion se démasque quand les trois situations ont été observées
+     ET que la salle est rallumée : c'est la dernière étape du protocole. */
+  if (toutVu() && !ETAT.noir && !ETAT.devoile && !horsProtocole()) {
+    ETAT.devoile = true;
+    $("concl").className = "box";
+    majBilan();
+    rendre();
+  }
+  dire(consigne(), ETAT.devoile);
+}
+function majBilan() {
+  var r1 = ETAT.releves[1] ? resoudreEtat(ETAT.releves[1]) : null;
+  var r2 = ETAT.releves[2] ? resoudreEtat(ETAT.releves[2]) : null;
+  if (!r1 || !r2) { $("bilan").innerHTML = ""; return; }
+  var rap = r1.corps.balle.L / Math.max(1e-12, r2.corps.balle.L);
+  $("bilan").innerHTML =
+    "<b>Ce que le modèle a mesuré.</b> En interposant le carton, la luminance "
+    + "de « " + NOMS.balle + " » est passée de <b>" + sci(r1.corps.balle.L, 2)
+    + "</b> à <b>" + sci(r2.corps.balle.L, 2) + " cd/m²</b>, soit une division "
+    + "par <b>" + sci(rap, 1) + "</b> — et elle est passée sous le seuil de "
+    + "l'œil. La lampe, elle, n'a pas bougé d'un millième : elle ne doit sa "
+    + "visibilité à personne.";
+}
+function recommencer() {
+  purger();
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  var tS = ETAT.tSeance;                    /* la séance ne se rembobine pas */
+  ETAT = neufEtat();
+  POSE = neufPose();
+  ETAT.tSeance = tS;
+  prise = null;
+  construireTableau();
+  $("concl").className = "box masque";
+  $("bilan").innerHTML = "";
+  noter("—", false);
+  cacherCibles();
+  apres();
+}
+
+/* ==================================================================
+   27. LE MODULE DE GUIDAGE — le protocole de la fiche, MOT POUR MOT
+   ==================================================================
+   ⚠ §12bis.1 : l'étape courante se DÉDUIT de l'état, jamais d'un compteur.
+   Le panneau avance seul — et RECULE quand on défait un geste, ce qu'un
+   compteur ne saurait pas faire.
+   ⚠ Le bouton du guide N'EXÉCUTE PAS : il écrit la consigne et surligne
+   l'objet à prendre. C'est le §1.1 — un bouton qui rejoue le YAML est le
+   refus explicite de l'enseignant. */
+var GUIDE = [
+  { fait: function () { return tousPoses(); },
+    aide: function () {
+      var n = 0;
+      ["lampe", "balle", "bouteille", "miroir"].forEach(function (k) {
+        if (ETAT.poses[k]) n++;
+      });
+      return "<b>" + n + " / 4</b> corps posés sur la table.";
+    },
+    montre: function () {
+      var k = ["lampe", "balle", "bouteille", "miroir"].filter(function (c) {
+        return !ETAT.poses[c];
+      })[0] || "lampe";
+      return [halo(G[k]), haloZone(zoneVoulue(k))];
+    } },
+  { fait: function () { return !!ETAT.vues[0]; },
+    aide: function () {
+      if (!ETAT.noir) return "L'enceinte est encore éclairée.";
+      if (ETAT.tObscur < T_ACCOUTUMANCE) {
+        return "Accoutumance : <b>" + nb(ETAT.tObscur * 60, 0) + " s</b> sur "
+          + nb(T_ACCOUTUMANCE * 60, 0) + ".";
+      }
+      return "Les yeux sont accoutumés : <b>observer</b>.";
+    },
+    montre: function () {
+      return [halo(NOEUDS_BOUTON[ETAT.noir ? "observer" : "faireNoir"].g)];
+    } },
+  { fait: function () { return !!ETAT.vues[1]; },
+    aide: function () {
+      if (!ETAT.lampe) return "La lampe est éteinte.";
+      if (!dansPinceau(POSE.balle)) return "Le pinceau ne tombe pas sur la balle.";
+      return "La balle est éclairée : <b>observer</b>.";
+    },
+    montre: function () {
+      if (!ETAT.lampe) return [halo(NOEUDS_BOUTON.allumer.g)];
+      if (!dansPinceau(POSE.balle)) return [halo(G.vise), haloZone(zoneVoulue("vise"))];
+      return [halo(NOEUDS_BOUTON.observer.g)];
+    } },
+  { fait: function () { return cartonEnPlace(); },
+    aide: function () {
+      return ETAT.carton
+        ? "Le carton est posé, mais il ne coupe pas la lumière de la balle."
+        : "Le carton attend sur l'étagère.";
+    },
+    montre: function () { return [halo(G.carton), haloZone(zoneVoulue("carton"))]; } },
+  { fait: function () { return !!ETAT.vues[2]; },
+    aide: function () {
+      return "Dire ce qui reste visible et ce qui a disparu.";
+    },
+    montre: function () { return [halo(NOEUDS_BOUTON.observer.g)]; } },
+  { fait: function () { return !ETAT.noir && ETAT.devoile; },
+    aide: function () {
+      return toutVu() ? "Rallumer pour terminer et compléter le tableau."
+                      : "Les trois situations ne sont pas toutes observées.";
+    },
+    montre: function () { return [halo(NOEUDS_BOUTON.faireNoir.g)]; } }
+];
+function etapeCourante() {
+  var i;
+  for (i = 0; i < GUIDE.length; i++) if (!GUIDE[i].fait()) return i;
+  return GUIDE.length;
+}
+function texteAide(c) {
+  if (c >= GUIDE.length) return "Protocole terminé.";
+  var n = document.createElement("div");
+  n.innerHTML = GUIDE[c].aide();
+  return n.textContent;
+}
+function construireProtocole() {
+  var ol = $("protocole"), p = DONNEES.protocole || [], i;
+  vide(ol);
+  for (i = 0; i < p.length; i++) {
+    var li = document.createElement("li");
+    li.innerHTML = md(p[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = String(ol.children.length);
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < GUIDE.length && GUIDE[i].fait()
+      ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = String(Math.min(c + 1, ol.children.length));
+  var a = $("protoAide");
+  if (a) a.innerHTML = c >= GUIDE.length ? "Protocole terminé." : GUIDE[c].aide();
+  if (ol.children[c] && ol.children[c].scrollIntoView) {
+    var h = ol.clientHeight, t = ol.children[c].offsetTop - ol.offsetTop;
+    if (t < ol.scrollTop || t > ol.scrollTop + h - 30) ol.scrollTop = Math.max(0, t - 20);
+  }
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le halo : un cadre en trait interrompu, posé sur la BOÎTE RÉELLE du nœud.
+   ⚠ §12bis.3-5 : `getBBox()` est local ; sous un groupe translaté il tombe à
+   côté. On passe par `getBoundingClientRect()` ramené au repère du viewBox. */
+var guideMinuteur = null, guideNoeuds = [];
+function boiteViewBox(n) {
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!r.width || !r.height || !s.width) return null;
+  var kx = VB_W / s.width, ky = VB_H / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+function halo(n) {
+  var b = boiteViewBox(n);
+  if (!b) return null;
+  return el("rect", {
+    x: b.x - 9, y: b.y - 9, width: b.w + 18, height: b.h + 18, rx: 10,
+    fill: "none", stroke: GOLD, "stroke-width": 3,
+    "stroke-dasharray": "10 6", "pointer-events": "none"
+  });
+}
+function haloZone(z) {
+  if (!z) return null;
+  return el("rect", {
+    x: z.x - z.r * 0.5, y: z.y - z.r * 0.5, width: z.r, height: z.r, rx: 10,
+    fill: "none", stroke: GOLD, "stroke-width": 3,
+    "stroke-dasharray": "10 6", "pointer-events": "none"
+  });
+}
+function effacerGuide() {
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+  while (guideNoeuds.length) {
+    var n = guideNoeuds.pop();
+    if (n && n.parentNode) n.parentNode.removeChild(n);
+  }
+}
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  var l = GUIDE[c].montre() || [], i;
+  for (i = 0; i < l.length; i++) {
+    if (!l[i]) continue;
+    COUCHES.ui.appendChild(l[i]);
+    guideNoeuds.push(l[i]);
+  }
+  dire("Étape " + (c + 1) + " — " + texteAide(c), false);
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. POSER LES QUATRE CORPS. Le protocole les cite dans l'ordre — la
+     lampe éteinte, la balle, la bouteille, le miroir — et l'étape reste
+     courante tant qu'il en manque un : c'est l'AIDE qui porte le compte
+     (« 2 / 4 »), et c'est elle qui dit au déroulé que quelque chose a
+     bougé. Un seul corps par pression : le geste de l'élève est un
+     glisser, et `deposer()` est exactement la fonction qu'il déclenche. */
+  function () {
+    var k = ["lampe", "balle", "bouteille", "miroir"].filter(function (c) {
+      return !ETAT.poses[c];
+    })[0];
+    if (!k) return 0;
+    var z = zoneDe(k, "poste");
+    if (z) { deposer(k, z); return 260; }
+    return 0;
+  },
+
+  /* 2. SITUATION 1 — obscurcir, ATTENDRE UNE MINUTE, puis observer.
+     ⚠ Le temps se joue, il ne se saute pas. On pousse le sélecteur de
+     vitesse — le geste que l'enseignant ferait — et l'on rend un délai
+     NÉGATIF tant que la minute de la fiche n'est pas écoulée : c'est ainsi
+     que le déroulé sait qu'on attend, et non qu'on est bloqué. La minute
+     vient du protocole, pas d'ici. */
+  function () {
+    if (!ETAT.noir) { presserBouton("faireNoir"); return 300; }
+    accelererTemps();
+    if (ETAT.tObscur < T_ACCOUTUMANCE) {
+      return -Math.max(400, (T_ACCOUTUMANCE - ETAT.tObscur) * 60000 / 60);
+    }
+    presserBouton("observer");
+    return 320;
+  },
+
+  /* 3. SITUATION 2 — allumer la lampe ET la diriger vers la balle. Les deux
+     appartiennent à la même étape de la fiche. La visée passe par le
+     repère qu'on glisse, donc par `deposer()` : rien n'est posé à la main,
+     et le pinceau dessiné relit la même valeur. */
+  function () {
+    if (!ETAT.lampe) { presserBouton("allumer"); return 300; }
+    if (!dansPinceau(POSE.balle)) {
+      var z = zoneDe("vise", "balle");
+      if (z) { deposer("vise", z); return 300; }
+    }
+    presserBouton("observer");
+    return 320;
+  },
+
+  /* 4. LE TÉMOIN — glisser le carton ENTRE la lampe et la balle. La zone
+     visée est celle qu'`emplacements()` propose dans l'état courant
+     (§12.16), jamais une position écrite en dur : c'est le solveur qui
+     dira ensuite si la feuille coupe réellement la ligne lampe → balle. */
+  function () {
+    var z = zoneDe("carton", "entre");
+    if (z) { deposer("carton", z); return 320; }
+    return 0;
+  },
+
+  /* 5. observer une dernière fois — dire ce qui reste visible */
+  function () { presserBouton("observer"); return 320; },
+
+  /* 6. RALLUMER LA SALLE. C'est la dernière étape du protocole, et c'est
+     elle qui démasque la conclusion : la page ne l'atteint que si les trois
+     situations ont été observées. Rien n'a été ajouté pour y arriver. */
+  function () { presserBouton("faireNoir"); return 320; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   28. LE PARCOURS EN CASES
+   ================================================================== */
+var PARCOURS = ["Poser les corps", "Situation 1", "Situation 2",
+                "Poser le témoin", "Situation 3", "Rallumer"];
+function majParcours() {
+  var n = $("etapes"), c = etapeCourante(), i;
+  if (!n.children.length) {
+    for (i = 0; i < PARCOURS.length; i++) {
+      var d = document.createElement("div");
+      d.innerHTML = '<span class="n"></span><span class="t"></span>';
+      n.appendChild(d);
+    }
+  }
+  for (i = 0; i < PARCOURS.length; i++) {
+    n.children[i].className = GUIDE[i] && GUIDE[i].fait()
+      ? "faite" : (i === c ? "actif" : "");
+    n.children[i].children[0].textContent = "étape " + (i + 1);
+    n.children[i].children[1].textContent = PARCOURS[i];
+  }
+}
+
+/* ==================================================================
+   29. LES PANNEAUX DE LA FICHE ET « SOUS LE CAPOT »
+   ================================================================== */
+function construireHTML() {
+  $("titre").textContent = "Paillasse virtuelle — " + depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.niveau || "2AC") + " · " + (DONNEES.unite || "")
+    + " · " + (DONNEES.lecon || "L10") + " · E2AC-16";
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md(DONNEES.observation || "");
+  $("conclTxt").innerHTML = md(DONNEES.conclusion || "");
+  var ul = $("materiel"), i;
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li");
+    li.innerHTML = md(m);
+    ul.appendChild(li);
+  });
+  var us = $("securite");
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li");
+    li.innerHTML = md(s);
+    us.appendChild(li);
+  });
+  $("eqModele").textContent =
+    "E   = I/d²            éclairement reçu, avec occultation du carton\n"
+    + "I   = Φ/Ω           Ω = Φ/I du constructeur = "
+    + nb(OMEGA_PINCEAU, 3) + " sr, soit " + nb(2 * DEMI_ANGLE * 180 / Math.PI, 1) + "°\n"
+    + "L   = ρ·E/π          diffuseur lambertien (balle, carton)\n"
+    + "L   = ρ·L_source     corps spéculaire (bouteille, miroir) : on voit\n"
+    + "                     l'IMAGE de la source, pas la surface\n"
+    + "E_p = Φ·ρ/(A(1−ρ))   retour des parois — sphère intégrante\n"
+    + "L_a = E_œil/π        adaptation : somme des L·Ω du champ\n"
+    + "S   = W·L_a          si L_a ≥ " + nb(K("L_MESO"), 2) + " cd/m² (Weber)\n"
+    + "S   = plancher(t)    sinon — accoutumance, deux branches\n"
+    + "\nverdict : visible ⇔ L > S";
+  $("eqBilan").textContent =
+    "source primaire   : L ne dépend d'aucune autre source\n"
+    + "                    lampe  " + sci(K("I_FAIBLE") / A_LENTILLE, 1) + " cd/m²\n"
+    + "                    bougie " + sci(K("I_BOUGIE") / (0.01 * 0.03), 1) + " cd/m²\n"
+    + "source secondaire : L = ρ · (ce qu'elle reçoit) / π\n"
+    + "                    elle ne crée rien, elle redistribue\n"
+    + "                    ρ(balle) = " + nb(K("RHO_BALLE"), 2)
+    + " → elle renvoie " + nb(K("RHO_BALLE") * 100, 0) + " % et absorbe le reste";
+  var t = $("capotConst"), tr = document.createElement("tr");
+  ["Constante", "Valeur", "Unité", "Provenance"].forEach(function (h) {
+    var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  var k;
+  for (k in PHYS) if (PHYS.hasOwnProperty(k)) {
+    (function (p) {
+      var l = document.createElement("tr");
+      [p.n, (Math.abs(p.v) < 0.01 || Math.abs(p.v) >= 10000) ? sci(p.v, 2) : nb(p.v, p.v >= 100 ? 0 : 3),
+       p.u, p.s].forEach(function (v) {
+        var td = document.createElement("td"); td.textContent = v; l.appendChild(td);
+      });
+      t.appendChild(l);
+    }(PHYS[k]));
+  }
+  $("capotSrc").innerHTML =
+    "Trois grandeurs se DÉDUISENT de ces constantes et ne sont pas mesurées "
+    + "à part : l'angle solide du pinceau Ω = Φ/I = <b>" + nb(OMEGA_PINCEAU, 3)
+    + " sr</b>, la réflexion de Fresnel du verre ((n−1)/(n+1))² = <b>"
+    + nb(RHO_VERRE, 4) + "</b>, et l'aire intérieure de l'enceinte <b>"
+    + nb(A_BOITE, 2) + " m²</b>.";
+  var lim = $("capotLimites");
+  [
+    "<b>Le débordement de la lampe est une valeur ASSUMÉE</b> (10 % du flux "
+    + "hors du pinceau). C'est la seule constante de la page qui ne soit pas "
+    + "mesurée. Elle a été balayée de 2 % à 30 % : aucun des six verdicts du "
+    + "tableau ne change, mais l'ordre de grandeur de l'éblouissement, lui, "
+    + "en dépend.",
+    "<b>Il ne modélise pas la vision des couleurs.</b> La balle est blanche, "
+    + "la lampe est blanche, et la page ne dit rien de ce qui se passerait "
+    + "avec une balle rouge sous une lampe verte — c'est la leçon suivante.",
+    "<b>L'interréflexion est traitée en sphère intégrante</b> : le modèle "
+    + "suppose la lumière parfaitement brassée dans l'enceinte. Près de la "
+    + "tache du pinceau, l'éclairement réel est plus fort ; dans un coin "
+    + "sombre, plus faible.",
+    "<b>Un seul œil, à une seule place.</b> Le judas est fixe. En classe, "
+    + "trente élèves regardent de trente endroits, et le miroir n'éblouit "
+    + "qu'une partie d'entre eux.",
+    "<b>L'accoutumance est celle d'un œil moyen et sain.</b> Elle varie "
+    + "beaucoup d'un élève à l'autre, et davantage encore avec l'âge : le "
+    + "modèle ne porte aucun terme d'âge.",
+    "<b>La balle n'est jamais à zéro en situation 3.</b> Le modèle la place à "
+    + "environ 0,15 cd/m², soit dix mille fois moins qu'en situation 2. La "
+    + "fiche écrit « la balle a disparu » ; le modèle dit « elle est passée "
+    + "sous le seuil de l'œil », ce qui est plus juste et se chiffre.",
+    "<b>Il ne sait pas ce que voit un œil ébloui pendant qu'il se rétablit.</b> "
+    + "Le passage de la situation 2 à la situation 3 est traité comme "
+    + "instantané pour l'adaptation à la baisse ; en réalité, quelques "
+    + "secondes de plus rendraient la balle un peu moins invisible."
+  ].forEach(function (s) {
+    var li = document.createElement("li");
+    li.innerHTML = s;
+    lim.appendChild(li);
+  });
+  $("capotInterp").innerHTML = md((DONNEES.oheric || {}).interpretation || "");
+}
+
+/* ==================================================================
+   30. LE PLEIN ÉCRAN
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), c = $("paillasse");
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (c.requestFullscreen) {
+      c.requestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    b.textContent = document.fullscreenElement ? "✕" : "⛶";
+    b.title = document.fullscreenElement ? "Quitter le plein écran"
+                                         : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   31. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  C_LAMPE = colonneDe("lampe");
+  C_BALLE = colonneDe("balle");
+  POSE = neufPose();
+  ETAT = neufEtat();
+  construireHTML();
+  construireTableau();
+  construireProtocole();
+  ["lampe", "balle", "bouteille", "miroir", "carton", "bougie", "vise"]
+    .forEach(brancherPrise);
+  var a;
+  for (a in NOEUDS_BOUTON) if (NOEUDS_BOUTON.hasOwnProperty(a)) {
+    (function (act) {
+      NOEUDS_BOUTON[act].g.addEventListener("click", function () {
+        if (act === "faireNoir") basculerNoir();
+        else if (act === "allumer") basculerLampe();
+        else if (act === "allumerBougie") basculerBougie();
+        else if (act === "observer") observer();
+      });
+    }(a));
+  }
+  fondBoite.addEventListener("click", function () { basculerNoir(); });
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherVitesse();
+  brancherCurseurs();
+  brancherPlein();
+  tPrec = Date.now();
+  setInterval(tick, 200);
+  apres();
+}
+demarrer();
+}());
+</script>
+</body>
+</html>

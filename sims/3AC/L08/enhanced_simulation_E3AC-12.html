@@ -1,0 +1,2606 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-12 · La valve de la roue : la trajectoire dépend du référentiel</title>
+
+<!--
+  ===================================================================
+  E3AC-12 · 3AC · L08 — PAILLASSE VIRTUELLE
+  « La valve de la roue : matérialiser une trajectoire et montrer
+    qu'elle dépend du référentiel »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Une roue de rayon R qui roule SANS GLISSER : quand elle a tourné de
+  l'angle φ, son moyeu a avancé de R·φ, exactement. Un point fixé à la
+  distance r du moyeu occupe alors, DANS LE RÉFÉRENTIEL DU SOL :
+
+      x(φ) = R·φ − r·sin φ            y(φ) = R − r·cos φ
+
+  Et dans le référentiel du CADRE — c'est-à-dire vélo sur béquille, le
+  moyeu immobile — le même point occupe :
+
+      x(φ) = − r·sin φ                y(φ) = R − r·cos φ
+
+  Les deux formules ne diffèrent que par le terme R·φ, celui de
+  l'avance. C'est LITTÉRALEMENT le changement de référentiel, et c'est
+  pourquoi la page les écrit côte à côte sous le capot.
+
+  CE QUI N'EST PAS DÉCRÉTÉ : LE NOM DE LA TRAJECTOIRE
+  ---------------------------------------------------
+  La fiche attend « circulaire », « curviligne », « rectiligne ». La page
+  ne les écrit nulle part en dur. Elle relève les points de la trace
+  qu'elle vient de tracer et les MESURE, dans cet ordre :
+
+    1. Tous alignés sur la droite qui joint les extrémités ? → rectiligne
+    2. Sinon, le meilleur cercle au sens des moindres carrés (ajustement
+       de Kåsa) laisse-t-il un résidu négligeable ? → circulaire
+    3. Sinon → curviligne
+
+  L'ordre compte : un arc de cercle de rayon immense passerait pour une
+  droite si l'on testait le cercle en premier. Le résidu est comparé à
+  l'étendue de la trace, jamais à une longueur absolue.
+
+  Conséquence : mettre la craie SUR le moyeu (curseur r/R à 0) fait
+  passer la trace au sol de « curviligne » à « rectiligne » sans qu'une
+  seule ligne de code s'en occupe. C'est le classificateur qui change
+  d'avis, parce que la trace a changé.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  1. Il fixe la craie sur la valve, et deux gommettes sur le moyeu et
+     sur le guidon (glisser-déposer).
+  2. Vélo sur béquille : il plaque la feuille contre la roue, puis il
+     FAIT TOURNER LA ROUE en glissant le doigt sur le pneu. La trace se
+     dessine sous le doigt, tour après tour.
+  3. Il retire la béquille, déroule la bande de papier, et POUSSE LE VÉLO
+     le long de la bande. Les trois traces se dessinent ensemble.
+
+  ATTENTION — CE QUE LA PAGE NE FAIT PAS
+  --------------------------------------
+  * Elle ne modifie AUCUN fichier partagé.
+  * Elle ne prononce jamais le mot « cycloïde » : hors programme, et il
+    remplacerait une observation par une étiquette.
+  * Elle ne parle pas d'accélération ni de vitesse : cette expérience-ci
+    ne porte que sur la FORME de la trace.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée E3AC-12.
+-->
+
+<style>
+
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.oui{color:var(--green)}
+.lect .v.non{color:#b03030}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.temoin td{background:#f4f6f9}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.rappel{background:var(--bluebg);border-left:3px solid var(--gold);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:11.5px;margin-top:8px;
+        color:var(--muted)}
+.rappel b{color:var(--ink)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:13.5px;font-weight:700;color:var(--ink);margin-top:2px}
+.cases .u.nul{color:#9aa5b2;font-weight:600}
+.cases .v{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px}
+.corps{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.corps button{flex:1 1 auto;font-size:11.5px;padding:5px 8px;border-radius:7px;
+              border:1.5px solid var(--line);background:#fff;cursor:pointer;
+              color:var(--ink);font-family:inherit}
+.corps button.on{border-color:var(--gold);background:#fdf6e6;font-weight:700}
+.preuve{font-family:var(--mono);font-size:10.5px;color:var(--muted);
+        line-height:1.6;margin-top:7px}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-12 · 3AC · L08</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le protocole demande un vélo poussé
+        <b>au pas</b>, roue roulant sans glisser, et une craie fixée <b>sur la
+        valve</b> — donc près de la jante. Ce n'est plus le cas. Le tableau de
+        référence cesse de se remplir : il consigne le résultat de l'expérience
+        prescrite, pas celui d'une variante. Le classement des traces, lui,
+        continue et reste juste.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La trace relevée <span class="note" id="suiviNom">—</span></h2>
+      <p class="src" style="margin:0 0 2px">Choisir le point dont on regarde
+        la trace.</p>
+      <div class="corps" id="corpsBtns"></div>
+      <div class="cases" id="suiviCases"></div>
+      <p class="src preuve" id="preuve"></p>
+    </div>
+
+    <div class="carte">
+      <h2>La trace, en grand <span class="note">telle qu'elle est calculée</span></h2>
+      <p class="src" style="margin:0 0 6px">C'est cette courbe-là que la page
+        mesure pour la nommer — pas une image choisie d'avance.</p>
+      <svg id="gTrace" viewBox="0 0 360 190" style="width:100%;height:auto;display:block"
+           role="img" aria-label="La trace du point choisi, agrandie"></svg>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label for="rVal">Où la craie est fixée, du moyeu à la jante</label>
+        <output id="oVal"></output>
+        <input type="range" id="rVal" min="0" max="1" step="0.05" value="0.8">
+        <div class="aide">À 0, la craie est SUR le moyeu : la trace au sol
+          devient une droite, et le classement change tout seul.</div>
+      </div>
+      <div class="reg">
+        <label for="rTours">Nombre de tours</label><output id="oTours"></output>
+        <input type="range" id="rTours" min="1" max="4" step="1" value="2">
+        <div class="aide">« deux tours complets », dit le protocole.</div>
+      </div>
+      <div class="reg">
+        <label for="rAvance">Avance du vélo, par tour de roue</label>
+        <output id="oAvance"></output>
+        <input type="range" id="rAvance" min="0" max="2" step="0.1" value="1">
+        <div class="aide">1 = la roue roule sans glisser. Moins, elle patine ;
+          plus, elle chasse. La trace fait alors des boucles.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · Les deux paramétrages, côte à côte</h3>
+      <p>Ils ne diffèrent que par un terme, celui de l'avance — et ce terme
+        <b>est</b> le changement de référentiel.</p>
+      <p class="fx" id="capotSol"></p>
+      <p class="fx" id="capotCadre"></p>
+
+      <h3>2 · Comment le nom de la trajectoire est obtenu</h3>
+      <p>Il n'est écrit nulle part. La page relève les points de la trace et
+        les mesure, dans cet ordre — l'ordre compte, car un arc de très grand
+        rayon passerait pour une droite si l'on testait le cercle d'abord :</p>
+      <ol>
+        <li><b>Rectiligne</b> si l'écart maximal à la droite joignant les deux
+          extrémités reste sous <b id="capotTol"></b> de l'étendue de la trace.</li>
+        <li>Sinon <b>circulaire</b> si le meilleur cercle au sens des moindres
+          carrés (ajustement de Kåsa) laisse un résidu sous la même tolérance.</li>
+        <li>Sinon <b>curviligne</b>.</li>
+      </ol>
+      <table id="capotMesures"></table>
+
+      <h3>3 · Les grandeurs du montage</h3>
+      <table id="capotVals"></table>
+
+      <h3>4 · Ce que le modèle simplifie</h3>
+      <ul>
+        <li><b>La roue est un cercle parfait</b> et le sol est plan : un pneu
+        réel s'écrase, et la trace au sol s'aplatit très légèrement en bas.</li>
+        <li><b>La craie marque en continu</b>, alors qu'une craie réelle ne
+        laisse de trace que là où elle touche — d'où les arceaux interrompus
+        d'une manipulation réelle, et le conseil de la fiche de filmer.</li>
+        <li><b>Le guidon est traité comme un point du cadre.</b> Il l'est :
+        tant qu'on ne tourne pas, il ne fait qu'avancer.</li>
+        <li><b>On ne tourne pas.</b> Le vélo va en ligne droite, comme le
+        prescrit le protocole ; sinon la trace du moyeu ne serait plus une
+        droite, et ce n'est pas la question de cette leçon.</li>
+      </ul>
+
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-12.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-12",
+  "niveau": "3AC",
+  "unite": "U2",
+  "lecon": "L08",
+  "titre": "La valve de la roue : matérialiser une trajectoire et montrer qu'elle dépend du référentiel",
+  "axe": "La trajectoire d'un point",
+  "objectif": "Matérialiser la trajectoire d'un point d'un solide en mouvement, la classer parmi les trois allures rectiligne, circulaire et curviligne, et établir qu'un même point décrit deux trajectoires différentes selon le référentiel choisi.",
+  "duree": 22,
+  "modalite": "démonstration au bureau pour le vélo qui avance · groupes de 4 pour le relevé et le classement",
+  "materiel": [
+    "Un **vélo** muni de sa **béquille**, roues en bon état (à défaut : une **roue seule** montée sur un axe tenu par deux apprenants)",
+    "Un **bâton de craie** humidifié, ou un **feutre à eau**, fixé sur la **valve** de la roue avant",
+    "De la **pâte adhésive** et un morceau de **ruban adhésif** pour fixer la craie sans la faire dépasser",
+    "Une **feuille de papier fort** (format A2) que l'on plaque verticalement contre la roue, vélo sur béquille",
+    "Une **bande de papier** de 3 à 4 m déroulée au sol le long du trajet du vélo",
+    "Deux **gommettes de couleur** : une sur le **moyeu**, une sur un point du **guidon**",
+    "Une **règle** et un **crayon** pour repérer les positions successives sur la bande",
+    "Un **téléphone** en mode vidéo, pour rejouer la scène au ralenti si la trace est peu lisible"
+  ],
+  "securite": [
+    "**Deux apprenants tiennent le vélo en permanence**, un de chaque côté : un vélo sur béquille bascule au premier coup de main sur la roue.",
+    "On fait tourner la roue **à la main, lentement, par le pneu**, jamais par les rayons et jamais en pédalant : les doigts ne s'approchent pas des rayons ni de la chaîne.",
+    "La craie est **fixée à plat** sur la valve et ne dépasse pas du pneu : rien ne doit pouvoir accrocher la fourche.",
+    "Le sol de la bande de papier est **dégagé et sec** ; personne ne se tient devant la roue pendant que le vélo avance.",
+    "Le vélo avance **au pas**, poussé à la main, guidon tenu : on ne le monte pas et on ne le lâche pas.",
+    "La craie humide tache : blouse fermée, mains lavées en fin de manipulation, sol essuyé."
+  ],
+  "protocole": [
+    "Repérer la **valve** de la roue avant et y fixer à plat la craie humidifiée : ce sera le **point M** étudié.",
+    "Coller une gommette sur le **moyeu O** de la même roue et une autre sur un point du **guidon**.",
+    "**Premier temps — référentiel : le cadre du vélo.** Poser le vélo sur sa béquille, roue avant libre. Plaquer la feuille A2 verticalement contre la roue, dans son plan.",
+    "Faire tourner la roue lentement à la main, par le pneu, sur **deux tours complets**, et observer la trace laissée par la craie sur la feuille.",
+    "Relever l'allure de la trace obtenue et la reporter dans le tableau.",
+    "**Second temps — référentiel : le sol.** Dérouler la bande de papier sur 3 à 4 m et enlever la béquille.",
+    "Pousser le vélo **au pas**, en ligne droite, le long de la bande, la craie touchant le papier à chaque passage.",
+    "Observer la trace laissée par la valve sur la bande, puis marquer au crayon les positions successives du **moyeu O** et du point du **guidon** pendant le même trajet.",
+    "Reporter dans le tableau, pour chacun des trois points, le référentiel choisi, l'allure de la trace et le nom de la trajectoire."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Le point observé",
+      "Le référentiel choisi",
+      "Allure de la trace obtenue",
+      "Nom de la trajectoire"
+    ],
+    "lignes": [
+      [
+        "La valve M",
+        "Le cadre du vélo (vélo sur béquille)",
+        "",
+        ""
+      ],
+      [
+        "La valve M",
+        "Le sol (vélo qui avance)",
+        "",
+        ""
+      ],
+      [
+        "Le moyeu O",
+        "Le sol (vélo qui avance)",
+        "",
+        ""
+      ],
+      [
+        "Un point du guidon",
+        "Le sol (vélo qui avance)",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "La valve M",
+        "Le cadre du vélo (vélo sur béquille)",
+        "Un cercle fermé, parcouru toujours dans le même sens",
+        "Circulaire"
+      ],
+      [
+        "La valve M",
+        "Le sol (vélo qui avance)",
+        "Une suite d'arceaux qui ne se referment jamais",
+        "Curviligne"
+      ],
+      [
+        "Le moyeu O",
+        "Le sol (vélo qui avance)",
+        "Une ligne droite parallèle au sol",
+        "Rectiligne"
+      ],
+      [
+        "Un point du guidon",
+        "Le sol (vélo qui avance)",
+        "Une ligne droite parallèle au sol",
+        "Rectiligne"
+      ]
+    ]
+  },
+  "observation": "La craie fixée sur la valve trace un cercle fermé quand le vélo est sur sa béquille, et une suite d'arceaux quand le vélo avance ; pendant le même trajet, le moyeu de la même roue ne trace qu'une ligne droite.",
+  "conclusion": "La trajectoire est l'ensemble des positions successives d'un point dans un référentiel donné. Elle change avec le référentiel choisi et diffère d'un point à l'autre du même solide : rectiligne, circulaire ou curviligne.",
+  "oheric": {
+    "observation": "La valve du vélo attaché à l'arrière du car laisse dans la poussière une suite d'**arceaux**, alors que le cycliste, lui, affirme qu'elle tourne en **rond**. Vue du trottoir, la valve avance en même temps qu'elle tourne ; vue par le cycliste, elle revient toujours au même endroit. La ligne suivie par un point dépend-elle, elle aussi, du corps par rapport auquel on l'observe ?",
+    "hypothese": "Si la ligne suivie par un point dépend du référentiel choisi, alors la **même valve**, marquée d'une craie, laissera une trace en forme de **cercle** lorsqu'on la rapporte au **cadre du vélo**, et une trace de **forme différente** lorsqu'on la rapporte au **sol**.",
+    "experience": "Une craie humide est fixée sur la **valve** d'une roue de vélo. Dans un premier temps, le vélo est posé sur sa **béquille** et une feuille est plaquée contre la roue : la craie y laisse sa trace pendant deux tours, le référentiel étant le **cadre**. Dans un second temps, le vélo est poussé au pas le long d'une **bande de papier** déroulée au sol : la craie y laisse sa trace, le référentiel étant le **sol**. On relève au passage les traces du **moyeu** et d'un point du **guidon**.",
+    "resultats": "Vélo sur béquille, la trace de la valve est un **cercle fermé**, parcouru toujours dans le même sens. Vélo qui avance, la trace de la même valve sur la bande est une **suite d'arceaux** qui se succèdent sans jamais se refermer. Pendant ce même trajet, la trace du **moyeu** est une **ligne droite**, et celle du point du **guidon** aussi.",
+    "interpretation": "Lorsque le vélo avance, la valve **tourne autour du moyeu** et **avance** avec lui : les deux déplacements s'ajoutent, et la trace ne peut plus se refermer. Rien n'a changé au mouvement de la roue entre les deux relevés — la roue a tourné de la même façon ; ce qui a changé, c'est le **corps par rapport auquel on regarde**. L'hypothèse est donc validée : la trajectoire est, comme le mouvement, une notion **relative**. Les deux autres traces apportent un second enseignement, qui n'était pas cherché : sur **un même solide**, le moyeu décrit une droite pendant que la valve décrit des arceaux. Deux points d'un même corps n'ont donc pas forcément la même trajectoire — c'est pourquoi on dit toujours « la trajectoire **d'un point** », jamais « la trajectoire du vélo ».",
+    "conclusion": "La **trajectoire** d'un point d'un corps en mouvement est l'ensemble des **positions successives** qu'il occupe au cours du temps, **dans un référentiel donné**. Elle est **rectiligne** si ces positions forment une droite, **circulaire** si elles forment un cercle, **curviligne** si elles forment une autre courbe. La trajectoire dépend du référentiel choisi et du point observé : il faut nommer les deux."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+
+
+
+/* ==================================================================
+   1. LES CONSTANTES DU MONTAGE
+   ==================================================================
+   La fiche ne chiffre ni la roue ni la valve : elle dit « la roue avant »
+   et « la valve ». Les valeurs ci-dessous sont donc des grandeurs de
+   MONTAGE, déclarées comme telles, et non des constantes de la nature.  */
+var PHYS = {
+  R_ROUE: { v: 0.34, u: "m", n: "rayon de la roue avant",
+    s: "roue de 26 pouces jantée, pneu compris : 0,34 m — la roue de vélo la plus répandue au collège" },
+  R_VALVE: { v: 0.80, u: "× R", n: "distance de la craie au moyeu",
+    s: "la valve traverse la jante, donc la craie se fixe tout près d'elle : 0,80 R" },
+  TOURS: { v: 2, u: "tours", n: "nombre de tours observés",
+    s: "« sur deux tours complets », dit le protocole — deux suffisent à voir que la trace se referme, ou non" },
+  ROULE: { v: 1.0, u: "× 2πR par tour", n: "avance du vélo par tour de roue",
+    s: "1 exactement, c'est la condition de ROULEMENT SANS GLISSEMENT ; c'est elle qui lie la rotation à l'avance" },
+  TOL: { v: 0.004, u: "de l'étendue", n: "tolérance de classement d'une trace",
+    s: "au-delà, la trace n'est plus tenue pour droite ni pour circulaire — repère de LECTURE, pas constante physique" },
+  N_PTS: { v: 480, u: "points", n: "finesse du relevé de la trace",
+    s: "assez pour que le classement ne dépende plus du pas d'échantillonnage ; vérifié en doublant la valeur" }
+};
+
+/* ==================================================================
+   2. CE QUE LA FICHE DIT — lu, jamais recopié (§0)
+   ================================================================== */
+function T(k) { return DONNEES[k] || ""; }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return TM().entetes || []; }
+function lignesFiche() { return TM().lignes || []; }
+function valeursFiche() { return TM().valeurs || []; }
+
+/* Les quatre relevés de la fiche : un couple (point observé, référentiel)
+   par ligne. La clé technique sert au calcul ; les intitulés viennent du
+   YAML et de nulle part ailleurs. */
+var RELEVES = [
+  { k: "valve-cadre", pt: "valve", ref: "cadre" },
+  { k: "valve-sol", pt: "valve", ref: "sol" },
+  { k: "moyeu-sol", pt: "moyeu", ref: "sol" },
+  { k: "guidon-sol", pt: "guidon", ref: "sol" }
+];
+function nomPoint(i) {
+  var l = lignesFiche()[i];
+  return l && l[0] ? String(l[0]) : RELEVES[i].pt;
+}
+function nomRefLigne(i) {
+  var l = lignesFiche()[i];
+  return l && l[1] ? String(l[1]) : RELEVES[i].ref;
+}
+/* Les trois noms de trajectoire que la fiche emploie. On les relit dans
+   ses valeurs plutôt que de les écrire : si elle disait « courbe » au
+   lieu de « curviligne », la page suivrait. */
+function nomsFiche() {
+  var v = valeursFiche(), out = {}, i, n;
+  for (i = 0; i < v.length; i++) {
+    n = String(v[i][3] || "");
+    if (/rectiligne/i.test(n)) out.droite = n;
+    else if (/circulaire/i.test(n)) out.cercle = n;
+    else if (n) out.courbe = n;
+  }
+  if (!out.droite) out.droite = "Rectiligne";
+  if (!out.cercle) out.cercle = "Circulaire";
+  if (!out.courbe) out.courbe = "Curviligne";
+  return out;
+}
+/* L'allure de la trace, telle que la fiche la décrit, pour le relevé i. */
+function allureFiche(i) {
+  var v = valeursFiche()[i];
+  return v ? String(v[2] || "") : "";
+}
+function verdictFiche(i) {
+  var v = valeursFiche()[i];
+  return v ? String(v[3] || "") : "";
+}
+function secu(motif) {
+  var s = L("securite"), i, re = new RegExp(motif, "i");
+  for (i = 0; i < s.length; i++) if (re.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+
+/* ==================================================================
+   3. LE MODÈLE — une roue qui roule, et rien d'autre
+   ==================================================================
+   Une roue de rayon R qui roule sans glisser : après un angle φ, le
+   moyeu a avancé de R·φ. Un point à la distance r du moyeu est alors,
+   dans le référentiel du SOL, en
+
+       x = a·R·φ − r·sin φ        y = R − r·cos φ
+
+   où a vaut 1 quand la roue roule sans glisser. Dans le référentiel du
+   CADRE, il suffit de retirer le terme d'avance : c'est la définition
+   même du changement de référentiel, écrite en une soustraction.        */
+
+var REG = { rVal: PHYS.R_VALVE.v, tours: PHYS.TOURS.v, avance: PHYS.ROULE.v };
+
+/* ⚠ LA HAUTEUR DU GUIDON, ÉCRITE UNE SEULE FOIS.
+   Elle valait 2,05 R aux deux endroits qui en ont besoin — le modèle, en
+   mètres, et l'écran, en pixels. Pour une roue de 0,34 m cela fait 0,70 m,
+   c'est-à-dire le SOMMET de la roue (2 R = 0,68 m) : le guidon était dessiné
+   au ras du pneu, SOUS le tube supérieur du cadre, et la potence n'était
+   qu'un moignon de 9 px dirigé vers le BAS — sa cible étant plus basse que
+   son départ. Un guidon de vélo adulte est à environ 1 m du sol.
+   Une seule constante, pour que le dessin et le tracé ne puissent plus
+   diverger.                                                                */
+var H_GUIDON = 2.9;                 // en rayons de roue : 0,99 m pour R = 0,34 m
+
+/* La distance au moyeu de chacun des trois points suivis. Le guidon ne
+   tourne pas : c'est un point du CADRE, pas de la roue. */
+function rayonDe(pt) {
+  if (pt === "valve") return REG.rVal * PHYS.R_ROUE.v;
+  if (pt === "moyeu") return 0;
+  return 0;                     // le guidon : solidaire du cadre
+}
+function tournavec(pt) { return pt !== "guidon"; }
+
+/* La trace, en mètres, dans le référentiel demandé. */
+function trace(pt, ref, n) {
+  var R = PHYS.R_ROUE.v, r = rayonDe(pt), pts = [], i, phi;
+  var N = n || PHYS.N_PTS.v;
+  var av = ref === "sol" ? REG.avance * R : 0;
+  var hauteurGuidon = H_GUIDON * R;   // bien au-dessus de la roue
+  for (i = 0; i <= N; i++) {
+    phi = REG.tours * 2 * Math.PI * i / N;
+    if (pt === "guidon") {
+      pts.push([av * phi, hauteurGuidon]);
+    } else if (tournavec(pt)) {
+      pts.push([av * phi - r * Math.sin(phi), R - r * Math.cos(phi)]);
+    } else {
+      pts.push([av * phi, R]);
+    }
+  }
+  return pts;
+}
+/* La trace se referme-t-elle ? La fiche insiste là-dessus : « un cercle
+   fermé » d'un côté, « qui ne se referment jamais » de l'autre. */
+function seReferme(pts) {
+  var a = pts[0], b = pts[pts.length - 1], e = etendue(pts);
+  return Math.hypot(b[0] - a[0], b[1] - a[1]) < PHYS.TOL.v * Math.max(e, 1e-9);
+}
+function etendue(pts) {
+  var xs = pts.map(function (p) { return p[0]; }),
+      ys = pts.map(function (p) { return p[1]; });
+  return Math.max(Math.max.apply(null, xs) - Math.min.apply(null, xs),
+                  Math.max.apply(null, ys) - Math.min.apply(null, ys));
+}
+
+/* ==================================================================
+   4. LE CLASSEMENT — mesuré sur la trace, jamais décrété
+   ==================================================================
+   Ajustement de Kåsa : le cercle qui colle le mieux à un nuage de
+   points, au sens des moindres carrés, se trouve en résolvant un système
+   linéaire 3×3. Aucun cercle n'est supposé d'avance ; s'il n'y en a pas,
+   le résidu le dit.                                                     */
+function ajusterCercle(pts) {
+  var n = pts.length, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0,
+      sxz = 0, syz = 0, sz = 0, i, x, y, z;
+  for (i = 0; i < n; i++) {
+    x = pts[i][0]; y = pts[i][1]; z = x * x + y * y;
+    sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y;
+    sxz += x * z; syz += y * z; sz += z;
+  }
+  var a11 = sxx, a12 = sxy, a13 = sx, a22 = syy, a23 = sy;
+  var b1 = sxz / 2, b2 = syz / 2, b3 = sz / 2;
+  var det = a11 * (a22 * n - a23 * a23) - a12 * (a12 * n - a23 * a13)
+          + a13 * (a12 * a23 - a22 * a13);
+  if (Math.abs(det) < 1e-24) return null;
+  var cx = (b1 * (a22 * n - a23 * a23) - a12 * (b2 * n - a23 * b3)
+          + a13 * (b2 * a23 - a22 * b3)) / det;
+  var cy = (a11 * (b2 * n - a23 * b3) - b1 * (a12 * n - a23 * a13)
+          + a13 * (a12 * b3 - b2 * a13)) / det;
+  var rr = 0;
+  for (i = 0; i < n; i++) rr += Math.hypot(pts[i][0] - cx, pts[i][1] - cy);
+  return { cx: cx, cy: cy, r: rr / n };
+}
+/* Les deux mesures qui décident, plus l'étendue qui les rend comparables. */
+function mesurer(pts) {
+  var e = etendue(pts), a = pts[0], b = pts[pts.length - 1], i;
+  var dx = b[0] - a[0], dy = b[1] - a[1], Lg = Math.hypot(dx, dy), d = 0;
+  if (Lg > 1e-12) {
+    for (i = 0; i < pts.length; i++) {
+      d = Math.max(d, Math.abs((pts[i][0] - a[0]) * dy
+                             - (pts[i][1] - a[1]) * dx) / Lg);
+    }
+  } else {
+    /* Trace fermée : la « droite » des extrémités est un point. On mesure
+       alors l'écart à la droite des moindres carrés, sans quoi un cercle
+       parfait serait déclaré rectiligne. */
+    d = e / 2;
+  }
+  var c = ajusterCercle(pts), res = Infinity;
+  if (c && c.r > 1e-12) {
+    res = 0;
+    for (i = 0; i < pts.length; i++) {
+      res = Math.max(res, Math.abs(Math.hypot(pts[i][0] - c.cx,
+                                              pts[i][1] - c.cy) - c.r));
+    }
+  }
+  return { etendue: e, ecartDroite: d, residuCercle: res, cercle: c };
+}
+/* ⚠️ L'ORDRE EST LE FOND DE L'AFFAIRE : la droite d'abord. Un arc de
+   cercle de très grand rayon a un résidu circulaire nul et un écart à la
+   droite nul ; en testant le cercle en premier, toute droite deviendrait
+   « circulaire de rayon infini ». */
+function classer(pts) {
+  var m = mesurer(pts), N = nomsFiche(), tol = PHYS.TOL.v * Math.max(m.etendue, 1e-9);
+  if (m.etendue < 1e-9) return { nom: N.droite, quoi: "point", m: m };
+  if (m.ecartDroite < tol) return { nom: N.droite, quoi: "droite", m: m };
+  if (m.residuCercle < tol) return { nom: N.cercle, quoi: "cercle", m: m };
+  return { nom: N.courbe, quoi: "courbe", m: m };
+}
+
+/* Le protocole : vélo poussé au pas, roue roulant sans glisser, craie
+   fixée sur la VALVE — donc près de la jante, pas sur le moyeu. */
+function horsProtocole() {
+  return Math.abs(REG.avance - PHYS.ROULE.v) > 0.05 || REG.rVal < 0.5;
+}
+
+/* Contrôle interne : au protocole, les quatre verdicts calculés doivent
+   redonner ceux de la fiche. S'ils divergent un jour, il faut le SAVOIR. */
+function accordAvecLaFiche() {
+  var i, c;
+  for (i = 0; i < RELEVES.length; i++) {
+    c = classer(trace(RELEVES[i].pt, RELEVES[i].ref));
+    if (c.nom !== verdictFiche(i)) return false;
+  }
+  return true;
+}
+
+/* ==================================================================
+   5. L'ÉTAT DE LA PAILLASSE
+   ================================================================== */
+var svg = null, COUCHES = {};
+var gVelo = null, gCraie = null, gGomMoyeu = null, gGomGuidon = null;
+var gFeuille = null, gBande = null, gRoue = null;
+var ETAT = null;
+
+function neufEtat() {
+  return {
+    craie: false,        // la craie est fixée sur la valve
+    gomM: false,         // gommette sur le moyeu
+    gomG: false,         // gommette sur un point du guidon
+    feuille: false,      // la feuille A2 est plaquée contre la roue
+    /* ⚠️ ref MANQUAIT dans cette liste. ETAT.ref valait alors undefined,
+       tous les tests « ref === "cadre" » tombaient dans la branche « sol »,
+       et le premier temps du protocole était INACCESSIBLE — sans la
+       moindre erreur JS. Une clé d'état oubliée ne se voit qu'au pilotage. */
+    ref: "cadre",        // le référentiel choisi : le cadre, puis le sol
+    bequille: true,      // le vélo est sur sa béquille
+    bande: false,        // la bande de papier est déroulée
+    phi: 0,              // l'angle dont la roue a tourné, en radians
+    releve: {},          // les relevés terminés, par clé
+    suivi: "valve-cadre",
+    conclu: false,
+    notes: []
+  };
+}
+/* L'angle total demandé par le réglage. */
+function phiMax() { return REG.tours * 2 * Math.PI; }
+
+/* ==================================================================
+   6. LA GÉOMÉTRIE
+   ==================================================================
+   ZONES INTERDITES, relevées sur capture :
+     · bandeau de consigne    x 224..896   y < 60
+     · journal d'observation  x < 278      y < 300
+     · plaque de sécurité     x < 276      y 316..452
+   La scène commence donc à x = 300.                                     */
+var W = 1120, H = 760, SOL = 588, BANC = 628;
+var Y_BT1 = 660, Y_BT2 = 700;
+/* ⚠️ TROIS CONTRAINTES SE RENCONTRENT ICI, ET ELLES ONT ÉTÉ MESURÉES,
+   pas estimées :
+     · la roue arrière ne doit pas mordre sur la plaque de sécurité (x<276) ;
+     · deux tours complets font avancer le vélo de 2·2πR : il faut que
+       X_DEPART + 4πR + R tienne dans les 1120 unités du cadre ;
+     · les outils, à droite, ne doivent pas être percutés à l'arrivée.
+   R = 52 est la plus grande roue qui satisfasse les trois. À 66, le vélo
+   traversait la plaque au départ et sortait du cadre à l'arrivée.        */
+var R_PX = 52;                               // rayon de la roue, à l'écran
+var PX_M = R_PX / PHYS.R_ROUE.v;             // l'échelle de toute la scène
+var X_DEPART = 400;
+var Y_MOYEU = SOL - R_PX;
+var EMPAT = 110;                             // empattement : roue avant / arrière
+var Y_GUIDON = SOL - Math.round(H_GUIDON * R_PX);
+var X_OUTILS = 1058, Y_CRAIE = 196, Y_GOM = 262;
+var Y_CHIPS = 128;
+
+/* La course dépend de l'avance EFFECTIVE — nulle sur béquille — définie
+   avec le reste du mouvement au §9. */
+
+/* ==================================================================
+   7. DÉFINITIONS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("sol", [[0, "#cfd6de"], [1, "#aeb8c4"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("papier", [[0, "#fffdf6"], [1, "#efeade"]]);
+  grad("cadre", [[0, "#3f7fb5"], [0.5, "#2b5c88"], [1, "#1d3f5e"]], true);
+  grad("pneu", [[0, "#4a5260"], [0.4, "#2b313b"], [1, "#171c23"]]);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .26 }));
+  D.appendChild(f);
+}
+function ajouterCouches() {
+  ["fond", "papier", "trace", "poste", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function txtIn(p, x, y, s, o) {
+  o = o || {};
+  return p.appendChild(el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 }, s));
+}
+function enrouler(t, n, max) {
+  var mots = String(t).split(/\s+/), out = [], ligne = "";
+  mots.forEach(function (m) {
+    if (!ligne.length) { ligne = m; return; }
+    if ((ligne + " " + m).length <= n) { ligne += " " + m; }
+    else { out.push(ligne); ligne = m; }
+  });
+  if (ligne.length) out.push(ligne);
+  if (max && out.length > max) {
+    out = out.slice(0, max);
+    out[max - 1] = out[max - 1].replace(/[\s,;:.]*$/, "") + "…";
+  }
+  return out;
+}
+
+/* ==================================================================
+   8. LE DÉCOR
+   ================================================================== */
+function construireFond() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: SOL, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: SOL, width: W, height: BANC - SOL, fill: "url(#sol)" }));
+  ajout("fond", el("line", { x1: 0, y1: SOL, x2: W, y2: SOL,
+    stroke: "#93a0af", "stroke-width": 2 }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: H - BANC, fill: "url(#banc)" }));
+}
+
+/* La bande de papier déroulée au sol : c'est le support de la trace dans
+   le référentiel du SOL. Elle n'apparaît qu'une fois déroulée. */
+function construireBande() {
+  var g = ajout("papier", el("g", { id: "bande", opacity: 0,
+    "pointer-events": "none" })), i;
+  gBande = g;
+  g.appendChild(el("rect", { x: 300, y: SOL - 4, width: 790, height: 22, rx: 2,
+    fill: "url(#papier)", stroke: "#c9c0aa", "stroke-width": 1.3 }));
+  for (i = 0; i <= 8; i++) {
+    g.appendChild(el("line", { x1: 300 + i * 98.75, y1: SOL - 4,
+      x2: 300 + i * 98.75, y2: SOL + 18, stroke: "#ded6c4", "stroke-width": 1 }));
+  }
+  txtIn(g, 695, SOL + 32, "bande de papier — 3 à 4 m déroulés au sol",
+    { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* La feuille A2 plaquée contre la roue : le support de la trace dans le
+   référentiel du CADRE. Elle suit le vélo, puisqu'elle est tenue contre
+   lui — et c'est bien pour cela qu'elle donne l'autre trace. */
+function construireFeuille() {
+  var g = ajout("papier", el("g", { id: "feuille", opacity: 0,
+    "pointer-events": "none" }));
+  gFeuille = g;
+  g.appendChild(el("rect", { x: -R_PX - 26, y: -R_PX - 26, width: 2 * R_PX + 52,
+    height: 2 * R_PX + 52, rx: 3, fill: "url(#papier)", stroke: "#c9c0aa",
+    "stroke-width": 1.4, filter: "url(#ombreDouce)" }));
+  txtIn(g, 0, R_PX + 40, "feuille A2, plaquée dans le plan de la roue",
+    { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* Le vélo, vu de côté. Seule la roue avant nous intéresse : c'est elle
+   qui porte la valve, et c'est elle qu'on fait tourner. */
+function construireVelo() {
+  var g = ajout("objets", el("g", { id: "velo" }));
+  gVelo = g;
+  var xa = -EMPAT, ya = 0;              // roue arrière, relative au moyeu avant
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  /* Le cadre : deux triangles, comme sur tout vélo. */
+  d.appendChild(el("path", { d: "M " + pt(xa, 0) + " L " + pt(xa + 44, -R_PX - 6)
+    + " L " + pt(-24, -R_PX - 6) + " L " + pt(xa + 10, -4) + " Z",
+    fill: "none", stroke: "url(#cadre)", "stroke-width": 6,
+    "stroke-linejoin": "round" }));
+  d.appendChild(el("path", { d: "M " + pt(-24, -R_PX - 6) + " L " + pt(0, 0),
+    stroke: "url(#cadre)", "stroke-width": 6, fill: "none" }));
+  d.appendChild(el("path", { d: "M " + pt(xa + 44, -R_PX - 6) + " L "
+    + pt(xa + 30, -R_PX - 30), stroke: "#2b5c88", "stroke-width": 5, fill: "none" }));
+  d.appendChild(el("ellipse", { cx: xa + 26, cy: -R_PX - 34, rx: 15, ry: 5,
+    fill: "#2c3440" }));
+  /* ⚠ LA DIRECTION : COLONNE, PUIS GUIDON — ET ELLE PROLONGE LA FOURCHE.
+     La fourche, elle, est déjà là : c'est le trait du cadre qui descend du
+     tube de direction (-24, -R-6) jusqu'au moyeu avant (0, 0). Ce qui
+     manquait, c'est ce qui monte AU-DESSUS du cadre. À sa place il y avait
+     une barre horizontale de 42 px posée à -55, sous le tube supérieur, et
+     un moignon qui pointait vers le bas : aucun vélo ne se tient comme ça.
+     La colonne suit maintenant l'axe de direction — le prolongement du trait
+     moyeu → tube de direction, ce qui donne un angle de chasse d'environ 71°,
+     celui d'un vélo réel — et porte un guidon vu de côté, légèrement cintré,
+     dont le milieu tombe exactement sur le point suivi. */
+  var YG = Y_GUIDON - Y_MOYEU;
+  d.appendChild(el("path", { d: "M " + pt(-24, -R_PX - 6) + " L " + pt(-33, YG + 2),
+    stroke: "#2b5c88", "stroke-width": 5, fill: "none",
+    "stroke-linecap": "round" }));
+  d.appendChild(el("path", { d: "M " + pt(-47, YG + 4) + " Q " + pt(-34, YG - 4)
+    + " " + pt(-19, YG + 2), stroke: "#2c3440", "stroke-width": 6,
+    fill: "none", "stroke-linecap": "round" }));
+  /* La roue arrière. */
+  d.appendChild(el("circle", { cx: xa, cy: 0, r: R_PX, fill: "none",
+    stroke: "url(#pneu)", "stroke-width": 7 }));
+  d.appendChild(el("circle", { cx: xa, cy: 0, r: R_PX - 6, fill: "none",
+    stroke: "#9aa5b2", "stroke-width": 1.6 }));
+  d.appendChild(el("circle", { cx: xa, cy: 0, r: 6, fill: "#8d97a5",
+    stroke: "#5d6874", "stroke-width": 1.4 }));
+  construireRoueAvant(g);
+  /* La béquille. */
+  var b = g.appendChild(el("g", { id: "bequille", "pointer-events": "none" }));
+  b.appendChild(el("line", { x1: xa + 6, y1: 4, x2: xa - 30, y2: R_PX - 2,
+    stroke: "#6b7686", "stroke-width": 4, "stroke-linecap": "round" }));
+}
+
+/* La roue avant : c'est l'objet manipulable de cette page. On la fait
+   tourner en glissant le doigt sur le PNEU — jamais sur les rayons, dit
+   la fiche, et la page respecte le geste jusque-là. */
+function construireRoueAvant(parent) {
+  var g = parent.appendChild(el("g", { "data-act": "roue", cursor: "grab" }));
+  /* Prise en main : la couronne du pneu, et elle seule. Tout le reste du
+     dessin est décoratif et désarmé (§12.15). */
+  g.appendChild(el("circle", { cx: 0, cy: 0, r: R_PX + 9, fill: "none",
+    stroke: "transparent", "stroke-width": 22 }));
+  var t = g.appendChild(el("g", { id: "roueTourne", "pointer-events": "none" }));
+  gRoue = t;
+  t.appendChild(el("circle", { cx: 0, cy: 0, r: R_PX, fill: "none",
+    stroke: "url(#pneu)", "stroke-width": 7 }));
+  t.appendChild(el("circle", { cx: 0, cy: 0, r: R_PX - 6, fill: "none",
+    stroke: "#9aa5b2", "stroke-width": 1.6 }));
+  var i, a;
+  for (i = 0; i < 12; i++) {
+    a = i * Math.PI / 6;
+    t.appendChild(el("line", { x1: 0, y1: 0, x2: (R_PX - 6) * Math.cos(a),
+      y2: (R_PX - 6) * Math.sin(a), stroke: "#b7c0cb", "stroke-width": 1.2 }));
+  }
+  /* La valve, sur la jante : c'est le point M de la fiche. Le groupe
+     est placé à (0, +r) dans le repère de la roue — donc EN BAS à
+     φ = 0, comme le veut le modèle y = R − r·cos φ — et r suit le
+     curseur, sans quoi le réglage mentirait sur ce qu'il fait. */
+  var v = t.appendChild(el("g", { id: "valve" }));
+  v.appendChild(el("rect", { x: -2.5, y: -6, width: 5, height: 12, rx: 1.5,
+    fill: "#c8912a", stroke: "#8a6a1e", "stroke-width": 1 }));
+  /* La craie, quand elle y est fixée. */
+  var c = v.appendChild(el("g", { id: "craieSurValve", opacity: 0 }));
+  c.appendChild(el("circle", { cx: 0, cy: 0, r: 5.5, fill: "#f6f1e3",
+    stroke: "#b9a878", "stroke-width": 1.2 }));
+  /* Le moyeu, et sa gommette. */
+  parent.appendChild(el("circle", { cx: 0, cy: 0, r: 6, fill: "#8d97a5",
+    stroke: "#5d6874", "stroke-width": 1.4, "pointer-events": "none" }));
+  var gm = parent.appendChild(el("g", { id: "gomMoyeu", opacity: 0,
+    "pointer-events": "none" }));
+  gm.appendChild(el("circle", { cx: 0, cy: 0, r: 5, fill: "#d64545",
+    stroke: "#8f2b2b", "stroke-width": 1.2 }));
+  /* Le point du guidon, et sa gommette. */
+  var gg = parent.appendChild(el("g", { id: "gomGuidon", opacity: 0,
+    "pointer-events": "none" }));
+  gg.appendChild(el("circle", { cx: -34, cy: Y_GUIDON - Y_MOYEU, r: 5,
+    fill: "#3a8f4a", stroke: "#256030", "stroke-width": 1.2 }));
+}
+
+/* Les outils, rangés à droite hors du trajet. */
+function construireOutils() {
+  var g = ajout("objets", el("g", { "data-act": "craie", cursor: "grab",
+    id: "outilCraie" }));
+  gCraie = g;
+  g.appendChild(el("rect", { x: -22, y: -22, width: 44, height: 44, fill: "transparent" }));
+  var d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("rect", { x: -6, y: -16, width: 12, height: 32, rx: 4,
+    fill: "#f6f1e3", stroke: "#b9a878", "stroke-width": 1.3 }));
+  d.appendChild(el("rect", { x: -6, y: -16, width: 12, height: 9, rx: 4,
+    fill: "#dcd2b4" }));
+  txt("poste", X_OUTILS, Y_CRAIE - 30, "craie humide", { taille: 9.5, couleur: "#9aa5b2" });
+
+  g = ajout("objets", el("g", { "data-act": "gommettes", cursor: "grab",
+    id: "outilGom" }));
+  gGomMoyeu = g;
+  g.appendChild(el("rect", { x: -24, y: -20, width: 48, height: 40, fill: "transparent" }));
+  d = g.appendChild(el("g", { "pointer-events": "none" }));
+  d.appendChild(el("circle", { cx: -9, cy: 0, r: 7, fill: "#d64545",
+    stroke: "#8f2b2b", "stroke-width": 1.2 }));
+  d.appendChild(el("circle", { cx: 9, cy: 0, r: 7, fill: "#3a8f4a",
+    stroke: "#256030", "stroke-width": 1.2 }));
+  txt("poste", X_OUTILS, Y_GOM - 22, "gommettes", { taille: 9.5, couleur: "#9aa5b2" });
+}
+
+/* La plaque de sécurité, sous le journal, à la largeur du journal. */
+function construireSecurite() {
+  var X = 20, Y = 316, LG = 254, HT = 136;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8, "pointer-events": "none" }));
+  txt("poste", X + 11, Y + 21, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.3 });
+  /* On vise la ligne par ce qu'elle DIT (§12.14) : le vrai risque de cette
+     séance, ce sont les doigts dans les rayons. */
+  enrouler(secu("rayons").replace(/\s*:.*$/, ""), 34, 4).forEach(function (s, i) {
+    txt("poste", X + 11, Y + 42 + i * 14, s, { ancre: "start", taille: 10,
+        gras: true, couleur: ROUGE });
+  });
+  txt("poste", X + 11, Y + 104, "Deux apprenants tiennent le vélo", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+  txt("poste", X + 11, Y + 118, "en permanence, un de chaque côté.", { ancre: "start",
+      taille: 10, couleur: "#8a5252" });
+}
+
+/* La rangée des deux référentiels : c'est elle qui commande la scène.
+   Elle est fixe, sous le bandeau de consigne, hors du journal. */
+var CHIPS = [];
+function construireChips() {
+  var g = ajout("ui", el("g", { id: "chips" })), x = 300, lg, b;
+  txt("ui", 300, Y_CHIPS - 20, "RÉFÉRENTIEL", { ancre: "start", taille: 9.5,
+      gras: true, couleur: "#8a7b52", esp: 1.1 });
+  [{ k: "cadre", t: nomRefLigne(0) }, { k: "sol", t: nomRefLigne(1) }]
+    .forEach(function (c) {
+      lg = 22 + c.t.length * 6.1;
+      b = g.appendChild(el("g", { "data-act": "ref-" + c.k, cursor: "pointer",
+        id: "chip-" + c.k }));
+      b.appendChild(el("rect", { x: x, y: Y_CHIPS - 13, width: lg, height: 26,
+        rx: 13, fill: "#fff9e2", stroke: "#c8912a", "stroke-width": 1.5 }));
+      txtIn(b, x + lg / 2, Y_CHIPS + 4.5, c.t, { taille: 11, couleur: "#8a6a1e" });
+      CHIPS.push({ k: c.k, x: x, lg: lg });
+      x += lg + 12;
+    });
+}
+
+function construireLegende() {
+  txt("ui", W / 2, 742, "schéma habillé — la roue, la valve et l'avance sont "
+    + "à l'échelle ; la craie marque en continu, ce qu'une craie réelle ne fait pas",
+    { taille: 9.5, couleur: "#8794a5" });
+}
+
+/* ==================================================================
+   9. OÙ SONT LES CHOSES
+   ==================================================================
+   L'avance EFFECTIVE : vélo sur béquille, la roue tourne et le vélo
+   n'avance pas — c'est là toute la différence entre les deux temps du
+   protocole, et c'est cette variable-là qui la porte.                   */
+function avanceEff() { return ETAT.bequille ? 0 : REG.avance; }
+function xVeloReel() { return X_DEPART + avanceEff() * R_PX * ETAT.phi; }
+function rPx() { return REG.rVal * R_PX; }
+
+/* La position à l'écran d'un point suivi, à l'angle φ. */
+function ecran(pt, phi, xv) {
+  var r = pt === "valve" ? rPx() : 0;
+  if (pt === "guidon") return { x: xv - 34, y: Y_GUIDON };
+  return { x: xv - r * Math.sin(phi), y: SOL - (R_PX - r * Math.cos(phi)) };
+}
+function posValve() { return ecran("valve", ETAT.phi, xVeloReel()); }
+function posMoyeu() { return { x: xVeloReel(), y: Y_MOYEU }; }
+function posGuidon() { return { x: xVeloReel() - 34, y: Y_GUIDON }; }
+
+/* ==================================================================
+   10. LE MOTEUR DE MANIPULATION
+   ================================================================== */
+var PRISE = null, SEUIL_PX = 5;
+
+function ptSvg(ev) {
+  var p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function noeudAct(n) {
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+function cible(x, y) {
+  var s = svg.createSVGPoint(), n;
+  s.x = x; s.y = y;
+  s = s.matrixTransform(svg.getScreenCTM());
+  n = noeudAct(document.elementFromPoint(s.x, s.y));
+  return n ? n.getAttribute("data-act") : null;
+}
+
+function brancherManipulation() {
+  svg.addEventListener("pointerdown", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act"), p;
+    if (!a) return;
+    p = ptSvg(ev);
+    PRISE = { act: a, x0: p.x, y0: p.y, bouge: false,
+              ang0: angleRoue(p.x, p.y), phi0: ETAT.phi };
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
+  });
+  svg.addEventListener("pointermove", function (ev) {
+    if (!PRISE) return;
+    var p = ptSvg(ev), dx = p.x - PRISE.x0, dy = p.y - PRISE.y0;
+    if (!PRISE.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL_PX) return;
+    PRISE.bouge = true;
+    if (PRISE.act === "roue") tournerVers(p.x, p.y);
+    else montrerFantome(PRISE.act, p.x, p.y);
+  });
+  function lacher(ev) {
+    if (!PRISE) return;
+    var pr = PRISE, p = ptSvg(ev);
+    PRISE = null;
+    effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (!pr.bouge) { cliquer(pr.act); return; }
+    if (pr.act === "roue") { finRotation(); return; }
+    deposer(pr.act, p.x, p.y);
+  }
+  svg.addEventListener("pointerup", lacher);
+  svg.addEventListener("pointercancel", function (ev) {
+    if (!PRISE) return;
+    PRISE = null; effacerFantome();
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    redessiner();
+  });
+}
+
+/* ==================================================================
+   11. FAIRE TOURNER LA ROUE
+   ==================================================================
+   On suit l'ANGLE du doigt autour du moyeu, et l'on cumule ses
+   variations en les recollant à ±π près : sans ce recollement, la roue
+   ferait un bond d'un tour chaque fois que le doigt passe par le haut. */
+function angleRoue(x, y) {
+  var c = posMoyeu();
+  return Math.atan2(y - c.y, x - c.x);
+}
+var ANG_PREC = null;
+function tournerVers(x, y) {
+  var a = angleRoue(x, y), d;
+  if (ANG_PREC === null) ANG_PREC = PRISE.ang0;
+  d = a - ANG_PREC;
+  while (d > Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  ANG_PREC = a;
+  ETAT.phi = borne(ETAT.phi + d, 0, phiMax());
+  redessiner();
+}
+function finRotation() {
+  ANG_PREC = null;
+  if (ETAT.phi >= phiMax() - 0.02) {
+    ETAT.phi = phiMax();
+    terminerReleve();
+  }
+  redessiner();
+}
+
+/* Un relevé terminé renseigne les lignes de la fiche qui portent sur le
+   référentiel courant — une seule pour le cadre, trois pour le sol. */
+function terminerReleve() {
+  if (!pret()) { signaler(pourquoiPasPret()); return; }
+  var faits = 0, i;
+  if (horsProtocole()) {
+    noter("Tour complet, mais hors protocole : le tableau de référence "
+        + "reste vide pour ce relevé. Le classement, lui, continue.");
+    return;
+  }
+  for (i = 0; i < RELEVES.length; i++) {
+    if (RELEVES[i].ref !== ETAT.ref) continue;
+    if (ETAT.releve[RELEVES[i].k]) continue;
+    ETAT.releve[RELEVES[i].k] = true;
+    faits++;
+  }
+  if (!faits) return;
+  var c = classer(trace(ETAT.ref === "cadre" ? "valve" : "valve", ETAT.ref));
+  noter("Relevé « " + nomRefLigne(ETAT.ref === "cadre" ? 0 : 1) + " » terminé : "
+      + "la trace de la valve est " + c.nom.toLowerCase()
+      + (seReferme(trace("valve", ETAT.ref)) ? " et se referme." : " et ne se referme pas."));
+  succes();
+}
+function pret() {
+  if (!ETAT.craie) return false;
+  if (ETAT.ref === "cadre") return ETAT.feuille;
+  return ETAT.bande && ETAT.gomM && ETAT.gomG;
+}
+function pourquoiPasPret() {
+  if (!ETAT.craie) return "Fixer d'abord la craie humide sur la valve : sans "
+    + "elle, la roue tourne mais ne laisse aucune trace.";
+  if (ETAT.ref === "cadre") return "Plaquer d'abord la feuille A2 contre la "
+    + "roue, dans son plan : c'est elle qui recevra la trace.";
+  if (!ETAT.bande) return "Dérouler d'abord la bande de papier au sol.";
+  if (!ETAT.gomM) return "Coller d'abord la gommette sur le moyeu O.";
+  return "Coller d'abord la gommette sur un point du guidon.";
+}
+
+/* ==================================================================
+   12. LES DÉPÔTS
+   ==================================================================
+   ⚠️ Les zones sont rendues DE LA PLUS PETITE À LA PLUS GRANDE : la
+   valve et le moyeu sont sur la roue, donc inclus dans elle. Testée en
+   dernier, la petite zone serait inatteignable et le refus qui enseigne
+   ne se produirait jamais (piège rencontré sur E3AC-11).                */
+function zoneValve() { var p = posValve(); return { type: "valve", x: p.x, y: p.y, r: 26 }; }
+function zoneMoyeu() { var p = posMoyeu(); return { type: "moyeu", x: p.x, y: p.y, r: 26 }; }
+function zoneGuidon() { var p = posGuidon(); return { type: "guidon", x: p.x, y: p.y, r: 30 }; }
+function zoneRoue() {
+  var p = posMoyeu();
+  return { type: "roue", x: p.x, y: p.y, r: R_PX + 14 };
+}
+function emplacements(a) {
+  if (a === "craie") return [zoneValve(), zoneMoyeu(), zoneGuidon(), zoneRoue()];
+  if (a === "gommettes") return [zoneMoyeu(), zoneGuidon(), zoneValve(), zoneRoue()];
+  return [];
+}
+function dansZone(z, x, y) { return Math.hypot(x - z.x, y - z.y) < z.r; }
+function zoneSous(a, x, y) {
+  var z = emplacements(a), i;
+  for (i = 0; i < z.length; i++) if (dansZone(z[i], x, y)) return z[i];
+  return null;
+}
+function accepte(a, z) {
+  if (!z) return false;
+  if (a === "craie") return z.type === "valve" && !ETAT.craie;
+  if (a === "gommettes") {
+    if (z.type === "moyeu") return !ETAT.gomM;
+    if (z.type === "guidon") return ETAT.gomM && !ETAT.gomG;
+  }
+  return false;
+}
+function refus(a, z) {
+  if (!z) return "Viser la roue : la valve, le moyeu, ou le point du guidon.";
+  if (a === "craie") {
+    if (ETAT.craie) return "La craie est déjà fixée sur la valve.";
+    if (z.type === "moyeu") return "Sur le moyeu, la craie ne tracerait qu'un "
+      + "POINT quand le vélo est sur béquille : le moyeu est le centre de la "
+      + "rotation, il ne tourne pas autour de lui-même. Le point étudié est "
+      + "la valve.";
+    if (z.type === "guidon") return "Le guidon n'appartient pas à la roue : il "
+      + "ne tourne pas. C'est sur la VALVE que la fiche fait fixer la craie.";
+    return "Viser la valve elle-même — le petit embout doré sur la jante.";
+  }
+  if (a === "gommettes") {
+    if (z.type === "moyeu") return "La gommette du moyeu est déjà collée.";
+    if (z.type === "guidon" && !ETAT.gomM) return "Commencer par le moyeu O : "
+      + "c'est lui que la fiche fait repérer en premier.";
+    if (z.type === "guidon") return "La gommette du guidon est déjà collée.";
+    if (z.type === "valve") return "La valve porte déjà la craie : les "
+      + "gommettes vont sur le moyeu et sur le guidon.";
+    return "Viser le moyeu, puis un point du guidon.";
+  }
+  return "";
+}
+function deposer(a, x, y) {
+  var z = zoneSous(a, x, y);
+  if (!accepte(a, z)) { signaler(refus(a, z)); redessiner(); return; }
+  if (a === "craie") {
+    ETAT.craie = true;
+    noter("Craie humide fixée à plat sur la valve : c'est le point M.");
+  } else if (z.type === "moyeu") {
+    ETAT.gomM = true;
+    noter("Gommette rouge collée sur le moyeu O.");
+  } else {
+    ETAT.gomG = true;
+    noter("Gommette verte collée sur un point du guidon.");
+  }
+  succes();
+  redessiner();
+}
+
+/* Le fantôme du glissement. */
+var FANTOME = null;
+function montrerFantome(a, x, y) {
+  if (!FANTOME) {
+    FANTOME = COUCHES.drag.appendChild(el("g", { opacity: .8,
+      "pointer-events": "none" }));
+    var src = a === "craie" ? gCraie : gGomMoyeu, c;
+    if (src) {
+      c = src.cloneNode(true);
+      c.removeAttribute("data-act");
+      c.setAttribute("pointer-events", "none");
+      FANTOME.appendChild(c);
+    }
+  }
+  FANTOME.setAttribute("transform", "translate(" + pt(x, y) + ")");
+  surlignerZones(a, x, y);
+}
+function effacerFantome() {
+  if (FANTOME) { COUCHES.drag.removeChild(FANTOME); FANTOME = null; }
+  var z = svg.querySelector("#zones");
+  if (z) vide(z);
+}
+function surlignerZones(a, x, y) {
+  var g = svg.querySelector("#zones");
+  if (!g) g = COUCHES.ui.appendChild(el("g", { id: "zones", "pointer-events": "none" }));
+  vide(g);
+  emplacements(a).forEach(function (z) {
+    if (z.type === "roue") return;         // trop grande pour être une cible
+    var ok = dansZone(z, x, y);
+    g.appendChild(el("circle", { cx: z.x, cy: z.y, r: z.r, fill: "none",
+      stroke: ok ? GOLD : "#c8b98a", "stroke-width": ok ? 2.4 : 1.4,
+      "stroke-dasharray": "6 5" }));
+  });
+}
+
+/* ==================================================================
+   13. CLIQUER
+   ================================================================== */
+function cliquer(a) {
+  if (a.indexOf("ref-") === 0) { choisirRef(a.slice(4)); return; }
+  if (a === "roue") { ETAT.suivi = ETAT.ref === "cadre" ? "valve-cadre" : "valve-sol"; }
+  redessiner();
+}
+/* Choisir le référentiel, c'est changer le MONTAGE : le cadre, c'est le
+   vélo sur sa béquille ; le sol, c'est la béquille retirée. La fiche ne
+   sépare pas les deux, et la page non plus. */
+function choisirRef(k) {
+  if (ETAT.ref === k) return;
+  if (ETAT.phi > 0 && ETAT.phi < phiMax()) {
+    signaler("Terminer le tour en cours, ou effacer, avant de changer de "
+           + "montage : on ne change pas de référentiel au milieu d'un relevé.");
+    return;
+  }
+  ETAT.ref = k;
+  ETAT.bequille = (k === "cadre");
+  ETAT.phi = 0;
+  ETAT.suivi = k === "cadre" ? "valve-cadre" : "valve-sol";
+  noter(k === "cadre"
+    ? "Vélo posé sur sa béquille : la roue tournera sans que le vélo avance."
+    : "Béquille retirée : la roue ne tournera plus qu'en faisant avancer le vélo.");
+  redessiner();
+}
+
+/* ==================================================================
+   14. LE CARNET ET LA CONSIGNE
+   ================================================================== */
+var MSG = null, MSG_JUSQUA = 0;
+function signaler(t) { MSG = t; MSG_JUSQUA = Date.now() + 4200; majConsigne(); }
+function succes() { MSG = null; MSG_JUSQUA = 0; majConsigne(); }
+function noter(t) {
+  ETAT.notes.push(t);
+  while (ETAT.notes.length > 2) ETAT.notes.shift();
+  var o = $("obs");
+  o.textContent = ETAT.notes.join(" ");
+  o.className = "obs pos";
+}
+function consigne() { return $("consigne").textContent; }
+function majConsigne() {
+  if (MSG && Date.now() < MSG_JUSQUA) { $("consigne").textContent = MSG; return; }
+  MSG = null;
+  $("consigne").textContent = consigneEtape();
+}
+function consigneEtape() {
+  if (!ETAT.craie) return "Glisser la craie humide sur la valve de la roue avant.";
+  if (ETAT.ref === "cadre") {
+    if (!ETAT.feuille) return "Plaquer la feuille A2 contre la roue, dans son plan.";
+    if (ETAT.phi < phiMax()) return "Faire tourner la roue à la main, par le pneu, "
+      + "sur " + REG.tours + " tour" + (REG.tours > 1 ? "s" : "") + " complet"
+      + (REG.tours > 1 ? "s" : "") + ".";
+    return "Passer au second temps : retirer la béquille, référentiel « le sol ».";
+  }
+  if (!ETAT.bande) return "Dérouler la bande de papier au sol, le long du trajet.";
+  if (!ETAT.gomM) return "Coller la gommette rouge sur le moyeu O.";
+  if (!ETAT.gomG) return "Coller la gommette verte sur un point du guidon.";
+  if (ETAT.phi < phiMax()) return "Pousser le vélo au pas en faisant rouler la "
+    + "roue sur la bande.";
+  return "Les quatre traces sont relevées : les classer et conclure.";
+}
+
+/* ==================================================================
+   15. LE RENDU
+   ================================================================== */
+function redessiner() {
+  var xv = xVeloReel(), i;
+  gVelo.setAttribute("transform", "translate(" + pt(xv, Y_MOYEU) + ")");
+  /* La roue tourne : l'angle est en degrés, et le sens est celui d'un
+     vélo qui avance vers la droite. */
+  gRoue.setAttribute("transform", "rotate(" + (ETAT.phi * 180 / Math.PI).toFixed(2) + ")");
+  /* La valve se place à la distance réglée du moyeu, vers le bas :
+     c'est le point de départ du paramétrage, φ = 0. */
+  svg.querySelector("#valve").setAttribute("transform",
+    "translate(0," + rPx().toFixed(1) + ")");
+  svg.querySelector("#craieSurValve").setAttribute("opacity", ETAT.craie ? 1 : 0);
+  svg.querySelector("#gomMoyeu").setAttribute("opacity", ETAT.gomM ? 1 : 0);
+  svg.querySelector("#gomGuidon").setAttribute("opacity", ETAT.gomG ? 1 : 0);
+  svg.querySelector("#bequille").setAttribute("opacity", ETAT.bequille ? 1 : 0);
+  /* La craie se ternit une fois posée : elle n'est plus disponible. */
+  gCraie.setAttribute("opacity", ETAT.craie ? .3 : 1);
+  gCraie.setAttribute("transform", "translate(" + pt(X_OUTILS, Y_CRAIE) + ")");
+  gGomMoyeu.setAttribute("opacity", ETAT.gomM && ETAT.gomG ? .3 : 1);
+  gGomMoyeu.setAttribute("transform", "translate(" + pt(X_OUTILS, Y_GOM) + ")");
+  gFeuille.setAttribute("opacity", ETAT.feuille && ETAT.bequille ? 1 : 0);
+  gFeuille.setAttribute("transform", "translate(" + pt(xv, Y_MOYEU) + ")");
+  gBande.setAttribute("opacity", ETAT.bande && !ETAT.bequille ? 1 : 0);
+  dessinerTraces();
+  majChips();
+  majTableau();
+  majPanneaux();
+  majBoutons();
+  majConsigne();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+  $("alerte").style.display = horsProtocole() ? "block" : "none";
+}
+
+/* Les traces telles qu'elles s'inscrivent SUR LA SCÈNE, tour après tour.
+   Elles ne sont pas préfabriquées : on relit le modèle jusqu'à l'angle
+   effectivement parcouru, et pas plus loin. */
+function dessinerTraces() {
+  var g = COUCHES.trace;
+  vide(g);
+  if (!ETAT.craie || ETAT.phi <= 0) return;
+  var pts = cheminEcran("valve"), d;
+  if (pts.length > 1) {
+    g.appendChild(el("path", { d: "M " + pts.map(function (p) { return pt(p.x, p.y); })
+      .join(" L "), fill: "none", stroke: "#e9e2cf", "stroke-width": 4.6,
+      "stroke-linecap": "round", "pointer-events": "none" }));
+    g.appendChild(el("path", { d: "M " + pts.map(function (p) { return pt(p.x, p.y); })
+      .join(" L "), fill: "none", stroke: "#b8ab86", "stroke-width": 1.6,
+      "stroke-linecap": "round", "pointer-events": "none" }));
+  }
+  if (ETAT.bequille) return;
+  /* Au sol, les deux gommettes laissent aussi leur trace : c'est le second
+     enseignement de la fiche, celui qu'elle dit « pas cherché ». */
+  if (ETAT.gomM) traceSimple(g, cheminEcran("moyeu"), "#d64545");
+  if (ETAT.gomG) traceSimple(g, cheminEcran("guidon"), "#3a8f4a");
+}
+function traceSimple(g, pts, c) {
+  if (pts.length < 2) return;
+  g.appendChild(el("path", { d: "M " + pts.map(function (p) { return pt(p.x, p.y); })
+    .join(" L "), fill: "none", stroke: c, "stroke-width": 2.2,
+    "stroke-dasharray": "1 5", "stroke-linecap": "round",
+    "pointer-events": "none" }));
+}
+/* Le chemin parcouru jusqu'ici, en coordonnées d'écran. */
+function cheminEcran(pt2) {
+  var n = 240, out = [], i, phi, xv;
+  if (ETAT.phi <= 0) return out;
+  for (i = 0; i <= n; i++) {
+    phi = ETAT.phi * i / n;
+    xv = X_DEPART + avanceEff() * R_PX * phi;
+    out.push(ecran(pt2, phi, xv));
+  }
+  return out;
+}
+
+function majChips() {
+  CHIPS.forEach(function (c) {
+    var n = svg.querySelector("#chip-" + c.k), on = ETAT.ref === c.k;
+    if (!n) return;
+    n.querySelector("rect").setAttribute("fill", on ? "#c8912a" : "#fff9e2");
+    n.querySelector("rect").setAttribute("stroke-width", on ? 2 : 1.5);
+    n.querySelector("text").setAttribute("fill", on ? "#fff" : "#8a6a1e");
+    n.querySelector("text").setAttribute("font-weight", on ? "bold" : "normal");
+  });
+}
+
+/* ==================================================================
+   16. LES BOUTONS COLLECTIFS
+   ================================================================== */
+var BOUTONS = [
+  { id: "craie", t: "Fixer la craie sur la valve", f: function () {
+      deposerDirect("craie", "valve");
+    }, fait: function () { return ETAT.craie; } },
+  { id: "feuille", t: "Plaquer la feuille A2", f: function () {
+      if (!ETAT.bequille) { signaler("La feuille se plaque contre la roue vélo "
+        + "sur béquille : c'est le premier temps du protocole."); return; }
+      if (ETAT.feuille) { signaler("La feuille est déjà plaquée."); return; }
+      ETAT.feuille = true;
+      noter("Feuille A2 plaquée verticalement contre la roue, dans son plan.");
+      succes();
+    }, fait: function () { return ETAT.feuille; } },
+  { id: "gomM", t: "Gommette sur le moyeu", f: function () {
+      deposerDirect("gommettes", "moyeu");
+    }, fait: function () { return ETAT.gomM; } },
+  { id: "gomG", t: "Gommette sur le guidon", f: function () {
+      deposerDirect("gommettes", "guidon");
+    }, fait: function () { return ETAT.gomG; } },
+  { id: "bande", t: "Dérouler la bande", f: function () {
+      if (ETAT.bequille) { signaler("La bande sert au second temps, béquille "
+        + "retirée : choisir d'abord le référentiel « le sol »."); return; }
+      if (ETAT.bande) { signaler("La bande est déjà déroulée."); return; }
+      ETAT.bande = true;
+      noter("Bande de papier déroulée au sol, le long du trajet.");
+      succes();
+    }, fait: function () { return ETAT.bande; } },
+  { id: "tourner", t: "Faire tourner la roue", f: function () {
+      if (!pret()) { signaler(pourquoiPasPret()); return; }
+      if (ETAT.phi >= phiMax()) { signaler("Le relevé est terminé : effacer "
+        + "pour recommencer."); return; }
+      animerRotation();
+    }, fait: function () { return ETAT.phi >= phiMax(); } },
+  { id: "effacer", t: "Effacer et recommencer", f: function () {
+      if (ETAT.phi <= 0) { signaler("Il n'y a rien à effacer."); return; }
+      ETAT.phi = 0;
+      noter("Traces effacées, roue ramenée à sa position de départ.");
+      succes();
+    }, fait: function () { return false; } },
+  { id: "conclure", t: "Classer et conclure", f: function () {
+      var reste = RELEVES.filter(function (r) { return !ETAT.releve[r.k]; });
+      if (reste.length) {
+        signaler("Il reste " + reste.length + " relevé"
+          + (reste.length > 1 ? "s" : "") + " à faire : le tableau se remplit "
+          + "un référentiel à la fois.");
+        return;
+      }
+      ETAT.conclu = true;
+      noter("Deux traces pour la MÊME valve, et deux traces différentes pour "
+          + "deux points du MÊME solide : la trajectoire dépend du référentiel "
+          + "et du point.");
+      succes();
+    }, fait: function () { return ETAT.conclu; } }
+];
+
+/* Le bouton passe par le même chemin que le glisser (§12.13) : il vise le
+   centre de la zone voulue et dépose. Un refus donne le MÊME message. */
+function deposerDirect(a, type) {
+  var z = emplacements(a), i;
+  for (i = 0; i < z.length; i++) {
+    if (z[i].type === type) { deposer(a, z[i].x, z[i].y); return; }
+  }
+}
+
+/* ⚠️ setTimeout et Date.now(), PAS requestAnimationFrame — voir la note
+   de d11.js : rAF ne tourne pas sous le pilote, et ce bouton doit mener
+   au même état que la rotation à la main (§12.13). */
+var ANIM_ON = false, ANIM_T0 = 0, ANIM_PHI0 = 0;
+function animerRotation() {
+  if (ANIM_ON) return;
+  ANIM_ON = true;
+  ANIM_T0 = Date.now();
+  ANIM_PHI0 = ETAT.phi;
+  setTimeout(pasRotation, 16);
+}
+function pasRotation() {
+  if (!ANIM_ON) return;
+  ETAT.phi = borne(ANIM_PHI0 + (Date.now() - ANIM_T0) / 1000 * 2.6, 0, phiMax());
+  redessiner();
+  if (ETAT.phi >= phiMax()) {
+    ANIM_ON = false;
+    terminerReleve();
+    redessiner();
+    return;
+  }
+  setTimeout(pasRotation, 16);
+}
+
+function construireBoutons() {
+  var g = ajout("ui", el("g", { id: "boutons" })), b;
+  var rangs = [[], []];
+  BOUTONS.forEach(function (bt, i) { rangs[i < 4 ? 0 : 1].push(bt); });
+  rangs.forEach(function (rang, r) {
+    var y = r ? Y_BT2 : Y_BT1, tot = 0, x;
+    rang.forEach(function (bt) { bt.lg = 16 + bt.t.length * 6.35; tot += bt.lg + 9; });
+    x = (W - tot + 9) / 2;
+    rang.forEach(function (bt) {
+      b = g.appendChild(el("g", { "data-act": "bt-" + bt.id, cursor: "pointer",
+        id: "bt-" + bt.id }));
+      b.appendChild(el("rect", { x: x, y: y - 15, width: bt.lg, height: 30,
+        rx: 8, fill: "#eef4ea", stroke: "#9fb98a", "stroke-width": 1.4 }));
+      txtIn(b, x + bt.lg / 2, y + 5, bt.t, { taille: 11.5, couleur: "#2f4a1e" });
+      x += bt.lg + 9;
+    });
+  });
+}
+function majBoutons() {
+  BOUTONS.forEach(function (bt) {
+    var n = svg.querySelector("#bt-" + bt.id);
+    if (!n) return;
+    var r = n.querySelector("rect"), on = bt.fait();
+    r.setAttribute("fill", on ? "#d7e8c8" : "#eef4ea");
+    r.setAttribute("stroke", on ? "#5f8a3a" : "#9fb98a");
+    r.setAttribute("stroke-width", on ? 2.2 : 1.4);
+  });
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (ev) {
+    var n = noeudAct(ev.target), a = n && n.getAttribute("data-act");
+    if (!a || a.indexOf("bt-") !== 0) return;
+    var id = a.slice(3), i;
+    for (i = 0; i < BOUTONS.length; i++) {
+      if (BOUTONS[i].id === id) { BOUTONS[i].f(); redessiner(); return; }
+    }
+  });
+}
+
+/* ==================================================================
+   17. LE TABLEAU DE LA FICHE
+   ==================================================================
+   Il se remplit RELEVÉ par relevé. Les deux dernières colonnes ne sont
+   pas recopiées de la fiche : la troisième décrit ce que la page vient
+   de tracer, la quatrième est le verdict du classificateur.             */
+function majTableau() {
+  var t = $("tab"), i, tr, td, c;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  entetes().forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = depouille(h);
+  });
+  for (i = 0; i < RELEVES.length; i++) {
+    tr = t.appendChild(document.createElement("tr"));
+    if (RELEVES[i].k === ETAT.suivi) tr.className = "suivi";
+    tr.appendChild(document.createElement("td")).textContent = nomPoint(i);
+    tr.appendChild(document.createElement("td")).textContent = nomRefLigne(i);
+    if (!ETAT.releve[RELEVES[i].k]) {
+      td = tr.appendChild(document.createElement("td"));
+      td.className = "vide";
+      td = tr.appendChild(document.createElement("td"));
+      td.className = "vide";
+      continue;
+    }
+    c = classer(trace(RELEVES[i].pt, RELEVES[i].ref));
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = allureFiche(i);
+    td.className = "mes";
+    td = tr.appendChild(document.createElement("td"));
+    td.textContent = c.nom;
+    td.className = "mes";
+    td.style.color = c.quoi === "droite" ? "var(--green)"
+      : c.quoi === "cercle" ? "var(--gold)" : "var(--orange)";
+  }
+  $("concl").className = ETAT.conclu ? "box" : "box masque";
+}
+
+/* ==================================================================
+   18. LES PANNEAUX DE DROITE
+   ================================================================== */
+function majPanneaux() {
+  majSuivi();
+  majBoutonsCorps();
+  majGrapheTrace();
+}
+function el2(tag, cls, t) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (t !== undefined) n.textContent = t;
+  return n;
+}
+function releveDe(k) {
+  var i;
+  for (i = 0; i < RELEVES.length; i++) if (RELEVES[i].k === k) return i;
+  return 0;
+}
+function majSuivi() {
+  var i = releveDe(ETAT.suivi), R = RELEVES[i], c, pts, d, vu;
+  $("suiviNom").textContent = nomPoint(i) + " · " + nomRefLigne(i);
+  var g = $("suiviCases");
+  vide(g);
+  vu = !!ETAT.releve[R.k];
+  pts = trace(R.pt, R.ref);
+  c = classer(pts);
+  d = g.appendChild(el2("div"));
+  d.appendChild(el2("div", "t", "la trace se referme-t-elle ?"));
+  d.appendChild(el2("div", "u" + (vu ? "" : " nul"),
+    vu ? (seReferme(pts) ? "oui, elle se referme" : "non, jamais") : "à observer"));
+  d = g.appendChild(el2("div"));
+  d.appendChild(el2("div", "t", "nom de la trajectoire"));
+  d.appendChild(el2("div", "u" + (vu ? "" : " nul"), vu ? c.nom : "à observer"));
+  /* ⚠️ La preuve n'apparaît qu'APRÈS le relevé : affichée dès l'ouverture,
+     elle donnerait le verdict avant que la roue ait tourné. */
+  $("preuve").textContent = vu ? preuveDe(c) :
+    "Faire tourner la roue : le classement se lira sur la trace obtenue, "
+    + "pas avant elle.";
+}
+function preuveDe(c) {
+  var m = c.m, tol = PHYS.TOL.v * m.etendue;
+  return "étendue " + nb(m.etendue, 3) + " m   ·   tolérance " + nb(tol, 4) + " m\n"
+    + "écart à la droite des extrémités : " + nb(m.ecartDroite, 4) + " m  "
+    + (m.ecartDroite < tol ? "< tolérance → RECTILIGNE" : "> tolérance") + "\n"
+    + "résidu du meilleur cercle : "
+    + (isFinite(m.residuCercle) ? nb(m.residuCercle, 4) + " m  "
+        + (m.residuCercle < tol ? "< tolérance → CIRCULAIRE" : "> tolérance")
+      : "aucun cercle ne convient")
+    + (c.quoi === "courbe" ? "\nni droite ni cercle → CURVILIGNE" : "");
+}
+
+/* Le tracé agrandi, dans le panneau : c'est LA MÊME suite de points que
+   celle qui a été mesurée, remise à l'échelle du cadre. */
+function majGrapheTrace() {
+  var s = $("gTrace"), i = releveDe(ETAT.suivi), R = RELEVES[i];
+  vide(s);
+  var vu = !!ETAT.releve[R.k];
+  var pts = trace(R.pt, R.ref, 300);
+  var xs = pts.map(function (p) { return p[0]; }),
+      ys = pts.map(function (p) { return p[1]; });
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+  var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  var lx = Math.max(x1 - x0, 1e-6), ly = Math.max(y1 - y0, 1e-6);
+  var k = Math.min(320 / lx, 130 / ly), ox = 20 + (320 - lx * k) / 2,
+      oy = 20 + (130 - ly * k) / 2;
+  function X(v) { return ox + (v - x0) * k; }
+  function Y(v) { return oy + 130 - (v - y0) * k - (130 - ly * k); }
+  s.appendChild(el("rect", { x: 8, y: 10, width: 344, height: 150, rx: 6,
+    fill: "#fbfaf6", stroke: "#e4dfd0", "stroke-width": 1 }));
+  if (!vu) {
+    s.appendChild(el("text", { x: 180, y: 90, "text-anchor": "middle",
+      "font-size": 12, fill: "#9aa5b2" }, "la roue n'a pas encore tourné"));
+    return;
+  }
+  s.appendChild(el("path", { d: "M " + pts.map(function (p) {
+    return X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1); }).join(" L "),
+    fill: "none", stroke: ORANGE, "stroke-width": 2.2, "stroke-linejoin": "round" }));
+  s.appendChild(el("circle", { cx: X(pts[0][0]), cy: Y(pts[0][1]), r: 3.6,
+    fill: VERT }));
+  s.appendChild(el("circle", { cx: X(pts[pts.length - 1][0]),
+    cy: Y(pts[pts.length - 1][1]), r: 3.6, fill: ROUGE }));
+  s.appendChild(el("text", { x: 180, y: 178, "text-anchor": "middle",
+    "font-size": 9.5, fill: "#9aa5b2" },
+    "départ en vert, arrivée en rouge — " + PHYS.N_PTS.v
+    + " points relevés pour le classement"));
+}
+
+/* ==================================================================
+   19. LES BOUTONS DE RELEVÉ
+   ================================================================== */
+function construireBoutonsCorps() {
+  var g = $("corpsBtns");
+  vide(g);
+  RELEVES.forEach(function (r, i) {
+    var b = document.createElement("button");
+    b.textContent = nomPoint(i) + " / " + nomRefLigne(i).replace(/\s*\(.*\)$/, "");
+    b.setAttribute("data-rel", r.k);
+    b.addEventListener("click", function () { ETAT.suivi = r.k; redessiner(); });
+    g.appendChild(b);
+  });
+}
+function majBoutonsCorps() {
+  Array.prototype.forEach.call($("corpsBtns").children, function (b) {
+    b.className = b.getAttribute("data-rel") === ETAT.suivi ? "on" : "";
+  });
+}
+
+/* ==================================================================
+   20. LES CURSEURS
+   ==================================================================
+   ⚠️ Toute valeur initiale tombe sur la grille du pas (§12.12) :
+   0,80 est multiple de 0,05 ; 2 de 1 ; 1,0 de 0,1. Vérifié.             */
+function brancherCurseurs() {
+  function lier(id, out, cle, fmt) {
+    var r = $(id), o = $(out);
+    function maj() {
+      REG[cle] = parseFloat(r.value);
+      o.textContent = fmt(REG[cle]);
+      if (ETAT) { ETAT.phi = Math.min(ETAT.phi, phiMax()); }
+      redessiner();
+    }
+    r.addEventListener("input", maj);
+    maj();
+  }
+  lier("rVal", "oVal", "rVal", function (v) {
+    return nb(v, 2) + " R  (" + nb(v * PHYS.R_ROUE.v, 3) + " m)";
+  });
+  lier("rTours", "oTours", "tours", function (v) {
+    return v + " tour" + (v > 1 ? "s" : "");
+  });
+  lier("rAvance", "oAvance", "avance", function (v) {
+    return nb(v, 1) + " × 2πR"
+      + (Math.abs(v - 1) < 1e-9 ? "  (roule sans glisser)" : "");
+  });
+}
+
+/* ==================================================================
+   21. LA SÉANCE, LE REMISE À ZÉRO, LES TEXTES
+   ================================================================== */
+var T0 = Date.now();
+function majSeance() {
+  var d = (DONNEES.duree || 22) * 60, e = (Date.now() - T0) / 1000;
+  $("seanceT").textContent = mmss(Math.min(e, d));
+  $("seanceJ").style.width = borne(100 * e / d, 0, 100) + "%";
+}
+function rezero() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  ETAT = neufEtat();
+  MSG = null; MSG_JUSQUA = 0; ANIM_ON = false; ANG_PREC = null;
+  $("obs").textContent = "—";
+  $("obs").className = "obs";
+  redessiner();
+}
+function remplirTextes() {
+  $("titre").textContent = depouille(T("titre"));
+  document.title = "Paillasse virtuelle — " + DONNEES.id + " · " + depouille(T("titre"));
+  $("ref").textContent = DONNEES.id + " · " + T("niveau") + " · " + T("lecon")
+    + " · résultats calculés";
+  $("objectif").innerHTML = md(T("objectif"));
+  $("observation").innerHTML = md(T("observation"));
+  $("conclTxt").innerHTML = md(T("conclusion"));
+  $("seanceB").textContent = "durée prescrite par la fiche";
+  $("seanceM").textContent = " " + (DONNEES.duree || 22) + " min · "
+    + depouille(T("modalite"));
+  ["materiel", "securite"].forEach(function (k) {
+    var u = $(k);
+    vide(u);
+    L(k).forEach(function (x) {
+      var li = document.createElement("li");
+      li.innerHTML = md(x);
+      u.appendChild(li);
+    });
+  });
+  $("capotSol").textContent = "référentiel « le sol »   :   x(φ) = a·R·φ − r·sin φ"
+    + "      y(φ) = R − r·cos φ";
+  $("capotCadre").textContent = "référentiel « le cadre » :   x(φ) = − r·sin φ"
+    + "              y(φ) = R − r·cos φ";
+  $("capotTol").textContent = nb(100 * PHYS.TOL.v, 1) + " %";
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+  majCapotVals();
+}
+function majCapotVals() {
+  var t = $("capotVals"), tr, k;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Grandeur", "Valeur", "D'où elle vient"].forEach(function (h) {
+    tr.appendChild(document.createElement("th")).textContent = h;
+  });
+  for (k in PHYS) {
+    if (!PHYS.hasOwnProperty(k)) continue;
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].n;
+    tr.appendChild(document.createElement("td")).textContent =
+      nb(PHYS[k].v, PHYS[k].v >= 10 ? 0 : 3) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(document.createElement("td")).textContent = PHYS[k].s;
+  }
+}
+/* Le détail des mesures, sous le capot : les quatre relevés, chiffrés. */
+function majCapotMesures() {
+  var t = $("capotMesures"), tr, i, c, m;
+  vide(t);
+  tr = t.appendChild(document.createElement("tr"));
+  ["Relevé", "Étendue", "Écart à la droite", "Résidu du cercle", "Verdict"]
+    .forEach(function (h) {
+      tr.appendChild(document.createElement("th")).textContent = h;
+    });
+  for (i = 0; i < RELEVES.length; i++) {
+    c = classer(trace(RELEVES[i].pt, RELEVES[i].ref));
+    m = c.m;
+    tr = t.appendChild(document.createElement("tr"));
+    tr.appendChild(document.createElement("td")).textContent =
+      nomPoint(i) + " / " + nomRefLigne(i).replace(/\s*\(.*\)$/, "");
+    tr.appendChild(document.createElement("td")).textContent = nb(m.etendue, 3) + " m";
+    tr.appendChild(document.createElement("td")).textContent = nb(m.ecartDroite, 4) + " m";
+    tr.appendChild(document.createElement("td")).textContent =
+      isFinite(m.residuCercle) ? nb(m.residuCercle, 4) + " m" : "—";
+    tr.appendChild(document.createElement("td")).textContent = c.nom;
+  }
+}
+
+/* ==================================================================
+   22. DÉMARRAGE
+   ================================================================== */
+/* ==================================================================
+   23. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = W / s.width, ky = H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* Un bouton de scène : sa géométrie est lue sur le rectangle qu'il porte,
+   ce qui évite de toucher à construireBoutons(). */
+function surlignerBouton(id) {
+  var n = svg.querySelector("#bt-" + id), r = n && n.querySelector("rect");
+  if (!r) return null;
+  return haloGuide(+r.getAttribute("x") - 7, +r.getAttribute("y") - 7,
+                   +r.getAttribute("width") + 14,
+                   +r.getAttribute("height") + 14, 13);
+}
+/* La ZONE où poser : on réemploie le surligneur de la page — un second
+   mécanisme de cible ferait deux traits de couleurs différentes pour la
+   même chose — puis on confie ses rectangles à effacerGuide, pour
+   qu'aucun ne survive au guidage. */
+function montrerCibles(a, x, y) {
+  surlignerZones(a, x, y);
+  var g = svg.querySelector("#zones"), i;
+  if (!g) return;
+  for (i = 0; i < g.childNodes.length; i++) guideSurb.push(g.childNodes[i]);
+}
+
+function releveFait(k) { return !!ETAT.releve[k]; }
+
+/* Les neuf étapes de la fiche. Les étapes 4 et 5 partagent un prédicat :
+   la page relève l'allure de la trace au moment même où le tour s'achève.
+   Les étapes 7 et 8 aussi : terminerReleve() renseigne d'un coup les trois
+   lignes du référentiel « le sol », et il ne le fait que si les deux
+   gommettes sont collées. */
+var GUIDE = [
+  { fait: function () { return ETAT.craie; },
+    aide: "Prendre la <b>craie humidifiée</b>, à droite, et la fixer à plat sur "
+        + "la <b>valve</b> de la roue avant : c'est elle qui sera le point M.",
+    montre: function () {
+      var p = posValve();
+      surlignerNoeud(gCraie);
+      montrerCibles("craie", p.x, p.y);
+    } },
+
+  { fait: function () { return ETAT.gomM && ETAT.gomG; },
+    aide: function () {
+      return ETAT.gomM
+        ? "Coller la seconde gommette sur un <b>point du guidon</b> — un point "
+        + "qui n'appartient pas à la roue."
+        : "Prendre les <b>gommettes</b> et en coller une sur le <b>moyeu O</b> "
+        + "de la même roue, puis l'autre sur un point du guidon.";
+    },
+    montre: function () {
+      var p = ETAT.gomM ? posGuidon() : posMoyeu();
+      surlignerNoeud(gGomMoyeu);
+      montrerCibles("gommettes", p.x, p.y);
+    } },
+
+  { fait: function () { return ETAT.feuille; },
+    aide: function () {
+      return ETAT.ref === "cadre"
+        ? "Premier temps : le vélo est sur sa béquille, roue avant libre. "
+        + "<b>Plaquer la feuille A2</b> verticalement contre la roue, dans son plan."
+        : "Premier temps : reprendre le référentiel <b>« " + nomRefLigne(0)
+        + " »</b> — le vélo remonte sur sa béquille — puis plaquer la feuille A2.";
+    },
+    montre: function () {
+      if (ETAT.ref !== "cadre") { surlignerNoeud("#chip-cadre", 4); return; }
+      surlignerBouton("feuille");
+      surlignerNoeud(gRoue, 10);
+    } },
+
+  { fait: function () { return releveFait("valve-cadre"); },
+    aide: function () {
+      return "Faire tourner la roue <b>lentement, à la main, par le pneu</b>, "
+        + "sur " + REG.tours + " tour" + (REG.tours > 1 ? "s" : "")
+        + " complet" + (REG.tours > 1 ? "s" : "") + " : la saisir et la "
+        + "tourner, ou presser « Faire tourner la roue ».";
+    },
+    montre: function () { surlignerNoeud(gRoue, 10); surlignerBouton("tourner"); } },
+
+  { fait: function () { return releveFait("valve-cadre"); },
+    aide: "Regarder la trace laissée sur la feuille et reporter son allure dans "
+        + "le tableau : le panneau « La trace, en grand » la montre telle "
+        + "qu'elle est calculée.",
+    montre: function () { surlignerNoeud(gRoue, 10); } },
+
+  { fait: function () { return ETAT.bande && !ETAT.bequille; },
+    aide: function () {
+      return ETAT.bequille
+        ? "Second temps : prendre le référentiel <b>« " + nomRefLigne(1)
+        + " »</b> — la béquille se retire, et la roue ne tournera plus qu'en "
+        + "faisant avancer le vélo."
+        : "<b>Dérouler la bande de papier</b> au sol, le long du trajet.";
+    },
+    montre: function () {
+      if (ETAT.bequille) { surlignerNoeud("#chip-sol", 4); return; }
+      surlignerBouton("bande");
+      surlignerNoeud(gBande, 4);
+    } },
+
+  { fait: function () { return releveFait("valve-sol"); },
+    aide: "<b>Pousser le vélo au pas</b>, en ligne droite le long de la bande, "
+        + "la craie touchant le papier à chaque passage : tourner la roue à la "
+        + "main, ou presser « Faire tourner la roue ».",
+    montre: function () { surlignerNoeud(gRoue, 10); surlignerBouton("tourner"); } },
+
+  { fait: function () {
+      return releveFait("moyeu-sol") && releveFait("guidon-sol"); },
+    aide: "Observer la trace de la valve sur la bande, puis les positions "
+        + "successives du <b>moyeu O</b> et du point du <b>guidon</b> : elles "
+        + "s'inscrivent pendant le même trajet, si les deux gommettes sont "
+        + "collées.",
+    montre: function () { surlignerNoeud(gGomMoyeu); surlignerNoeud(gRoue, 10); } },
+
+  { fait: function () { return ETAT.conclu; },
+    aide: "Reporter les trois points dans le tableau — référentiel, allure de "
+        + "la trace, nom de la trajectoire — puis presser <b>« Classer et "
+        + "conclure »</b>.",
+    montre: function () { surlignerBouton("conclure"); } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : les
+     curseurs appellent redessiner() avant le démarrage du panneau. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape soit lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  MSG = null; MSG_JUSQUA = 0;
+  majConsigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 2, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* Arreter le deroule, c'est aussi arreter le geste EN COURS : sur ces
+     paillasses, un trajet anime continuerait seul jusqu'a son terme et
+     renseignerait une ligne que l'enseignant venait d'interrompre. On coupe
+     l'animation la ou elle en est — ce que fait un eleve qui lache le
+     chariot en route. Aucun resultat n'est ecrit : la fin de trajet, elle,
+     passe par `finTirage()` / `finRotation()`, qui ne sont pas appeles. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* Le panneau se rafraichit une derniere fois par le RENDU de la page.
+       Les lots precedents avaient un `avancer()` qui le faisait ; ces
+       pages-ci n'en ont pas, et sur E3AC-13 `avancer(x, v, a, t)` est la
+       cinematique de la bille — un homonyme, pas un rafraichisseur. */
+    redessiner();
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* Comme E3AC-11, les boutons de scène de cette page sont les entrées de
+     `BOUTONS`, portées par `data-act="bt-<id>"` : `presserBouton("bt-…")`
+     déclenche l'écouteur de `brancherBoutons()`, et chaque bouton passe par
+     `deposerDirect()`, donc par le MÊME `deposer()` que le glisser. */
+
+  /* 1. la craie humide sur la valve — le point M */
+  function () { presserBouton("bt-craie"); return 380; },
+
+  /* 2. les deux gommettes, une par pression : `accepte()` refuse celle du
+     guidon tant que celle du moyeu n'est pas collée (« commencer par le
+     moyeu O », dit le refus de la page). */
+  function () {
+    if (!ETAT.gomM) { presserBouton("bt-gomM"); return 380; }
+    presserBouton("bt-gomG");
+    return 380;
+  },
+
+  /* 3. la feuille A2, plaquée contre la roue. Le bouton exige le vélo SUR
+     SA BÉQUILLE : c'est le premier temps du protocole, et c'est l'état de
+     départ de la page — on n'a donc rien à lever ici. */
+  function () { presserBouton("bt-feuille"); return 380; },
+
+  /* 4 et 5. Le premier relevé : deux tours complets de roue. La page relève
+     l'allure de la trace au moment même où le tour s'achève — les deux
+     étapes partagent leur prédicat, et le panneau saute de l'une à l'autre.
+     Le délai se calcule sur le modèle : `pasRotation()` avance de 2,6 rad
+     par seconde jusqu'à `phiMax()`. */
+  function () {
+    presserBouton("bt-tourner");
+    return Math.max(1500, (phiMax() - ETAT.phi) / 2.6 * 1000 + 1500);
+  },
+  function () {
+    presserBouton("bt-tourner");
+    return Math.max(1500, (phiMax() - ETAT.phi) / 2.6 * 1000 + 1500);
+  },
+
+  /* 6. Le second temps. Il demande DEUX choses, et la page l'a écrit dans
+     ses refus : la bande ne se déroule que « béquille retirée », et retirer
+     la béquille, c'est prendre le référentiel « le sol ». On change donc de
+     référentiel d'abord, la bande ensuite.
+
+     Le référentiel n'a pas de bouton de scène : ce sont les pastilles
+     `data-act="ref-…"`, que la page écoute au POINTEUR et non au clic. On
+     joue donc un vrai appui-relâché sur la pastille, sans déplacement — le
+     chemin exact de `brancherManipulation()`, qui aboutit à `cliquer()`
+     puis à `choisirRef()` avec tous ses refus (« terminer le tour en
+     cours »). Le centre vient de la géométrie de la page, jamais d'une
+     coordonnée écrite en dur. */
+  function () {
+    var n, r, o;
+    if (ETAT.bequille) {
+      n = svg.querySelector('[data-act="ref-sol"]');
+      if (!n) return 0;
+      r = n.getBoundingClientRect();
+      o = { bubbles: true, cancelable: true, pointerId: 1, pointerType: "mouse",
+            clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+      n.dispatchEvent(new PointerEvent("pointerdown", o));
+      n.dispatchEvent(new PointerEvent("pointerup", o));
+      return 420;
+    }
+    presserBouton("bt-bande");
+    return 420;
+  },
+
+  /* 7 et 8. Le second relevé. Un seul trajet renseigne les TROIS lignes du
+     référentiel « le sol » — la valve, le moyeu et le point du guidon
+     s'inscrivent pendant le même passage, ce que `terminerReleve()` fait
+     d'un coup dès que les deux gommettes sont collées. */
+  function () {
+    presserBouton("bt-tourner");
+    return Math.max(1500, (phiMax() - ETAT.phi) / 2.6 * 1000 + 1500);
+  },
+  function () {
+    presserBouton("bt-tourner");
+    return Math.max(1500, (phiMax() - ETAT.phi) / 2.6 * 1000 + 1500);
+  },
+
+  /* 9. « Classer et conclure » — c'est lui qui démasque la conclusion. */
+  function () { presserBouton("bt-conclure"); return 520; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  var p = $("paillasse");
+  svg = p.appendChild(el("svg", { viewBox: "0 0 " + W + " " + H,
+    width: "100%", role: "img",
+    "aria-label": "Paillasse virtuelle : un vélo, sa roue avant et la craie fixée sur la valve" }));
+  svg.style.display = "block";
+  svg.style.touchAction = "none";
+  ajouterDefs();
+  ajouterCouches();
+  construireFond();
+  construireBande();
+  construireFeuille();
+  construireSecurite();
+  construireVelo();
+  construireOutils();
+  construireChips();
+  construireBoutons();
+  construireLegende();
+  construireBoutonsCorps();
+  brancherManipulation();
+  brancherBoutons();
+  /* L'état AVANT les curseurs : brancherCurseurs() appelle redessiner(). */
+  ETAT = neufEtat();
+  brancherCurseurs();
+  remplirTextes();
+  $("rezero").addEventListener("click", rezero);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  construireProtocole();
+  redessiner();
+  majCapotMesures();
+  majSeance();
+  setInterval(majSeance, 1000);
+  setInterval(function () {
+    if (MSG && Date.now() >= MSG_JUSQUA) { MSG = null; majConsigne(); }
+  }, 400);
+  if (!accordAvecLaFiche()) {
+    console.warn("E3AC-12 : le classement ne redonne plus les verdicts de la fiche.");
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else {
+  demarrer();
+}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,4064 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-22 · Que compte le compteur de la maison ?</title>
+
+<!--
+  ===================================================================
+  E3AC-22 · 3AC · L15 · U3 — PAILLASSE VIRTUELLE
+  « Que compte le compteur de la maison, et comment y lire l'énergie
+    consommée ? »
+  ===================================================================
+
+  CE QUE LA PAGE CALCULE
+  ----------------------
+  Rien n'est affirmé. Les onze lignes du tableau sont OBTENUES, et il
+  n'y a qu'UN modèle — un intégrateur :
+
+      E(t) = ∫ P_totale dt      P_totale = somme des appareils branchés
+
+  Tout le reste en découle, et rien n'est recopié du tableau :
+
+   * LE DISQUE d'un compteur à induction tourne d'un tour par C
+     wattheures :   dn/dt = P / (3600·C)  [tr/s], C en Wh/tr.
+     Le nombre de tours est donc PROPORTIONNEL à l'énergie, jamais au
+     temps ; c'est la VITESSE qui suit la puissance.
+   * LE VOYANT d'un compteur électronique clignote K fois par kWh :
+     dN/dt = P·K / 3,6e6  [imp/s], K en imp/kWh.
+   * L'INDEX n'affiche pas un réel : il avance par CRANS. Le cran n'est
+     pas posé, il est DÉDUIT du nombre de décimales que la fiche écrit
+     sur son index (« 04 213,40 » en porte deux → 0,01 kWh).
+
+  Conséquences, et elles tombent toutes sur la fiche : P = 1 000 + 100
+  + 100 = 1 200 W ; 10 min → 200 Wh ; l'index passe de 04 213,40 à
+  04 213,60, soit exactement 20 crans ; le disque fait 80 tours à
+  8,00 tr/min ; le voyant produit 200 impulsions ; et le témoin, tout
+  éteint, laisse l'index INCHANGÉ et le disque IMMOBILE — non par une
+  règle, mais parce que la puissance vaut zéro et qu'elle MULTIPLIE.
+
+  LES TROIS CHEMINS N'ONT PAS LA MÊME PRÉCISION, et la page la CHIFFRE
+  au lieu de la masquer : différence des index ± un cran (10 Wh) ·
+  disque ± un tour (2,5 Wh) · P × t exact. Leur accord se juge à
+  l'aune du plus grossier.
+
+  LE SEUL ÉCART DE LA FICHE EST UN ARRONDI, et la page le DIT sans la
+  corriger : elle écrit « 1 200 × 0,167 = 200 Wh » ; le produit exact
+  vaut 200,4 Wh et 1 200 × (1/6) vaut 200,0 Wh. L'écart, 0,4 Wh, tient
+  à l'arrondi de 1/6 h à trois décimales — il est 25 fois plus petit
+  que le cran de l'index, donc invisible sur l'appareil.
+
+  CE QUE L'ÉLÈVE MANIPULE
+  -----------------------
+  Tout se prend à la souris : la plaque chauffante et les deux lampes
+  se branchent aux prises de la canalisation ; la feuille de comptage
+  se pose sur la plaque du compteur (on lit sa constante), sur son
+  index (on relève un index) ou devant sa fenêtre (on compte les tours
+  ou les impulsions) ; le chronomètre se pose devant la fenêtre pour
+  lancer un épisode chronométré ; la calculatrice se pose sur la
+  feuille pour faire le chemin de calcul suivant ; la facture se pose
+  sur l'écran de projection ; et le levier du disjoncteur se tire de
+  haut en bas. La sécurité de la fiche est APPLIQUÉE, pas affichée.
+
+  ⚠️ LE COMPTEUR NE S'OUVRE PAS. Aucun capot, aucun plomb, aucune
+  borne interne n'est dessiné : « Le compteur appartient au
+  distributeur ; l'ouvrir est une infraction en plus d'être
+  dangereux. » On ne dessine que ce qu'on voit de l'extérieur —
+  l'index, le disque ou le voyant, et la plaque.
+
+  ATTENTION — CE QUE LA PAGE N'EST PAS
+  ------------------------------------
+  * Elle est AUTONOME. Elle ne passe pas par generer.py, n'utilise ni
+    moteur.js ni simulation.html.j2 ni icones.js, et ne s'ouvre pas
+    depuis index.html. Elle DOUBLE simulation_E3AC-22.html, elle ne la
+    remplace pas.
+  * Elle n'a pas de vue 3D.
+  * Elle s'écarte volontairement de la grammaire à plat du §5 du SKILL
+    principal (fond blanc, aplats, aucun dégradé) : on cherche ici
+    qu'un objet se reconnaisse comme un objet et donne envie d'y
+    porter la main.
+  * Le dessin est un SCHÉMA HABILLÉ. Sont à l'échelle les grandeurs
+    dont le modèle dépend : l'ANGLE du disque, qui vaut exactement
+    360°·E/C, la position de l'index, qui avance d'un cran par cran,
+    et la fréquence du voyant. Ne le sont pas les cotes du boîtier, le
+    diamètre du disque, la taille des appareils ni les longueurs de
+    câble — un compteur domestique fait 20 cm de haut, pas 270 unités.
+  * Le temps est COMPRIMÉ, et le facteur est affiché en permanence
+    dans la scène. Dix minutes de manipulation plus deux minutes de
+    témoin ne tiennent pas dans une démonstration.
+  * L'ORDRE DE GRANDEUR DE LA VITESSE DU DISQUE EST DONC FAUSSÉ à
+    l'écran : sous compression, le disque tourne autant de fois plus
+    vite. Ce qui est vrai, c'est ce qui est COMPTÉ, et le nombre de
+    tours par minute est écrit en clair à côté de lui.
+
+  §0 — TOUT vient de valise/curriculum/experiences.yaml, entrée
+  E3AC-22. Aucune durée, aucune valeur, aucun nom n'est écrit en dur :
+  la constante du compteur, la constante en imp/kWh, les index, la
+  durée, les puissances des appareils, la tension, la fréquence, le
+  cran de l'index et jusqu'au nombre de kilowattheures de la facture
+  sont lus dans la fiche.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.consigne.non{background:#8f2f0aee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"\2713";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cmd button{font-size:12px;padding:6px 11px}
+.choix{display:flex;gap:6px;margin:2px 0 8px}
+.choix button{flex:1;font-size:11.5px;font-weight:700;padding:7px 9px;
+  border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--muted)}
+.choix button.on{border-color:var(--gold);background:#fdf6e6;color:var(--ink)}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;list-style:none;
+      margin:0;padding:0}
+.lect li,.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px;
+      font-size:11.5px}
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px}
+.cases>div{background:var(--bluebg);border-radius:7px;padding:7px 9px}
+.cases .t{font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--muted);font-weight:700;line-height:1.25}
+.cases .u{font-size:17px;font-weight:700;color:var(--ink);margin-top:2px;
+          font-family:var(--mono)}
+.cases .u.nul{color:#9aa5b2;font-weight:600;font-family:inherit;font-size:13px}
+.cases .u.gros{font-size:22px;color:var(--orange)}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.temoin td{background:#f4f6f9}
+tr.autre td{background:#fffaf0}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans
+   la vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit EN CLAIR. Passée par un échappement CSS, la séquence
+   d'échappement se fait avaler par le chiffre qui la suit et sort en
+   « ¹3 ». Le fichier est en UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px;
+       line-height:1.9}
+.bilan2{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin-top:9px;
+        font-size:12px}
+.bilan2 .n{color:var(--muted)}
+.bilan2 .v{font-family:var(--mono);font-weight:700;text-align:right}
+.bilan2 .v.ok{color:var(--green)}
+.bilan2 .v.mal{color:#b03030}
+.ecart{background:#fdf6e6;border-left:3px solid var(--gold);padding:8px 11px;
+  border-radius:0 7px 7px 0;font-size:11.5px;margin-top:9px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-22 · 3AC · L15</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience" type="button">&#10227;</button>
+    </div>
+
+    <div class="seance" id="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <!-- Les gestes que le protocole fait D'UN SEUL COUP, et eux seuls.
+         Chacun DOUBLE un glisser qui reste possible (§4.A) et passe par
+         la MÊME fonction que lui (§12.13) : la logique d'état vit sur le
+         chemin commun, jamais dans le gestionnaire du bouton.
+           lire la plaque      ← feuille de comptage sur la plaque
+           lancer le témoin    ← chronomètre devant la fenêtre
+           relever un index    ← feuille de comptage sur l'index
+           se mettre au comptage ← feuille de comptage devant la fenêtre
+           fermer / couper     ← levier du disjoncteur, tiré de haut en bas
+           calculer            ← calculatrice sur la feuille de comptage
+           projeter la facture ← facture sur l'écran de projection      -->
+    <div class="cmd">
+      <button id="btnPlaque" type="button">Lire la plaque</button>
+      <button id="btnTemoin" type="button">Lancer le témoin</button>
+      <button id="btnIndex" type="button">Relever l'index</button>
+      <button id="btnComptage" type="button">Se mettre au comptage</button>
+      <button id="btnLancer" type="button">Fermer et chronométrer</button>
+      <button id="btnCouper" type="button">Couper et relever</button>
+      <button id="btnCalcul" type="button">Calculer le chemin suivant</button>
+      <button id="btnFacture" class="sec" type="button">Projeter la facture</button>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel <span class="note">de la fiche</span></h2>
+      <ul id="materiel" class="lect"></ul>
+      <h2 style="margin-top:12px">Sécurité <span class="note">de la fiche</span></h2>
+      <ul id="securite" class="lect"></ul>
+    </div>
+  </div>
+
+  <div>
+    <!-- Le protocole de la fiche, MOT POUR MOT, en TÊTE de colonne : sous la
+         scène il commençait au-delà de 900 px et restait invisible sans
+         dérouler. L'étape courante s'y DÉDUIT de l'état, jamais d'un
+         compteur — le panneau avance donc seul, et il recule. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Les instruments <span class="note" id="instNote">—</span></h2>
+      <div class="cases" id="instCases"></div>
+      <p class="src" id="instPhrase" style="margin-top:9px"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Le carnet de mesures <span class="note">ce que le modèle calcule</span></h2>
+      <p class="src" style="margin:0 0 5px">Les relevés que la manipulation en
+        cours a réellement produits, sous les réglages courants. Il n'est pas le
+        tableau de la fiche : celui-là dit ce que la séance prescrite donne,
+        celui-ci ce que <em>cette</em> séance-ci a donné.</p>
+      <table id="carnet"></table>
+      <div class="bilan2" id="carnetBilan"></div>
+      <div class="ecart" id="ecartFiche"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Le disque et la puissance <span class="note">l'hypothèse de la fiche</span></h2>
+      <p class="src" id="essaiTxt" style="margin:0 0 5px"></p>
+      <table id="vitesses"></table>
+    </div>
+
+    <div class="carte">
+      <h2>Les réglages <span class="note">outil de l'enseignant</span></h2>
+      <div class="reg">
+        <label>Le compteur</label><output id="oType"></output>
+        <div class="choix">
+          <button id="typInd" class="on" type="button">À induction</button>
+          <button id="typElec" type="button">Électronique</button>
+        </div>
+        <div class="aide" id="aideType"></div>
+      </div>
+      <div class="reg">
+        <label for="rC">Constante du compteur à induction</label><output id="oC"></output>
+        <input type="range" id="rC" min="5" max="100" step="1" value="25">
+        <div class="aide" id="aideC"></div>
+      </div>
+      <div class="reg">
+        <label for="rK">Constante du compteur électronique</label><output id="oK"></output>
+        <input type="range" id="rK" min="100" max="3000" step="1" value="1000">
+        <div class="aide" id="aideK"></div>
+      </div>
+      <div class="reg">
+        <label for="rA">Vitesse de la simulation</label><output id="oA"></output>
+        <input type="range" id="rA" min="1" max="300" step="1" value="240">
+        <div class="aide">Le témoin dure deux minutes et la mesure dix : une
+          démonstration n'a pas douze minutes d'attente à donner. À
+          <b>× 240</b>, la valeur de départ, les dix minutes prescrites passent
+          en <b>deux secondes et demie</b> et le témoin en une demi-seconde. Le
+          temps est comprimé, le facteur est écrit <b>dans la scène</b>, et
+          l'horloge s'<b>arrête d'elle-même</b> à l'instant prescrit. Ce réglage ne change
+          <b>aucun</b> résultat — il change seulement la vitesse à laquelle le
+          disque tourne <em>à l'écran</em>.</div>
+      </div>
+      <div class="cmd">
+        <button id="btnProto" class="sec" type="button">Revenir au protocole</button>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — pour l'enseignant</summary>
+
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="capotEq"></div>
+      <p id="capotEqTxt"></p>
+
+      <h3>2 · Ce que devient l'énergie</h3>
+      <p id="capotBilanTxt"></p>
+      <div class="eq" id="capotBilanEq"></div>
+
+      <h3>3 · Les constantes et leur provenance</h3>
+      <table id="capotPhys"></table>
+
+      <h3>4 · Les trois chemins et leur précision</h3>
+      <p id="capotPrec"></p>
+      <table id="capotPrecTab"></table>
+      <div class="ecart" id="capotEcart"></div>
+
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul id="capotLimites"></ul>
+
+      <h3>6 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-22.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-22",
+  "niveau": "3AC",
+  "unite": "U3",
+  "lecon": "L15",
+  "titre": "Que compte le compteur de la maison, et comment y lire l'énergie consommée ?",
+  "axe": "Le compteur électrique et l'énergie consommée dans une installation domestique",
+  "objectif": "Reconnaître le **rôle du compteur électrique** dans une installation domestique — totaliser en permanence l'énergie consommée par **tous** les appareils — et **déterminer l'énergie consommée pendant une durée donnée** par la méthode qui vaut sur **tous** les compteurs, la **différence de deux index**. Vérifier ce résultat par deux autres chemins : le **comptage des tours du disque**, **E = n × C**, sur un compteur à induction, et le calcul **E = P totale × t**. ⚠️ Établir explicitement la **transposition sur compteur électronique** — comptage des impulsions du voyant, constante en imp/kWh —, sans laquelle l'élève ne peut pas refaire la mesure chez lui.",
+  "duree": 26,
+  "modalite": "démonstration au tableau électrique du laboratoire ; les apprenants sont répartis par postes de 4, un binôme compte les tours ou les impulsions, l'autre chronomètre et relève les index",
+  "materiel": [
+    "Le **compteur d'énergie du laboratoire** — ou, à défaut, un **compteur pédagogique** monté sur panneau",
+    "⚠️ À défaut de compteur accessible : **photographies projetées en gros plan** des **trois** compteurs que l'on rencontre au Maroc — compteur **à induction** (avec disque et constante en Wh/tr), compteur **électronique** (avec voyant à impulsions et constante en imp/kWh), compteur **à prépaiement** (crédit en kWh)",
+    "Une **plaque chauffante 220 V – 1 000 W**",
+    "**Deux lampes à filament incandescent 220 V – 100 W** sur douilles isolées",
+    "Un **chronomètre** par poste",
+    "Une **feuille de comptage** pour marquer les tours ou les impulsions",
+    "Une **facture d'électricité réelle** (ONEE ou régie de distribution), apportée par l'enseignant, pour la comparaison finale",
+    "Une calculatrice par poste"
+  ],
+  "securite": [
+    "⚠️ **Le compteur et le tableau électrique sont sous 220 V : ON REGARDE, ON NE TOUCHE PAS.** L'enseignant seul manœuvre l'interrupteur général et branche les appareils.",
+    "⚠️ **Aucun capot de compteur n'est ouvert, aucun plomb n'est touché.** Le compteur appartient au distributeur ; l'ouvrir est une infraction en plus d'être dangereux.",
+    "Les apprenants restent **à distance du tableau**, comptent les tours **à l'œil** et notent sur leur feuille.",
+    "Vérifier que la **puissance totale branchée** reste compatible avec le circuit du laboratoire et avec le calibre du disjoncteur.",
+    "La **plaque chauffante est chaude** : ne rien poser dessus, ne pas l'approcher des cahiers, la laisser refroidir avant rangement.",
+    "Manipuler **les mains sèches** ; aucun liquide sur la paillasse du tableau électrique.",
+    "En cas de **déclenchement du disjoncteur**, personne ne le réarme sauf l'enseignant, après avoir débranché les appareils.",
+    "⚠️ **À la maison, l'élève ne fait que LIRE** : relever un index, lire une plaque, compter des clignotements. **Il ne branche rien, n'ouvre rien et ne démonte rien.**"
+  ],
+  "protocole": [
+    "**Situer** le compteur dans l'installation : il est placé à l'**entrée**, avant le disjoncteur général, et **tout** ce que la maison consomme passe par lui.",
+    "Lire sa **plaque** et relever : la **tension** (220 V), la **fréquence** (50 Hz), l'**unité de l'index** (kWh) et sa **constante** — **C en Wh/tr** sur un compteur à disque, ou **K en imp/kWh** sur un compteur électronique.",
+    "**Témoin** — tout étant éteint, relever l'index et observer le disque (ou le voyant) pendant **2 minutes**.",
+    "Relever l'**index de départ E₁**, en kWh, et le noter chiffre par chiffre.",
+    "Brancher simultanément la **plaque chauffante de 1 000 W** et les **deux lampes de 100 W**, et **déclencher le chronomètre** au même instant.",
+    "Pendant **10 minutes exactement**, un binôme **compte les tours du disque** ; sur un compteur électronique, il **compte les clignotements du voyant**.",
+    "À 10 minutes, **couper l'alimentation** et relever l'**index d'arrivée E₂**.",
+    "Calculer l'énergie par la **différence des index** : **E = E₂ − E₁**, en kWh puis en Wh.",
+    "Calculer l'énergie par le **disque** : **E = n × C**, en Wh. Sur un compteur électronique, calculer **E = N / K**, où N est le nombre d'impulsions et K la constante en imp/kWh.",
+    "Calculer l'énergie par la **puissance** : additionner les puissances, **P = 1 000 + 100 + 100**, convertir **10 min = 1/6 h ≈ 0,167 h**, puis appliquer **E = P × t**.",
+    "**Comparer les trois résultats** et conclure.",
+    "Terminer en projetant la **facture réelle** : y repérer l'**ancien index**, le **nouvel index** et la **consommation**, et vérifier que cette dernière est bien leur **différence**."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Grandeur relevée ou calculée",
+      "Symbole et unité",
+      "Valeur"
+    ],
+    "lignes": [
+      [
+        "Constante du compteur, lue sur sa plaque",
+        "C (Wh/tr)",
+        ""
+      ],
+      [
+        "Index au début",
+        "E₁ (kWh)",
+        ""
+      ],
+      [
+        "Index à la fin",
+        "E₂ (kWh)",
+        ""
+      ],
+      [
+        "Durée de la manipulation",
+        "t (min) puis (h)",
+        ""
+      ],
+      [
+        "Nombre de tours du disque — compteur à induction",
+        "n (tr)",
+        ""
+      ],
+      [
+        "Nombre d'impulsions du voyant — compteur électronique",
+        "N (imp)",
+        ""
+      ],
+      [
+        "Puissance totale des appareils branchés",
+        "P (W)",
+        ""
+      ],
+      [
+        "Énergie par la différence des index : E = E₂ − E₁",
+        "E (kWh) puis (Wh)",
+        ""
+      ],
+      [
+        "Énergie par le disque : E = n × C",
+        "E (Wh)",
+        ""
+      ],
+      [
+        "Énergie par la puissance : E = P × t",
+        "E (Wh)",
+        ""
+      ],
+      [
+        "Témoin — tout éteint pendant 2 min",
+        "index et disque",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Constante du compteur, lue sur sa plaque",
+        "C (Wh/tr)",
+        "**2,5 Wh/tr**, soit 400 tr/kWh"
+      ],
+      [
+        "Index au début",
+        "E₁ (kWh)",
+        "04 213,40"
+      ],
+      [
+        "Index à la fin",
+        "E₂ (kWh)",
+        "04 213,60"
+      ],
+      [
+        "Durée de la manipulation",
+        "t (min) puis (h)",
+        "10 min = 1/6 h ≈ **0,167 h**"
+      ],
+      [
+        "Nombre de tours du disque — compteur à induction",
+        "n (tr)",
+        "**80 tours**"
+      ],
+      [
+        "Nombre d'impulsions du voyant — compteur électronique",
+        "N (imp)",
+        "**200 impulsions** (constante 1 000 imp/kWh)"
+      ],
+      [
+        "Puissance totale des appareils branchés",
+        "P (W)",
+        "1 000 + 100 + 100 = **1 200 W**"
+      ],
+      [
+        "Énergie par la différence des index : E = E₂ − E₁",
+        "E (kWh) puis (Wh)",
+        "0,20 kWh = **200 Wh**"
+      ],
+      [
+        "Énergie par le disque : E = n × C",
+        "E (Wh)",
+        "80 × 2,5 = **200 Wh**"
+      ],
+      [
+        "Énergie par la puissance : E = P × t",
+        "E (Wh)",
+        "1 200 × 0,167 = **200 Wh**"
+      ],
+      [
+        "Témoin — tout éteint pendant 2 min",
+        "index et disque",
+        "index **inchangé**, disque **immobile**"
+      ]
+    ]
+  },
+  "observation": "Les trois chemins — différence des index, n × C, et P × t — donnent la même énergie ; tout éteint, le disque s'arrête et l'index ne bouge plus.",
+  "conclusion": "Le compteur totalise l'énergie consommée par toute l'installation, en kWh. E = index de fin − index de début sur tous les compteurs ; E = n × C sur un compteur à disque ; E = N / K sur un compteur électronique.",
+  "oheric": {
+    "observation": "Chez soi, personne ne mesure la puissance de chaque appareil et personne ne chronomètre quoi que ce soit. Pourtant, à chaque relève, la facture annonce un nombre **précis** de kilowattheures — **175 kWh** sur celle de Salma. Ce nombre n'a pas été calculé à la main : il est la **différence entre deux index** lus sur un appareil placé à l'entrée de l'installation, le **compteur**. Que mesure exactement cet appareil, et comment y lire l'énergie consommée pendant une durée donnée ?",
+    "hypothese": "**Si** le compteur totalise en permanence l'énergie consommée par **tous** les appareils de l'installation, **alors** l'augmentation de son index pendant une durée **t** doit être égale à la somme des énergies consommées, c'est-à-dire à **P totale × t**. **Et si** son disque — ou son voyant — est entraîné par l'énergie qui le traverse et non par le temps qui passe, **alors** il doit **s'arrêter** lorsque tout est éteint, et **accélérer** dès qu'on branche un appareil de plus.",
+    "experience": "Relever la **plaque** du compteur — tension, fréquence, unité de l'index, **constante** — puis son **index de départ**, tout étant éteint, et observer le disque pendant **2 minutes** : c'est le **témoin**. Brancher ensuite une **plaque chauffante de 1 000 W** et **deux lampes de 100 W** pendant **10 minutes** chronométrées, en **comptant les tours du disque** — ou les **clignotements du voyant** sur un compteur électronique. Relever l'**index d'arrivée**, puis déterminer l'énergie par **trois** chemins : la **différence des index**, la relation **E = n × C**, et le calcul **E = P totale × t**.",
+    "resultats": "La plaque du compteur porte **220 V**, **50 Hz**, un index en **kWh** et une constante **C = 2,5 Wh/tr**, ce qui s'écrit aussi **400 tr/kWh**. L'index de départ vaut **04 213,40 kWh** et l'index d'arrivée **04 213,60 kWh** : leur **différence est de 0,20 kWh, soit 200 Wh**. Pendant les 10 minutes, le disque a fait **80 tours** — et, sur le compteur électronique de la photographie, le voyant a produit **200 impulsions** pour une constante de 1 000 imp/kWh. La puissance totale branchée valait **P = 1 000 + 100 + 100 = 1 200 W**, et **P × t = 1 200 × 0,167 = 200 Wh**. Enfin, pendant les **2 minutes** du témoin, tout étant éteint, le **disque est resté immobile** et l'**index n'a pas bougé**.",
+    "interpretation": "Les **trois** chemins donnent la **même** valeur, **200 Wh** : la différence des index, **E = n × C = 80 × 2,5 = 200 Wh**, et **E = P × t = 200 Wh**. Le compteur mesure donc bien l'**énergie électrique totale** consommée par l'installation, c'est-à-dire la **somme** des énergies de tous les appareils branchés : **E = E₁ + E₂ + E₃ + …**. La **constante C = 2,5 Wh/tr** signifie que **chaque tour du disque correspond à 2,5 Wh consommés** : plus la puissance branchée est grande, plus le disque tourne **vite**, mais un tour vaut toujours la **même** énergie — le nombre de tours est donc **proportionnel** à l'énergie, et non l'inverse. Le **témoin** tranche la confusion la plus tenace : tout éteint, le disque **ne tourne pas** alors que le temps, lui, s'écoule — **le compteur mesure une énergie, pas une durée**. ⚠️ **Reste un point décisif pour la maison.** Le comptage de tours suppose un **compteur à disque**, dit à induction ; or la plupart des foyers marocains en sont sortis. Sur un **compteur électronique**, il n'y a **pas de disque** : un **voyant clignote**, et sa constante s'écrit en **impulsions par kWh** — **1 000 imp/kWh** signifie **1 impulsion pour 1 Wh**, de sorte que **E = N / K**. Sur un **compteur à prépaiement**, c'est un **crédit en kWh** qui **décroît**. La seule méthode qui vaut sur les **trois** est la **différence de deux index**, et c'est elle qu'il faut retenir. Les hypothèses sont validées.",
+    "conclusion": "Dans une installation domestique, l'énergie électrique totale consommée est la **somme des énergies consommées par chaque appareil** — **E = E₁ + E₂ + E₃ + …** — et elle est mesurée par le **compteur électrique**, placé à l'**entrée** de l'installation, qui l'affiche en **kWh** sur son **index**. L'énergie consommée pendant une période se calcule, **quel que soit le type de compteur**, par la **différence des index** : **E = index de fin − index de début**. Sur un **compteur à disque**, on peut aussi écrire **E = n × C**, où **n** est le nombre de tours et **C** la **constante du compteur** en **Wh/tr**, inscrite sur sa plaque. ⚠️ Sur un **compteur électronique** — le plus répandu aujourd'hui dans les foyers marocains — on compte les **impulsions du voyant** et **E = N / K**, K étant la constante en **imp/kWh**. C'est ce nombre de kilowattheures, et lui seul, que la **facture d'électricité** fait payer."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   1. LES CONSTANTES — lues sur la fiche, sourcées, jamais ajustées
+   ==================================================================
+   Aucune n'est calibrée : ce modèle-ci n'a rien à ajuster. Les deux
+   constantes du compteur sont LUES DANS LE TABLEAU DE LA FICHE, et le
+   cran de l'index est DÉDUIT du nombre de décimales que la fiche écrit
+   sur son index. PHYS est bâti au démarrage (batirPhys), une fois le
+   YAML lu, et le tableau de « sous le capot » s'en régénère.          */
+var PHYS = {};
+var PAS_INT = 0.5;          /* s — pas d'intégration, voir batirPhys */
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030", PALE = "#a7b3c1";
+var ALU = "#dfe7ef", JAUNE = "#ffd21e";
+var NUIT = "#1b2740", NUIT_CREUX = "#0b1524", NUIT_FILET = "#38455f";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* §12.2 — `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de nb() ; un rattrapage par expression régulière
+   détruirait aussi les virgules séparatrices. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+/* Un nombre écrit à la française, espaces des milliers compris. */
+function nombre(t) {
+  var m = String(depouille(t)).replace(/ /g, " ")
+    .replace(/(\d)\s+(?=\d)/g, "$1").replace(",", ".")
+    .match(/-?\d+(?:\.\d+)?/);
+  return m ? parseFloat(m[0]) : null;
+}
+/* Groupe les milliers par un espace, comme la fiche écrit ses index. */
+function groupe(s) {
+  var i, o = "";
+  for (i = 0; i < s.length; i++) {
+    o += s.charAt(i);
+    if ((s.length - 1 - i) % 3 === 0 && i < s.length - 1) o += " ";
+  }
+  return o;
+}
+
+/* ==================================================================
+   3. LE YAML — ce que la fiche dit (§0)
+   ================================================================== */
+function T(k) { return depouille(DONNEES[k] || ""); }
+function L(k) { return DONNEES[k] || []; }
+function TM() { return DONNEES.tableau_mesures || {}; }
+function OH(k) { return (DONNEES.oheric || {})[k] || ""; }
+function entetes() { return TM().entetes || []; }
+function ligsF() { return TM().lignes || []; }
+function valsF() { return TM().valeurs || []; }
+function cel(k, c) {
+  var v = valsF()[k];
+  return v ? depouille(String(v[c] == null ? "" : v[c])) : "";
+}
+function intitule(k) {
+  var l = ligsF()[k] || valsF()[k];
+  return l ? depouille(String(l[0] || "")) : "";
+}
+function symbole(k) {
+  var l = ligsF()[k] || valsF()[k];
+  return l ? depouille(String(l[1] || "")) : "";
+}
+/* Une ligne se trouve par son INTITULÉ, jamais par son rang. */
+function ligneQui(re) {
+  var i, n = Math.max(ligsF().length, valsF().length);
+  for (i = 0; i < n; i++) if (re.test(intitule(i))) return i;
+  return -1;
+}
+/* Une ligne de sécurité se vise par ce qu'elle DIT (§12.14). */
+function secu(re) {
+  var s = L("securite"), i, r = new RegExp(re, "i");
+  for (i = 0; i < s.length; i++) if (r.test(s[i])) return depouille(s[i]);
+  return "";
+}
+function proto() { return L("protocole").map(depouille).join(" · "); }
+function mater() { return L("materiel").map(depouille).join(" · "); }
+
+var K_CONST = -1, K_E1 = -1, K_E2 = -1, K_DUREE = -1, K_TOURS = -1,
+    K_IMP = -1, K_P = -1, K_TEM = -1, K_CALC = [];
+
+/* ==================================================================
+   3bis. LES DURÉES ET LES VALEURS VIENNENT DE LA FICHE (§5, §0)
+   ==================================================================
+   §12.29 — le nombre commence par un CHIFFRE, aucun drapeau `i` sur
+   une unité, et l'unité n'est jamais suivie d'une lettre. Le protocole
+   de cette fiche contient « 1/6 h » : lire « 6 h » y serait un piège
+   parfait, d'où le motif à décimale obligatoire pour les heures.      */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20 };
+function minutesDe(s) {
+  var m = String(depouille(s)).match(/(\d[\d\s]*)\s*min(?![A-Za-zÀ-ÿ])/);
+  if (m) return parseFloat(m[1].replace(/\s/g, ""));
+  m = String(s).match(/\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt)\s+minutes?\b/i);
+  return m ? MOTS_NB[m[1].toLowerCase()] : null;
+}
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* Toutes les grandeurs de la fiche, lues une fois pour toutes. */
+var C_FICHE = 2.5, K_FICHE = 1000, RESOL = 0.01, DEC_IDX = 2, LARG_IDX = 5;
+var INDEX0 = 0, INDEX_FIN = 0, MIN_TEM = 2, MIN_MES = 10, H_FICHE = null;
+var P_FICHE = 0, N_TOURS_F = 0, N_IMP_F = 0, U_RESEAU = "", F_RESEAU = "";
+var UNITE_IDX = "kWh", S_C = "C", S_K = "K", KWH_FACTURE = null, NOM_FACTURE = "";
+var APPAREILS = [], DUREE_SEANCE = 20;
+
+function lireFiche() {
+  K_CONST = ligneQui(/constante/i);
+  K_E1 = ligneQui(/index\s+au\s+d[ée]but/i);
+  K_E2 = ligneQui(/index\s+[àa]\s+la\s+fin/i);
+  K_DUREE = ligneQui(/dur[ée]e/i);
+  K_TOURS = ligneQui(/nombre\s+de\s+tours/i);
+  K_IMP = ligneQui(/nombre\s+d'impulsions/i);
+  K_P = ligneQui(/puissance\s+totale/i);
+  K_TEM = ligneQui(/t[ée]moin/i);
+  K_CALC = [];
+  var i, n = Math.max(ligsF().length, valsF().length);
+  for (i = 0; i < n; i++) {
+    if (/^\s*[ÉE]nergie\s+par/i.test(intitule(i))) K_CALC.push(i);
+  }
+
+  /* la constante du compteur à induction — « 2,5 Wh/tr, soit 400 tr/kWh » */
+  var m = cel(K_CONST, 2).match(/(\d[\d,.\s]*)\s*Wh\s*\/\s*tr/);
+  C_FICHE = m ? nombre(m[1]) : 2.5;
+  /* la constante du compteur électronique, entre parenthèses de la ligne
+     des impulsions : « 200 impulsions (constante 1 000 imp/kWh) » */
+  m = cel(K_IMP, 2).match(/constante\s*(\d[\d\s]*)\s*imp\s*\/\s*kWh/);
+  K_FICHE = m ? nombre(m[1]) : 1000;
+  N_IMP_F = nombre(cel(K_IMP, 2)) || 0;
+  N_TOURS_F = nombre(cel(K_TOURS, 2)) || 0;
+
+  /* LE CRAN DE L'INDEX N'EST PAS POSÉ : il se DÉDUIT du nombre de
+     décimales que la fiche écrit sur son index. « 04 213,40 » en porte
+     deux, donc l'index avance de 0,01 kWh en 0,01 kWh. */
+  var s1 = cel(K_E1, 2).replace(/\s/g, "");
+  var iv = s1.indexOf(",");
+  DEC_IDX = iv < 0 ? 0 : s1.length - iv - 1;
+  LARG_IDX = iv < 0 ? s1.length : iv;
+  RESOL = Math.pow(10, -DEC_IDX);
+  INDEX0 = nombre(cel(K_E1, 2)) || 0;
+  INDEX_FIN = nombre(cel(K_E2, 2)) || 0;
+
+  MIN_MES = minutesDe(cel(K_DUREE, 2)) || minutesDe(proto()) || 10;
+  MIN_TEM = minutesDe(intitule(K_TEM)) || 2;
+  /* l'heure décimale de la fiche : elle a une virgule, « 1/6 h » n'en a
+     pas — c'est ce qui les distingue sans ambiguïté */
+  m = cel(K_DUREE, 2).match(/(\d+,\d+)\s*h(?![A-Za-zÀ-ÿ])/);
+  H_FICHE = m ? nombre(m[1]) : null;
+
+  /* les appareils : les TERMES de la somme portée par la ligne
+     « Puissance totale » — leur nombre et leurs puissances viennent donc
+     du tableau, jamais d'un choix de la page */
+  var som = cel(K_P, 2), g = som.split("=")[0].split("+"), j;
+  P_FICHE = nombre(som.split("=")[1]) || 0;
+  var pPlaque = null, pLampe = null;
+  m = mater().match(/plaque\s+chauffante[^·]{0,40}?(\d[\d\s]*)\s*W(?![A-Za-zÀ-ÿ])/);
+  if (m) pPlaque = nombre(m[1]);
+  m = mater().match(/[Ll]ampes?\s[^·]{0,70}?(\d[\d\s]*)\s*W(?![A-Za-zÀ-ÿ])/);
+  if (m) pLampe = nombre(m[1]);
+  APPAREILS = [];
+  for (j = 0; j < g.length; j++) {
+    var v = nombre(g[j]);
+    if (v === null) continue;
+    APPAREILS.push({
+      p: v,
+      plaque: pPlaque !== null && v === pPlaque,
+      nom: (pPlaque !== null && v === pPlaque) ? "plaque chauffante"
+         : (pLampe !== null && v === pLampe ? "lampe" : "appareil")
+    });
+  }
+
+  m = mater().match(/(\d[\d\s]*)\s*V(?![A-Za-zÀ-ÿ])/);
+  U_RESEAU = m ? nombre(m[1]) : null;
+  m = proto().match(/(\d[\d\s]*)\s*Hz(?![A-Za-zÀ-ÿ])/);
+  F_RESEAU = m ? nombre(m[1]) : null;
+  m = symbole(K_E1).match(/\(([^)]+)\)/);
+  UNITE_IDX = m ? m[1] : "kWh";
+  m = symbole(K_CONST).match(/^\s*([A-Za-z])\b/);
+  S_C = m ? m[1] : "C";
+  m = proto().match(/\b([A-Z])\s+en\s+imp\s*\/\s*kWh/);
+  S_K = m ? m[1] : "K";
+
+  /* la facture : le nombre de kilowattheures que la fiche cite, et le
+     prénom auquel elle l'attache */
+  var obs = depouille(OH("observation"));
+  m = obs.match(/(\d[\d\s]*)\s*kWh(?![A-Za-zÀ-ÿ])/);
+  KWH_FACTURE = m ? nombre(m[1]) : null;
+  m = obs.match(/celle\s+de\s+([A-ZÀ-Ý][A-Za-zà-ÿ]+)/);
+  NOM_FACTURE = m ? m[1] : "";
+
+  DUREE_SEANCE = +(DONNEES.duree || 20);
+}
+
+function batirPhys() {
+  PHYS = {
+    C_COMPTEUR: { v: C_FICHE, u: "Wh/tr", d: 1,
+      n: "constante du compteur à induction",
+      s: "LUE sur la plaque, ligne « " + intitule(K_CONST) + " » du tableau de "
+        + "la fiche : « " + cel(K_CONST, 2) + " ». " + nb(C_FICHE, 1) + " Wh/tr, "
+        + "c'est " + nb(1000 / C_FICHE, 0) + " tr/kWh — une constante normalisée "
+        + "de compteur monophasé. Elle n'est pas dans le code : le curseur part "
+        + "de la valeur de la fiche" },
+    K_COMPTEUR: { v: K_FICHE, u: "imp/kWh", d: 0,
+      n: "constante du compteur électronique",
+      s: "LUE entre les parenthèses de la ligne « " + intitule(K_IMP) + " » : « "
+        + cel(K_IMP, 2) + " ». " + nb(K_FICHE, 0) + " imp/kWh, c'est exactement "
+        + nb(1000 / K_FICHE, 3) + " Wh par impulsion" },
+    RESOL_INDEX: { v: RESOL, u: UNITE_IDX, d: DEC_IDX,
+      n: "cran de l'index d'un compteur domestique",
+      s: "DÉDUITE, non posée : la fiche écrit son index « " + cel(K_E1, 2)
+        + " », donc avec " + DEC_IDX + " décimales. Un index mécanique n'affiche "
+        + "pas un réel — il avance par crans, et c'est ce cran qui limite la "
+        + "méthode de la différence des index" },
+    TENSION: { v: U_RESEAU, u: "V", d: 0, n: "tension du réseau",
+      s: "lue dans le matériel de la fiche (plaques des appareils) et relevée "
+        + "sur la plaque du compteur par le protocole" },
+    FREQUENCE: { v: F_RESEAU, u: "Hz", d: 0, n: "fréquence du réseau",
+      s: "lue dans le protocole : « relever la tension, la fréquence ». Elle "
+        + "n'entre dans aucun calcul de cette page — elle est sur la plaque, "
+        + "et le protocole demande de la lire" },
+    PAS_INT: { v: PAS_INT, u: "s", d: 2, n: "pas d'intégration",
+      s: "l'intégrale d'une puissance CONSTANTE est exacte à tout pas ; celui-ci "
+        + "ne sert qu'à ne jamais enjamber l'instant de relevé prescrit" }
+  };
+}
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO, les valeurs prescrites ; REG, les courantes
+   ==================================================================
+   §12.12 — la `value` initiale DOIT tomber sur la grille des `step` à
+   partir de `min`. Les deux curseurs travaillent donc en ENTIERS :
+   `c` en DIXIÈMES de Wh/tr, `k` en imp/kWh. Un flottant (2,5) sur une
+   grille de pas 0,1 se ferait ramener en silence à 2,4 ou 2,6,
+   `horsProtocole()` serait vrai dès le chargement, et le tableau de la
+   fiche ne se remplirait JAMAIS — sans la moindre erreur.
+   ⚠️ Le TYPE de compteur n'entre pas dans horsProtocole() : le
+   protocole prescrit les DEUX (« C en Wh/tr sur un compteur à disque,
+   ou K en imp/kWh sur un compteur électronique »), et c'est la
+   transposition que la leçon demande d'établir.                       */
+var PROTO = { c: 25, k: 1000 };
+/* ⚠️ × 240 AU DÉPART, ET CE N'EST PAS UN CONFORT. À × 20 les dix minutes
+   prescrites duraient trente secondes de montre : personne n'attend cela
+   devant une classe, et l'enseignant l'a dit. À × 240 elles passent en deux
+   secondes et demie. Accélérer ne change AUCUN résultat — l'intégration
+   garde son pas de PAS_INT (à × 240, un tic de 40 ms avance de 9,6 s, soit
+   20 sous-pas) et l'horloge se recale exactement sur l'instant prescrit
+   (§12.43). Le facteur reste écrit en permanence dans la scène. */
+var REG = { c: 25, k: 1000, acc: 240, type: "induction" };
+function cWhTr() { return REG.c / 10; }
+function kImpKwh() { return REG.k; }
+function horsProtocole() { return REG.c !== PROTO.c || REG.k !== PROTO.k; }
+
+/* ==================================================================
+   5. LE SOLVEUR — un seul modèle, et il est intégrateur
+   ==================================================================
+       E(t) = ∫ P_totale dt        P_totale = Σ appareils branchés
+   Le disque, le voyant et l'index n'en sont que trois lectures, avec
+   chacune sa précision d'instrument.                                  */
+function pBranchee() {
+  var i, p = 0;
+  for (i = 0; i < APPAREILS.length; i++) if (ETAT.prise[i] !== null) p += APPAREILS[i].p;
+  return p;
+}
+function pTotale() { return ETAT.disj ? pBranchee() : 0; }
+/* ce que l'index AFFICHE : jamais le réel, toujours des crans */
+function indexDe(e) {
+  return INDEX0 + Math.floor(e / (RESOL * 1000) + 1e-9) * RESOL;
+}
+function indexCourant() { return indexDe(ETAT.eTotal); }
+function eMesure() { return ETAT.eDepart === null ? 0 : ETAT.eTotal - ETAT.eDepart; }
+/* le nombre de tours ENTIERS passés devant le repère, et les
+   impulsions ENTIÈRES : on ne compte pas un demi-tour */
+function toursDe(e) { return Math.floor(e / cWhTr() + 1e-9); }
+function impDe(e) { return Math.floor(e * kImpKwh() / 1000 + 1e-9); }
+function compteDe(e) { return REG.type === "induction" ? toursDe(e) : impDe(e); }
+/* ce qu'on VOIT changer quand on branche un appareil de plus */
+function vitesseDisque(p) { return p / (60 * cWhTr()); }          /* tr/min  */
+function freqVoyant(p) { return p * kImpKwh() / 3.6e6; }          /* imp/s   */
+/* l'angle du disque EST l'énergie : 360° par C wattheures (§12.18) */
+function angleDisque() { return (360 * ETAT.eTotal / cWhTr()) % 360; }
+/* les décimales suivent la division de l'instrument (§12.21) */
+function decDe(div) {
+  return Math.max(0, Math.ceil(-Math.log(div) / Math.LN10 - 1e-9));
+}
+function fmtIndex(v) {
+  var s = Math.abs(v).toFixed(DEC_IDX), i = s.indexOf(".");
+  var ent = i < 0 ? s : s.slice(0, i), dec = i < 0 ? "" : s.slice(i + 1);
+  while (ent.length < LARG_IDX) ent = "0" + ent;
+  return groupe(ent) + (dec ? "," + dec : "");
+}
+/* Les trois chemins, chacun avec sa PRÉCISION D'INSTRUMENT. */
+function cheminsCalcules(r) {
+  var out = [], dt = r.minutes / 60;
+  out.push({ cle: "index",
+    nom: "E = " + symLettre(K_E2) + " − " + symLettre(K_E1),
+    detail: fmtIndex(r.i2) + " − " + fmtIndex(r.i1) + " = "
+      + nb(r.i2 - r.i1, DEC_IDX) + " " + UNITE_IDX,
+    wh: Math.round((r.i2 - r.i1) * 1000),
+    prec: RESOL * 1000, precTxt: "± " + nb(RESOL * 1000, 0) + " Wh — le cran de l'index" });
+  if (r.type === "induction") {
+    out.push({ cle: "disque", nom: "E = n × " + S_C,
+      detail: nb(r.compte, 0) + " × " + nb(r.c, 1) + " = " + nb(r.compte * r.c, 0) + " Wh",
+      wh: r.compte * r.c,
+      prec: r.c, precTxt: "± " + nb(r.c, 1) + " Wh — un tour de disque" });
+  } else {
+    out.push({ cle: "disque", nom: "E = N / " + S_K,
+      detail: nb(r.compte, 0) + " / " + nb(r.k, 0) + " = "
+        + nb(r.compte / r.k, DEC_IDX + 1) + " " + UNITE_IDX + " = "
+        + nb(r.compte / r.k * 1000, 0) + " Wh",
+      wh: r.compte / r.k * 1000,
+      prec: 1000 / r.k, precTxt: "± " + nb(1000 / r.k, 2) + " Wh — une impulsion" });
+  }
+  out.push({ cle: "puissance", nom: "E = P × t",
+    detail: nb(r.p, 0) + " × " + nb(dt, 4) + " = " + nb(r.p * dt, 1) + " Wh",
+    wh: r.p * dt, prec: 0, precTxt: "exact — ce n'est pas une lecture, c'est un produit" });
+  return out;
+}
+function symLettre(k) {
+  var m = symbole(k).match(/^\s*(\S+)/);
+  return m ? m[1] : "E";
+}
+
+/* ==================================================================
+   6. L'ÉTAT
+   ==================================================================
+   §12.17 — TOUTE clé lue ailleurs figure ici. Une clé oubliée rend une
+   branche entière morte sans lever la moindre erreur.                 */
+var MINUTEURS = [];
+function tard(f, ms) { MINUTEURS.push(setTimeout(f, ms)); }
+function purger() {
+  var i;
+  for (i = 0; i < MINUTEURS.length; i++) clearTimeout(MINUTEURS[i]);
+  MINUTEURS = [];
+}
+var ETAT = null;
+function neufEtat() {
+  return {
+    plaqueLue: false,        /* la plaque du compteur a-t-elle été lue ? */
+    disj: true,              /* disjoncteur fermé — l'installation est alimentée */
+    prise: [null, null, null],  /* appareil i → numéro de prise, ou null */
+    feuille: null,           /* null | "fenetre" — le binôme est-il au comptage ? */
+    temoinFait: false, temoinIndex: null, temoinTours: 0, temoinFin: null,
+    index1: null, index2: null,
+    eTotal: 0,               /* Wh intégrés depuis l'ouverture de la page */
+    eDepart: null,           /* eTotal au lancement de la mesure */
+    eEssai: 0,               /* Wh consommés hors mesure — l'index n'oublie pas */
+    t: 0,                    /* secondes de l'épisode chronométré en cours */
+    marche: false,           /* un épisode chronométré avance-t-il ? */
+    gel: false,              /* l'horloge est-elle arrêtée sur l'instant prescrit ? */
+    episode: null,           /* null | "temoin" | "mesure" */
+    mesureFinie: false,
+    compte: 0,               /* tours ou impulsions comptés pendant la mesure */
+    runs: [],                /* les mesures achevées, une par type de compteur */
+    chemins: [],             /* les chemins de calcul déjà faits */
+    factureVue: false,
+    vitesses: {},            /* puissance observée → vitesse du disque */
+    cellules: 0,             /* cellules dévoilées — compté pour le pilotage */
+    devoile: {},             /* "k:c" → true, pour ne pas compter deux fois */
+    tSeance: 0,
+    obs: "", obsPos: null,
+    retenue: 0,              /* §12.10 : un refus tient jusqu'à sa résolution */
+    horsProto: false
+  };
+}
+function mesureOuverte() { return ETAT.index1 !== null && !ETAT.mesureFinie; }
+function toutBranche() {
+  var i;
+  for (i = 0; i < APPAREILS.length; i++) if (ETAT.prise[i] === null) return false;
+  return APPAREILS.length > 0;
+}
+function rienBranche() {
+  var i;
+  for (i = 0; i < APPAREILS.length; i++) if (ETAT.prise[i] !== null) return false;
+  return true;
+}
+function runDe(type) {
+  var i;
+  for (i = 0; i < ETAT.runs.length; i++) if (ETAT.runs[i].type === type) return ETAT.runs[i];
+  return null;
+}
+function runCourant() { return runDe(REG.type); }
+
+/* ==================================================================
+   7. GÉOMÉTRIE — toutes les cotes de la scène, en constantes nommées
+   ==================================================================
+   Cadre ÉTROIT (§10.5) : 1120 × 660.
+
+   ⚠️ ZONES INTERDITES DU CADRE, MESURÉES SUR LA CAPTURE — et le brief
+   les sous-estimait :
+     · la CONSIGNE : sa largeur est `max-width:60%`, soit 672 unités
+       CENTRÉES — donc x 224..896, et non 281..619 ; et sur deux lignes
+       elle descend à y ≈ 90, non 62. C'est pourquoi le boîtier du
+       compteur commence à y = 100 et non à 74 : posé plus haut, il
+       passait sous la bulle dès qu'une consigne tenait sur trois
+       lignes ;
+     · le JOURNAL : x ≤ 285 mesuré, et il descend avec son texte — le
+       refus le plus long de cette page tient en huit lignes, ce qui le
+       mène vers y ≈ 340 (§12.9). Rien au-dessus de y = 340 en x < 320 ;
+     · le bouton RECOMMENCER : x ≥ 1046, y ≤ 74.
+
+   D'où la mise en page : l'installation se lit de gauche à droite —
+   arrivée du réseau, compteur, disjoncteur, canalisation — mais elle
+   commence à x = 326, à droite du journal. L'arrivée du réseau est
+   donc un tronçon court, étiqueté sur DEUX lignes pour tenir dans les
+   94 unités disponibles : une étiquette d'un seul tenant mordrait sur
+   le boîtier du compteur.
+
+   ⚠️ LE CADRE EST COURT, ET IL DOIT L'ÊTRE (§10.5). Une première
+   version à 1120 × 660 laissait 174 unités de meuble gris vides sous
+   le plan de travail — un quart du cadre — pendant que les objets se
+   tassaient. Chaque unité de hauteur perdue en décor est une unité de
+   moins pour la taille apparente des objets.                          */
+var VB_W = 1120, VB_H = 580;
+var BANC = 486, MEUBLE = 580, Y_BANDE = 546;
+var YL = 222;                                     /* l'axe de l'installation */
+var XRES = 326;                                   /* l'entrée du réseau       */
+var MX = 420, MY = 100, MW = 224, MH = 244;       /* le compteur : 420..644   */
+var MX2 = MX + MW, MCX = MX + MW / 2;             /* 644, 532                 */
+var PLX = MX + 14, PLW = MW - 28, PLY = MY + 32, PLH = 44;   /* la platine    */
+var FX = MX + 18, FW = MW - 36, FY = MY + 88, FH = 112;      /* la fenêtre    */
+var XD = MCX, YD = FY + 46, RD = 34;              /* le disque                */
+var QX = MX + 14, QY = MY + 206, QW = MW - 28, QH = 36;      /* la plaque     */
+var XJ = 726, JW = 100, JH = 62;                  /* le disjoncteur 676..776  */
+var XLEV = XJ + 16;                               /* le levier                */
+var XBUS0 = 700, XBUS1 = 1064, YBUS = 366;        /* la canalisation          */
+var PRISES = [786, 895, 1004];
+var YAPP = 452;                                   /* le centre des appareils  */
+var ECR = { x: 838, y: 96, w: 226, h: 154 };      /* l'écran de projection    */
+var APP_REPOS = [{ x: 92, y: YAPP }, { x: 208, y: YAPP }, { x: 324, y: YAPP }];
+var FEU_REPOS = { x: 430, y: 447 }, FEU_COMPTE = { x: 384, y: 300 };
+var CHR_REPOS = { x: 528, y: 457 };
+var CAL_REPOS = { x: 616, y: 448 };
+/* La facture est calée à 690 et non 712 : son intitulé, mesuré sur la
+   capture, venait toucher celui de la plaque chauffante une fois
+   celle-ci branchée à la première prise (§12.7). */
+var FAC_REPOS = { x: 690, y: 444 };
+
+/* ⚠️ LES ÉTIQUETTES VOISINES SE COUPENT BIEN AVANT DE SE TOUCHER (§12.7).
+   Toutes les hauteurs sont déclarées ICI, dans un seul objet, pour se
+   comparer d'un coup d'œil — dispersées dans le code, on ne voit pas
+   que trois d'entre elles sont à la même ligne.
+   ⚠️ AUCUNE ÉTIQUETTE SOUS LE PLAN DE TRAVAIL (y > 486) : gris sur gris,
+   elles sont illisibles, et rien ne le signale sinon la capture. */
+var Y_ETIQ = {
+  reseau1: 192, reseau2: 208,      /* « arrivée » / « du réseau », deux lignes */
+  role: 360,                       /* « à l'entrée, avant le disjoncteur »     */
+  disj: 176,                       /* « disjoncteur général », au-dessus       */
+  disjEtat: 272,                   /* « fermé » / « ouvert », au-dessous       */
+  bus: 350,                        /* « vers la maison »                       */
+  appareil: 414,                   /* les trois appareils, branchés ou au repos*/
+  feuille: 400, chrono: 420, calc: 400, facture: 394,
+  ecran: 268                       /* sous l'écran de projection               */
+};
+/* La position en x de l'intitulé du rôle du compteur : centré sur le
+   boîtier, il était traversé de part en part par la descente du
+   disjoncteur vers la canalisation (x = 692), vu sur la capture. */
+var X_ROLE = 500;
+var ENCRE_ETIQ = "#4a5563";
+
+/* ==================================================================
+   8. DÉFS SVG ET COUCHES
+   ==================================================================
+   L'ordre EST la moitié du dessin (§8) : les câbles passent DERRIÈRE
+   les appareils, les étiquettes et les vitres DEVANT.                 */
+var svg = null, COUCHES = {};
+var ORDRE = ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"];
+
+function defs() {
+  var d = el("defs"), g, f;
+
+  g = el("linearGradient", { id: "gBoitier", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fbfcfd" }));
+  g.appendChild(el("stop", { offset: .5, "stop-color": "#e7ebf0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#ccd4dd" }));
+  d.appendChild(g);
+
+  g = el("linearGradient", { id: "gMetal", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#727c8a" }));
+  g.appendChild(el("stop", { offset: .2, "stop-color": "#aab4c0" }));
+  g.appendChild(el("stop", { offset: .38, "stop-color": "#f4f7fa" }));
+  g.appendChild(el("stop", { offset: .74, "stop-color": "#9aa5b2" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#6b7480" }));
+  d.appendChild(g);
+
+  g = el("linearGradient", { id: "gVerre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#b6c4d2" }));
+  g.appendChild(el("stop", { offset: .18, "stop-color": "#dfe7ef" }));
+  g.appendChild(el("stop", { offset: .34, "stop-color": "#ffffff" }));
+  g.appendChild(el("stop", { offset: .72, "stop-color": "#d3dde7" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#a9b8c8" }));
+  d.appendChild(g);
+
+  g = el("linearGradient", { id: "gBanc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#d9d2c6" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#b9b0a1" }));
+  d.appendChild(g);
+
+  g = el("radialGradient", { id: "gHalo" });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#ffe9a8", "stop-opacity": .95 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#ffd21e", "stop-opacity": 0 }));
+  d.appendChild(g);
+
+  g = el("radialGradient", { id: "gFoyer" });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#ffd9a0", "stop-opacity": .9 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#b4530f", "stop-opacity": 0 }));
+  d.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 6 }));
+  d.appendChild(f);
+
+  f = el("filter", { id: "ombre", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 4 }));
+  d.appendChild(f);
+
+  f = el("filter", { id: "ombrePrise", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 7, stdDeviation: 6,
+                                     "flood-color": "#12203a", "flood-opacity": .38 }));
+  d.appendChild(f);
+  return d;
+}
+
+function batirSvg() {
+  var hote = $("paillasse"), i;
+  svg = el("svg", { viewBox: "0 0 " + VB_W + " " + VB_H,
+                    xmlns: NS, "font-family": "'Inter','Segoe UI',sans-serif" });
+  svg.appendChild(defs());
+  for (i = 0; i < ORDRE.length; i++) {
+    COUCHES[ORDRE[i]] = el("g", { id: "c-" + ORDRE[i] });
+    svg.appendChild(COUCHES[ORDRE[i]]);
+  }
+  hote.insertBefore(svg, hote.firstChild);
+}
+/* Une décoration ne vole jamais le clic de son voisin (§12.15). */
+function deco(n) { n.setAttribute("pointer-events", "none"); return n; }
+/* ⚠️ ET LE REVERS DE LA MÊME MÉDAILLE : la zone de préhension se DÉCLARE.
+   Un objet fin — le levier du disjoncteur, la feuille de comptage — n'offre
+   au pointeur que quelques unités utiles, et viser le centre de sa
+   silhouette ne saisit rien du tout. On lui pose une plaque transparente
+   aux cotes de sa silhouette, insérée EN PREMIER dans le groupe pour
+   qu'elle passe derrière le dessin. */
+function zonePrise(g, x, y, w, h) {
+  g.insertBefore(el("rect", { "class": "prise", x: x, y: y, width: w, height: h,
+    fill: "#ffffff", "fill-opacity": 0.001 }), g.firstChild);
+}
+function texte(c, x, y, t, o) {
+  var a = { x: x, y: y, "font-size": 12, fill: INK }, k;
+  for (k in (o || {})) a[k] = o[k];
+  var n = el("text", a, t);
+  c.appendChild(deco(n));
+  return n;
+}
+
+/* ==================================================================
+   9. LE DÉCOR — le mur du local, le plan de travail, le meuble
+   ================================================================== */
+function decor() {
+  var c = COUCHES.fond, x, y;
+  c.appendChild(deco(el("rect", { x: 0, y: 0, width: VB_W, height: BANC, fill: "#e8ecf1" })));
+  c.appendChild(deco(el("rect", { x: 0, y: BANC - 3, width: VB_W, height: 22,
+                                  fill: "url(#gBanc)" })));
+  c.appendChild(deco(el("rect", { x: 0, y: BANC + 19, width: VB_W, height: MEUBLE - BANC - 19,
+                                  fill: "#7d8794" })));
+  c.appendChild(deco(el("rect", { x: 0, y: Y_BANDE - 24, width: VB_W,
+                                  height: MEUBLE - Y_BANDE + 24, fill: "#5d6773" })));
+  for (x = 0; x <= VB_W; x += 80) {
+    c.appendChild(deco(el("line", { x1: x, y1: 0, x2: x, y2: BANC - 3,
+                                    stroke: "#dde2e8", "stroke-width": 1 })));
+  }
+  for (y = 40; y < BANC - 3; y += 80) {
+    c.appendChild(deco(el("line", { x1: 0, y1: y, x2: VB_W, y2: y,
+                                    stroke: "#dde2e8", "stroke-width": 1 })));
+  }
+  /* La légende va sur le BANDEAU SOMBRE du meuble : posée au ras du banc,
+     elle passerait sous les appareils. */
+  texte(c, 16, Y_BANDE + 4, "schéma habillé — l'angle du disque vaut 360° × E / "
+    + S_C + " ; les cotes sont agrandies",
+    { "font-size": 12, fill: "#c7cfd8", "font-style": "italic" });
+}
+function ombreAuSol(c, x, y, rx) {
+  c.appendChild(deco(el("ellipse", { cx: x, cy: y, rx: rx, ry: 5,
+                                     fill: "#12203a", opacity: .22, filter: "url(#ombre)" })));
+}
+
+/* ==================================================================
+   10. LES POSTES — le compteur, le disjoncteur, la canalisation
+   ==================================================================
+   ⚠️ LE COMPTEUR NE S'OUVRE PAS. Aucun capot, aucun plomb, aucune borne
+   interne n'est dessiné : « Le compteur appartient au distributeur ;
+   l'ouvrir est une infraction en plus d'être dangereux. » On ne dessine
+   que ce qu'on voit de l'extérieur — l'index, le disque ou le voyant,
+   et la plaque signalétique.
+   ⚠️ LES DEUX COMPTEURS PARTAGENT LA MÊME PLATINE et ne diffèrent que
+   par ce qu'elle porte : des tambours d'un côté, une vitre d'afficheur
+   de l'autre. C'est voulu — la leçon demande d'établir la transposition
+   de l'un à l'autre, et elle se voit mal si les deux appareils n'ont
+   rien de commun.                                                     */
+function batirCompteur() {
+  var c = COUCHES.poste, g = el("g", { id: "compteur" });
+  g.appendChild(el("rect", { x: MX, y: MY, width: MW, height: MH, rx: 13,
+    fill: "url(#gBoitier)", stroke: "#8a94a4", "stroke-width": 2.6 }));
+  g.appendChild(el("rect", { x: MX + 7, y: MY + 7, width: MW - 14, height: MH - 14,
+    rx: 9, fill: "none", stroke: "#c3cbd4", "stroke-width": 1.2 }));
+  g.appendChild(el("text", { x: MX + 16, y: MY + 24, "font-size": 14,
+    "font-weight": 700, fill: INK }, "Compteur"));
+  /* le badge de type : il se clique, et il double le choix du panneau */
+  g.appendChild(el("rect", { id: "badgeType", x: MX + 108, y: MY + 10, width: 100,
+    height: 22, rx: 6, fill: "#f5f7fa", stroke: "#c3cbd4", "stroke-width": 1.2,
+    "data-act": "badge", cursor: "pointer" }));
+  g.appendChild(deco(el("text", { id: "badgeTxt", x: MX + 158, y: MY + 25,
+    "text-anchor": "middle", "font-size": 10.5, fill: GRIS }, "")));
+  c.appendChild(g);
+  COUCHES.poste.appendChild(el("g", { id: "index" }));
+
+  /* la fenêtre : le disque OU le voyant, jamais les deux */
+  var f = el("g");
+  f.appendChild(el("rect", { x: FX, y: FY, width: FW, height: FH, rx: 8,
+    fill: "#f5f7fa", stroke: "#c3cbd4", "stroke-width": 1.4 }));
+  c.appendChild(deco(f));
+
+  var gd = el("g", { id: "disque" });
+  /* le repère FIXE, contre lequel on compte les passages */
+  gd.appendChild(el("path", { d: "M " + (XD - 7) + " " + (YD - RD - 13) + " L "
+    + (XD + 7) + " " + (YD - RD - 13) + " L " + XD + " " + (YD - RD - 2) + " Z",
+    fill: INK }));
+  gd.appendChild(el("circle", { cx: XD, cy: YD, r: RD, fill: ALU,
+    stroke: "#8a94a4", "stroke-width": 2.4 }));
+  /* le chanfrein : un disque de compteur est une TÔLE, pas un rond plein */
+  gd.appendChild(el("circle", { cx: XD, cy: YD, r: RD - 6, fill: "none",
+    stroke: "#c3cbd4", "stroke-width": 1.2 }));
+  /* la marque PEINTE affleure le bord : c'est son passage devant le repère
+     qu'on compte, et on ne peut le compter que si elle va jusqu'au bord */
+  var rep = el("g", { id: "repere" });
+  rep.appendChild(el("rect", { x: XD - 3.5, y: YD - RD + 1.5, width: 7, height: 20,
+    fill: ORANGE }));
+  gd.appendChild(rep);
+  gd.appendChild(el("circle", { cx: XD, cy: YD, r: 10, fill: ALU,
+    stroke: "#c3cbd4", "stroke-width": 1.2 }));
+  gd.appendChild(el("circle", { cx: XD, cy: YD, r: 6, fill: INK }));
+  c.appendChild(deco(gd));
+
+  var gv = el("g", { id: "voyant", opacity: 0 });
+  var XV = MCX - 22, YV = YD - 2, a0, t0;
+  var ray = el("g", { id: "voyantRayons", opacity: 0 });
+  for (a0 = 0; a0 < 8; a0++) {
+    t0 = a0 * Math.PI / 4 + Math.PI / 8;
+    ray.appendChild(el("line", { x1: XV + Math.cos(t0) * 19, y1: YV + Math.sin(t0) * 19,
+      x2: XV + Math.cos(t0) * 28, y2: YV + Math.sin(t0) * 28,
+      stroke: GOLD, "stroke-width": 2.6, "stroke-linecap": "round" }));
+  }
+  gv.appendChild(ray);
+  gv.appendChild(el("circle", { id: "led", cx: XV, cy: YV, r: 13, fill: "#fff",
+    stroke: INK, "stroke-width": 2.2 }));
+  gv.appendChild(el("text", { x: XV + 34, y: YV + 6, "font-size": 15,
+    "font-weight": 700, fill: INK }, "imp"));
+  c.appendChild(deco(gv));
+
+  texte(COUCHES.avant, MCX, FY + FH - 24, "", { id: "fenNom", "font-size": 10,
+    fill: GRIS, "text-anchor": "middle" });
+  texte(COUCHES.avant, MCX, FY + FH - 8, "", { id: "fenVit", "font-size": 13,
+    fill: INK, "text-anchor": "middle", "font-weight": 700 });
+
+  /* la plaque signalétique : ON LA LIT, elle n'est pas décorative */
+  var gp = el("g", { id: "plaqueC", "data-act": "plaqueC", cursor: "pointer" });
+  gp.appendChild(el("rect", { x: QX, y: QY, width: QW, height: QH, rx: 6,
+    fill: "#f5f7fa", stroke: "#c3cbd4", "stroke-width": 1.4 }));
+  gp.appendChild(deco(el("text", { id: "plaque1", x: MCX, y: QY + 16,
+    "text-anchor": "middle", "font-size": 11, fill: PALE }, "")));
+  gp.appendChild(deco(el("text", { id: "plaque2", x: MCX, y: QY + 31,
+    "text-anchor": "middle", "font-size": 12, "font-weight": 700, fill: INK }, "")));
+  c.appendChild(gp);
+
+  texte(COUCHES.avant, X_ROLE, Y_ETIQ.role,
+    "à l'entrée, avant le disjoncteur — tout passe par lui",
+    { "font-size": 10.5, fill: ENCRE_ETIQ, "text-anchor": "middle" });
+}
+
+/* L'INDEX. À induction : un CYCLOMÈTRE — des tambours jointifs, séparés
+   par leur toile, chacun creusé d'une fenêtre à lèvre sombre, les
+   décimales sur fond orange comme sur un vrai compteur. Électronique :
+   le même nombre sur un afficheur clair. Sans les lèvres et sans la
+   toile, on relit un afficheur à segments, c'est-à-dire l'AUTRE
+   compteur — la différence que la leçon demande justement de voir.    */
+function poserIndex(txt, elec) {
+  var gi = $("index");
+  vide(gi);
+  var s = (txt || "").trim();
+  gi.appendChild(deco(el("rect", { x: PLX, y: PLY, width: PLW, height: PLH, rx: 5,
+    fill: ALU, stroke: "#8a94a4", "stroke-width": 1.6 })));
+  if (elec) {
+    gi.appendChild(deco(el("rect", { x: PLX + 6, y: PLY + 6, width: PLW - 12,
+      height: PLH - 12, rx: 3, fill: "#dfe9e2", stroke: "#a9b8b0", "stroke-width": 1 })));
+    gi.appendChild(deco(el("text", { x: PLX + 16, y: PLY + 32, "text-anchor": "start",
+      "font-size": 23, "font-weight": 700, "letter-spacing": "1.5",
+      "font-family": "ui-monospace,Consolas,monospace", fill: "#16281f" }, s)));
+    gi.appendChild(deco(el("text", { x: PLX + PLW - 14, y: PLY + 32,
+      "text-anchor": "end", "font-size": 11, "font-weight": 700, fill: "#16281f" },
+      UNITE_IDX)));
+    return;
+  }
+  var ent = s, dec = "", iv = s.indexOf(",");
+  if (iv >= 0) { ent = s.slice(0, iv); dec = s.slice(iv + 1); }
+  var CW = 19, FILET = 2, DIVISEUR = 5, items = [], larg = 0, i;
+  ent.split("").forEach(function (ch) {
+    if (ch === " ") items.push({ sep: FILET }); else items.push({ c: ch });
+  });
+  if (dec.replace(/\s/g, "").length) {
+    items.push({ sep: DIVISEUR });
+    dec.replace(/\s/g, "").split("").forEach(function (ch) {
+      items.push({ c: ch, dec: true });
+    });
+  }
+  for (i = 0; i < items.length; i++) larg += items[i].sep || CW;
+  var x = PLX + 10, yc = PLY + 8, hc = PLH - 16, LEVRE = 5, voisin = false;
+  gi.appendChild(deco(el("rect", { x: x - 3, y: yc - 3, width: larg + 6, height: hc + 6,
+    rx: 2, fill: NUIT_CREUX, stroke: INK, "stroke-width": 1.4 })));
+  items.forEach(function (it) {
+    if (it.sep) {
+      gi.appendChild(deco(el("rect", { x: x, y: yc, width: it.sep, height: hc,
+        fill: NUIT_FILET })));
+      x += it.sep; voisin = false; return;
+    }
+    var face = it.dec ? ORANGE : NUIT, levre = it.dec ? "#7d3a0a" : NUIT_CREUX;
+    gi.appendChild(deco(el("rect", { x: x, y: yc, width: CW, height: hc, fill: face })));
+    gi.appendChild(deco(el("rect", { x: x, y: yc, width: CW, height: LEVRE, fill: levre })));
+    gi.appendChild(deco(el("rect", { x: x, y: yc + hc - LEVRE, width: CW, height: LEVRE,
+      fill: levre })));
+    if (!it.dec) {
+      gi.appendChild(deco(el("rect", { x: x, y: yc + LEVRE - 1, width: CW, height: 1,
+        fill: NUIT_FILET })));
+      gi.appendChild(deco(el("rect", { x: x, y: yc + hc - LEVRE, width: CW, height: 1,
+        fill: NUIT_FILET })));
+    }
+    if (voisin) {
+      gi.appendChild(deco(el("rect", { x: x - 0.5, y: yc, width: 1, height: hc,
+        fill: NUIT_FILET })));
+    }
+    gi.appendChild(deco(el("text", { x: x + CW / 2, y: yc + hc / 2 + 6.5,
+      "text-anchor": "middle", "font-size": 17, "font-weight": 700, fill: "#fff" }, it.c)));
+    x += CW; voisin = true;
+  });
+  gi.appendChild(deco(el("text", { x: PLX + PLW - 8, y: PLY + PLH / 2 + 5,
+    "text-anchor": "end", "font-size": 11, "font-weight": 700, fill: INK }, UNITE_IDX)));
+}
+
+/* --- le disjoncteur général, et son levier qui se tire --------------- */
+function batirDisjoncteur() {
+  var c = COUCHES.poste, g = el("g", { id: "disjoncteur", "data-act": "disjoncteur",
+    cursor: "pointer" });
+  g.appendChild(el("rect", { x: XJ - JW / 2, y: YL - JH / 2, width: JW, height: JH,
+    rx: 8, fill: "url(#gBoitier)", stroke: "#8a94a4", "stroke-width": 2.4 }));
+  g.appendChild(el("circle", { cx: XJ - 34, cy: YL, r: 4.6, fill: INK }));
+  g.appendChild(el("circle", { cx: XJ - 34, cy: YL + 22, r: 3.2, fill: "#8a94a4" }));
+  c.appendChild(g);
+  texte(COUCHES.avant, XJ, Y_ETIQ.disj, "", { id: "disjNom", "font-size": 11.5,
+    fill: ENCRE_ETIQ, "text-anchor": "middle", "font-weight": 600 });
+
+  var l = el("g", { id: "levier", "data-act": "levier", cursor: "grab" });
+  l.appendChild(el("rect", { x: XLEV - 15, y: YL - 26, width: 30, height: 24, rx: 5,
+    fill: "#c9d1da", stroke: "#5d6773", "stroke-width": 1.6 }));
+  l.appendChild(el("rect", { x: XLEV - 9, y: YL - 21, width: 18, height: 4, rx: 2,
+    fill: "#8a94a4" }));
+  zonePrise(l, XLEV - 22, YL - 32, 44, 36);
+  COUCHES.objets.appendChild(l);
+  /* L'état va SOUS le boîtier, et décalé de la descente vers la
+     canalisation (x = XJ − 34) : posé à droite du levier, il tombait sur
+     le bord du disjoncteur (vu sur la capture). */
+  texte(COUCHES.avant, XJ + 12, Y_ETIQ.disjEtat, "", { id: "levEtat", "font-size": 11.5,
+    fill: VERT, "text-anchor": "middle", "font-weight": 700 });
+}
+
+/* --- la canalisation de la maison et ses trois prises ---------------- */
+function batirCanalisation() {
+  var c = COUCHES.poste, i;
+  texte(COUCHES.avant, XBUS1, Y_ETIQ.bus, "vers la maison", { "font-size": 11,
+    fill: ENCRE_ETIQ, "text-anchor": "end" });
+  for (i = 0; i < PRISES.length; i++) {
+    var g = el("g");
+    g.appendChild(el("rect", { x: PRISES[i] - 21, y: YBUS - 2, width: 42, height: 28,
+      rx: 6, fill: "#f2f4f7", stroke: "#9aa5b2", "stroke-width": 1.8 }));
+    g.appendChild(el("circle", { cx: PRISES[i], cy: YBUS + 13, r: 10,
+      fill: "#e4e8ee", stroke: "#b3bcc7", "stroke-width": 1.3 }));
+    g.appendChild(el("circle", { cx: PRISES[i] - 5, cy: YBUS + 13, r: 2.6, fill: "#39424f" }));
+    g.appendChild(el("circle", { cx: PRISES[i] + 5, cy: YBUS + 13, r: 2.6, fill: "#39424f" }));
+    c.appendChild(deco(g));
+  }
+}
+
+/* --- l'écran de projection : la facture réelle ----------------------- */
+function batirEcran() {
+  var c = COUCHES.poste, g = el("g");
+  g.appendChild(el("rect", { x: ECR.x - 6, y: ECR.y - 6, width: ECR.w + 12, height: 10,
+    rx: 4, fill: "#5d6773" }));
+  g.appendChild(el("rect", { x: ECR.x, y: ECR.y, width: ECR.w, height: ECR.h,
+    fill: "#f7f8fa", stroke: "#9aa5b2", "stroke-width": 1.8 }));
+  c.appendChild(deco(g));
+  COUCHES.arriere.appendChild(el("g", { id: "projete" }));
+  texte(COUCHES.avant, ECR.x + ECR.w / 2, Y_ETIQ.ecran, "écran de projection",
+    { "font-size": 11, fill: ENCRE_ETIQ, "text-anchor": "middle", "font-weight": 600 });
+}
+
+/* --- les appareils : ce que le TABLEAU cite, rien de plus ------------ */
+function batirAppareil(i) {
+  var a = APPAREILS[i], d = APP_REPOS[i];
+  var g = el("g", { id: "app" + i, "data-act": "app" + i, cursor: "grab" });
+  var x = d.x, y = d.y;
+  /* L'ombre de contact est DANS le groupe : elle suit l'appareil quand on
+     le branche. Sans elle, tout flotte (§10.3). */
+  g.appendChild(deco(el("ellipse", { cx: x, cy: BANC + 4, rx: a.plaque ? 54 : 26,
+    ry: 5, fill: "#12203a", opacity: .22, filter: "url(#ombre)" })));
+  if (a.plaque) {
+    g.appendChild(el("rect", { x: x - 52, y: y - 26, width: 104, height: 60, rx: 9,
+      fill: "url(#gBoitier)", stroke: "#5d6773", "stroke-width": 2.2 }));
+    g.appendChild(deco(el("text", { x: x, y: y - 11, "text-anchor": "middle",
+      "font-size": 11, "font-weight": 700, fill: INK }, nb(a.p, 0) + " W")));
+    g.appendChild(el("circle", { id: "foyer" + i, cx: x, cy: y + 12, r: 18,
+      fill: "#cfd6de", stroke: "#5d6773", "stroke-width": 1.6 }));
+    g.appendChild(el("path", { id: "spirale" + i,
+      d: "M " + (x - 13) + " " + (y + 12) + " A 13 13 0 1 1 " + (x + 13) + " " + (y + 12)
+       + " A 9 9 0 1 0 " + (x - 9) + " " + (y + 12)
+       + " A 5 5 0 1 1 " + (x + 5) + " " + (y + 12),
+      fill: "none", stroke: "#6b7480", "stroke-width": 2.8, "stroke-linecap": "round" }));
+    zonePrise(g, x - 54, y - 28, 108, 64);
+  } else {
+    g.appendChild(el("rect", { x: x - 17, y: y + 10, width: 34, height: 24, rx: 5,
+      fill: "#c9d1da", stroke: "#5d6773", "stroke-width": 1.5 }));
+    g.appendChild(el("circle", { id: "halo" + i, cx: x, cy: y - 10, r: 0,
+      fill: "url(#gHalo)", opacity: 0 }));
+    g.appendChild(el("path", { id: "verre" + i, d: "M" + pt(x - 18, y + 10)
+      + " Q" + pt(x - 26, y - 10) + " " + pt(x - 13, y - 22)
+      + " Q" + pt(x, y - 34) + " " + pt(x + 13, y - 22)
+      + " Q" + pt(x + 26, y - 10) + " " + pt(x + 18, y + 10) + " Z",
+      fill: "url(#gVerre)", "fill-opacity": .45, stroke: "#7f93a6", "stroke-width": 2 }));
+    g.appendChild(el("ellipse", { cx: x - 7, cy: y - 16, rx: 4, ry: 7,
+      fill: "#ffffff", opacity: .6 }));
+    g.appendChild(el("polyline", { id: "filament" + i,
+      points: [pt(x - 7, y + 2), pt(x - 4, y - 10), pt(x - 1, y), pt(x + 3, y - 10),
+               pt(x + 6, y), pt(x + 7, y + 2)].join(" "),
+      fill: "none", stroke: "#8a94a4", "stroke-width": 2 }));
+    g.appendChild(deco(el("text", { x: x, y: y + 27, "text-anchor": "middle",
+      "font-size": 10.5, "font-weight": 700, fill: INK }, nb(a.p, 0) + " W")));
+    zonePrise(g, x - 28, y - 36, 56, 72);
+  }
+  /* L'intitulé est DANS le groupe : il suit l'appareil quand on le branche
+     (§12.18). Posé à une hauteur fixe, il se retrouverait à quatre cents
+     unités de son objet. */
+  /* ⚠️ Et il faut un HALO. Une fois l'appareil suspendu à sa prise, le
+     cordon descend PILE sur son intitulé : « lampe » se lisait « lamp »,
+     et « plaque chauffante » était barrée en son milieu. Décaler
+     l'étiquette la mettrait à la merci du prochain ajustement du cordon ;
+     un liseré de la couleur du mur la rend lisible par-dessus n'importe
+     quel trait, et le restera. */
+  g.appendChild(deco(el("text", { x: x, y: Y_ETIQ.appareil, "text-anchor": "middle",
+    "font-size": 11, fill: ENCRE_ETIQ, "font-weight": 600,
+    "paint-order": "stroke", stroke: "#e8ecf1", "stroke-width": 3.6,
+    "stroke-linejoin": "round" }, a.nom)));
+  COUCHES.objets.appendChild(g);
+}
+
+/* --- la feuille de comptage, le chronomètre, la calculatrice, la facture */
+function batirFeuille() {
+  var g = el("g", { id: "feuille", "data-act": "feuille", cursor: "grab" });
+  var x = FEU_REPOS.x, y = FEU_REPOS.y, i;
+  g.appendChild(el("rect", { x: x - 31, y: y - 39, width: 62, height: 78, rx: 3,
+    fill: "#fdfdfb", stroke: "#9aa5b2", "stroke-width": 1.6 }));
+  g.appendChild(el("rect", { x: x - 31, y: y - 39, width: 62, height: 12, rx: 3,
+    fill: "#e4e8ee" }));
+  for (i = 0; i < 5; i++) {
+    g.appendChild(el("line", { x1: x - 24, y1: y - 16 + i * 12, x2: x + 24,
+      y2: y - 16 + i * 12, stroke: "#d3dde7", "stroke-width": 1.2 }));
+  }
+  g.appendChild(el("text", { id: "feuTxt", x: x, y: y + 2, "text-anchor": "middle",
+    "font-size": 13, "font-weight": 700, fill: INK }, ""));
+  g.appendChild(deco(el("text", { x: x, y: Y_ETIQ.feuille, "text-anchor": "middle",
+    "font-size": 10.5, fill: ENCRE_ETIQ, "font-weight": 600 }, "feuille de comptage")));
+  zonePrise(g, x - 34, y - 42, 68, 84);
+  COUCHES.objets.appendChild(g);
+}
+function batirChrono() {
+  var g = el("g", { id: "chrono", "data-act": "chrono", cursor: "grab" });
+  var x = CHR_REPOS.x, y = CHR_REPOS.y;
+  g.appendChild(el("rect", { x: x - 35, y: y - 29, width: 70, height: 58, rx: 10,
+    fill: "url(#gBoitier)", stroke: "#8a94a4", "stroke-width": 2 }));
+  g.appendChild(el("rect", { x: x - 28, y: y - 22, width: 56, height: 26, rx: 4,
+    fill: "#20302a", stroke: "#4d5a52", "stroke-width": 1.2 }));
+  g.appendChild(el("text", { id: "chronoVal", x: x, y: y - 3,
+    "font-family": "ui-monospace,Consolas,monospace", "font-size": 16,
+    "font-weight": 700, fill: "#9ff2b4", "text-anchor": "middle" }, "0:00"));
+  g.appendChild(el("circle", { id: "chronoLed", cx: x, cy: y + 16, r: 5, fill: "#5d6773" }));
+  g.appendChild(deco(el("text", { x: x, y: Y_ETIQ.chrono, "text-anchor": "middle",
+    "font-size": 10.5, fill: ENCRE_ETIQ, "font-weight": 600 }, "chronomètre")));
+  zonePrise(g, x - 37, y - 31, 74, 62);
+  COUCHES.objets.appendChild(g);
+}
+function batirCalculatrice() {
+  var g = el("g", { id: "calc", "data-act": "calc", cursor: "grab" });
+  var x = CAL_REPOS.x, y = CAL_REPOS.y, i, j;
+  g.appendChild(el("rect", { x: x - 27, y: y - 38, width: 54, height: 76, rx: 7,
+    fill: "#3d4652", stroke: "#242c36", "stroke-width": 1.6 }));
+  g.appendChild(el("rect", { x: x - 21, y: y - 32, width: 42, height: 18, rx: 3,
+    fill: "#c8d6c4", stroke: "#7d8f7a", "stroke-width": 1 }));
+  for (i = 0; i < 4; i++) {
+    for (j = 0; j < 3; j++) {
+      g.appendChild(el("rect", { x: x - 20 + j * 14, y: y - 8 + i * 11, width: 11,
+        height: 8, rx: 2, fill: "#8a94a4" }));
+    }
+  }
+  g.appendChild(deco(el("text", { x: x, y: Y_ETIQ.calc, "text-anchor": "middle",
+    "font-size": 10.5, fill: ENCRE_ETIQ, "font-weight": 600 }, "calculatrice")));
+  zonePrise(g, x - 30, y - 41, 60, 82);
+  COUCHES.objets.appendChild(g);
+}
+function batirFacture() {
+  var g = el("g", { id: "facture", "data-act": "facture", cursor: "grab" });
+  var x = FAC_REPOS.x, y = FAC_REPOS.y, i;
+  g.appendChild(el("rect", { x: x - 37, y: y - 42, width: 74, height: 84, rx: 3,
+    fill: "#fffdf4", stroke: "#b09a6e", "stroke-width": 1.6 }));
+  g.appendChild(el("rect", { x: x - 37, y: y - 42, width: 74, height: 16, rx: 3,
+    fill: "#f0e6cd" }));
+  g.appendChild(el("text", { x: x, y: y - 31, "text-anchor": "middle",
+    "font-size": 8, "font-weight": 700, fill: "#6b5a2a" }, "ÉLECTRICITÉ"));
+  for (i = 0; i < 6; i++) {
+    g.appendChild(el("line", { x1: x - 29, y1: y - 18 + i * 10, x2: x + 29,
+      y2: y - 18 + i * 10, stroke: "#e0d6bb", "stroke-width": 1.2 }));
+  }
+  g.appendChild(deco(el("text", { x: x, y: Y_ETIQ.facture, "text-anchor": "middle",
+    "font-size": 10.5, fill: ENCRE_ETIQ, "font-weight": 600 }, "facture réelle")));
+  zonePrise(g, x - 40, y - 45, 80, 90);
+  COUCHES.objets.appendChild(g);
+}
+
+/* --- les câbles, DERRIÈRE les appareils (couche `fils`) --------------
+   C'est la LIGNE ALIMENTÉE qui passe à travers le compteur, et c'est
+   elle qui dit sans un mot que tout ce que la maison consomme passe
+   par lui. Aucune flèche de sens : le sens du courant est la leçon
+   d'après, et l'affirmer ici enseignerait autre chose.                */
+function dessinerFils() {
+  var c = COUCHES.fils, n = c.querySelectorAll(".cable"), i, sous = ETAT.disj;
+  for (i = 0; i < n.length; i++) n[i].parentNode.removeChild(n[i]);
+  function fil(d, actif, ep) {
+    c.appendChild(deco(el("path", { "class": "cable", d: d, fill: "none",
+      stroke: actif ? ORANGE : "#3d4652", "stroke-width": actif ? (ep || 4.6) : (ep || 4),
+      "stroke-linecap": "round" })));
+  }
+  /* l'arrivée du réseau — toujours sous tension, elle est AVANT le
+     disjoncteur : le compteur est alimenté même disjoncteur ouvert */
+  fil("M" + pt(XRES, YL) + " L" + pt(MX, YL), true);
+  fil("M" + pt(MX2, YL) + " L" + pt(XJ - JW / 2, YL), true);
+  /* du disjoncteur à la canalisation, puis la canalisation */
+  fil("M" + pt(XJ - 34, YL) + " L" + pt(XJ - 34, YBUS) + " L" + pt(XBUS1, YBUS), sous);
+  /* les descentes vers chaque prise occupée */
+  for (i = 0; i < APPAREILS.length; i++) {
+    if (ETAT.prise[i] === null) continue;
+    var xp = PRISES[ETAT.prise[i]];
+    fil("M" + pt(xp, YBUS + 16) + " Q" + pt(xp + 26, YAPP - 40) + " "
+      + pt(xp, YAPP - 26), sous && pBranchee() > 0, 3.4);
+  }
+  /* la borne d'entrée, dessinée par-dessus le fil */
+  c.appendChild(deco(el("rect", { "class": "cable", x: XRES - 12, y: YL - 13,
+    width: 16, height: 26, rx: 4, fill: "#c9d1da", stroke: "#8a94a4",
+    "stroke-width": 1.5 })));
+}
+
+/* ==================================================================
+   11. LES PLACES, LES ZONES, LES REFUS
+   ==================================================================
+   Une PLACE est l'endroit où l'objet se dessine une fois posé ; une
+   ZONE est le rectangle qui l'accepte. `zones()` les rend de la plus
+   PETITE à la plus GRANDE (§12.16) — sans quoi la paillasse, qui
+   contient tout, avalerait chaque dépôt et les refus les plus
+   instructifs deviendraient inatteignables. Un harnais vise le CENTRE
+   DE LA ZONE, jamais la place de l'objet (§12.30).                    */
+var OBJETS = ["app0", "app1", "app2", "feuille", "chrono", "calc", "facture", "levier"];
+function depart(a) {
+  var m = a.match(/^app(\d)$/);
+  if (m) return APP_REPOS[+m[1]];
+  if (a === "feuille") return FEU_REPOS;
+  if (a === "chrono") return CHR_REPOS;
+  if (a === "calc") return CAL_REPOS;
+  if (a === "facture") return FAC_REPOS;
+  if (a === "levier") return { x: XLEV, y: YL - 14 };
+  return null;
+}
+function placeDe(a) {
+  var m = a.match(/^app(\d)$/);
+  if (m) {
+    var j = ETAT.prise[+m[1]];
+    return j === null ? APP_REPOS[+m[1]] : { x: PRISES[j], y: YAPP };
+  }
+  if (a === "feuille") return ETAT.feuille === "fenetre" ? FEU_COMPTE : FEU_REPOS;
+  /* ⚠️ Une fois projetée, la feuille EST la projection : elle ne se pose
+     plus sur l'écran par-dessus son propre texte, où elle en couvrait la
+     moitié droite. Elle reste à sa place et `majObjets` la masque. */
+  if (a === "facture") return FAC_REPOS;
+  if (a === "levier") return { x: XLEV, y: ETAT.disj ? YL - 14 : YL + 14 };
+  return depart(a);
+}
+function zones() {
+  var z = [], i, p = placeDe("feuille");
+  /* les trois zones du compteur, les plus petites, et disjointes */
+  z.push({ n: "plaqueC", x0: QX - 6, x1: QX + QW + 6, y0: QY - 6, y1: QY + QH + 6 });
+  z.push({ n: "platine", x0: PLX - 6, x1: PLX + PLW + 6, y0: PLY - 6, y1: PLY + PLH + 6 });
+  z.push({ n: "fenetre", x0: FX - 6, x1: FX + FW + 6, y0: FY - 4, y1: FY + FH + 4 });
+  /* le levier : deux positions, deux zones */
+  z.push({ n: "levHaut", x0: XLEV - 26, x1: XLEV + 26, y0: YL - 34, y1: YL });
+  z.push({ n: "levBas", x0: XLEV - 26, x1: XLEV + 26, y0: YL, y1: YL + 34 });
+  for (i = 0; i < PRISES.length; i++) {
+    z.push({ n: "prise" + i, x0: PRISES[i] - 44, x1: PRISES[i] + 44,
+             y0: YBUS - 26, y1: YBUS + 56 });
+  }
+  /* la feuille elle-même est une cible : c'est là qu'on pose la
+     calculatrice. La zone SUIT la feuille, elle n'est pas figée (§9.4). */
+  z.push({ n: "feuilleZ", x0: p.x - 46, x1: p.x + 46, y0: p.y - 52, y1: p.y + 52 });
+  z.push({ n: "ecran", x0: ECR.x, x1: ECR.x + ECR.w, y0: ECR.y, y1: ECR.y + ECR.h });
+  z.push({ n: "paillasse", x0: 0, x1: VB_W, y0: BANC - 70, y1: MEUBLE });
+  return z;
+}
+function zoneEn(x, y) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) {
+    if (x >= z[i].x0 && x <= z[i].x1 && y >= z[i].y0 && y <= z[i].y1) return z[i].n;
+  }
+  return null;
+}
+function centreZone(n) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) {
+    if (z[i].n === n) return { x: (z[i].x0 + z[i].x1) / 2, y: (z[i].y0 + z[i].y1) / 2 };
+  }
+  return null;
+}
+/* §12.16 — le bouton équivalent vise la zone que accepte() ACCEPTE,
+   jamais zones()[0]. Sans quoi bouton et glisser divergent pour une
+   raison purement interne. */
+function zoneVoulue(a) {
+  var z = zones(), i;
+  for (i = 0; i < z.length; i++) if (accepte(z[i].n, a).ok) return z[i].n;
+  return null;
+}
+
+/* Chaque refus CITE la fiche. Un refus sans raison n'apprend rien. */
+function accepte(zone, a) {
+  var m = a.match(/^app(\d)$/), i = m ? +m[1] : -1;
+
+  if (zone === "plaqueC") {
+    if (a !== "feuille") return { ok: false, pourquoi: "Sur la plaque du compteur, "
+      + "on ne pose que la feuille de comptage : on la LIT, on n'y touche pas. "
+      + depouille(secu("ON REGARDE")) };
+    return { ok: true };
+  }
+  if (zone === "platine") {
+    if (a !== "feuille") return { ok: false, pourquoi: "L'index se relève avec la "
+      + "feuille de comptage, chiffre par chiffre." };
+    if (ETAT.marche && ETAT.feuille === "fenetre") {
+      return { ok: false, pourquoi: "Le binôme est au comptage et l'épisode "
+        + "chronométré n'est pas terminé : quitter la fenêtre maintenant ferait "
+        + "perdre le compte des " + (REG.type === "induction" ? "tours" : "impulsions") + "." };
+    }
+    return { ok: true };
+  }
+  if (zone === "fenetre") {
+    if (a === "feuille") {
+      if (ETAT.feuille === "fenetre") return { ok: false, pourquoi: "Le binôme y est déjà." };
+      return { ok: true };
+    }
+    if (a === "chrono") {
+      return { ok: true };
+    }
+    return { ok: false, grave: true, pourquoi: "Rien ne se pose sur le compteur. "
+      + depouille(secu("aucun capot")) };
+  }
+  if (zone === "levHaut" || zone === "levBas") {
+    if (a !== "levier") return { ok: false, grave: true,
+      pourquoi: depouille(secu("ON REGARDE")) };
+    if (zone === "levHaut" && ETAT.disj) return { ok: false, pourquoi: "Le disjoncteur est déjà fermé." };
+    if (zone === "levBas" && !ETAT.disj) return { ok: false, pourquoi: "Le disjoncteur est déjà ouvert." };
+    return { ok: true };
+  }
+  if (zone.indexOf("prise") === 0) {
+    var j = +zone.slice(5);
+    if (i < 0) return { ok: false, pourquoi: "Une prise de la canalisation reçoit "
+      + "la fiche d'un appareil, rien d'autre." };
+    if (ETAT.prise[i] === j) return { ok: false, pourquoi: "Il y est déjà." };
+    if (occupee(j) !== null) return { ok: false, pourquoi: "Cette prise est déjà "
+      + "occupée par « " + APPAREILS[occupee(j)].nom + " »." };
+    if (ETAT.marche || ETAT.gel) return { ok: false, pourquoi: "L'épisode chronométré "
+      + "est en cours. Le protocole compte pendant « " + nb(MIN_MES, 0)
+      + " minutes exactement » à puissance constante : brancher maintenant ferait "
+      + "perdre la mesure." };
+    if (mesureOuverte() && ETAT.disj) {
+      return { ok: false, grave: true, pourquoi: "L'index de départ est relevé : à "
+        + "partir de maintenant, tout ce qui passe compte. Le protocole branche les "
+        + "appareils et déclenche le chronomètre AU MÊME INSTANT — on branche donc "
+        + "disjoncteur OUVERT. " + depouille(secu("interrupteur général")) };
+    }
+    return { ok: true };
+  }
+  if (zone === "feuilleZ") {
+    if (a !== "calc") return { ok: false, pourquoi: "" };
+    if (!ETAT.mesureFinie) return { ok: false, pourquoi: "Il n'y a rien à calculer : "
+      + "la mesure n'est pas terminée. Il faut les deux index, la durée et le "
+      + "comptage." };
+    if (ETAT.chemins.length >= K_CALC.length) return { ok: false, pourquoi:
+      "Les " + K_CALC.length + " chemins sont faits. Il reste à les comparer." };
+    return { ok: true };
+  }
+  if (zone === "ecran") {
+    if (a !== "facture") return { ok: false, pourquoi: "L'écran ne reçoit que la "
+      + "facture, à projeter à la fin." };
+    if (ETAT.factureVue) return { ok: false, pourquoi: "Elle y est déjà." };
+    if (!ETAT.mesureFinie) return { ok: false, pourquoi: "Le protocole projette la "
+      + "facture EN DERNIER, « pour la comparaison finale » : il faut d'abord avoir "
+      + "mesuré une énergie par différence de deux index." };
+    return { ok: true };
+  }
+  if (zone === "paillasse") {
+    if (a === "levier") return { ok: false, pourquoi: "Le levier ne quitte pas son "
+      + "disjoncteur." };
+    if (i >= 0 && ETAT.prise[i] !== null && (ETAT.marche || ETAT.gel)) {
+      return { ok: false, pourquoi: "L'épisode chronométré est en cours : on ne "
+        + "débranche pas au milieu des " + nb(MIN_MES, 0) + " minutes." };
+    }
+    if (i >= 0 && ETAT.prise[i] !== null && mesureOuverte() && ETAT.disj) {
+      return { ok: false, grave: true, pourquoi: "L'installation est sous tension et "
+        + "la mesure est ouverte. " + depouille(secu("interrupteur général")) };
+    }
+    if (a === "feuille" && ETAT.feuille === "fenetre" && ETAT.marche) {
+      return { ok: false, pourquoi: "Le binôme compte pendant tout l'épisode : il ne "
+        + "quitte pas la fenêtre avant la fin." };
+    }
+    return { ok: true };
+  }
+  return { ok: false, pourquoi: "" };
+}
+function occupee(j) {
+  var i;
+  for (i = 0; i < APPAREILS.length; i++) if (ETAT.prise[i] === j) return i;
+  return null;
+}
+
+/* ==================================================================
+   12. PRENDRE ET DÉPOSER — le moteur de glisser-déposer
+   ==================================================================
+   La capture se fait sur le SVG, jamais sur l'objet (§9.1) : un
+   mouvement rapide sortirait de l'objet et le glissement s'arrêterait
+   net au milieu du geste, sans lever d'erreur.                        */
+var DRAG = null, SEUIL = 5;
+
+function ptSvg(ev) {
+  var r = svg.getBoundingClientRect(), b = svg.viewBox.baseVal;
+  return { x: (ev.clientX - r.left) / r.width * b.width,
+           y: (ev.clientY - r.top) / r.height * b.height };
+}
+function cibleDe(ev) {
+  var n = ev.target;
+  while (n && n !== svg) {
+    if (n.getAttribute && n.getAttribute("data-act")) return n.getAttribute("data-act");
+    n = n.parentNode;
+  }
+  return null;
+}
+function decale(a, dx, dy) {
+  var n = $(a);
+  if (n) n.setAttribute("transform", "translate(" + dx.toFixed(1) + "," + dy.toFixed(1) + ")");
+}
+function replacer(a) {
+  var n = $(a);
+  if (!n) return;
+  var p = placeDe(a), d = depart(a);
+  if (!p || !d) { n.removeAttribute("transform"); return; }
+  decale(a, p.x - d.x, p.y - d.y);
+}
+function replacerTout() { OBJETS.forEach(replacer); }
+function montrerCibles(a) {
+  var z = zones(), i, r;
+  cacherCibles();
+  for (i = 0; i < z.length; i++) {
+    if (z[i].n === "paillasse" || !accepte(z[i].n, a).ok) continue;
+    r = el("rect", { "class": "cible", x: z[i].x0, y: z[i].y0,
+      width: z[i].x1 - z[i].x0, height: z[i].y1 - z[i].y0, rx: 9,
+      fill: GOLD, "fill-opacity": .13, stroke: GOLD, "stroke-width": 2.4,
+      "stroke-dasharray": "9 6" });
+    COUCHES.arriere.appendChild(deco(r));
+  }
+}
+function cacherCibles() {
+  var n = svg.querySelectorAll(".cible"), i;
+  for (i = 0; i < n.length; i++) n[i].parentNode.removeChild(n[i]);
+}
+
+function surDown(ev) {
+  var a = cibleDe(ev), n;
+  if (!a) return;
+  if (a === "disjoncteur") { basculerDisjoncteur(!ETAT.disj); ev.preventDefault(); return; }
+  if (a === "badge") { choisirType(REG.type === "induction" ? "electronique" : "induction");
+                       ev.preventDefault(); return; }
+  if (a === "plaqueC") { lirePlaque(); ev.preventDefault(); return; }
+  if (DRAG) return;                                   /* verrou en PREMIÈRE ligne */
+  n = $(a);
+  if (!n) return;
+  var p = ptSvg(ev), base = { x: 0, y: 0 }, t = n.getAttribute("transform"), m;
+  if (t && (m = t.match(/translate\(([-\d.]+),\s*([-\d.]+)\)/))) {
+    base = { x: parseFloat(m[1]), y: parseFloat(m[2]) };
+  }
+  DRAG = { a: a, x0: p.x, y0: p.y, base: base, dx: 0, dy: 0, bouge: false };
+  n.setAttribute("filter", "url(#ombrePrise)");
+  n.setAttribute("cursor", "grabbing");
+  COUCHES.drag.appendChild(n);
+  montrerCibles(a);
+  if (svg.setPointerCapture) {
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) { /* rien */ }
+  }
+  ev.preventDefault();
+}
+function surMove(ev) {
+  if (!DRAG) return;
+  var p = ptSvg(ev), dx = p.x - DRAG.x0, dy = p.y - DRAG.y0;
+  if (!DRAG.bouge && Math.abs(dx) + Math.abs(dy) < SEUIL) return;
+  DRAG.bouge = true;
+  /* le levier ne quitte pas sa glissière : il coulisse, il ne vole pas */
+  if (DRAG.a === "levier") { dx = 0; dy = borne(dy, -34, 34); }
+  DRAG.dx = dx; DRAG.dy = dy;
+  decale(DRAG.a, DRAG.base.x + dx, DRAG.base.y + dy);
+  ev.preventDefault();
+}
+function surUp(ev) {
+  if (!DRAG) return;
+  var d = DRAG, n = $(d.a);
+  DRAG = null;
+  cacherCibles();
+  if (n) { n.removeAttribute("filter"); n.setAttribute("cursor", "grab"); }
+  COUCHES.objets.appendChild(n);
+  if (!d.bouge) {
+    /* un CLIC, pas un glissement (§9.3) : sur le levier, il bascule */
+    replacer(d.a);
+    if (d.a === "levier") basculerDisjoncteur(!ETAT.disj);
+    rendre();
+    return;
+  }
+  var dep = depart(d.a);
+  deposer(d.a, dep.x + d.base.x + d.dx, dep.y + d.base.y + d.dy);
+}
+function surCancel() {
+  if (!DRAG) return;
+  var a = DRAG.a, n = $(a);
+  DRAG = null;
+  cacherCibles();
+  if (n) { n.removeAttribute("filter"); n.setAttribute("cursor", "grab"); }
+  COUCHES.objets.appendChild(n);
+  replacer(a);
+  rendre();
+}
+
+/* ==================================================================
+   13. CE QUI SE PASSE QUAND ON DÉPOSE
+   ==================================================================
+   §12.13 — la logique d'état vit ICI, sur le chemin COMMUN. Les
+   boutons ne font qu'appeler ces mêmes fonctions ; aucun d'eux ne
+   pose d'état pour son compte.                                       */
+function deposer(a, x, y) {
+  var z = zoneEn(x, y), r;
+  if (!z) { refuser(a, "Rien ici. " + ouPoser(a)); return; }
+  r = accepte(z, a);
+  if (!r.ok) { refuser(a, r.pourquoi || ouPoser(a), r.grave); return; }
+  appliquer(a, z);
+}
+function ouPoser(a) {
+  if (/^app\d$/.test(a)) return "Un appareil se branche sur une prise de la canalisation.";
+  if (a === "feuille") return "La feuille de comptage se pose sur la plaque du "
+    + "compteur (on lit sa constante), sur son index (on relève un index) ou "
+    + "devant sa fenêtre (on compte).";
+  if (a === "chrono") return "Le chronomètre se pose devant la fenêtre du compteur.";
+  if (a === "calc") return "La calculatrice se pose sur la feuille de comptage.";
+  if (a === "facture") return "La facture se projette sur l'écran.";
+  if (a === "levier") return "Le levier se tire vers le bas pour couper, vers le "
+    + "haut pour réarmer.";
+  return "";
+}
+function refuser(a, msg, grave) {
+  replacer(a);
+  signaler(msg, grave);
+  rendre();
+}
+function appliquer(a, z) {
+  var m = a.match(/^app(\d)$/);
+  if (z === "paillasse") { reposer(a); return; }
+  if (z === "plaqueC" && a === "feuille") { lirePlaque(); return; }
+  if (z === "platine" && a === "feuille") { releverIndex(); return; }
+  if (z === "fenetre" && a === "feuille") { seMettreAuComptage(); return; }
+  if (z === "fenetre" && a === "chrono") { chronometrer(); return; }
+  if (z === "levHaut" && a === "levier") { basculerDisjoncteur(true); return; }
+  if (z === "levBas" && a === "levier") { basculerDisjoncteur(false); return; }
+  if (m && z.indexOf("prise") === 0) { brancher(+m[1], +z.slice(5)); return; }
+  if (z === "feuilleZ" && a === "calc") { calculer(); return; }
+  if (z === "ecran" && a === "facture") { projeter(); return; }
+  replacer(a);
+  rendre();
+}
+
+/* ==================================================================
+   14. LES GESTES — un seul chemin par geste
+   ================================================================== */
+function lirePlaque() {
+  ETAT.plaqueLue = true;
+  succes();
+  if (REG.type === "induction") {
+    reveler(K_CONST);
+    noter("Plaque relevée : " + nb(U_RESEAU, 0) + " V, " + nb(F_RESEAU, 0)
+      + " Hz, index en " + UNITE_IDX + ", constante " + S_C + " = " + nb(cWhTr(), 1)
+      + " Wh/tr — soit " + nb(1000 / cWhTr(), 0) + " tr/kWh. Chaque tour du disque "
+      + "vaut " + nb(cWhTr(), 1) + " Wh consommés.", true);
+  } else {
+    noter("Plaque relevée : " + nb(U_RESEAU, 0) + " V, " + nb(F_RESEAU, 0)
+      + " Hz, index en " + UNITE_IDX + ", constante " + S_K + " = "
+      + nb(kImpKwh(), 0) + " imp/kWh — soit une impulsion pour "
+      + nb(1000 / kImpKwh(), 3) + " Wh. La ligne « " + intitule(K_CONST)
+      + " » du tableau demande " + S_C + " en Wh/tr : elle se lit sur le compteur "
+      + "à induction.", true);
+  }
+  replacer("feuille");
+  rendre();
+}
+function seMettreAuComptage() {
+  ETAT.feuille = "fenetre";
+  succes();
+  noter("Un binôme est au comptage devant la fenêtre : il marquera sur la feuille "
+    + "chaque " + (REG.type === "induction" ? "passage de la marque du disque devant "
+      + "le repère" : "éclat du voyant") + ".", true);
+  rendre();
+}
+function releverIndex() {
+  var v = indexCourant();
+  if (ETAT.marche) {
+    signaler("Un épisode chronométré est en cours : on relève l'index au début et à "
+      + "la fin, pas au milieu.", false);
+    replacer("feuille");
+    rendre();
+    return;
+  }
+  if (ETAT.index1 === null) {
+    if (!ETAT.temoinFait) {
+      signaler("Le protocole fait le TÉMOIN d'abord : « tout étant éteint, relever "
+        + "l'index et observer le disque pendant " + motDuree(MIN_TEM)
+        + " minutes ». C'est lui qui montre que le compteur ne compte pas le temps.",
+        false);
+      replacer("feuille");
+      rendre();
+      return;
+    }
+    if (pTotale() > 0) {
+      signaler("Le disque tourne : l'index bouge pendant qu'on le lit. L'index de "
+        + "départ se relève avant qu'on ne branche quoi que ce soit, sans quoi la "
+        + "différence des index n'aurait plus de sens.", false);
+      replacer("feuille");
+      rendre();
+      return;
+    }
+    ETAT.index1 = v;
+    reveler(K_E1);
+    succes();
+    noter("Index de départ " + symLettre(K_E1) + " = " + fmtIndex(v) + " "
+      + UNITE_IDX + ", noté chiffre par chiffre."
+      + (ETAT.eEssai > 0 ? " ⚠ L'essai a déjà fait avancer l'index de "
+        + nb(ETAT.eEssai / (RESOL * 1000), 0) + " crans : un compteur ne revient "
+        + "jamais en arrière, et c'est bien pourquoi on relève un index de DÉPART."
+        : ""), true);
+  } else if (ETAT.index2 === null) {
+    if (ETAT.episode !== "mesure" && !ETAT.mesureFinie) {
+      signaler("La mesure n'a pas eu lieu : il n'y a pas d'index d'arrivée à "
+        + "relever.", false);
+      replacer("feuille");
+      rendre();
+      return;
+    }
+    if (ETAT.disj) {
+      signaler("Le protocole dit : « À " + nb(MIN_MES, 0) + " minutes, COUPER "
+        + "l'alimentation ET relever l'index d'arrivée ». On coupe d'abord — sinon "
+        + "l'index continue de monter pendant qu'on le lit.", false);
+      replacer("feuille");
+      rendre();
+      return;
+    }
+    ETAT.index2 = v;
+    finirMesure();
+  } else {
+    signaler("Les deux index de cette mesure sont relevés.", false);
+  }
+  replacer("feuille");
+  rendre();
+}
+function brancher(i, j) {
+  ETAT.prise[i] = j;
+  succes();
+  noterVitesse();
+  if (pBranchee() === P_FICHE) reveler(K_P);
+  noter("« " + APPAREILS[i].nom + " » de " + nb(APPAREILS[i].p, 0)
+    + " W est branchée sur la canalisation : la puissance totale passe à "
+    + nb(pBranchee(), 0) + " W."
+    + (ETAT.disj ? " Le disque tourne maintenant à " + nb(vitesseDisque(pTotale()), 2)
+      + " tr/min." : " Le disjoncteur est ouvert : rien ne passe encore."), true);
+  rendre();
+}
+function debrancher(i) {
+  var n = APPAREILS[i].nom;
+  ETAT.prise[i] = null;
+  succes();
+  noterVitesse();
+  noter("« " + n + " » est débranchée : la puissance totale retombe à "
+    + nb(pBranchee(), 0) + " W"
+    + (ETAT.disj ? ", et le disque à " + nb(vitesseDisque(pTotale()), 2) + " tr/min."
+      : "."), true);
+  rendre();
+}
+function reposer(a) {
+  var m = a.match(/^app(\d)$/);
+  if (m && ETAT.prise[+m[1]] !== null) { debrancher(+m[1]); return; }
+  if (a === "feuille" && ETAT.feuille === "fenetre") {
+    ETAT.feuille = null;
+    noter("La feuille quitte la fenêtre : plus personne ne compte.", null);
+    replacer(a); rendre(); return;
+  }
+  replacer(a);
+  rendre();
+}
+/* L'HYPOTHÈSE DE LA FICHE, vérifiée par le geste : « le disque doit
+   s'arrêter lorsque tout est éteint, et accélérer dès qu'on branche un
+   appareil de plus ». Chaque puissance observée est enregistrée. */
+function noterVitesse() {
+  if (!ETAT.disj) return;
+  ETAT.vitesses[String(pBranchee())] = true;
+}
+function basculerDisjoncteur(fermer) {
+  if (fermer === ETAT.disj) { replacer("levier"); rendre(); return; }
+  if (fermer) {
+    if (ETAT.mesureFinie || !mesureOuverte()) {
+      ETAT.disj = true;
+      succes();
+      noterVitesse();
+      noter("Disjoncteur réarmé. L'installation est alimentée"
+        + (pBranchee() > 0 ? " et le disque tourne à "
+          + nb(vitesseDisque(pTotale()), 2) + " tr/min." : "."), true);
+      replacer("levier");
+      rendre();
+      return;
+    }
+    /* la mesure est ouverte : fermer, c'est la lancer — « au même instant » */
+    lancerMesure();
+    return;
+  }
+  /* ouvrir */
+  if (ETAT.episode === "mesure") { couperEtRelever(); return; }
+  if (ETAT.episode === "temoin") {
+    signaler("Le témoin est en cours : le protocole l'observe pendant "
+      + motDuree(MIN_TEM) + " minutes, installation alimentée. Couper maintenant "
+      + "le priverait de tout son sens.", false);
+    replacer("levier");
+    rendre();
+    return;
+  }
+  ETAT.disj = false;
+  succes();
+  noter("Disjoncteur ouvert. Plus rien ne passe : c'est dans cet état qu'on branche "
+    + "les appareils.", true);
+  replacer("levier");
+  rendre();
+}
+function projeter() {
+  ETAT.factureVue = true;
+  succes();
+  var r = runCourant() || ETAT.runs[0];
+  var kwh = r ? (r.i2 - r.i1) : 0;
+  noter("Facture projetée. La consommation facturée, " + nb(KWH_FACTURE, 0) + " "
+    + UNITE_IDX + ", est la DIFFÉRENCE de deux index — exactement l'opération que "
+    + "nous venons de faire"
+    + (kwh > 0 ? ", à " + nb(KWH_FACTURE / kwh, 0) + " fois près." : "."), true);
+  replacer("facture");
+  rendre();
+}
+
+/* ==================================================================
+   15. LES ÉPISODES CHRONOMÉTRÉS — le témoin, puis la mesure
+   ==================================================================
+   `chronometrer()` est le chemin COMMUN : le chronomètre déposé devant
+   la fenêtre et le bouton « Lancer le témoin » y passent tous deux.   */
+function chronometrer() {
+  replacer("chrono");
+  if (ETAT.marche) {
+    signaler("Le chronomètre tourne déjà — il reste "
+      + nb((butoir() - ETAT.t) / 60, 1) + " min.", false);
+    rendre();
+    return;
+  }
+  if (!ETAT.temoinFait) { lancerTemoin(); return; }
+  if (ETAT.mesureFinie) {
+    signaler("La mesure de ce compteur est faite. Pour la refaire, il faut changer "
+      + "de compteur dans les réglages — c'est la transposition que la leçon "
+      + "demande d'établir.", false);
+    rendre();
+    return;
+  }
+  lancerMesure();
+}
+function lancerTemoin() {
+  if (!ETAT.disj) {
+    signaler("Le témoin s'observe installation ALIMENTÉE : « tout étant éteint », "
+      + "c'est-à-dire aucun appareil branché — pas disjoncteur ouvert. Il faut "
+      + "réarmer.", false);
+    rendre();
+    return;
+  }
+  if (!rienBranche()) {
+    signaler("Le témoin se fait « tout étant éteint ». Il faut débrancher les "
+      + "appareils : c'est justement de montrer que le compteur n'avance pas quand "
+      + "rien ne consomme.", false);
+    rendre();
+    return;
+  }
+  ETAT.episode = "temoin";
+  ETAT.marche = true;
+  ETAT.t = 0;
+  ETAT.temoinIndex = indexCourant();
+  ETAT.temoinTours = toursDe(ETAT.eTotal);
+  succes();
+  noter("Témoin lancé : installation alimentée, aucun appareil branché. Index à cet "
+    + "instant : " + fmtIndex(ETAT.temoinIndex) + " " + UNITE_IDX + ".", null);
+  rendre();
+}
+function finirTemoin() {
+  ETAT.marche = false;
+  ETAT.episode = null;
+  ETAT.temoinFait = true;
+  ETAT.temoinFin = indexCourant();
+  reveler(K_TEM);
+  var bouge = Math.abs(indexCourant() - ETAT.temoinIndex) > 1e-9;
+  noter("Après " + motDuree(MIN_TEM) + " minutes, l'index est "
+    + (bouge ? "passé à " + fmtIndex(indexCourant()) : "resté à "
+      + fmtIndex(ETAT.temoinIndex)) + " " + UNITE_IDX + " et le disque n'a fait "
+    + nb(toursDe(ETAT.eTotal) - ETAT.temoinTours, 0) + " tour. Le temps, lui, s'est "
+    + "bien écoulé : le compteur ne le compte pas — la puissance vaut zéro, et elle "
+    + "MULTIPLIE.", !bouge);
+  rendre();
+}
+function lancerMesure() {
+  if (ETAT.index1 === null) {
+    signaler("L'index de départ n'est pas relevé. Le protocole le relève AVANT de "
+      + "brancher, sans quoi la différence des index n'aurait plus de sens.", false);
+    replacer("levier"); rendre(); return;
+  }
+  if (!toutBranche()) {
+    signaler("Le protocole branche « simultanément » les " + APPAREILS.length
+      + " appareils du tableau : " + cel(K_P, 2) + ". Il en manque.", false);
+    replacer("levier"); rendre(); return;
+  }
+  if (ETAT.feuille !== "fenetre") {
+    signaler("Personne n'est au comptage. Le protocole fait compter les "
+      + (REG.type === "induction" ? "tours du disque" : "clignotements du voyant")
+      + " PENDANT les " + nb(MIN_MES, 0) + " minutes : il faut poser la feuille de "
+      + "comptage devant la fenêtre avant de lancer.", false);
+    replacer("levier"); rendre(); return;
+  }
+  ETAT.disj = true;
+  ETAT.episode = "mesure";
+  ETAT.marche = true;
+  ETAT.t = 0;
+  ETAT.eDepart = ETAT.eTotal;
+  ETAT.compte = 0;
+  succes();
+  noterVitesse();
+  noter("Disjoncteur fermé et chronomètre déclenché AU MÊME INSTANT, comme la fiche "
+    + "le demande. " + nb(pBranchee(), 0) + " W passent par le compteur ; le disque "
+    + "tourne à " + nb(vitesseDisque(pTotale()), 2) + " tr/min.", true);
+  replacer("levier");
+  rendre();
+}
+function butoir() {
+  if (ETAT.episode === "temoin") return MIN_TEM * 60;
+  if (ETAT.episode === "mesure") return MIN_MES * 60;
+  return null;
+}
+function atteindreButoir() {
+  /* ⚠️ ON RECALE L'HORLOGE SUR L'INSTANT PRESCRIT. Les 1 200 pas de 0,5 s
+     laissent une erreur de flottant de l'ordre de 10⁻¹⁰ s ; `mmss()`
+     plancherait alors 599,999… à 9:59, et le chronomètre afficherait une
+     seconde de moins que la durée que la page vient de dévoiler dans le
+     tableau. Aucune erreur, aucun calcul faux — un seul chiffre, et il
+     contredit la fiche. */
+  ETAT.t = butoir();
+  if (ETAT.episode === "temoin") { finirTemoin(); return; }
+  if (ETAT.episode === "mesure") {
+    ETAT.marche = false;
+    ETAT.gel = true;                 /* l'horloge s'arrête sur l'instant prescrit */
+    reveler(K_DUREE);
+    noter(nb(MIN_MES, 0) + " minutes exactement. L'horloge s'arrête d'elle-même : le "
+      + "protocole demande de COUPER l'alimentation à cet instant, et de relever "
+      + "l'index d'arrivée. Le compte est de " + nb(ETAT.compte, 0) + " "
+      + (REG.type === "induction" ? "tours" : "impulsions") + ".", true);
+  }
+}
+function couperEtRelever() {
+  if (ETAT.episode !== "mesure") {
+    signaler("Il n'y a pas de mesure en cours à couper.", false);
+    replacer("levier"); rendre(); return;
+  }
+  ETAT.disj = false;
+  ETAT.marche = false;
+  ETAT.gel = false;
+  replacer("levier");
+  releverIndex();
+}
+function finirMesure() {
+  var r = {
+    type: REG.type, c: cWhTr(), k: kImpKwh(), i1: ETAT.index1, i2: ETAT.index2,
+    minutes: ETAT.t / 60, compte: ETAT.compte, p: pBranchee(), e: eMesure()
+  };
+  var anc = runDe(REG.type), i;
+  if (anc) ETAT.runs[ETAT.runs.indexOf(anc)] = r; else ETAT.runs.push(r);
+  ETAT.episode = null;
+  ETAT.mesureFinie = true;
+  ETAT.chemins = [];
+  /* le binôme rapporte sa feuille : le comptage est terminé, et c'est sur
+     elle qu'on posera la calculatrice */
+  ETAT.feuille = null;
+  reveler(REG.type === "induction" ? K_TOURS : K_IMP);
+  reveler(K_E2);
+  succes();
+  noter("Index d'arrivée " + symLettre(K_E2) + " = " + fmtIndex(ETAT.index2) + " "
+    + UNITE_IDX + ". Entre les deux index, " + nb((r.i2 - r.i1) * 1000, 0) + " Wh — "
+    + "et le compteur a marqué " + nb(r.compte, 0) + " "
+    + (r.type === "induction" ? "tours" : "impulsions") + ". Il reste à faire les "
+    + K_CALC.length + " chemins de calcul.", true);
+  /* §11.5 — si le modèle et la fiche divergeaient, on le DIT */
+  var att = REG.type === "induction" ? N_TOURS_F : N_IMP_F;
+  if (!ETAT.horsProto && att > 0 && r.compte !== att) {
+    noter("⚠ Le modèle et la fiche divergent sur le comptage : "
+      + nb(r.compte, 0) + " contre " + nb(att, 0) + " — vérifier les constantes.", false);
+  }
+  rendre();
+}
+/* Les chemins de calcul, un par un — c'est la calculatrice qui les
+   fait, et chacun DÉVOILE sa ligne. Rien n'est affirmé : la valeur
+   sort du modèle, et le tableau de la fiche la confirme. */
+function calculer() {
+  replacer("calc");
+  var r = runCourant();
+  if (!r) {
+    signaler("Aucune mesure achevée sur ce compteur : il n'y a rien à calculer.", false);
+    rendre(); return;
+  }
+  var ch = cheminsCalcules(r);
+  if (ETAT.chemins.length >= ch.length) {
+    signaler("Les " + ch.length + " chemins sont faits. Ils donnent "
+      + ch.map(function (x) { return nb(x.wh, 0); }).join(", ") + " Wh : il reste à "
+      + "conclure sur leur accord.", false);
+    rendre(); return;
+  }
+  var i = ETAT.chemins.length, c = ch[i];
+  ETAT.chemins.push(c.cle);
+  reveler(K_CALC[i]);
+  succes();
+  noter("Chemin " + (i + 1) + " sur " + ch.length + " — " + c.nom + " : " + c.detail
+    + ", à " + c.precTxt + ".", true);
+  rendre();
+}
+
+/* ==================================================================
+   16. LE CALCUL — l'intégration, pas à pas
+   ==================================================================
+   §13.5 bis — l'horloge tourne sur setTimeout et Date.now(), jamais
+   sur requestAnimationFrame : sous le pilote, rAF n'est jamais appelé
+   et TOUT le résultat disparaîtrait sans lever d'erreur.
+   ⚠️ L'HORLOGE SE GÈLE À L'INSTANT PRESCRIT. Sans ce gel, un élève lent
+   à couper l'alimentation laisserait le compteur monter au-delà des
+   200 Wh, et E₂ − E₁ ne vaudrait plus la valeur de la fiche — sans
+   qu'aucun nombre paraisse faux.                                     */
+var derniere = 0;
+function tic() {
+  var now = Date.now(), dtReel = derniere ? (now - derniere) / 1000 : 0;
+  derniere = now;
+  dtReel = Math.min(dtReel, 0.5);
+  /* Le minuteur de séance mesure le temps RÉEL, jamais accéléré (§5.4). */
+  ETAT.tSeance += dtReel;
+
+  if (!ETAT.gel) {
+    var reste = dtReel * REG.acc, b = butoir(), pas, p = pTotale();
+    while (reste > 1e-6) {
+      pas = Math.min(PAS_INT, reste);
+      if (ETAT.marche && b !== null && ETAT.t + pas > b) pas = b - ETAT.t;
+      if (pas <= 1e-9) break;
+      ETAT.eTotal += p * pas / 3600;
+      if (ETAT.marche) ETAT.t += pas; else if (p > 0) ETAT.eEssai += p * pas / 3600;
+      reste -= pas;
+      if (ETAT.marche && ETAT.episode === "mesure" && ETAT.feuille === "fenetre") {
+        ETAT.compte = compteDe(eMesure());
+      }
+      if (ETAT.marche && b !== null && ETAT.t >= b - 1e-9) { atteindreButoir(); break; }
+    }
+  }
+  rendre();
+  tard(tic, 40);
+}
+
+/* ==================================================================
+   17. LA CONSIGNE, LE JOURNAL
+   ==================================================================
+   Une seule vérité : une cascade de si sur ETAT. La consigne décrit
+   TOUJOURS un geste que la page accepte (§11.2).                     */
+function dire(txt, fini, refus) {
+  var n = $("consigne");
+  if (ETAT.retenue > Date.now()) return;                /* §12.10 */
+  n.textContent = txt;
+  n.className = "consigne" + (fini ? " ok" : (refus ? " non" : ""));
+}
+function signaler(txt, grave) {
+  var n = $("consigne");
+  ETAT.retenue = Date.now() + 4000;
+  n.textContent = (grave ? "⚠ " : "") + txt;
+  n.className = "consigne non";
+  noter(txt, false);
+}
+/* Un refus tient tant qu'il n'est pas résolu, et pas une seconde de
+   plus : toute action qui ABOUTIT lève la retenue (§12.10). */
+function succes() { ETAT.retenue = 0; }
+function noter(txt, positif) {
+  ETAT.obs = txt;
+  ETAT.obsPos = positif;
+}
+function consigne() {
+  if (!ETAT.plaqueLue) {
+    dire("Poser la feuille de comptage sur la plaque du compteur pour la lire : "
+      + "tension, fréquence, unité de l'index et constante.");
+    return;
+  }
+  if (ETAT.episode === "temoin") {
+    dire("Le témoin tourne — " + motDuree(MIN_TEM) + " minutes, tout éteint. "
+      + "Le disque bouge-t-il ?");
+    return;
+  }
+  if (!ETAT.temoinFait) {
+    if (!ETAT.disj) { dire("Réarmer le disjoncteur : le témoin s'observe "
+      + "installation alimentée."); return; }
+    if (!rienBranche()) { dire("Débrancher les appareils : le témoin se fait tout "
+      + "éteint."); return; }
+    dire("Poser le chronomètre devant la fenêtre pour lancer le témoin — "
+      + motDuree(MIN_TEM) + " minutes, tout éteint.");
+    return;
+  }
+  if (ETAT.index1 === null) {
+    if (pTotale() > 0) { dire("Le disque tourne : débrancher, ou ouvrir le "
+      + "disjoncteur, avant de relever l'index de départ."); return; }
+    dire("Poser la feuille de comptage sur l'index pour relever l'index de départ "
+      + symLettre(K_E1) + ", chiffre par chiffre.");
+    return;
+  }
+  if (!ETAT.mesureFinie && !toutBranche()) {
+    if (ETAT.disj) { dire("Tirer le levier du disjoncteur vers le bas : on branche "
+      + "les appareils hors tension."); return; }
+    dire("Brancher les " + APPAREILS.length + " appareils du tableau sur les prises "
+      + "de la canalisation : " + cel(K_P, 2) + ".");
+    return;
+  }
+  if (!ETAT.mesureFinie && ETAT.feuille !== "fenetre") {
+    dire("Poser la feuille de comptage devant la fenêtre : un binôme compte les "
+      + (REG.type === "induction" ? "tours du disque" : "éclats du voyant")
+      + " pendant toute la mesure.");
+    return;
+  }
+  if (ETAT.episode === "mesure" && ETAT.marche) {
+    dire("La mesure tourne. L'horloge s'arrêtera d'elle-même à " + nb(MIN_MES, 0)
+      + " minutes.");
+    return;
+  }
+  if (ETAT.gel) {
+    dire("« À " + nb(MIN_MES, 0) + " minutes, couper l'alimentation et relever "
+      + "l'index d'arrivée » : tirer le levier vers le bas.");
+    return;
+  }
+  if (!ETAT.mesureFinie && ETAT.index2 === null && ETAT.episode !== "mesure") {
+    dire("Fermer le disjoncteur : cela branche et déclenche le chronomètre au même "
+      + "instant, comme le protocole le demande.");
+    return;
+  }
+  if (ETAT.index2 !== null && !ETAT.mesureFinie) {
+    dire("Relever l'index d'arrivée " + symLettre(K_E2) + ".");
+    return;
+  }
+  if (ETAT.chemins.length < K_CALC.length) {
+    dire("Poser la calculatrice sur la feuille : chemin " + (ETAT.chemins.length + 1)
+      + " sur " + K_CALC.length + ".");
+    return;
+  }
+  if (ETAT.cellules < cellulesAtteignables()) {
+    if (!runDe("induction") || !runDe("electronique")) {
+      dire("Il reste une ligne du tableau : changer de compteur dans les réglages et "
+        + "refaire la mesure — c'est la transposition que la leçon demande.");
+      return;
+    }
+    dire("Il reste " + (cellulesAtteignables() - ETAT.cellules) + " cellule(s) à "
+      + "renseigner.");
+    return;
+  }
+  if (!ETAT.factureVue) {
+    dire("Projeter la facture réelle sur l'écran, et y retrouver la différence des "
+      + "deux index.", true);
+    return;
+  }
+  dire("Tout est relevé. Les " + K_CALC.length + " chemins donnent-ils la même "
+    + "énergie, à la précision du plus grossier près ?", true);
+}
+
+/* ==================================================================
+   18. LE RENDU — redessiner à chaque tic
+   ================================================================== */
+function rendre() {
+  dessinerFils();
+  majCompteur();
+  majObjets();
+  majEtapes();
+  majInstruments();
+  majCarnet();
+  majVitesses();
+  majSeance();
+  majAlerte();
+  consigne();
+  var o = $("obs");
+  o.textContent = ETAT.obs || "—";
+  o.className = "obs" + (ETAT.obsPos === true ? " pos" : (ETAT.obsPos === false ? " mal" : ""));
+  majBoutons();
+  majProtocole();          /* le panneau suit l'état, sans compteur */
+}
+function majCompteur() {
+  var elec = REG.type === "electronique", p = pTotale(), i;
+  poserIndex(fmtIndex(indexCourant()), elec);
+  $("badgeTxt").textContent = elec ? "électronique" : "à induction";
+  $("plaque1").textContent = nb(U_RESEAU, 0) + " V — " + nb(F_RESEAU, 0) + " Hz — "
+    + UNITE_IDX;
+  $("plaque2").textContent = elec
+    ? S_K + " = " + nb(kImpKwh(), 0) + " imp/kWh"
+    : S_C + " = " + nb(cWhTr(), 1) + " Wh/tr";
+  $("disque").setAttribute("opacity", elec ? 0 : 1);
+  $("voyant").setAttribute("opacity", elec ? 1 : 0);
+  /* L'ANGLE DU DISQUE EST L'ÉNERGIE : le dessin RELIT le modèle, il ne
+     recopie rien (§12.18). */
+  $("repere").setAttribute("transform", "rotate(" + angleDisque().toFixed(1)
+    + "," + XD + "," + YD + ")");
+  /* le voyant : un éclat par impulsion, sur la fraction d'impulsion en cours */
+  var fr = (ETAT.eTotal * kImpKwh() / 1000) % 1;
+  var allume = p > 0 && fr < 0.34;
+  $("led").setAttribute("fill", allume ? JAUNE : "#fff");
+  $("voyantRayons").setAttribute("opacity", allume ? 1 : 0);
+  $("fenNom").textContent = elec ? "voyant — 1 éclat = 1 impulsion"
+    : "disque — 1 passage = 1 tour";
+  $("fenVit").textContent = elec
+    ? nb(freqVoyant(p) * 60, 2) + " imp/min"
+    : nb(vitesseDisque(p), 2) + " tr/min";
+  $("fenVit").setAttribute("fill", p > 0 ? ORANGE : PALE);
+  $("disjNom").textContent = "disjoncteur général";
+  $("levEtat").textContent = ETAT.disj ? "fermé" : "ouvert";
+  $("levEtat").setAttribute("fill", ETAT.disj ? ORANGE : GRIS);
+  $("chronoVal").textContent = mmss(ETAT.t);
+  $("chronoLed").setAttribute("fill", ETAT.marche ? "#9ff2b4" : (ETAT.gel ? GOLD : "#5d6773"));
+  $("feuTxt").textContent = ETAT.feuille === "fenetre" ? nb(ETAT.compte, 0) : "";
+  /* les appareils : la plaque rougit, les lampes s'allument */
+  for (i = 0; i < APPAREILS.length; i++) {
+    var sous = ETAT.prise[i] !== null && ETAT.disj;
+    if (APPAREILS[i].plaque) {
+      var f = $("foyer" + i), s = $("spirale" + i);
+      if (f) f.setAttribute("fill", sous ? melange("#cfd6de", "#e8843a", 1) : "#cfd6de");
+      if (s) s.setAttribute("stroke", sous ? "#fff0d8" : "#6b7480");
+    } else {
+      var h = $("halo" + i), fl = $("filament" + i);
+      if (h) { h.setAttribute("r", sous ? 44 : 0); h.setAttribute("opacity", sous ? .85 : 0); }
+      if (fl) {
+        fl.setAttribute("stroke", sous ? "#fffdf2" : "#8a94a4");
+        fl.setAttribute("stroke-width", sous ? 3.6 : 2);
+      }
+    }
+  }
+  /* le facteur de compression, affiché en permanence dans la scène (§12.36) */
+  var t = $("facteur");
+  if (!t) {
+    t = texte(COUCHES.ui, VB_W - 16, Y_BANDE + 4, "", { id: "facteur",
+      "font-size": 13, fill: "#e9edf2", "text-anchor": "end", "font-weight": 700 });
+  }
+  t.textContent = "temps × " + REG.acc + " — le chronomètre affiche la durée RÉELLE";
+  /* l'arrivée du réseau, étiquetée sur deux lignes faute de place */
+  if (!$("res1")) {
+    texte(COUCHES.avant, (XRES + MX) / 2, Y_ETIQ.reseau1, "arrivée", { id: "res1",
+      "font-size": 11, fill: ENCRE_ETIQ, "text-anchor": "middle", "font-weight": 600 });
+    texte(COUCHES.avant, (XRES + MX) / 2, Y_ETIQ.reseau2, "du réseau", { id: "res2",
+      "font-size": 11, fill: ENCRE_ETIQ, "text-anchor": "middle", "font-weight": 600 });
+  }
+  majProjection();
+}
+function majObjets() {
+  var i;
+  for (i = 0; i < OBJETS.length; i++) if (!DRAG || DRAG.a !== OBJETS[i]) replacer(OBJETS[i]);
+  /* La feuille disparaît du poste quand elle est passée dans le projecteur :
+     ce qu'on lit alors, c'est l'image sur l'écran, et elle seule. */
+  var f = $("facture");
+  if (f) f.setAttribute("display", ETAT.factureVue ? "none" : "inline");
+}
+function majProjection() {
+  var g = $("projete"), r = runCourant() || ETAT.runs[0];
+  vide(g);
+  if (!ETAT.factureVue) {
+    g.appendChild(deco(el("text", { x: ECR.x + ECR.w / 2, y: ECR.y + ECR.h / 2,
+      "text-anchor": "middle", "font-size": 12, fill: PALE }, "(rien de projeté)")));
+    return;
+  }
+  /* ⚠️ HUIT LIGNES, ET ELLES SONT MESURÉES. L'écran fait 154 de haut : les
+     dix lignes d'avant, à 16 d'interligne depuis y + 26, descendaient à 44
+     unités SOUS son bord — les trois dernières étaient hors de l'image, et
+     personne ne le signalait. Le budget est ici de 154 − 20 = 134 ; les huit
+     lignes en occupent 122. Toute ligne ajoutée doit être retranchée d'une
+     autre. La phrase longue sur les deux index est portée par les « ? » et
+     par la ligne grise qui les suit, et le détail reste au journal. */
+  var x = ECR.x + 14, y = ECR.y + 20, dk = r ? (r.i2 - r.i1) : 0;
+  /* Le fond de l'image projetée : c'est la feuille elle-même, agrandie. */
+  g.appendChild(deco(el("rect", { x: ECR.x + 5, y: ECR.y + 5, width: ECR.w - 10,
+    height: ECR.h - 10, rx: 2, fill: "#fffdf4" })));
+  function ligne(t, taille, teinte, saut) {
+    g.appendChild(deco(el("text", { x: x, y: y, "font-size": taille,
+      "font-weight": taille >= 12 ? 700 : 400, fill: teinte || INK }, t)));
+    y += saut;
+  }
+  ligne("FACTURE D'ÉLECTRICITÉ", 12, "#6b5a2a", 19);
+  if (NOM_FACTURE) ligne("relève de " + NOM_FACTURE, 9.5, GRIS, 14);
+  ligne("ancien index …………… ?", 10, GRIS, 14);
+  ligne("nouvel index ………… ?", 10, GRIS, 14);
+  ligne("(la fiche ne les donne pas)", 9, PALE, 15);
+  ligne("consommation : " + nb(KWH_FACTURE, 0) + " " + UNITE_IDX, 12, ORANGE, 19);
+  ligne("= nouvel index − ancien index", 10, INK, 14);
+  if (dk > 0) {
+    ligne("soit " + nb(KWH_FACTURE / dk, 0) + " × les " + nb(dk, DEC_IDX) + " "
+      + UNITE_IDX + " d'ici", 9.5, VERT, 14);
+  }
+}
+function majSeance() {
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceB").textContent = "durée prescrite " + DUREE_SEANCE + " min";
+  $("seanceM").textContent = depouille(T("modalite"));
+  var f = borne(ETAT.tSeance / (DUREE_SEANCE * 60), 0, 1);
+  $("seanceJ").style.width = (f * 100).toFixed(1) + "%";
+  $("seance").className = "seance" + (ETAT.tSeance > DUREE_SEANCE * 60 ? " deborde" : "");
+}
+
+/* ==================================================================
+   19. LES ÉTAPES, LES INSTRUMENTS, LE CARNET
+   ================================================================== */
+var ETAPES = [
+  { t: "Situer le compteur et lire sa plaque", f: function () { return ETAT.plaqueLue; } },
+  { t: "Le témoin — tout éteint", f: function () { return ETAT.temoinFait; } },
+  { t: "Relever l'index de départ", f: function () { return ETAT.index1 !== null; } },
+  { t: "Brancher les appareils, hors tension", f: function () { return toutBranche(); } },
+  { t: "Fermer, chronométrer et compter",
+    f: function () { return ETAT.mesureFinie || ETAT.gel; } },
+  { t: "Couper et relever l'index d'arrivée",
+    f: function () { return ETAT.mesureFinie; } },
+  { t: "Les trois chemins de calcul",
+    f: function () { return ETAT.chemins.length >= K_CALC.length; } },
+  { t: "L'autre compteur, puis la facture",
+    f: function () { return ETAT.factureVue && ETAT.cellules >= cellulesAtteignables(); } }
+];
+function majEtapes() {
+  var c = $("etapes"), i, d, prem = -1;
+  if (!c.children.length) {
+    for (i = 0; i < ETAPES.length; i++) {
+      d = document.createElement("div");
+      d.innerHTML = "<span class='n'>" + (i + 1) + "</span>" + ETAPES[i].t;
+      c.appendChild(d);
+    }
+  }
+  for (i = 0; i < ETAPES.length; i++) if (!ETAPES[i].f() && prem < 0) prem = i;
+  for (i = 0; i < ETAPES.length; i++) {
+    c.children[i].className = ETAPES[i].f() ? "faite" : (i === prem ? "actif" : "");
+  }
+}
+function majInstruments() {
+  var c = $("instCases"), p = pTotale(), elec = REG.type === "electronique";
+  var html = "";
+  function caseHtml(t, v, cl) {
+    return "<div><div class='t'>" + t + "</div><div class='u " + (cl || "") + "'>"
+      + v + "</div></div>";
+  }
+  html += caseHtml("Index affiché", fmtIndex(indexCourant()) + " " + UNITE_IDX, "gros");
+  html += caseHtml("Puissance branchée", nb(pBranchee(), 0) + " W",
+                   pBranchee() > 0 ? "" : "nul");
+  html += caseHtml(elec ? "Fréquence du voyant" : "Vitesse du disque",
+    elec ? nb(freqVoyant(p) * 60, 2) + " imp/min" : nb(vitesseDisque(p), 2) + " tr/min",
+    p > 0 ? "" : "nul");
+  html += caseHtml(elec ? "Impulsions comptées" : "Tours comptés",
+    ETAT.feuille === "fenetre" ? nb(ETAT.compte, 0) : "—",
+    ETAT.feuille === "fenetre" ? "" : "nul");
+  html += caseHtml("Chronomètre", mmss(ETAT.t) + (ETAT.gel ? " ⏸" : ""));
+  html += caseHtml("Énergie intégrée",
+    ETAT.eDepart === null ? "—" : nb(eMesure(), 2) + " Wh",
+    ETAT.eDepart === null ? "nul" : "");
+  c.innerHTML = html;
+  $("instNote").textContent = elec ? "compteur électronique" : "compteur à induction";
+  var ph;
+  if (ETAT.eDepart !== null) {
+    ph = "L'« énergie intégrée » est ce que le MODÈLE sait ; l'index, lui, ne "
+      + "l'affiche que par crans de " + nb(RESOL * 1000, 0) + " Wh, et le "
+      + (elec ? "voyant" : "disque") + " par pas de "
+      + nb(elec ? 1000 / kImpKwh() : cWhTr(), elec ? 2 : 1) + " Wh. C'est cet écart, "
+      + "et lui seul, qui sépare les trois chemins de calcul.";
+  } else if (p > 0) {
+    ph = "Le disque tourne à " + nb(vitesseDisque(p), 2) + " tr/min, soit un tour "
+      + "toutes les " + nb(60 / Math.max(vitesseDisque(p), 1e-9), 1) + " s. Un tour "
+      + "vaut toujours " + nb(cWhTr(), 1) + " Wh, quelle que soit la vitesse : c'est "
+      + "le NOMBRE de tours qui suit l'énergie.";
+  } else {
+    ph = "Rien ne consomme : le compteur n'avance pas, quel que soit le temps qui "
+      + "passe. La puissance vaut zéro, et elle MULTIPLIE la durée.";
+  }
+  $("instPhrase").textContent = ph;
+}
+function majCarnet() {
+  var t = $("carnet"), r = runCourant(), h;
+  h = "<thead><tr><th>Grandeur mesurée</th><th>Valeur</th><th>Précision</th>"
+    + "</tr></thead><tbody>";
+  function li(n, v, p, cl) {
+    h += "<tr class='" + (cl || "") + "'><td>" + n + "</td><td class='mes'>" + v
+      + "</td><td class='src'>" + p + "</td></tr>";
+  }
+  if (ETAT.plaqueLue) {
+    li("Constante lue sur la plaque",
+       REG.type === "induction" ? nb(cWhTr(), 1) + " Wh/tr" : nb(kImpKwh(), 0) + " imp/kWh",
+       "gravée sur l'appareil");
+  }
+  if (ETAT.temoinFait) {
+    var dTem = Math.round((ETAT.temoinFin - ETAT.temoinIndex) / RESOL);
+    li("Témoin — " + nb(MIN_TEM, 0) + " min tout éteint",
+       fmtIndex(ETAT.temoinIndex) + " → " + fmtIndex(ETAT.temoinFin),
+       dTem === 0 ? "index INCHANGÉ, disque immobile, 0 tour"
+                  : dTem + " cran(s) — le compteur a bougé", "temoin");
+  }
+  if (ETAT.index1 !== null) li("Index de départ " + symLettre(K_E1),
+    fmtIndex(ETAT.index1) + " " + UNITE_IDX, "± " + nb(RESOL, DEC_IDX) + " " + UNITE_IDX);
+  if (r) {
+    li("Index d'arrivée " + symLettre(K_E2), fmtIndex(r.i2) + " " + UNITE_IDX,
+       "± " + nb(RESOL, DEC_IDX) + " " + UNITE_IDX);
+    li("Durée chronométrée", nb(r.minutes, 0) + " min = " + nb(r.minutes / 60, 4) + " h",
+       "l'horloge s'arrête à l'instant prescrit");
+    li("Puissance totale branchée", nb(r.p, 0) + " W", "somme des plaques du tableau");
+    li(r.type === "induction" ? "Tours comptés n" : "Impulsions comptées N",
+       nb(r.compte, 0) + (r.type === "induction" ? " tr" : " imp"),
+       r.type === "induction" ? "± 1 tour" : "± 1 impulsion");
+    cheminsFaits(r).forEach(function (c) {
+      li(c.nom, nb(c.wh, c.prec === 0 ? 1 : 0) + " Wh", c.precTxt, "autre");
+    });
+  }
+  var autre = runDe(REG.type === "induction" ? "electronique" : "induction");
+  if (autre) {
+    li("L'AUTRE compteur (" + (autre.type === "induction" ? "à induction" : "électronique")
+      + ")", nb((autre.i2 - autre.i1) * 1000, 0) + " Wh par la différence des index",
+      nb(autre.compte, 0) + (autre.type === "induction" ? " tours × " + nb(autre.c, 1)
+        + " Wh" : " impulsions / " + nb(autre.k, 0) + " imp/kWh"), "temoin");
+  }
+  if (!r && ETAT.index1 === null && !ETAT.temoinFait && !ETAT.plaqueLue) {
+    h += "<tr><td colspan='3' class='vide'>Aucun relevé pour l'instant.</td></tr>";
+  }
+  t.innerHTML = h + "</tbody>";
+  majCarnetBilan();
+}
+function cheminsFaits(r) {
+  var ch = cheminsCalcules(r), out = [], i;
+  for (i = 0; i < ETAT.chemins.length && i < ch.length; i++) out.push(ch[i]);
+  return out;
+}
+function majCarnetBilan() {
+  var b = $("carnetBilan"), r = runCourant(), h = "", i;
+  function li(n, v, cl) {
+    h += "<div class='n'>" + n + "</div><div class='v " + (cl || "") + "'>" + v + "</div>";
+  }
+  if (!r || !ETAT.chemins.length) {
+    b.innerHTML = "<div class='n'>Les chemins de calcul n'ont pas encore été "
+      + "faits.</div><div class='v'>—</div>";
+    $("ecartFiche").innerHTML = "";
+    return;
+  }
+  var ch = cheminsFaits(r), lo = null, hi = null, pMax = 0;
+  for (i = 0; i < ch.length; i++) {
+    if (lo === null || ch[i].wh < lo) lo = ch[i].wh;
+    if (hi === null || ch[i].wh > hi) hi = ch[i].wh;
+    pMax = Math.max(pMax, ch[i].prec);
+  }
+  for (i = 0; i < ch.length; i++) li(ch[i].nom, nb(ch[i].wh, ch[i].prec === 0 ? 1 : 0) + " Wh", "ok");
+  if (ch.length >= 2) {
+    var acc = (hi - lo) <= pMax + 1e-9;
+    li("écart entre les chemins", nb(hi - lo, 1) + " Wh", acc ? "ok" : "mal");
+    li("le plus grossier des trois", "± " + nb(pMax, 1) + " Wh", "");
+    li("s'accordent-ils ?", acc ? "oui" : "non", acc ? "ok" : "mal");
+  }
+  b.innerHTML = h;
+  /* LE SEUL ÉCART DE LA FICHE, ET IL EST D'ARRONDI — on le DIT, on ne
+     corrige pas la fiche : on la situe dans sa précision d'instrument. */
+  if (H_FICHE !== null && ETAT.chemins.length >= K_CALC.length) {
+    var exact = r.p * r.minutes / 60, arr = r.p * H_FICHE, ec = Math.abs(arr - exact);
+    $("ecartFiche").innerHTML = "<b>Le seul écart de la fiche, et il est d'arrondi.</b> "
+      + "Elle écrit « " + cel(K_CALC[2], 2) + " ». Le produit exact vaut <b>"
+      + nb(arr, 1) + " Wh</b>, et " + nb(r.p, 0) + " × " + nb(r.minutes, 0) + "/60 vaut <b>"
+      + nb(exact, 1) + " Wh</b>. L'écart, " + nb(ec, 1) + " Wh, tient à l'arrondi de "
+      + nb(r.minutes, 0) + "/60 h à " + String(H_FICHE).split(".")[1].length
+      + " décimales — il est " + nb(RESOL * 1000 / Math.max(ec, 1e-9), 0)
+      + " fois plus petit que le cran de l'index (" + nb(RESOL * 1000, 0)
+      + " Wh), donc <b>invisible sur l'appareil</b>. La page écrit la valeur exacte ; "
+      + "elle ne corrige pas la fiche.";
+  } else {
+    $("ecartFiche").innerHTML = "";
+  }
+}
+function majVitesses() {
+  var t = $("vitesses"), ps = [], k, h;
+  for (k in ETAT.vitesses) ps.push(+k);
+  ps.sort(function (a, b) { return a - b; });
+  h = "<thead><tr><th>Puissance branchée</th><th>Vitesse du disque</th>"
+    + "<th>Voyant</th></tr></thead><tbody>";
+  if (!ps.length) {
+    h += "<tr><td colspan='3' class='vide'>Aucune puissance observée pour "
+      + "l'instant : brancher un appareil, disjoncteur fermé.</td></tr>";
+  }
+  for (k = 0; k < ps.length; k++) {
+    h += "<tr><td class='mes'>" + nb(ps[k], 0) + " W</td><td class='mes'>"
+      + nb(vitesseDisque(ps[k]), 2) + " tr/min</td><td class='mes'>"
+      + nb(freqVoyant(ps[k]) * 60, 2) + " imp/min</td></tr>";
+  }
+  t.innerHTML = h + "</tbody>";
+  $("essaiTxt").innerHTML = md(depouille(OH("hypothese")).split("**Et si**").length > 1
+    ? "L'hypothèse de la fiche : le disque « doit **s'arrêter** lorsque tout est "
+      + "éteint, et **accélérer** dès qu'on branche un appareil de plus ». On la "
+      + "vérifie en branchant les appareils un par un, disjoncteur fermé — hors de "
+      + "la mesure chronométrée, qui se fait à puissance constante."
+    : "Brancher les appareils un par un, disjoncteur fermé, et lire la vitesse.");
+}
+function majAlerte() {
+  var a = $("alerte"), hp = horsProtocole();
+  ETAT.horsProto = hp;
+  if (!hp) { a.className = "alerte"; a.innerHTML = ""; return; }
+  var d = [];
+  if (REG.c !== PROTO.c) d.push("la constante du compteur à induction est à "
+    + nb(cWhTr(), 1) + " Wh/tr au lieu des " + nb(PROTO.c / 10, 1)
+    + " Wh/tr de la plaque");
+  if (REG.k !== PROTO.k) d.push("la constante du compteur électronique est à "
+    + nb(REG.k, 0) + " imp/kWh au lieu des " + nb(PROTO.k, 0) + " imp/kWh de la fiche");
+  a.className = "alerte on";
+  a.innerHTML = "<b>Réglages hors protocole.</b> " + d.join(" · ")
+    + ". Le tableau de la fiche cesse d'être renseigné — mais le carnet de mesures, "
+    + "lui, continue, et c'est là qu'on lit ce que devient l'expérience : le nombre "
+    + "de tours change, l'énergie NON.";
+}
+function majBoutons() {
+  $("btnPlaque").disabled = false;
+  $("btnTemoin").disabled = ETAT.temoinFait || ETAT.marche;
+  $("btnIndex").disabled = ETAT.marche || (ETAT.index1 !== null && ETAT.mesureFinie);
+  $("btnComptage").disabled = ETAT.feuille === "fenetre";
+  $("btnLancer").disabled = ETAT.marche || ETAT.gel || ETAT.mesureFinie
+    || !ETAT.temoinFait;
+  $("btnCouper").disabled = ETAT.episode !== "mesure";
+  $("btnCalcul").disabled = !ETAT.mesureFinie || ETAT.chemins.length >= K_CALC.length;
+  $("btnFacture").disabled = ETAT.factureVue || !ETAT.mesureFinie;
+  $("btnProto").disabled = !horsProtocole();
+  $("typInd").className = REG.type === "induction" ? "on" : "";
+  $("typElec").className = REG.type === "electronique" ? "on" : "";
+  /* la conclusion ne se démasque qu'une fois TOUT relevé */
+  var fini = ETAT.cellules >= cellulesAtteignables() && ETAT.factureVue && !ETAT.horsProto;
+  $("concl").className = "box" + (fini ? "" : " masque");
+  if (fini) majBilan();
+}
+function majBilan() {
+  var b = $("bilan"), ri = runDe("induction"), re = runDe("electronique");
+  var r = ri || re;
+  if (!r) { b.textContent = ""; return; }
+  var t = r.minutes / 60;
+  b.innerHTML = symLettre(K_E2) + " − " + symLettre(K_E1) + " = " + fmtIndex(r.i2)
+    + " − " + fmtIndex(r.i1) + " = " + nb((r.i2 - r.i1) * 1000, 0) + " Wh<br>"
+    + (ri ? "n × " + S_C + " = " + nb(ri.compte, 0) + " × " + nb(ri.c, 1) + " = "
+        + nb(ri.compte * ri.c, 0) + " Wh<br>" : "")
+    + (re ? "N / " + S_K + " = " + nb(re.compte, 0) + " / " + nb(re.k, 0) + " = "
+        + nb(re.compte / re.k * 1000, 0) + " Wh<br>" : "")
+    + "P × t = " + nb(r.p, 0) + " × " + nb(t, 4) + " = " + nb(r.p * t, 1) + " Wh";
+}
+
+/* ==================================================================
+   20. LES PANNEAUX DE LA FICHE — intégraux, jamais retranchés (§0)
+   ==================================================================
+   revelerCellule — pas revelerLigne, pas revelerColonne : chaque
+   grandeur se dévoile AU MOMENT où la manipulation la produit.        */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t.querySelectorAll("tbody tr")[k], v = cel(k, c);
+  if (!tr || !tr.children[c] || !v) return;
+  if (ETAT.devoile[k + ":" + c]) return;
+  tr.children[c].innerHTML = md((valsF()[k] || [])[c]);
+  tr.children[c].className = "mes";
+  ETAT.devoile[k + ":" + c] = true;
+  ETAT.cellules++;
+}
+function reveler(k) {
+  var c, ligne = ligsF()[k] || [];
+  if (k < 0) return;
+  for (c = 1; c < entetes().length; c++) {
+    if (String(ligne[c] || "") === "") revelerCellule(k, c);
+  }
+  majCompte();
+}
+function majCompte() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.cellules + " / " + cellulesAtteignables();
+}
+function cellulesAtteignables() {
+  var n = 0, k, c, lig = ligsF();
+  for (k = 0; k < lig.length; k++) {
+    for (c = 1; c < entetes().length; c++) {
+      if (String(lig[k][c] || "") === "" && cel(k, c) !== "") n++;
+    }
+  }
+  return n;
+}
+function batirTableau() {
+  var t = $("tab"), h = "<thead><tr>", i, k, c, lig = ligsF();
+  for (i = 0; i < entetes().length; i++) h += "<th>" + md(entetes()[i]) + "</th>";
+  h += "</tr></thead><tbody>";
+  for (k = 0; k < lig.length; k++) {
+    h += "<tr class='" + (k === K_TEM ? "temoin" : (K_CALC.indexOf(k) >= 0 ? "autre" : "")) + "'>";
+    for (c = 0; c < entetes().length; c++) {
+      if (c === 0) h += "<td>" + md(lig[k][c]) + "</td>";
+      else if (String(lig[k][c] || "") !== "") h += "<td class='mes'>" + md(lig[k][c]) + "</td>";
+      else h += "<td class='vide'>·</td>";
+    }
+    h += "</tr>";
+  }
+  t.innerHTML = h + "</tbody>";
+  majCompte();
+}
+function batirPanneaux() {
+  $("titre").textContent = depouille(T("titre"));
+  $("ref").textContent = "E3AC-22 · " + T("niveau") + " · " + T("lecon") + " · " + T("unite");
+  document.title = "Paillasse virtuelle — E3AC-22 · " + depouille(T("titre"));
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md(DONNEES.observation);
+  $("conclTxt").innerHTML = md(DONNEES.conclusion);
+  var m = $("materiel"), s = $("securite");
+  m.innerHTML = ""; s.innerHTML = "";
+  L("materiel").forEach(function (x) {
+    var li = document.createElement("li");
+    li.innerHTML = md(x);
+    m.appendChild(li);
+  });
+  L("securite").forEach(function (x) {
+    var li = document.createElement("li");
+    li.innerHTML = md(x);
+    li.style.background = "#fdeeee";
+    s.appendChild(li);
+  });
+  $("capotReserve").innerHTML = md(OH("interpretation"));
+}
+function batirCapot() {
+  $("capotEq").textContent =
+    "UN SEUL MODÈLE, ET IL EST INTÉGRATEUR\n"
+    + "     P_totale = Σ P_i   (appareils branchés, disjoncteur fermé)\n"
+    + "     E(t)     = ∫ P_totale dt                      [Wh]\n\n"
+    + "TROIS LECTURES DU MÊME NOMBRE, TROIS PRÉCISIONS\n"
+    + "     index    = index₀ + ⌊ E / (" + nb(RESOL * 1000, 0) + " Wh) ⌋ × "
+      + nb(RESOL, DEC_IDX) + " " + UNITE_IDX + "   (des CRANS)\n"
+    + "     n        = ⌊ E / " + S_C + " ⌋           dn/dt = P / (3600·" + S_C + ")  [tr/s]\n"
+    + "     N        = ⌊ E × " + S_K + " / 1000 ⌋    dN/dt = P·" + S_K + " / 3,6·10⁶ [imp/s]\n\n"
+    + "CE QUI SE VOIT, ET CE QUI SE COMPTE\n"
+    + "     vitesse  = P / (60·" + S_C + ")   [tr/min]  ← suit la PUISSANCE\n"
+    + "     nombre   = E / " + S_C + "                  ← suit l'ÉNERGIE\n"
+    + "     angle du disque à l'écran = 360° × E / " + S_C + "  (exact)";
+  $("capotEqTxt").innerHTML = "Aucune de ces relations n'est une table : le nombre de "
+    + "tours n'est pas posé, il <b>tombe</b> de l'intégrale. C'est pourquoi le témoin "
+    + "sort à zéro tour sans qu'aucune règle ne le dise — la puissance vaut zéro, et "
+    + "elle <b>multiplie</b> la durée. Et c'est pourquoi la vitesse du disque change "
+    + "quand on branche un appareil de plus, alors qu'<em>un tour vaut toujours la "
+    + "même énergie</em>.";
+  $("capotBilanTxt").innerHTML = "Le compteur ne mesure ni la lumière, ni la chaleur : "
+    + "il mesure l'<b>énergie électrique</b> qui entre dans l'installation, quelle "
+    + "que soit sa destination. La plaque chauffante la rend en chaleur, les lampes "
+    + "à filament pour l'essentiel en chaleur aussi et pour une petite part en "
+    + "lumière — et le compteur compte la même chose dans les deux cas. C'est ce "
+    + "nombre de kilowattheures, et lui seul, que la facture fait payer.";
+  $("capotBilanEq").textContent =
+    "E_totale = E₁ + E₂ + E₃ + …          (somme des appareils)\n"
+    + "         = " + APPAREILS.map(function (a) { return nb(a.p, 0); }).join(" + ")
+      + " W  ×  " + nb(MIN_MES / 60, 4) + " h\n"
+    + "         = " + nb(P_FICHE * MIN_MES / 60, 1) + " Wh = "
+      + nb(P_FICHE * MIN_MES / 60 / 1000, 4) + " kWh\n\n"
+    + "un tour de disque      = " + nb(PROTO.c / 10, 1) + " Wh\n"
+    + "un cran d'index        = " + nb(RESOL * 1000, 0) + " Wh\n"
+    + "une impulsion          = " + nb(1000 / PROTO.k, 3) + " Wh";
+  var t = $("capotPhys"), h = "<thead><tr><th>Grandeur</th><th>Valeur</th>"
+    + "<th>Provenance</th></tr></thead><tbody>", k;
+  for (k in PHYS) {
+    h += "<tr><td>" + PHYS[k].n + "</td><td class='mes'>"
+      + (PHYS[k].v === null ? "—" : nb(PHYS[k].v, PHYS[k].d))
+      + " " + PHYS[k].u + "</td><td class='src'>" + md(PHYS[k].s) + "</td></tr>";
+  }
+  t.innerHTML = h + "</tbody>";
+
+  $("capotPrec").innerHTML = "Les trois chemins <b>ne peuvent pas</b> tomber sur la "
+    + "même valeur au wattheure près : ils n'ont pas la même précision. Le modèle la "
+    + "<b>chiffre</b> au lieu de la masquer, et l'accord se juge à l'aune du plus "
+    + "grossier. C'est aussi ce qui décide du nombre de décimales : une valeur "
+    + "mesurée s'écrit avec les chiffres que l'instrument justifie, et pas un de plus.";
+  var pt2 = $("capotPrecTab"), hh = "<thead><tr><th>Chemin</th><th>Ce qui limite</th>"
+    + "<th>Précision</th></tr></thead><tbody>";
+  hh += "<tr><td>E = " + symLettre(K_E2) + " − " + symLettre(K_E1)
+    + "</td><td>le cran de l'index</td><td class='mes'>± " + nb(RESOL * 1000, 0)
+    + " Wh</td></tr>";
+  hh += "<tr><td>E = n × " + S_C + "</td><td>un tour de disque</td><td class='mes'>± "
+    + nb(PROTO.c / 10, 1) + " Wh</td></tr>";
+  hh += "<tr><td>E = N / " + S_K + "</td><td>une impulsion</td><td class='mes'>± "
+    + nb(1000 / PROTO.k, 2) + " Wh</td></tr>";
+  hh += "<tr><td>E = P × t</td><td>rien — ce n'est pas une lecture</td>"
+    + "<td class='mes'>exact</td></tr>";
+  pt2.innerHTML = hh + "</tbody>";
+
+  var exact = P_FICHE * MIN_MES / 60, arr = H_FICHE === null ? exact : P_FICHE * H_FICHE;
+  var ec = Math.abs(arr - exact);
+  $("capotEcart").innerHTML = "<b>L'écart d'arrondi de la fiche, chiffré.</b> Elle "
+    + "écrit « " + (K_CALC.length > 2 ? cel(K_CALC[2], 2) : "") + " ». Le produit "
+    + "exact vaut " + nb(arr, 1) + " Wh, et " + nb(P_FICHE, 0) + " × "
+    + nb(MIN_MES, 0) + "/60 vaut " + nb(exact, 1) + " Wh : "
+    + nb(ec, 1) + " Wh d'écart, soit " + nb(RESOL * 1000 / Math.max(ec, 1e-9), 0)
+    + " fois moins que le cran de l'index. <b>Il est invisible sur l'appareil</b>, et "
+    + "la fiche a donc raison d'écrire " + nb(exact, 0) + " Wh. La page écrit la "
+    + "valeur exacte et situe la fiche dans sa précision d'instrument — elle ne la "
+    + "corrige pas.";
+
+  var lim = $("capotLimites"), L6 = [
+    "<b>Le compteur est parfait.</b> Un compteur domestique est de classe 2 : il se trompe de ± 2 %, soit ± " + nb(0.02 * exact, 0) + " Wh sur les " + nb(exact, 0) + " mesurés — davantage qu'un tour de disque. C'est la vraie limite de la mesure, et elle n'est pas simulée.",
+    "<b>Le disque n'a pas d'anti-fluage.</b> Un vrai compteur à induction porte un cran de freinage : sous quelques millièmes de sa puissance nominale, il ne tourne pas du tout. Ici, un appareil de 1 W ferait avancer le disque, très lentement — en salle, il ne le ferait probablement pas.",
+    "<b>Les puissances sont celles des plaques, et elles ne varient pas.</b> Une plaque chauffante ne consomme sa puissance nominale que sous sa tension nominale, et la résistance d'un filament de lampe croît fortement avec sa température. Le modèle branche des puissances constantes.",
+    "<b>Le facteur de puissance vaut 1.</b> Un compteur d'énergie active compte P = U·I·cos φ. Les trois appareils de la fiche sont résistifs, donc cos φ = 1 — mais un moteur ou un tube fluorescent ne s'y prêteraient pas, et le compteur ne compterait plus le produit des lectures d'un voltmètre et d'un ampèremètre.",
+    "<b>La tension du réseau est constante.</b> Elle fléchit aux heures de pointe ; les appareils résistifs consomment alors moins, et le disque ralentit. La page ne fait pas varier la tension : elle la lit sur la plaque et s'y tient.",
+    "<b>Le comptage est parfait.</b> En salle, c'est un élève qui compte les tours à l'œil pendant dix minutes ; c'est là que se logent les erreurs réelles, et la page n'en simule aucune. Elle ne simule pas non plus la fatigue de celui qui compte 200 impulsions.",
+    "<b>Le compteur à prépaiement n'est pas modélisé.</b> La fiche le cite comme troisième type rencontré au Maroc ; la page ne montre que les deux qui se prêtent au comptage. Sur le troisième, c'est un crédit en kWh qui décroît — et la différence de deux index y vaut encore.",
+    "<b>Les pertes de la canalisation sont ignorées.</b> Le fil entre le compteur et l'appareil dissipe lui aussi, et le compteur le compte : l'énergie facturée est un peu supérieure à celle que les appareils reçoivent.",
+    "<b>Le temps est comprimé.</b> Rien de physique n'en dépend — l'énergie est le produit d'une puissance par une durée, et les deux sont exactes —, mais le disque tourne à l'écran bien plus vite qu'en vrai, et l'élève ne vit pas les douze minutes d'attente qui sont, en salle, la moitié de la leçon."
+  ];
+  lim.innerHTML = "";
+  L6.forEach(function (x) {
+    var li = document.createElement("li");
+    li.innerHTML = x;
+    lim.appendChild(li);
+  });
+}
+
+/* ==================================================================
+   21. LES COMMANDES HTML
+   ==================================================================
+   §12.12 — chaque `value` initiale tombe sur la grille des `step`, et
+   les curseurs travaillent en ENTIERS pour que ce soit vrai sans
+   arrondi flottant : rC est en DIXIÈMES de Wh/tr, jamais en Wh/tr.    */
+function brancherCommandes() {
+  $("rC").addEventListener("input", function () {
+    REG.c = +this.value;
+    perimer();
+    rendre();
+  });
+  $("rK").addEventListener("input", function () {
+    REG.k = +this.value;
+    perimer();
+    rendre();
+  });
+  $("rA").addEventListener("input", function () {
+    REG.acc = +this.value;      /* ne périme RIEN (§12.32) — mais il DOIT */
+    majSorties();               /* rafraîchir son propre nombre (§12.5)   */
+    rendre();
+  });
+  $("typInd").addEventListener("click", function () { choisirType("induction"); });
+  $("typElec").addEventListener("click", function () { choisirType("electronique"); });
+  $("btnProto").addEventListener("click", function () {
+    REG.c = PROTO.c; REG.k = PROTO.k;
+    $("rC").value = PROTO.c; $("rK").value = PROTO.k;
+    perimer();
+    noter("Réglages ramenés au protocole.", true);
+    rendre();
+  });
+  /* Chaque bouton BOUCLE sur la fonction du glisser (§12.13) : aucun
+     d'eux ne pose d'état pour son compte. */
+  $("btnPlaque").addEventListener("click", lirePlaque);
+  $("btnTemoin").addEventListener("click", chronometrer);
+  $("btnIndex").addEventListener("click", releverIndex);
+  $("btnComptage").addEventListener("click", seMettreAuComptage);
+  $("btnLancer").addEventListener("click", function () { basculerDisjoncteur(true); });
+  $("btnCouper").addEventListener("click", function () { basculerDisjoncteur(false); });
+  $("btnCalcul").addEventListener("click", calculer);
+  $("btnFacture").addEventListener("click", projeter);
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+}
+/* Changer de compteur ne périme pas la fiche : le protocole prescrit
+   les DEUX. Il rouvre en revanche une mesure neuve — on ne relève pas
+   l'index d'arrivée d'un appareil sur un autre. */
+function choisirType(t) {
+  if (ETAT.marche || ETAT.gel) {
+    signaler("Un épisode chronométré est en cours : on ne change pas de compteur au "
+      + "milieu.", false);
+    return;
+  }
+  REG.type = t;
+  ETAT.index1 = null; ETAT.index2 = null; ETAT.eDepart = null;
+  ETAT.compte = 0; ETAT.mesureFinie = false; ETAT.episode = null;
+  ETAT.chemins = []; ETAT.t = 0;
+  majSorties();
+  noter("Compteur " + (t === "induction" ? "à induction" : "électronique")
+    + " : même platine, même index, même énergie — seul le MÉCANISME change. "
+    + (t === "induction" ? "On compte les tours d'un disque, constante en Wh/tr."
+      : "On compte les éclats d'un voyant, constante en imp/kWh.")
+    + " La mesure est à refaire sur cet appareil.", true);
+  rendre();
+}
+/* Deux fonctions, et il en faut deux. `majSorties` rafraîchit les nombres
+   affichés sous les curseurs ; `perimer` y ajoute l'invalidation des
+   relevés (§12.19). Les confondre produit un curseur MORT : « vitesse de
+   la simulation » ne peut pas appeler `perimer` — il ne périme rien
+   (§12.32) —, donc il n'appellerait rien, et son étiquette resterait
+   figée pendant que le réglage, lui, changerait bien. */
+function majSorties() {
+  $("oC").textContent = nb(cWhTr(), 1) + " Wh/tr";
+  $("oK").textContent = nb(REG.k, 0) + " imp/kWh";
+  $("oA").textContent = "× " + REG.acc;
+  $("oType").textContent = REG.type === "induction" ? "à induction" : "électronique";
+  $("aideC").innerHTML = "Un tour du disque vaut <b>" + nb(cWhTr(), 1) + " Wh</b>, "
+    + "soit " + nb(1000 / cWhTr(), 0) + " tr/kWh. La faire varier change le NOMBRE "
+    + "de tours et la vitesse du disque — elle ne change pas d'un wattheure "
+    + "l'énergie consommée. La valeur de la fiche est " + nb(PROTO.c / 10, 1) + " Wh/tr.";
+  $("aideK").innerHTML = "Une impulsion vaut <b>" + nb(1000 / REG.k, 3) + " Wh</b>. "
+    + "À " + nb(PROTO.k, 0) + " imp/kWh, la valeur de la fiche, c'est exactement une "
+    + "impulsion par wattheure — c'est ce qui rend la transposition si simple.";
+  $("aideType").innerHTML = REG.type === "induction"
+    ? "Les deux compteurs partagent la <b>même platine</b> et ne diffèrent que par le "
+      + "mécanisme : des tambours qui tournent contre un affichage à plat, un disque "
+      + "contre un voyant. C'est voulu — la transposition se voit mal si les deux "
+      + "appareils n'ont rien de commun."
+    : "Le compteur le plus répandu aujourd'hui dans les foyers marocains. <b>Pas de "
+      + "disque</b> : un voyant clignote, et sa constante s'écrit en impulsions par "
+      + "kWh. La seule méthode qui vaut sur les <b>trois</b> types de compteurs reste "
+      + "la <b>différence de deux index</b>.";
+}
+function perimer() {
+  majSorties();
+  if (ETAT && (ETAT.runs.length || ETAT.chemins.length)) {
+    ETAT.runs = [];
+    ETAT.chemins = [];
+    ETAT.mesureFinie = false;
+    ETAT.index2 = null;
+    noter("Les constantes ont changé : les mesures précédentes ne correspondent plus "
+      + "à l'appareil, elles sont effacées.", null);
+  }
+}
+
+/* ==================================================================
+   22. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages, et CONSERVE le
+   minuteur de séance : la séance ne se rembobine pas (§11.6).         */
+function recommencer() {
+  effacerGuide();          /* aucun halo ne survit à la remise en état */
+  arreterDeroule();        /* ni un deroule en cours */
+  var seance = ETAT ? ETAT.tSeance : 0;
+  purger();
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  replacerTout();
+  batirTableau();
+  noter("Tout est remis en place, et le compteur repart de son index de départ. Les "
+    + "réglages, eux, n'ont pas bougé.", null);
+  derniere = 0;
+  tard(tic, 40);
+  rendre();
+}
+
+/* ==================================================================
+   23. LE DÉMARRAGE
+   ================================================================== */
+/* ==================================================================
+   24. LE PROTOCOLE GUIDÉ, ET LE PLEIN ÉCRAN
+   ==================================================================
+   Le panneau de droite reprend les étapes de la fiche MOT POUR MOT et
+   marque celle où l'on en est.
+
+   DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc tout seul dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Il écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser ; le
+      geste reste à l'élève. Un bouton qui rejoue le résultat de la
+      fiche est le refus explicite de l'enseignant.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.              */
+
+var guideSurb = [], guideDefaire = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  /* Un surlignage qui n'ajoute pas de nœud — le contour posé sur un bouton
+     de la colonne — se défait par une fonction, pas par un removeChild. */
+  guideDefaire.forEach(function (f) { try { f(); } catch (e) { /* rien */ } });
+  guideDefaire = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo
+   reste visible et rien du guidage ne se perd. */
+function haloGuide(x, y, w, h, r) {
+  var g = COUCHES.ui.appendChild(el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* La boîte d'un élément de la scène, ramenée dans le repère du viewBox.
+   On passe par l'ÉCRAN plutôt que par getBBox : un objet qui vit sous une
+   couche déplacée ou tournée y donnerait sa boîte locale, et le halo
+   tomberait à côté. Le SVG garde son rapport de forme, donc deux facteurs
+   d'échelle suffisent. */
+function boiteScene(n, m) {
+  if (typeof n === "string") n = svg.querySelector(n);
+  if (!n || !n.getBoundingClientRect) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  if (!s.width || !s.height) return null;
+  if (!r.width && !r.height) return null;
+  var kx = VB_W / s.width, ky = VB_H / s.height;
+  m = m === undefined ? 9 : m;
+  return { x: (r.left - s.left) * kx - m, y: (r.top - s.top) * ky - m,
+           w: r.width * kx + 2 * m, h: r.height * ky + 2 * m };
+}
+function surlignerNoeud(n, m) {
+  var b = boiteScene(n, m);
+  if (!b) return null;
+  return haloGuide(b.x, b.y, b.w, b.h, 12);
+}
+/* ⚠️ On vise par [data-act], jamais par #id : un dégradé de <defs> porte
+   parfois le même nom qu'un objet de la scène, et querySelector rendrait
+   le dégradé — dont la boîte est nulle. */
+function surlignerActe(a, m) {
+  return surlignerNoeud('[data-act="' + a + '"]', m);
+}
+/* Un élément de la PAGE — un bouton de commande, le tableau, un graphe :
+   il n'est pas dans le SVG, on ne peut donc pas lui poser de halo. On lui
+   pose un contour, et on le défait avec le reste du guidage. */
+function surlignerHtml(id) {
+  var b = $(id);
+  if (!b) return null;
+  var av = b.style.outline, ao = b.style.outlineOffset;
+  b.style.outline = "3px dashed " + GOLD;
+  b.style.outlineOffset = "3px";
+  guideDefaire.push(function () {
+    b.style.outline = av; b.style.outlineOffset = ao;
+  });
+  return b;
+}
+/* La ZONE où poser : on réemploie `montrerCibles` de la page — un second
+   mécanisme de cible ferait deux traits de couleurs différentes pour la
+   même chose — puis on confie ses rectangles à effacerGuide, pour
+   qu'aucun ne survive au guidage. */
+function montrerCiblesGuide(a) {
+  montrerCibles(a);
+  var n = svg.querySelectorAll(".cible"), i;
+  for (i = 0; i < n.length; i++) guideSurb.push(n[i]);
+  return n.length;
+}
+
+/* Une zone NOMMÉE, quand `montrerCibles` en désignerait plusieurs : la
+   feuille de comptage est acceptée par trois emplacements, et l'étape ne
+   parle que d'un seul. Les cotes viennent de `zones()`, jamais d'ici. */
+function montrerZoneNommee(nom) {
+  var z = zones(), i, r;
+  for (i = 0; i < z.length; i++) {
+    if (z[i].n !== nom) continue;
+    r = el("rect", { "class": "cible", x: z[i].x0, y: z[i].y0,
+      width: z[i].x1 - z[i].x0, height: z[i].y1 - z[i].y0, rx: 9,
+      fill: GOLD, "fill-opacity": .13, stroke: GOLD, "stroke-width": 2.4,
+      "stroke-dasharray": "9 6" });
+    COUCHES.arriere.appendChild(deco(r));
+    guideSurb.push(r);
+    return r;
+  }
+  return null;
+}
+function surlignerObjet(a, zone) {
+  surlignerActe(a);
+  if (zone) montrerZoneNommee(zone); else montrerCiblesGuide(a);
+}
+/* Le premier appareil du tableau qui n'est pas encore sur une prise. */
+function appareilLibre() {
+  var i;
+  for (i = 0; i < APPAREILS.length; i++) if (ETAT.prise[i] === null) return i;
+  return -1;
+}
+function priseLibre() {
+  var i, j, pris = {}, z = zones();
+  for (i = 0; i < APPAREILS.length; i++) {
+    if (ETAT.prise[i] !== null) pris[ETAT.prise[i]] = true;
+  }
+  for (j = 0; j < z.length; j++) {
+    if (z[j].n.indexOf("prise") !== 0) continue;
+    if (!pris[+z[j].n.slice(5)]) return z[j].n;
+  }
+  return null;
+}
+/* Le geste qui reste pour lancer la mesure : ouvrir le disjoncteur,
+   brancher, poster le binôme à la fenêtre, puis fermer. C'est la
+   cascade de consigne(), reprise pas à pas. */
+function gesteLancement() {
+  if (!toutBranche()) return ETAT.disj ? "ouvrir" : "brancher";
+  if (ETAT.feuille !== "fenetre") return "comptage";
+  return "lancer";
+}
+function mesureLancee() {
+  return ETAT.episode === "mesure" || ETAT.gel || ETAT.mesureFinie;
+}
+
+/* Les douze étapes de la fiche. Les prédicats sortent de la cascade de
+   consigne() et du tableau ETAPES de la page — ils ne sont pas inventés.
+
+   L'étape 1 — « situer le compteur dans l'installation » — est une
+   OBSERVATION, sans geste : la page ne peut pas en faire un état. Elle
+   est rattachée à celui qui la suit immédiatement, la lecture de la
+   plaque, et l'aide le dit. */
+var GUIDE = [
+  { fait: function () { return ETAT.plaqueLue; },
+    aide: "Regarder où le compteur est <b>placé</b> : à l'<b>entrée</b> de "
+        + "l'installation, <b>avant</b> le disjoncteur général — tout ce que "
+        + "la maison consomme passe par lui. Cette observation n'a pas de "
+        + "geste : la page la marquera faite avec la lecture de la plaque.",
+    montre: function () {
+      surlignerNoeud("#compteur", 8);
+      surlignerActe("disjoncteur");
+    } },
+
+  { fait: function () { return ETAT.plaqueLue; },
+    aide: function () {
+      return "Poser la <b>feuille de comptage</b> sur la <b>plaque</b> du "
+        + "compteur pour la lire : la tension, la fréquence, l'unité de "
+        + "l'index (" + UNITE_IDX + ") et sa <b>constante</b> — "
+        + (REG.type === "induction" ? S_C + " en Wh/tr sur un compteur à "
+           + "disque" : S_K + " en imp/kWh sur un compteur électronique") + ".";
+    },
+    montre: function () {
+      surlignerObjet("feuille", "plaqueC");
+      surlignerHtml("btnPlaque");
+    } },
+
+  { fait: function () { return ETAT.temoinFait; },
+    aide: function () {
+      if (!ETAT.plaqueLue) return "Lire d'abord la plaque du compteur.";
+      if (!ETAT.disj) return "<b>Réarmer le disjoncteur</b> : le témoin "
+        + "s'observe installation alimentée, sinon il ne prouve rien.";
+      if (!rienBranche()) return "<b>Débrancher</b> les appareils : le témoin "
+        + "se fait <b>tout éteint</b>.";
+      return "Poser la <b>feuille de comptage devant la fenêtre</b> du "
+        + "compteur, ou presser « Lancer le témoin » : "
+        + motDuree(MIN_TEM) + " minutes, tout éteint. Le disque bouge-t-il ?";
+    },
+    montre: function () {
+      if (!ETAT.disj) { surlignerObjet("levier", "levHaut"); return; }
+      if (!rienBranche()) {
+        var i = 0, j;
+        for (j = 0; j < APPAREILS.length; j++) if (ETAT.prise[j] !== null) { i = j; break; }
+        surlignerObjet("app" + i, "paillasse");
+        return;
+      }
+      surlignerHtml("btnTemoin");
+      surlignerObjet("feuille", "fenetre");
+    } },
+
+  { fait: function () { return ETAT.index1 !== null; },
+    aide: function () {
+      if (pTotale() > 0) return "Le disque tourne : <b>débrancher</b>, ou "
+        + "ouvrir le disjoncteur, avant de relever l'index de départ.";
+      return "Poser la <b>feuille de comptage sur l'index</b> et relever "
+        + "l'<b>index de départ " + symLettre(K_E1) + "</b>, en "
+        + UNITE_IDX + ", <b>chiffre par chiffre</b>.";
+    },
+    montre: function () {
+      surlignerObjet("feuille", "platine");
+      surlignerHtml("btnIndex");
+    } },
+
+  { fait: function () { return mesureLancee(); },
+    aide: function () {
+      var g = gesteLancement(), i = appareilLibre();
+      if (g === "ouvrir") return "<b>Tirer le levier du disjoncteur vers le "
+        + "bas</b> : on branche les appareils <b>hors tension</b>.";
+      if (g === "brancher") return "Brancher « <b>"
+        + (i >= 0 ? APPAREILS[i].nom : "l'appareil suivant")
+        + "</b> » sur une prise de la canalisation — les "
+        + APPAREILS.length + " appareils du tableau y passent.";
+      if (g === "comptage") return "Poster le binôme : poser la <b>feuille de "
+        + "comptage devant la fenêtre</b> du compteur.";
+      return "<b>Fermer le disjoncteur</b> : cela branche et déclenche le "
+        + "chronomètre au même instant, comme le protocole le demande.";
+    },
+    montre: function () {
+      var g = gesteLancement(), i = appareilLibre();
+      if (g === "ouvrir") { surlignerObjet("levier", "levBas"); return; }
+      if (g === "brancher") {
+        if (i >= 0) surlignerObjet("app" + i, priseLibre());
+        return;
+      }
+      if (g === "comptage") { surlignerObjet("feuille", "fenetre"); return; }
+      surlignerObjet("levier", "levHaut");
+      surlignerHtml("btnLancer");
+    } },
+
+  { fait: function () { return ETAT.gel || ETAT.mesureFinie; },
+    aide: function () {
+      var quoi = REG.type === "induction" ? "les <b>tours du disque</b>"
+                                          : "les <b>clignotements du voyant</b>";
+      if (ETAT.feuille !== "fenetre" && !mesureLancee()) {
+        return "Pendant toute la mesure, un binôme compte " + quoi + " : sa "
+          + "feuille se pose <b>devant la fenêtre</b> du compteur.";
+      }
+      if (ETAT.marche) return "Le binôme compte " + quoi + " — "
+        + nb(ETAT.compte, 0) + " jusqu'ici. L'horloge s'arrêtera d'elle-même à "
+        + nb(MIN_MES, 0) + " minutes.";
+      return "Pendant <b>" + nb(MIN_MES, 0) + " minutes exactement</b>, le "
+        + "binôme compte " + quoi + ".";
+    },
+    montre: function () {
+      surlignerObjet("feuille", "fenetre");
+      surlignerHtml("btnComptage");
+    } },
+
+  { fait: function () { return ETAT.mesureFinie; },
+    aide: function () {
+      if (!mesureLancee()) return "La mesure n'est pas lancée : revenir à "
+        + "l'étape 5.";
+      return "À " + nb(MIN_MES, 0) + " minutes : <b>couper l'alimentation</b> — "
+        + "tirer le levier vers le bas — et relever l'<b>index d'arrivée "
+        + symLettre(K_E2) + "</b>.";
+    },
+    montre: function () {
+      surlignerObjet("levier", "levBas");
+      surlignerHtml("btnCouper");
+    } },
+
+  { fait: function () { return ETAT.chemins.length >= 1; },
+    aide: function () {
+      if (!ETAT.mesureFinie) return "Terminer d'abord la mesure : les chemins "
+        + "de calcul se font sur deux index relevés.";
+      return "Premier chemin : poser la <b>calculatrice sur la feuille</b> et "
+        + "calculer <b>E = " + symLettre(K_E2) + " − " + symLettre(K_E1)
+        + "</b>, en " + UNITE_IDX + " puis en Wh. C'est la seule méthode qui "
+        + "vaut sur <b>tous</b> les compteurs.";
+    },
+    montre: function () {
+      surlignerObjet("calc", "feuilleZ");
+      surlignerHtml("btnCalcul");
+    } },
+
+  { fait: function () { return ETAT.chemins.length >= 2; },
+    aide: function () {
+      return "Deuxième chemin : "
+        + (REG.type === "induction"
+           ? "<b>E = n × " + S_C + "</b>, en Wh — le nombre de tours comptés "
+             + "multiplié par la constante du compteur."
+           : "<b>E = N / " + S_K + "</b> — le nombre d'impulsions divisé par "
+             + "la constante en imp/kWh.")
+        + " Reposer la calculatrice sur la feuille.";
+    },
+    montre: function () {
+      surlignerObjet("calc", "feuilleZ");
+      surlignerHtml("btnCalcul");
+    } },
+
+  { fait: function () { return ETAT.chemins.length >= 3; },
+    aide: function () {
+      return "Troisième chemin : additionner les puissances, convertir "
+        + nb(MIN_MES, 0) + " min en heures, et appliquer <b>E = P × t</b>. "
+        + "Celui-là n'est pas une lecture, c'est un produit — il est exact.";
+    },
+    montre: function () {
+      surlignerObjet("calc", "feuilleZ");
+      surlignerHtml("btnCalcul");
+    } },
+
+  { fait: function () { return ETAT.chemins.length >= K_CALC.length; },
+    aide: function () {
+      var r = K_CALC.length - ETAT.chemins.length;
+      if (r > 0) return "Il reste " + r + " chemin(s) de calcul avant de "
+        + "pouvoir les comparer.";
+      return "<b>Comparer les trois résultats</b> : le carnet, à droite, les "
+        + "met côte à côte avec la précision de chacun. Donnent-ils la même "
+        + "énergie, à la précision du plus grossier près ?";
+    },
+    montre: function () {
+      surlignerHtml("carnet");
+      surlignerHtml("tab");
+    } },
+
+  { fait: function () { return ETAT.factureVue; },
+    aide: "Terminer en <b>projetant la facture réelle</b> sur l'écran : y "
+        + "repérer l'<b>ancien index</b>, le <b>nouvel index</b> et la "
+        + "<b>consommation</b>, et vérifier que cette dernière est bien leur "
+        + "différence.",
+    montre: function () {
+      surlignerObjet("facture", "ecran");
+      surlignerHtml("btnFacture");
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c, i, b;
+  /* Tant que la liste n'est pas construite, on ne touche à rien : le rendu
+     de la page tourne avant que le panneau ne soit bâti. */
+  if (!ol || !ol.children.length) return;
+  c = etapeCourante();
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état de
+   l'expérience — seul le message transitoire du bandeau est écarté, pour
+   que la consigne de l'étape redevienne lisible. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  /* §12.10 — on lève la retenue d'un refus pour que la consigne de
+     l'étape redevienne lisible. Aucun état de l'expérience ne bouge. */
+  ETAT.retenue = 0;
+  consigne();
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* Cette paillasse n'a pas de `ec("…")`. Ses gestes sont de deux sortes, et
+     la page les fait passer par le MÊME chemin : le glisser — `deposer()`,
+     dont la cible est le centre d'une zone de `zones()`, jamais une
+     coordonnée écrite — et les huit boutons de la colonne, dont les
+     écouteurs sont les actions elles-mêmes (`lirePlaque`, `chronometrer`,
+     `releverIndex`, `seMettreAuComptage`, `basculerDisjoncteur`, `calculer`,
+     `projeter`). L'ordre n'est jamais deviné : il est lu sur
+     `gesteLancement()`, la cascade de la page. */
+
+  /* 1 et 2. situer le compteur, puis lire sa plaque. La première étape est
+     une OBSERVATION sans geste — le compteur est à l'entrée, avant le
+     disjoncteur — et la page la marque faite avec la lecture de la plaque,
+     comme son aide l'annonce. Le même geste coche donc les deux.
+
+     ⚠️ La ligne « Constante du compteur » du tableau demande C en Wh/tr, et la
+     page ne la dévoile que sur le compteur À INDUCTION — elle le dit
+     elle-même dans le journal du mode électronique. « Recommencer » remet
+     l'expérience à zéro mais PAS les réglages : après une séance qui s'est
+     terminée sur l'autre compteur, la plaque se lirait au mauvais endroit et
+     cette ligne-là resterait vide pour toujours. On s'assure donc du compteur
+     avant de lire la plaque. */
+  function () {
+    if (REG.type !== "induction") presserHTML("typInd");
+    presserHTML("btnPlaque");
+    return 380;
+  },
+  function () {
+    if (REG.type !== "induction") presserHTML("typInd");
+    presserHTML("btnPlaque");
+    return 380;
+  },
+
+  /* 3. LE TÉMOIN — deux minutes, installation alimentée, rien de branché.
+     Une fois lancé, il n'y a plus rien à presser : on attend, et l'on rend
+     le temps réel qui reste, en négatif. */
+  function () {
+    if (ETAT.episode === "temoin" && ETAT.marche) {
+      return -Math.max(1500, (MIN_TEM * 60 - ETAT.t) / REG.acc * 1000 + 1500);
+    }
+    presserHTML("btnTemoin");
+    return 420;
+  },
+
+  /* 4. l'index de départ, relevé avant qu'on ne branche quoi que ce soit. */
+  function () { presserHTML("btnIndex"); return 420; },
+
+  /* 5. ouvrir le disjoncteur, brancher, poster le binôme, refermer.
+     `gesteLancement()` dit lequel de ces gestes reste à faire, et la page
+     impose l'ordre : `accepte()` refuse de brancher sous tension une fois
+     l'index de départ relevé, et `lancerMesure()` refuse de lancer sans
+     personne au comptage. Les trois appareils partent ENSEMBLE — la fiche
+     écrit « brancher simultanément la plaque chauffante et les deux
+     lampes » —, et la fermeture du disjoncteur est, elle aussi, le
+     déclenchement du chronomètre « au même instant ». */
+  function () {
+    var g = gesteLancement(), c, i, z, n;
+    if (g === "ouvrir") {
+      c = centreZone("levBas");
+      if (c) deposer("levier", c.x, c.y);
+      return 420;
+    }
+    if (g === "brancher") {
+      for (n = 0; n < APPAREILS.length; n++) {
+        i = appareilLibre();
+        z = priseLibre();
+        if (i < 0 || !z) break;
+        c = centreZone(z);
+        if (!c) break;
+        deposer("app" + i, c.x, c.y);
+      }
+      return 560;
+    }
+    if (g === "comptage") presserHTML("btnComptage");
+    presserHTML("btnLancer");
+    return 560;
+  },
+
+  /* 6. DIX MINUTES EXACTEMENT, pendant lesquelles le binôme compte. Dix
+     minutes ne s'attendent pas en classe : on pousse « vitesse de la
+     simulation » à son maximum, par le curseur `#rA` que l'enseignant a sous
+     la main — c'est le geste qu'`accelererTemps()` fait ailleurs sur `#vit`,
+     et la page dit elle-même qu'il ne change aucun résultat (l'intégration
+     garde son pas de `PAS_INT`, et l'horloge se recale exactement sur
+     l'instant prescrit). Ensuite il n'y a plus rien à presser : on attend,
+     et l'on rend le temps réel qui reste, en négatif. */
+  function () {
+    var r = $("rA");
+    if (r && +r.value < +r.max) {
+      r.value = r.max;
+      r.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (ETAT.marche && ETAT.episode === "mesure") {
+      return -Math.max(1500, (MIN_MES * 60 - ETAT.t) / REG.acc * 1000 + 1500);
+    }
+    if (!mesureLancee()) { presserHTML("btnLancer"); return 560; }
+    return 0;
+  },
+
+  /* 7. à dix minutes : couper l'alimentation ET relever l'index d'arrivée.
+     Sur cette page, c'est un seul geste — `couperEtRelever()` — et la page
+     refuse l'ordre inverse : lire l'index sous tension le ferait monter
+     pendant qu'on le lit. */
+  function () { presserHTML("btnCouper"); return 560; },
+
+  /* 8, 9 et 10. les trois chemins de calcul, un par pression : la différence
+     des index, le comptage du disque, puis P × t. C'est la calculatrice qui
+     les fait, et chacun dévoile SA ligne du tableau. */
+  function () { presserHTML("btnCalcul"); return 460; },
+  function () { presserHTML("btnCalcul"); return 460; },
+  function () { presserHTML("btnCalcul"); return 460; },
+
+  /* 11. comparer les trois résultats — le carnet les met côte à côte dès
+     que le troisième chemin est fait. Même prédicat que l'étape 10 : le
+     panneau saute, il DÉDUIT. */
+  function () { presserHTML("btnCalcul"); return 460; },
+
+  /* 12. L'AUTRE COMPTEUR, PUIS LA FACTURE. La fiche prescrit les deux
+     mécanismes — « C en Wh/tr sur un compteur à disque, ou K en imp/kWh sur
+     un compteur électronique » (étape 2), « sur un compteur électronique,
+     calculer E = N / K » (étape 9) —, et la page en fait sa huitième case de
+     parcours : « L'autre compteur, puis la facture ». Sa consigne le dit
+     mot pour mot dès que le tableau n'a plus qu'une ligne à remplir.
+     Tant que l'autre compteur n'a pas eu sa mesure, on change donc de
+     compteur : `choisirType()` rouvre une mesure neuve, le panneau revient
+     de lui-même à l'étape 4, et les mêmes gestes la refont sur l'autre
+     mécanisme. La facture se projette en DERNIER, comme la fiche l'écrit —
+     et c'est elle qui démasque la conclusion. */
+  function () {
+    if (!runDe("induction") || !runDe("electronique")) {
+      presserHTML(REG.type === "induction" ? "typElec" : "typInd");
+      return 520;
+    }
+    presserHTML("btnFacture");
+    return 560;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ------------------------------------------------------------------
+   LE PLEIN ÉCRAN
+   ------------------------------------------------------------------
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, premier usage de cette page en
+   classe. On agrandit le CADRE, pas la mise en page.                   */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+
+function demarrer() {
+  construireProtocole();   /* AVANT le premier majProtocole() */
+  lireFiche();
+  batirPhys();
+  /* §12.12 — la valeur initiale DOIT tomber sur la grille des pas. En
+     dixièmes de Wh/tr et en imp/kWh entières, avec un pas de 1, elle y
+     tombe toujours ; les bornes sont posées autour d'elle. */
+  PROTO.c = Math.round(C_FICHE * 10);
+  PROTO.k = Math.round(K_FICHE);
+  REG.c = PROTO.c; REG.k = PROTO.k;
+  $("rC").min = Math.max(1, Math.round(PROTO.c / 5));
+  $("rC").max = Math.round(PROTO.c * 4);
+  $("rC").step = 1;
+  $("rC").value = PROTO.c;
+  $("rK").min = Math.max(1, Math.round(PROTO.k / 10));
+  $("rK").max = Math.round(PROTO.k * 3);
+  $("rK").step = 1;
+  $("rK").value = PROTO.k;
+
+  ETAT = neufEtat();
+  batirSvg();
+  decor();
+  batirCompteur();
+  batirDisjoncteur();
+  batirCanalisation();
+  batirEcran();
+  var i;
+  for (i = 0; i < APPAREILS.length && i < APP_REPOS.length; i++) batirAppareil(i);
+  ombreAuSol(COUCHES.fils, CHR_REPOS.x, BANC + 4, 34);
+  ombreAuSol(COUCHES.fils, CAL_REPOS.x, BANC + 4, 26);
+  batirFeuille();
+  batirChrono();
+  batirCalculatrice();
+  batirFacture();
+
+  svg.addEventListener("pointerdown", surDown);
+  svg.addEventListener("pointermove", surMove);
+  svg.addEventListener("pointerup", surUp);
+  svg.addEventListener("pointercancel", surCancel);   /* ne PAS l'oublier */
+
+  batirPanneaux();
+  batirTableau();
+  batirCapot();
+  brancherCommandes();
+  majSorties();
+  replacerTout();
+  derniere = 0;
+  tard(tic, 40);
+  rendre();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", demarrer);
+} else {
+  demarrer();
+}
+})();
+</script>
+
+</body>
+</html>

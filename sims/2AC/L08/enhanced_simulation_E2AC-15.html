@@ -1,0 +1,3299 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-15 · Simuler l'effet de serre : deux bocaux, deux gaz, une seule lampe</title>
+<!-- L'ECOUTEUR D'ERREURS EST ICI, ET PAS EN FIN DE BODY (SKILL §12.47) :
+     pose apres le script de la page, il ne verrait aucune erreur de
+     demarrage — celles-ci ont deja eu lieu. -->
+<script>
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message) + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<!--
+  ===================================================================
+  E2AC-15 · 2AC · U1 · L08 — PAILLASSE VIRTUELLE
+  « Simuler l'effet de serre : deux bocaux, deux gaz, une seule lampe »
+  ===================================================================
+
+  LES SEIZE CELLULES SORTENT D'UN BILAN D'ÉNERGIE
+  -----------------------------------------------
+  Aucune température n'est écrite. Chaque bocal est un système à TROIS
+  NŒUDS — le FOND qui reçoit la lumière, le GAZ que le thermomètre lit, le
+  VERRE qui échange avec la salle — et l'on intègre par Runge-Kutta 4, à
+  pas FIXE d'une seconde. Ce qui distingue les deux bocaux, et c'est TOUT
+  ce qui les distingue, c'est le gaz :
+
+   · SON ÉMISSIVITÉ INFRAROUGE. Elle est nulle pour l'air, et ce n'est pas
+     une convention : N₂ et O₂ sont des molécules diatomiques
+     homonucléaires, sans moment dipolaire, donc transparentes à
+     l'infrarouge. C'est cela, et rien d'autre, qui fait du bocal à air un
+     témoin. Pour le dioxyde de carbone, elle vaut 0,17 sur les 10 cm du
+     bocal — abaques de Hottel.
+   · SA BANDE À 2,7 µm, la seule de ses bandes que le verre laisse encore
+     passer. La part du rayonnement de la lampe qui y tombe est calculée
+     par une INTÉGRALE DE PLANCK sur la température du filament — pas
+     recopiée, puisqu'elle dépend d'un réglage.
+   · SES PROPRIÉTÉS THERMIQUES. Le dioxyde de carbone conduit 37 % moins
+     bien que l'air, et sa diffusivité change le nombre de Rayleigh, donc
+     la convection interne. Sans ce terme on attribuerait au rayonnement
+     tout l'écart mesuré.
+
+  ⚠ CE QUE LA PAGE NE MASQUE PAS : LE MODÈLE NE RETROUVE PAS LA FICHE
+  --------------------------------------------------------------------
+  Il retrouve le TÉMOIN — à une division de thermomètre près. Il ne
+  retrouve PAS le bocal au dioxyde de carbone : il prédit environ +1 °C
+  d'écart à un quart d'heure là où la fiche en relève +5.
+
+  Et la raison est calculée, non supposée : dans un bocal fermé par du
+  VERRE, le verre est déjà opaque à l'infrarouge thermique, si bien que le
+  dioxyde de carbone n'a presque plus rien à retenir — la réduction de la
+  perte du fond vaut 0,5 % du bilan. Ce qui reste est l'absorption directe
+  du rayonnement de la lampe à 2,7 µm.
+
+  La page l'AFFICHE, dans un panneau permanent qui met les deux tableaux
+  côte à côte et chiffre chaque écart. Elle ne tranche pas : trois pistes
+  sont nommées — la stratification (le CO₂ est 1,5 fois plus dense, et
+  deux thermomètres « à la même hauteur » n'y lisent pas la même chose),
+  des bocaux qui ne seraient pas rigoureusement identiques, ou la
+  fermeture par FILM ALIMENTAIRE que la fiche propose aussi et qui est,
+  elle, transparente à l'infrarouge thermique. Un bouton de la scène
+  permet d'essayer la troisième, et de voir ce que l'écart devient.
+
+  CE QUI EST CALIBRÉ, ET CE QUI NE L'EST PAS
+  -------------------------------------------
+  DEUX grandeurs sont fixées, et sur le TÉMOIN seul : la distance de la
+  lampe (« à égale distance », sans nombre) et la masse du bocal (« deux
+  bocaux de 1 L »). Ce ne sont pas des constantes physiques : ce sont les
+  cotes d'un montage que la fiche décrit sans les chiffrer, et le témoin
+  sert exactement à cela. La masse est bornée par le catalogue — 400 à
+  600 g. Les QUATRE valeurs du bocal au dioxyde de carbone n'entrent dans
+  aucune calibration : elles sont prédites.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Fiche `E2AC-15` de `experiences.yaml`, bloc `DONNEES` régénéré (§0).
+  · La température de la salle est LUE dans la ligne « 0 min » du tableau ;
+    les quatre instants de relevé dans sa colonne « Temps », que le
+    protocole répète en toutes lettres.
+  · Le modèle Python `_outils_faire/_modeles_2AC/modele_L08.py` a été
+    déposé et validé sur le disque AVANT que cette page n'existe ;
+    `solveur_L08.js` en est le port fidèle.
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome ; pas de vue 3D ; elle DOUBLE `simulation_E2AC-15.html`.
+  · LA SCÈNE SE REGARDE DE CÔTÉ (§12.20). À l'échelle, et suivant le
+    curseur : la DISTANCE de la lampe à chaque bocal — c'est elle que la
+    fiche fait vérifier à la règle, et c'est elle qui décide de la
+    puissance reçue. Ne le sont pas : la taille des bocaux, celle de la
+    lampe, la verrerie du plateau.
+  · Le remplissage du second bocal est comprimé (§12.52) : le sélecteur de
+    vitesse est dans la scène, et le facteur ne change RIEN au résultat —
+    le pas d'intégration est fixe et l'horloge se recale exactement sur
+    chaque instant prescrit (§12.43).
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §1.2bis chaque geste qui change la scène est ANIMÉ par `setTimeout` +
+          `Date.now()` ; l'état est posé AVANT l'animation. ⚠ Deux
+          `animer()` de suite, c'est un seul qui tourne — payé sur E2AC-25.
+  §6.2 · §6.11 · §6.12 · §12.2 · §12.4 · §12.5 · §12.12 · §12.15 · §12.16
+  §12.21  le thermomètre est gradué au degré : on écrit des entiers.
+  §12.37  une course a UNE horloge, et un pas d'intégration FIXE.
+  §12.40  la ligne « 0 min » n'est pas un relevé de chauffage : c'est
+          l'état de départ, et il se relève AVANT d'allumer la lampe.
+  §12.43  l'horloge se RECALE sur l'instant prescrit, au lieu de rester à
+          899,999 999 et d'afficher 14:59 sous une ligne qui dit 15 min.
+  §12.47  l'écouteur d'erreurs est dans le `<head>`, AVANT le script.
+  §11.5   quand le modèle et la fiche divergent, on le DIT et on le chiffre.
+-->
+
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --rouge:#b03030;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #00000077;
+          pointer-events:none;max-width:52%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(244px,22%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #00000055}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0006}
+.rezero:hover{filter:brightness(1.09)}
+
+/* ---- LE BANDEAU DE SÉCURITÉ ----
+   Une lampe qu'on ne doit pas fixer, du verre qui peut éclater, des béchers
+   d'eau près d'une prise : la sécurité n'est pas un encadré à côté du
+   montage, c'est une condition d'exécution. Le bandeau porte en permanence
+   la ligne de `securite` qui motive le geste en cours. */
+.secubande{margin-top:10px;border-radius:9px;padding:10px 14px;
+           border-left:6px solid var(--rouge);background:var(--redbg);
+           display:flex;gap:12px;align-items:flex-start}
+.secubande .pic{font-size:22px;line-height:1.1}
+.secubande .co{flex:1;min-width:0}
+.secubande .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+              font-weight:700;color:var(--rouge);display:block;margin-bottom:2px}
+.secubande .t{font-size:13.5px;color:#4a1f1f;line-height:1.45}
+.secubande.refus{background:#f7d9d9;border-left-color:#8c1c1c}
+.secubande.refus .k{color:#8c1c1c}
+.secubande.ok{background:var(--greenbg);border-left-color:var(--green)}
+.secubande.ok .k{color:var(--green)}
+.secubande.ok .t{color:#22380f}
+
+.checks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.checks div{flex:1 1 calc(33% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted);
+            position:relative;min-width:120px}
+.checks div .n{font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+               font-weight:700;color:#c0a0a0;display:block}
+.checks div.non{border-color:#e6b9b9;background:#fdf4f4}
+.checks div.non .n{color:var(--rouge)}
+.checks div.oui{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.checks div.oui .n{color:var(--green)}
+.checks div.oui::after{content:"✓";position:absolute;right:7px;top:5px;
+                       font-weight:700;color:var(--green)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:92px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect div.ajout{background:#f4f0fa}
+.lect div.ajout .k{color:#6b4b9a}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:var(--rouge);background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.box.secu li{margin-bottom:4px}
+.box.secu li.actif{background:#f7d9d9;border-radius:4px;padding:2px 4px;
+                   margin-left:-4px;font-weight:600}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on lui impose donc une BOÎTE explicite, en
+   `!important` — c'est exactement le cas pour lequel ce mot existe : le SVG
+   porte un style EN LIGNE qui bat tout sélecteur, et sans cela la scène
+   projetée est rognée en haut et en bas. Les 56 px retranchés sont la bande
+   réservée à la flèche d'avance. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:flex-start;justify-content:center;background:#eef1f5}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ⚠ LE COIN BAS-DROIT N'EST LIBRE SUR AUCUNE SCÈNE (SKILL §12bis) — et rien
+   d'autre que la capture ne le dit. La flèche d'avance reçoit donc sa PROPRE
+   bande : on raccourcit la scène de 56 px et l'on range le bouton dedans.
+   Ces trois règles viennent APRÈS le bloc que `aligner_fleche.py` insère plus
+   haut, et elles le corrigent — c'est l'ordre de la feuille qui tranche.
+   ⚠ `!important` À DESSEIN : le SVG porte un style EN LIGNE (`height:auto`)
+   qui bat tout sélecteur ; sans cela la scène projetée est rognée en haut et
+   en bas, et la bande de commandes du bas disparaît. */
+#paillasse:fullscreen{align-items:flex-start}
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{right:24px;bottom:6px;height:44px;min-width:44px;
+  border-radius:22px;font-size:22px;padding:0 18px;gap:11px}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de neuf
+   étapes fait 450 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit en clair. Passée par un échappement CSS, la séquence du
+   caractère se fait avaler par le chiffre qui la suit et sort en « ¹3 ». */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--serif);font-size:16px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px}
+/* ---- le sélecteur de vitesse ----
+   Une phase de cinq minutes dure vingt secondes de montre à ×15, et deux à
+   ×150 : personne n'attend la première devant une classe (§12.52). Le facteur
+   reste affiché DANS la scène, et il ne change rien au résultat — le pas
+   d'intégration est fixe. */
+.vit{display:flex;gap:6px;flex-wrap:wrap}
+.vit button{flex:1 1 auto;padding:5px 10px;font-size:12px;font-weight:700;
+  font-family:var(--mono);border:1.4px solid var(--line);border-radius:7px;
+  background:#fff;color:var(--muted);cursor:pointer}
+.vit button.on{border-color:var(--gold);background:#fdf6e6;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-15 · 2AC · L08</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="secubande" id="secuBande">
+      <span class="pic" id="secuPic">⚠</span>
+      <span class="co">
+        <span class="k" id="secuTitre">Consigne de sécurité du geste en cours</span>
+        <span class="t" id="secuTexte">…</span>
+      </span>
+    </div>
+    <div class="checks" id="checks"></div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <!-- ⚠ LE PANNEAU QUI NE MASQUE RIEN. Le modèle retrouve le témoin et ne
+         retrouve pas le bocal au dioxyde de carbone : cela se dit, et cela se
+         chiffre (SKILL §11.5). Ce panneau est permanent, et non une ligne
+         d'observation qui s'efface au geste suivant. -->
+    <div class="carte">
+      <h2>Ce que le modèle trouve, et ce que la fiche relève
+        <span class="note">l'écart, chiffré</span></h2>
+      <table id="accord"></table>
+      <div class="src" style="margin-top:6px" id="motAccord"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le bilan d'énergie a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeSeuils"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:var(--rouge)">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Les deux bocaux <span class="note" id="nomPhase">—</span></h2>
+      <div class="vit" id="vit"></div>
+      <div class="lect" style="margin-top:10px">
+        <div><div class="k">Chronomètre</div><div class="v" id="lT">—</div></div>
+        <div><div class="k">Bocal à air (témoin)</div><div class="v" id="lTa">—</div></div>
+        <div><div class="k">Bocal au dioxyde de carbone</div><div class="v" id="lTc">—</div></div>
+        <div><div class="k">Écart entre les deux</div><div class="v" id="lEc">—</div></div>
+        <div class="ajout"><div class="k">Lampe déposée sur chaque fond</div>
+          <div class="v" id="lPhi">—</div></div>
+        <div class="ajout"><div class="k">Prise directe du CO₂ à 2,7 µm</div>
+          <div class="v" id="lPhiG">—</div></div>
+        <div class="ajout"><div class="k">Remplissage du 2ᵉ bocal</div>
+          <div class="v" id="lRemp">—</div></div>
+        <div class="ajout"><div class="k">Eau de chaux</div>
+          <div class="v" id="lChaux">—</div></div>
+      </div>
+      <div class="src" style="margin-top:6px" id="srcTemps"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Les deux courbes <span class="note">et les points de la fiche</span></h2>
+      <svg id="gCourbes" viewBox="0 0 360 200" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Les deux traits pleins sont <b>intégrés</b> pas à pas par Runge-Kutta ;
+        les croix sont les valeurs de la fiche. Le témoin est retrouvé ; le
+        bocal au dioxyde de carbone ne l'est pas, et l'écart est celui que le
+        panneau de gauche chiffre.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>D'où vient l'écart <span class="note">décomposé, terme à terme</span></h2>
+      <svg id="gBilan" viewBox="0 0 360 186" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px" id="srcBilan"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg"><label for="rDist">Distance de la lampe à chaque bocal</label><output id="oDist"></output>
+        <input type="range" id="rDist" min="5" max="30" step="0.1" value="12.2">
+        <div class="aide" id="aideDist"></div></div>
+      <div class="reg"><label for="rP">Puissance de la lampe</label><output id="oP"></output>
+        <input type="range" id="rP" min="25" max="150" step="5" value="100">
+        <div class="aide" id="aideP"></div></div>
+      <div class="reg"><label for="rCO2">Teneur du 2ᵉ bocal en dioxyde de carbone</label><output id="oCO2"></output>
+        <input type="range" id="rCO2" min="0" max="100" step="5" value="100">
+        <div class="aide" id="aideCO2"></div></div>
+      <div class="reg"><label for="rSalle">Température de la salle</label><output id="oSalle"></output>
+        <input type="range" id="rSalle" min="15" max="30" step="0.5" value="22">
+        <div class="aide" id="aideSalle"></div></div>
+      <div class="reg"><label for="rMasse">Masse de verre d'un bocal</label><output id="oMasse"></output>
+        <input type="range" id="rMasse" min="0.35" max="0.65" step="0.01" value="0.4">
+        <div class="aide" id="aideMasse"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="eqModele"></div>
+      <p>Aucune température n'est affichée parce que la fiche la donne :
+      chacune sort d'un bilan d'énergie intégré pas à pas, et le pas est
+      <b>fixe</b> — le résultat ne dépend donc pas de la vitesse d'affichage.</p>
+      <h3>2 · Ce que devient la matière</h3>
+      <div class="eq" id="eqBilan"></div>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>LE PLUS IMPORTANT : il ne retrouve pas le bocal au dioxyde de
+        carbone.</b> Il prédit environ <b>+1 °C</b> d'écart à un quart d'heure
+        là où la fiche en relève <b>+5</b>. Ce n'est pas un réglage à
+        retoucher : dans un bocal fermé par du <b>verre</b>, le verre est déjà
+        opaque à l'infrarouge thermique, et le dioxyde de carbone n'ajoute
+        presque rien par ce chemin — 0,5 % du bilan. Ce qui reste est
+        l'absorption directe du rayonnement de la lampe dans la bande à
+        2,7 µm. Le panneau « Ce que le modèle trouve » le chiffre, et le
+        bouton du couvercle permet d'essayer l'autre fermeture.</li>
+        <li><b>Le gaz est une seule température.</b> Un vrai bocal est
+        <b>stratifié</b> : il fait plusieurs degrés de plus en haut qu'en bas,
+        et le dioxyde de carbone, une fois et demie plus dense que l'air, ne
+        se stratifie pas comme lui. Deux thermomètres « à la même hauteur »
+        ne lisent donc pas la même chose dans les deux bocaux — c'est la
+        première explication à chercher pour l'écart de la fiche, et le modèle
+        ne sait pas la calculer.</li>
+        <li><b>Les surfaces sont traitées comme noires.</b> Leurs émissivités
+        valent 0,92 et 0,95 : l'erreur est de quelques pour cent, et c'est le
+        prix d'un bilan radiatif qui se referme exactement.</li>
+        <li><b>La lampe est un point isotrope.</b> Une vraie lampe a un
+        réflecteur, un culot, une direction ; sa distance n'est donc pas
+        exactement ce que la loi en 1/d² dit.</li>
+        <li><b>Rien ne fuit.</b> Le bocal est parfaitement clos, le dioxyde de
+        carbone y reste pur, et l'air ne rentre pas. En salle, un bocal mal
+        fermé perd son gaz en quelques minutes — et l'écart avec lui.</li>
+        <li><b>L'échauffement de la lampe elle-même n'est pas modélisé.</b>
+        Elle chauffe la salle, donc la référence, et à un quart d'heure d'un
+        chauffage de 100 W dans une petite pièce cela commence à compter.</li>
+        <li><b>Ce dispositif est un MODÈLE, et la fiche le dit mieux que ce
+        commentaire.</b> Il n'y a dans un bocal ni vent, ni nuage, ni océan,
+        ni végétation, et une part de l'échauffement vient simplement de ce
+        que l'air est enfermé — cet effet-là joue dans les deux bocaux.</li>
+      </ul>
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-15.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-15",
+  "niveau": "2AC",
+  "unite": "U1",
+  "lecon": "L08",
+  "titre": "Simuler l'effet de serre : deux bocaux, deux gaz, une seule lampe",
+  "axe": "L'effet de serre et le réchauffement de la planète",
+  "objectif": "Mettre en évidence, sur un modèle réduit, qu'une enceinte remplie de dioxyde de carbone s'échauffe davantage qu'une enceinte identique remplie d'air ordinaire soumise au même éclairage, et établir en même temps les limites de ce modèle.",
+  "duree": 12,
+  "modalite": "démonstration au bureau · un binôme désigné relève les températures toutes les 5 min",
+  "materiel": [
+    "**Deux bocaux en verre transparents identiques**, à couvercle (ou deux béchers de 1 L fermés par un film alimentaire)",
+    "**Deux thermomètres identiques**, gradués de −10 °C à 110 °C",
+    "Une **lampe à incandescence de 100 W** sur pied, placée à **égale distance** des deux bocaux",
+    "Une **règle graduée**, pour vérifier que les deux distances sont bien égales",
+    "Un **chronomètre** ou l'horloge de la salle",
+    "Un erlenmeyer, un bouchon percé et un tube coudé, pour produire le gaz",
+    "**Bicarbonate de sodium** (2 cuillerées) et **vinaigre blanc** (50 mL)",
+    "De l'**eau de chaux** et un tube à essai, pour vérifier que le bocal est bien rempli de dioxyde de carbone (rappel de la leçon 4)"
+  ],
+  "securite": [
+    "La **lampe chauffe très fort** : ne jamais toucher l'ampoule, ne rien poser dessus, et la laisser refroidir avant de la ranger.",
+    "Écarter la lampe de tout papier, cahier ou rideau : c'est une source de chaleur, pas seulement de lumière.",
+    "Les bocaux sont en **verre** : les poser bien à plat, loin du bord de la paillasse.",
+    "Ne **jamais visser le couvercle** pendant que le gaz se dégage : la pression ferait sauter le bouchon. On ferme seulement quand le dégagement a cessé.",
+    "L'**eau de chaux** est irritante pour les yeux et la peau : porter des lunettes, ne pas la porter à la bouche, se laver les mains après usage.",
+    "Ne pas respirer volontairement le dioxyde de carbone du bocal : ce n'est pas un gaz respirable.",
+    "Rincer l'erlenmeyer et essuyer la paillasse en fin de manipulation."
+  ],
+  "protocole": [
+    "Placer les deux bocaux côte à côte, à **la même distance** de la lampe, mesurée à la règle, et vérifier qu'ils reçoivent la lumière de la même façon.",
+    "Introduire dans chaque bocal un thermomètre identique, à la même hauteur, sans qu'il touche le verre ni le fond.",
+    "Laisser le **premier bocal rempli d'air ordinaire** : c'est le **témoin**. Le fermer.",
+    "Préparer le dioxyde de carbone : verser le vinaigre sur le bicarbonate de sodium dans l'erlenmeyer et boucher aussitôt.",
+    "Conduire le gaz par le tube **jusqu'au fond du second bocal** : le dioxyde de carbone, plus lourd que l'air, s'y accumule et chasse l'air vers le haut.",
+    "Vérifier le remplissage : prélever un peu du gaz du bocal et le faire barboter dans l'eau de chaux, qui doit se **troubler** (test de la leçon 4).",
+    "Fermer le second bocal dès que le dégagement a cessé.",
+    "Noter les deux températures de départ, puis **allumer la lampe** et déclencher le chronomètre.",
+    "Relever les deux températures **toutes les 5 minutes** pendant 15 minutes, pendant que la leçon se poursuit, et calculer chaque fois l'écart entre les deux bocaux."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Temps (min)",
+      "Bocal à air ordinaire (°C)",
+      "Bocal au dioxyde de carbone (°C)",
+      "Écart (°C)"
+    ],
+    "lignes": [
+      [
+        "0",
+        "",
+        "",
+        ""
+      ],
+      [
+        "5",
+        "",
+        "",
+        ""
+      ],
+      [
+        "10",
+        "",
+        "",
+        ""
+      ],
+      [
+        "15",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "0",
+        "22",
+        "22",
+        "0"
+      ],
+      [
+        "5",
+        "26",
+        "28",
+        "2"
+      ],
+      [
+        "10",
+        "29",
+        "33",
+        "4"
+      ],
+      [
+        "15",
+        "31",
+        "36",
+        "5"
+      ]
+    ]
+  },
+  "observation": "Sous la même lampe et à la même distance, le bocal rempli de dioxyde de carbone s'échauffe plus vite et plus haut que le bocal témoin resté à l'air ordinaire : 36 °C contre 31 °C au bout de quinze minutes.",
+  "conclusion": "Le dioxyde de carbone laisse passer la lumière mais retient une partie de la chaleur : c'est l'effet de serre. Naturel et indispensable, il maintient la Terre à environ 15 °C ; renforcé par les gaz que rejette l'homme, il provoque le réchauffement climatique.",
+  "oheric": {
+    "observation": "Une voiture laissée au soleil, vitres fermées, devient un four : il y fait bien plus chaud que dehors, alors que c'est le même Soleil qui éclaire la rue. Les exposés viennent d'affirmer que le **dioxyde de carbone** rejeté par les moteurs et les usines réchauffe la planète entière. Mais comment un gaz **invisible**, qui laisse passer la lumière, pourrait-il faire monter une température ?",
+    "hypothese": "Si un gaz comme le dioxyde de carbone retient la chaleur, alors une enceinte qui en est remplie doit s'échauffer **davantage** qu'une enceinte identique remplie d'air ordinaire, lorsque les deux reçoivent la même lumière pendant le même temps.",
+    "experience": "Placer deux bocaux de verre identiques, **tous deux fermés**, à égale distance d'une même lampe. Le premier garde son **air ordinaire** : c'est le **témoin**. Le second est rempli de **dioxyde de carbone** préparé au laboratoire, dont la présence est vérifiée à l'**eau de chaux**. Deux thermomètres identiques y sont placés à la même hauteur, et l'on relève les deux températures toutes les 5 minutes pendant un quart d'heure.",
+    "resultats": "Les deux bocaux partent de la **même température**, 22 °C. Dès la lampe allumée, les deux s'échauffent — mais pas au même rythme. Au bout de 5 minutes l'écart est déjà de **2 °C**, il est de **4 °C** à 10 minutes et de **5 °C** à 15 minutes : le bocal à air ordinaire atteint **31 °C**, celui au dioxyde de carbone **36 °C**. L'eau de chaux s'était bien troublée : le second bocal contenait bien du dioxyde de carbone.",
+    "interpretation": "Les deux bocaux ont reçu la **même lumière**, à la **même distance**, pendant le **même temps** ; ils sont de même verre et de même volume, et tous deux fermés. La **seule** différence est le gaz qu'ils contiennent : c'est donc bien le gaz qui explique l'écart, et le bocal à air ordinaire, qui joue le rôle de **témoin**, est ce qui permet de l'affirmer. Le dioxyde de carbone laisse passer la lumière du Soleil, mais il **retient** une partie de la chaleur que le fond du bocal renvoie : la température y monte plus haut. L'hypothèse est validée. **Mais il faut dire aussi ce que cette expérience ne montre pas.** D'abord, elle ne reproduit pas l'atmosphère : il n'y a dans un bocal ni vent, ni nuages, ni océan, ni végétation. Ensuite, une part de l'échauffement vient simplement de ce que l'air est **enfermé** et ne peut pas s'échapper — c'est ainsi que fonctionne une serre de jardin, et cet effet-là existe dans les **deux** bocaux. Enfin, les valeurs relevées dépendent de la lampe, de la taille des bocaux et de la température de la salle : seul l'**écart** entre les deux bocaux a un sens, jamais la valeur absolue. Ce dispositif est donc un **modèle** : il rend visible en quinze minutes un mécanisme réel qui, dans l'atmosphère, se joue sur des dizaines d'années et sur des variations de quelques centièmes de pour cent. Un modèle explique ; il ne prouve pas.",
+    "conclusion": "Certains gaz de l'atmosphère — le **dioxyde de carbone**, le **méthane**, la vapeur d'eau — laissent passer la lumière du Soleil mais retiennent une partie de la chaleur renvoyée par le sol : c'est l'**effet de serre**. C'est un phénomène **naturel** et indispensable : c'est lui qui maintient la température moyenne de la Terre autour de **15 °C**. En rejetant toujours plus de ces gaz, l'homme **renforce** cet effet, et la température moyenne de la planète s'élève : c'est le **réchauffement climatique**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+var CLAIR = "#e8eef5", SOMBRE = "#171c23";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.47 : `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0 — le
+   garde-fou d'origine laissait donc passer `null`, et `null.toFixed` levait
+   PENDANT le démarrage, sur une page qui avait l'air de charger. Le TYPE se
+   teste avant la finitude. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+function nbAuto(x) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  var a = Math.abs(x);
+  return nb(x, a >= 100 ? 0 : (a >= 10 ? 1 : (a >= 1 ? 2 : (a >= 0.01 ? 3 : 4))));
+}
+/* Un nombre qui court sur plusieurs décades — un éclat lumineux, une
+   absorbance — s'écrit en notation scientifique française. */
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x) || x === 0) return nb(x, d);
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10);
+  if (e >= -2 && e <= 3) return nbAuto(x);
+  return nb(x / Math.pow(10, e), d === undefined ? 1 : d) + "·10" + expo(e);
+}
+function expo(e) {
+  var s = "" + e, o = "", i, T = { "0": "⁰", "1": "¹", "2": "²", "3": "³",
+    "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  for (i = 0; i < s.length; i++) o += T[s.charAt(i)] || s.charAt(i);
+  return o;
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+/* Le mini-markdown du YAML. Le gras se dépouille AVANT l'italique : le motif
+   de l'italique ne doit jamais voir une paire d'astérisques doubles. */
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* §12.2 : `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de nb(). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function rgb(r, v, b) {
+  function h(x) { return ("0" + Math.round(borne(x, 0, 255)).toString(16)).slice(-2); }
+  return "#" + h(r) + h(v) + h(b);
+}
+/* Couper un texte long en lignes d'au plus n caractères, sans casser un mot. */
+function lignes(txt, n) {
+  var mots = String(txt || "").split(/\s+/), out = [], cur = "";
+  mots.forEach(function (m) {
+    if (!cur.length) { cur = m; return; }
+    if ((cur + " " + m).length <= n) { cur += " " + m; }
+    else { out.push(cur); cur = m; }
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   PORT FIDÈLE de `_outils_faire/_modeles_2AC/modele_L08.py`, déposé et
+   validé sur le disque AVANT que cette page n'existe.
+
+   ⚠ CE QUE LE MODÈLE RETROUVE, ET CE QU'IL NE RETROUVE PAS. Il retrouve le
+   TÉMOIN — le bocal à air — à une division de thermomètre près. Il ne
+   retrouve PAS le bocal au dioxyde de carbone : il prédit +1,0 °C d'écart à
+   15 min là où la fiche en relève +5. La page ne masque pas cet écart : elle
+   l'affiche, chiffré, avec la décomposition qui l'explique. Voir le panneau
+   « Ce que le modèle trouve, et ce que la fiche relève ».                  */
+var PHYS = {
+  SIGMA: { v: 5.670374419e-8, u: "W·m⁻²·K⁻⁴", n: "constante de Stefan-Boltzmann",
+    s: "valeur exacte du SI depuis la révision de 2019" },
+  G: { v: 9.81, u: "m·s⁻²", n: "accélération de la pesanteur", s: "valeur usuelle" },
+  FRAC_RAYONNEE: { v: 0.85, u: "", n: "part de la lampe qui SORT en rayonnement",
+    s: "lampe à incandescence : environ 15 % part en conduction et convection " +
+       "par le culot, le reste est rayonné" },
+  TAU_VERRE_COURT: { v: 0.88, u: "", n: "transmission du verre, 0,4 à 2,5 µm",
+    s: "verre sodocalcique de 3 mm : ~90 % dans le visible, encore ~85 % à 2 µm" },
+  TAU_VERRE_27: { v: 0.35, u: "", n: "transmission du verre à 2,7 µm",
+    s: "le verre sodocalcique porte une bande d'absorption OH vers 2,75 µm : " +
+       "sa transmission y tombe de 0,85 à 0,2–0,5" },
+  EPS_VERRE: { v: 0.92, u: "", n: "émissivité du verre dans l'infrarouge thermique",
+    s: "verre lisse : 0,90 à 0,95 — c'est elle qui rend le verre OPAQUE au " +
+       "rayonnement du sol, et c'est l'effet de serre du verre lui-même" },
+  EPS_FOND: { v: 0.95, u: "", n: "émissivité du fond du bocal",
+    s: "surface non métallique, mate : 0,92 à 0,97" },
+  C_VERRE: { v: 800, u: "J·kg⁻¹·K⁻¹", n: "capacité thermique massique du verre",
+    s: "verre sodocalcique : 750 à 840" },
+  T_FILAMENT: { v: 2700, u: "K", n: "température du filament de la lampe",
+    s: "lampe à incandescence domestique : 2600 à 2900 K" },
+  ABS_BANDE_CO2: { v: 0.85, u: "",
+    n: "part de la bande à 2,7 µm absorbée sur 10 cm de CO₂ pur",
+    s: "la bande 2,69 + 2,77 µm est forte : sur un décimètre à 1 atm elle est " +
+       "presque saturée" },
+  LAM_B1: { v: 2.55e-6, u: "m", n: "bord bleu de la bande du CO₂ à 2,7 µm",
+    s: "les deux têtes de bande sont à 2,69 et 2,77 µm ; avec leurs ailes, la " +
+       "bande court de 2,55 à 2,90 µm" },
+  LAM_B2: { v: 2.90e-6, u: "m", n: "bord rouge de la bande du CO₂ à 2,7 µm",
+    s: "même source" }
+};
+/* Ce que la fiche ne donne pas — chaque entrée est réaffichée avec la
+   mention « ajout ». Les DEUX premières sont celles que le TÉMOIN fixe.    */
+var AJOUTS = {
+  D_LAMPE: { v: 0.122, u: "m", n: "distance de la lampe à chaque bocal",
+    s: "AJOUT — la fiche dit « à égale distance », sans nombre. FIXÉE sur la " +
+       "courbe du témoin par modele_L08.py, et sur elle seule" },
+  M_VERRE: { v: 0.400, u: "kg", n: "masse de verre d'un bocal de 1 L",
+    s: "AJOUT — un bocal de 1 L pèse 400 à 600 g à vide. FIXÉE sur la courbe " +
+       "du témoin, dans cet encadrement de catalogue" },
+  D_BOCAL: { v: 0.100, u: "m", n: "diamètre intérieur d'un bocal de 1 L",
+    s: "AJOUT — un bocal à couvercle de 1 L fait 10 cm de diamètre" },
+  H_BOCAL: { v: 0.140, u: "m", n: "hauteur intérieure d'un bocal de 1 L",
+    s: "AJOUT — π·(0,05)²·0,14 = 1,10 L" },
+  C_THERMO: { v: 12, u: "J·K⁻¹", n: "capacité thermique d'un thermomètre",
+    s: "AJOUT — tige de verre de ~15 g : 15 × 800 ≈ 12 J/K" }
+};
+/* Les deux gaz, et ce qui les distingue — c'est TOUT ce qui les distingue. */
+var GAZ = {
+  air: { nom: "air ordinaire", lam: 0.0263, rho: 1.177, cp: 1005,
+         nu: 15.89e-6, eps: 0,
+         s: "N₂ et O₂ sont des molécules DIATOMIQUES HOMONUCLÉAIRES : sans " +
+            "moment dipolaire, elles n'absorbent pas l'infrarouge. C'est cela, " +
+            "et rien d'autre, qui fait du bocal à air un témoin" },
+  co2: { nom: "dioxyde de carbone", lam: 0.0166, rho: 1.797, cp: 846,
+         nu: 8.32e-6, eps: 0.17,
+         s: "émissivité par les abaques de Hottel, p·L = 0,10 atm·m à 300 K ; " +
+            "et une conductivité inférieure de 37 % à celle de l'air, qui pèse " +
+            "elle aussi sur l'écart" }
+};
+function alphaDe(g) { return g.lam / (g.rho * g.cp); }
+
+var SIGMA = PHYS.SIGMA.v;
+var C2_RAY = 1.438776877e-2;             /* seconde constante de rayonnement */
+
+/* ==================================================================
+   2. LA FRACTION DE PLANCK — calculée, jamais recopiée
+   ==================================================================
+   F(0 → λT) = (15/π⁴)·Σ e^(−nx)(x³/n + 3x²/n² + 6x/n³ + 6/n⁴), x = c₂/(λT).
+   C'est elle qui dit quelle part du rayonnement d'un filament tombe dans la
+   bande du CO₂ — un nombre qu'il serait absurde d'écrire en dur, puisqu'il
+   dépend de la température du filament, que la page laisse régler.        */
+function fractionPlanck(lam, T) {
+  var x = C2_RAY / (lam * T), s = 0, n;
+  for (n = 1; n <= 60; n++) {
+    s += Math.exp(-n * x) * (x * x * x / n + 3 * x * x / (n * n) +
+                             6 * x / (n * n * n) + 6 / (n * n * n * n));
+  }
+  return 15 / Math.pow(Math.PI, 4) * s;
+}
+/* ⚠ MEMORISEE : elle ne depend que de la temperature du filament, et la
+   recalculer dans la derivee coutait trois millions d'exponentielles par
+   courbe — au point que le pilote n'obtenait plus la main. */
+var MEMO_BANDE = {};
+function partBandeCO2(Tfil) {
+  if (MEMO_BANDE[Tfil] === undefined) {
+    MEMO_BANDE[Tfil] = fractionPlanck(PHYS.LAM_B2.v, Tfil) -
+                       fractionPlanck(PHYS.LAM_B1.v, Tfil);
+  }
+  return MEMO_BANDE[Tfil];
+}
+
+/* ==================================================================
+   3. LA GÉOMÉTRIE DU BOCAL — toutes les aires viennent de deux cotes
+   ================================================================== */
+function geometrie(d, h) {
+  var aFond = Math.PI * d * d / 4, aLat = Math.PI * d * h;
+  return { d: d, h: h, V: aFond * h, A_fond: aFond, A_lat: aLat,
+           A_ext: aLat + 2 * aFond, A_int: aLat + aFond };
+}
+
+/* ==================================================================
+   4. LES ÉCHANGES — chacun sa loi, aucune n'est ajustée
+   ==================================================================
+   Convection naturelle sur paroi verticale : Nu = 0,59·Ra^0,25, h = Nu·λ/L.
+   C'est ICI que le dioxyde de carbone se distingue une SECONDE fois : sa
+   diffusivité et sa viscosité ne sont pas celles de l'air, donc son Rayleigh
+   non plus. Sans ce terme, on attribuerait au rayonnement tout l'écart.   */
+function hConvection(gaz, dT, L) {
+  var beta = 1 / 300, ra;
+  dT = Math.max(Math.abs(dT), 1e-3);
+  ra = PHYS.G.v * beta * dT * L * L * L / (gaz.nu * alphaDe(gaz));
+  return Math.max(0.59 * Math.pow(ra, 0.25) * gaz.lam / L, 1);
+}
+function hRayonnement(eps, T1, T2) {
+  return eps * SIGMA * (T1 * T1 + T2 * T2) * (T1 + T2);
+}
+/* La chaîne de la lampe, terme à terme : elle rayonne, le bocal en intercepte
+   son maître-couple, le verre transmet, le fond absorbe. */
+function puissanceGazDirecte(dLampe, geo, gaz, Tfil) {
+  if (!gaz.eps) return 0;                         /* l'air : rien du tout */
+  var pRay = REG.pLampe * PHYS.FRAC_RAYONNEE.v;
+  var fracGeo = Math.min(geo.d * geo.h / (4 * Math.PI * dLampe * dLampe), 1);
+  return pRay * fracGeo * partBandeCO2(Tfil) * PHYS.TAU_VERRE_27.v *
+         PHYS.ABS_BANDE_CO2.v;
+}
+function puissanceFond(dLampe, geo, gaz, Tfil) {
+  var pRay = REG.pLampe * PHYS.FRAC_RAYONNEE.v;
+  var frac = Math.min(geo.d * geo.h / (4 * Math.PI * dLampe * dLampe), 1);
+  var tot = pRay * frac * PHYS.TAU_VERRE_COURT.v * PHYS.EPS_FOND.v;
+  if (gaz) tot -= puissanceGazDirecte(dLampe, geo, gaz, Tfil) * PHYS.EPS_FOND.v;
+  return Math.max(tot, 0);
+}
+
+/* ==================================================================
+   5. LE SYSTÈME À TROIS NŒUDS
+   ==================================================================
+     S  le FOND : il reçoit la lumière, il émet l'infrarouge thermique
+     G  le GAZ  : c'est LUI que le thermomètre lit
+     V  le VERRE : il échange avec la salle
+
+   ⚠ LES TROIS BILANS RADIATIFS DOIVENT SE SOMMER À ZÉRO, et c'est la seule
+   façon de les vérifier. Écrits d'abord avec les émissivités des surfaces
+   mais sans leur réflexion, ils ne se sommaient pas — et le modèle rendait le
+   bocal au CO₂ plus FROID que le témoin, c'est-à-dire l'inverse exact de la
+   leçon. Trois lignes plausibles, un signe faux, aucune erreur levée. On
+   traite donc les deux surfaces comme NOIRES — leurs émissivités valent 0,92
+   et 0,95, l'écart est de quelques pour cent — et le bilan se referme.    */
+/* Le contexte d'une integration : tout ce qui ne depend PAS de l'etat, et
+   qu'il serait absurde de recalculer a chaque pas. */
+function contexte(gaz, geo, dLampe, Tamb, mVerre, Tfil, couvercleIR) {
+  return {
+    gaz: gaz, geo: geo, Tamb: Tamb, couv: couvercleIR,
+    phiIn: puissanceFond(dLampe, geo, gaz, Tfil),
+    phiGaz: puissanceGazDirecte(dLampe, geo, gaz, Tfil),
+    cS: mVerre * 0.25 * PHYS.C_VERRE.v,
+    cG: gaz.rho * geo.V * gaz.cp + AJOUTS.C_THERMO.v,
+    cV: mVerre * 0.75 * PHYS.C_VERRE.v
+  };
+}
+function derivees(T, X) {
+  var gaz = X.gaz, geo = X.geo, Tamb = X.Tamb, couvercleIR = X.couv;
+  var Ts = T[0], Tg = T[1], Tv = T[2], eg = gaz.eps;
+  var phiIn = X.phiIn, phiGaz = X.phiGaz;
+  var eS = SIGMA * Ts * Ts * Ts * Ts;
+  var eG = SIGMA * Tg * Tg * Tg * Tg;
+  var eV = SIGMA * Tv * Tv * Tv * Tv;
+  var eA = SIGMA * Tamb * Tamb * Tamb * Tamb;
+  var a = geo.A_fond;
+  /* Le couvercle : de VERRE il est opaque à l'infrarouge thermique et le
+     renvoie ; de FILM ALIMENTAIRE il le laisse partir dans la salle. C'est la
+     variante que la fiche propose, et c'est elle qui rend au dioxyde de
+     carbone le rôle que la leçon lui donne. */
+  var eHaut = couvercleIR ? eV : eA;
+  var irFond = a * (eS - (1 - eg) * eHaut - eg * eG);
+  var irGaz = a * eg * (eS + eHaut - 2 * eG);
+  var irVerre = a * ((1 - eg) * eS + eg * eG - eHaut) * (couvercleIR ? 1 : 0);
+  var hSG = hConvection(gaz, Ts - Tg, geo.h);
+  var hGV = hConvection(gaz, Tg - Tv, geo.h);
+  var cvSG = hSG * geo.A_fond * (Ts - Tg);
+  var cvGV = hGV * geo.A_int * (Tg - Tv);
+  var he = hConvection(GAZ.air, Tv - Tamb, geo.h);
+  var hr = hRayonnement(PHYS.EPS_VERRE.v, Tv, Tamb);
+  var perte = (he + hr) * geo.A_ext * (Tv - Tamb);
+  return [(phiIn - irFond - cvSG) / X.cS,
+          (phiGaz + irGaz + cvSG - cvGV) / X.cG,
+          (irVerre + cvGV - perte) / X.cV];
+}
+/* Un pas de RUNGE-KUTTA 4, à pas FIXE. ⚠ Le pas ne suit PAS l'affichage :
+   le résultat ne dépend donc ni de la vitesse de simulation ni du nombre
+   d'images (§12bis.6, le piège le plus cher de la campagne).              */
+function pasRK4(T, dt, X) {
+  function f(Y) { return derivees(Y, X); }
+  var k1 = f(T), i;
+  var k2 = f([T[0] + dt / 2 * k1[0], T[1] + dt / 2 * k1[1], T[2] + dt / 2 * k1[2]]);
+  var k3 = f([T[0] + dt / 2 * k2[0], T[1] + dt / 2 * k2[1], T[2] + dt / 2 * k2[2]]);
+  var k4 = f([T[0] + dt * k3[0], T[1] + dt * k3[1], T[2] + dt * k3[2]]);
+  var out = [];
+  for (i = 0; i < 3; i++) {
+    out.push(T[i] + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+  }
+  return out;
+}
+
+/* ==================================================================
+   3. LE YAML — tout ce que la page affiche vient d'ici
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var NL = LIG.length, NC = ENTETES.length;
+var SECU = (DONNEES.securite || []).map(depouille);
+var MATERIEL = (DONNEES.materiel || []).map(depouille).join(" · ");
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille).join(" · ");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function secuOu(motif, repli) {
+  var i, re = new RegExp(motif, "i");
+  for (i = 0; i < SECU.length; i++) if (re.test(SECU[i])) return SECU[i];
+  return repli || (SECU[0] || "");
+}
+var S_LAMPE = secuOu("lampe chauffe très fort|ne jamais toucher l'ampoule"),
+    S_PAPIER = secuOu("papier, cahier ou rideau"),
+    S_VERRE = secuOu("bocaux sont en"),
+    S_BOUCHON = secuOu("jamais visser le couvercle"),
+    S_CHAUX = secuOu("eau de chaux"),
+    S_RESPIRER = secuOu("respirer");
+
+function colonne(re, defaut) {
+  var i;
+  for (i = 0; i < ENTETES.length; i++) if (re.test(depouille(ENTETES[i]))) return i;
+  return defaut;
+}
+var C_T = colonne(/^Temps/, 0), C_AIR = colonne(/air ordinaire/, 1),
+    C_CO2 = colonne(/dioxyde/, 2), C_ECART = colonne(/Écart/, 3);
+var COLS = [C_AIR, C_CO2, C_ECART];
+
+/* Les quatre instants de relevé viennent de la COLONNE « Temps » du tableau,
+   et le protocole les répète en toutes lettres (« toutes les 5 minutes
+   pendant 15 minutes ») : la page relit les deux et signale toute
+   divergence au lieu d'en choisir une (§5). */
+var INSTANTS = LIG.map(function (l) {
+  return parseFloat(depouille(l[C_T]).replace(",", "."));
+});
+var PAS_RELEVE = (function () {
+  var m = /toutes\s+les\s+(\d[\d,.]*)\s*min/i.exec(PROTOCOLE);
+  return m ? parseFloat(m[1].replace(",", ".")) : 5;
+})();
+var DUREE_TOTALE = (function () {
+  var m = /pendant\s+(\d[\d,.]*)\s*minutes/i.exec(PROTOCOLE);
+  return m ? parseFloat(m[1].replace(",", ".")) : INSTANTS[INSTANTS.length - 1];
+})();
+var T0_FICHE = parseFloat(cel(0, C_AIR).replace(",", ".")) || 22;
+
+/* ==================================================================
+   3bis. LES DURÉES — §5 : elles viennent de la fiche, jamais du code
+   ================================================================== */
+var DUREE_SEANCE = +(DONNEES.duree || 12);
+var MODALITE = depouille(DONNEES.modalite || "");
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO porte les valeurs prescrites, REG les courantes
+   ================================================================== */
+var PROTO = { dist: 12.2, pLampe: 100, co2: 100, salle: T0_FICHE, masse: 0.40 };
+var REG = { dist: 12.2, pLampe: 100, co2: 100, salle: T0_FICHE, masse: 0.40 };
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+/* §12.21 : le thermomètre de la fiche est gradué de −10 à 110 °C. Sa division
+   est le DEGRÉ, et la fiche écrit d'ailleurs ses seize valeurs en entiers. Ce
+   qu'on inscrit au tableau est la graduation la plus proche, jamais le nombre
+   du solveur. */
+var DIV_THERMO = 1;
+function lireThermometre(t) { return Math.floor(t / DIV_THERMO + 0.5) * DIV_THERMO; }
+
+/* ==================================================================
+   5. LE SOLVEUR APPLIQUÉ À CETTE FICHE
+   ================================================================== */
+var GEO = geometrie(AJOUTS.D_BOCAL.v, AJOUTS.H_BOCAL.v);
+/* Le second bocal n'est pas forcément rempli de dioxyde de carbone PUR : le
+   curseur en donne la teneur, et les propriétés du mélange se composent — en
+   volume pour la densité et la capacité, et l'émissivité suit la pression
+   partielle, qui est ce que voit l'infrarouge. */
+function melangeGaz(fracCO2) {
+  var x = borne(fracCO2 / 100, 0, 1), a = GAZ.air, c = GAZ.co2;
+  return {
+    nom: x >= 0.999 ? c.nom : (x <= 0.001 ? a.nom
+      : nb(100 * x, 0) + " % de dioxyde de carbone"),
+    lam: a.lam + (c.lam - a.lam) * x,
+    rho: a.rho + (c.rho - a.rho) * x,
+    cp: (a.rho * a.cp + (c.rho * c.cp - a.rho * a.cp) * x) /
+        (a.rho + (c.rho - a.rho) * x),
+    nu: a.nu + (c.nu - a.nu) * x,
+    eps: c.eps * x
+  };
+}
+function gazDe(k) { return k === 0 ? GAZ.air : melangeGaz(REG.co2); }
+function TambK() { return REG.salle + 273.15; }
+function phiFond(k) {
+  return puissanceFond(REG.dist / 100, GEO, gazDe(k), PHYS.T_FILAMENT.v);
+}
+function phiGaz(k) {
+  return puissanceGazDirecte(REG.dist / 100, GEO, gazDe(k), PHYS.T_FILAMENT.v);
+}
+/* La course complète, intégrée d'un trait — c'est elle qui trace les courbes
+   et qui remplit le carnet. Mémorisée : elle ne dépend que des réglages. */
+var MEMO_C = {};
+function courbe(k, tMaxMin) {
+  var cle = [k, REG.dist, REG.pLampe, REG.co2, REG.salle, REG.masse,
+             ETAT.couvercleVerre, tMaxMin].join("|");
+  if (MEMO_C[cle]) return MEMO_C[cle];
+  var g = gazDe(k), Ta = TambK(), T = [Ta, Ta, Ta], out = [[0, REG.salle]];
+  var X = contexte(g, GEO, REG.dist / 100, Ta, REG.masse, PHYS.T_FILAMENT.v,
+                   ETAT.couvercleVerre);
+  var n = Math.round(tMaxMin * 60 / PAS_SIM), i;
+  for (i = 0; i < n; i++) {
+    T = pasRK4(T, PAS_SIM, X);
+    if ((i + 1) % Math.round(6 / PAS_SIM) === 0) {
+      out.push([(i + 1) * PAS_SIM / 60, T[1] - 273.15]);
+    }
+  }
+  MEMO_C[cle] = out;
+  return out;
+}
+function videMemo() { MEMO_C = {}; MEMO_D = {}; }
+/* La température PRÉDITE d'un bocal à l'instant t, lue sur la course. */
+function tPrevue(k, tMin) {
+  var c = courbe(k, Math.max(tMin, DUREE_TOTALE)), i;
+  for (i = 0; i < c.length; i++) if (c[i][0] >= tMin - 1e-9) return c[i][1];
+  return c[c.length - 1][1];
+}
+/* Ce que le MODÈLE écrit dans la cellule (k, c) — rien n'est recopié. */
+function celluleCalculee(k, c) {
+  var a = lireThermometre(tPrevue(0, INSTANTS[k]));
+  var b = lireThermometre(tPrevue(1, INSTANTS[k]));
+  if (c === C_AIR) return nb(a, 0);
+  if (c === C_CO2) return nb(b, 0);
+  if (c === C_ECART) return nb(b - a, 0);
+  return "";
+}
+function celluleFiche(k, c) { return depouille(cel(k, c)); }
+function ecartCellule(k, c) {
+  var m = parseFloat(celluleCalculee(k, c).replace(",", "."));
+  var f = parseFloat(celluleFiche(k, c).replace(",", "."));
+  return (isFinite(m) && isFinite(f)) ? m - f : 0;
+}
+function pireEcart() {
+  var k, i, p = 0, e;
+  for (k = 0; k < NL; k++) {
+    for (i = 0; i < COLS.length; i++) {
+      e = Math.abs(ecartCellule(k, COLS[i]));
+      if (e > p) p = e;
+    }
+  }
+  return p;
+}
+/* La décomposition de l'écart, terme à terme : c'est elle qui dit que la
+   fiche et le modèle ne parlent pas du même mécanisme. */
+var MEMO_D = {};
+function decomposer() {
+  var cle = [REG.dist, REG.pLampe, REG.co2, REG.salle, REG.masse,
+             ETAT.couvercleVerre].join("|");
+  if (MEMO_D[cle]) return MEMO_D[cle];
+  var g = gazDe(1), tot, therm, radia;
+  var opaque = { nom: g.nom, lam: g.lam, rho: g.rho, cp: g.cp, nu: g.nu, eps: 0 };
+  var Ta = TambK(), T = [Ta, Ta, Ta], n = Math.round(DUREE_TOTALE * 60 / PAS_SIM), i;
+  var X = contexte(opaque, GEO, REG.dist / 100, Ta, REG.masse,
+                   PHYS.T_FILAMENT.v, ETAT.couvercleVerre);
+  for (i = 0; i < n; i++) { T = pasRK4(T, PAS_SIM, X); }
+  var tAir = tPrevue(0, DUREE_TOTALE), tCo2 = tPrevue(1, DUREE_TOTALE);
+  tot = tCo2 - tAir;
+  therm = (T[1] - 273.15) - tAir;
+  radia = tot - therm;
+  MEMO_D[cle] = { total: tot, thermique: therm, radiatif: radia,
+                  fiche: parseFloat(celluleFiche(NL - 1, C_ECART).replace(",", ".")) };
+  return MEMO_D[cle];
+}
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   §12.17 : toute clé lue dans le code figure ici. */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0;
+var svg = null, COUCHES = {};
+var PAS_SIM = 1;                    /* seconde : le pas FIXE de l'intégration */
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+function relVierge() {
+  var m = [], i, j;
+  for (i = 0; i < NL; i++) { m.push([]); for (j = 0; j < NC; j++) m[i].push(false); }
+  return m;
+}
+function neufEtat() {
+  return {
+    tSeance: 0, retenue: 0, horsProto: false,
+    t: 0, vitesse: 45, lampe: false,
+    mesureFaite: false,
+    thermo: [false, false], couv: [false, false],
+    verse: false, tubePose: false, remplissage: 0, degagementFini: false,
+    chaux: false, couvercleVerre: true,
+    rel: relVierge(), mes: {}, conclu: false,
+    /* ce qui est DESSINÉ, et que l'animation rejoint (§1.2 bis). Chaque objet
+       a SA fraction de trajet : 0 sur le plateau, 1 à son poste. */
+    vuRemp: 0, vuLampe: 0, vuBulles: 0, vuVerse: 0, vuBascule: 0, vuLu: 0, vuConcl: 0,
+    vuPose: { thermoA: 0, thermoB: 0, couvA: 0, couvB: 0, regle: 0,
+              tube: 0, chaux: 0 }
+  };
+}
+var CHECKS = [
+  { k: "mesureFaite", n: "Distances vérifiées à la règle" },
+  { k: "degagementFini", n: "Dégagement terminé avant de fermer" }
+];
+function lesDeuxThermos() { return ETAT.thermo[0] && ETAT.thermo[1]; }
+function bocalPret(k) { return ETAT.thermo[k] && ETAT.couv[k]; }
+function ligneFaite(k) {
+  var i;
+  for (i = 0; i < COLS.length; i++) if (!ETAT.rel[k][COLS[i]]) return false;
+  return true;
+}
+function toutesLignesFaites() {
+  var k;
+  for (k = 0; k < NL; k++) if (!ligneFaite(k)) return false;
+  return true;
+}
+function prochainInstant() {
+  var k;
+  for (k = 0; k < NL; k++) if (!ligneFaite(k)) return k;
+  return NL - 1;
+}
+/* Un relevé se fait AU temps prescrit, à une demi-minute près — et comme
+   l'horloge ne recule pas, la page le dit quand l'instant est passé (§12.4). */
+function TOL_RELEVE() { return 0.5; }
+function instantRelevable() {
+  var k;
+  for (k = 0; k < NL; k++) {
+    if (!ligneFaite(k) && Math.abs(ETAT.t / 60 - INSTANTS[k]) <= TOL_RELEVE()) return k;
+  }
+  return -1;
+}
+
+/* ==================================================================
+   8. LA GÉOMÉTRIE DE LA SCÈNE — vue de CÔTÉ (§12.20)
+   ==================================================================
+   La DISTANCE lampe–bocal est à l'échelle et suit le curseur : c'est elle
+   que la fiche fait vérifier à la règle, et c'est elle qui décide de la
+   puissance reçue. Le bocal, lui, est dessiné à une taille fixe et
+   commode — le modèle en dépend, mais rien ne le fait varier (§10.4).     */
+var W = 1120, H = 760;
+var ECH = 1.55;                     /* pixels par millimètre, horizontalement */
+var X_LAMPE = 560, PAILL_Y = 520, MEUBLE_Y = 612, Y_BOUTONS = 706;
+var W_BOC = 132, H_BOC = 200;       /* le bocal, à taille fixe */
+var Y_BOC = PAILL_Y - H_BOC;
+var Y_AMPOULE = 208;                /* le centre de l'ampoule */
+var PLAT_X0 = 30, PLAT_X1 = 476, PLAT_Y = 524, PLAT_H = 86;
+var PLAT_CY = PLAT_Y + 50;
+/* §12.7 : TOUTES les hauteurs d'étiquette dans un seul objet. Dispersées, on
+   ne les compare pas — et c'est la comparaison, pas le calcul, qui montre la
+   collision. Les cotes passent AU-DESSUS des bocaux et SOUS l'ampoule : sous
+   le plan de travail elles tombaient dans le plateau du matériel. */
+var Y_ETIQ = {
+  vue: 108, vue2: 126,
+  lampe: 148,                       /* l'intitulé de la lampe                 */
+  cote: 282,                        /* les cotes, entre l'ampoule et les bocaux */
+  bocal: 308,                       /* le nom du bocal, au-dessus du couvercle */
+  temp: 388,                        /* la température lue, dans le bocal      */
+  plateau: PLAT_Y + 13
+};
+function xBocal(k) {
+  return X_LAMPE + (k === 0 ? -1 : 1) * REG.dist * 10 * ECH;
+}
+
+/* ==================================================================
+   9. DÉFS ET COUCHES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0, y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  function rgrad(id, stops) {
+    g = el("radialGradient", { id: id, cx: .5, cy: .5, r: .5 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [0.55, "#eef2f7"], [1, "#dde5ee"]]);
+  grad("bois", [[0, "#c79a4e"], [0.35, "#b8862f"], [1, "#8a6220"]]);
+  grad("meuble", [[0, "#2b323b"], [1, "#171c23"]]);
+  grad("inox", [[0, "#79838f"], [0.26, "#c9d2db"], [0.5, "#eef2f6"],
+                [0.74, "#a3adb9"], [1, "#6d7681"]], true);
+  grad("inoxV", [[0, "#6d7681"], [0.3, "#b7c0cb"], [0.55, "#e6ebf1"], [1, "#79838f"]]);
+  /* §10.2 : le verre, c'est trois choses, et il en faut trois — un voile de
+     teinte, un reflet vertical net près du bord gauche, une arête sombre à
+     droite. Sans le reflet, ce n'est jamais du verre. */
+  grad("verre", [[0, "#b6c4d2"], [0.16, "#dfe7ef"], [0.4, "#ffffff"],
+                 [0.72, "#d3dde7"], [1, "#a9b8c8"]], true);
+  grad("laiton", [[0, "#8a6a1f"], [0.35, "#d9b45c"], [0.6, "#f2e0a8"],
+                  [1, "#7d5c15"]], true);
+  rgrad("halo", [[0, "#fff8d8", 0.95], [0.45, "#ffe89a", 0.5], [1, "#ffd21e", 0]]);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%", width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#000000", "flood-opacity": .45 }));
+  D.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 10, stdDeviation: 9,
+    "flood-color": "#000000", "flood-opacity": .6 }));
+  D.appendChild(f);
+}
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none", "letter-spacing": o.esp || 0 };
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo; a["stroke-width"] = 3.2;
+    a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function etiqG(g, x, y, s, ancre, couleur, taille) {
+  g.appendChild(el("text", { x: x, y: y, "text-anchor": ancre || "middle",
+    "font-size": taille || 11.5, "font-weight": "bold", fill: couleur || ORANGE,
+    "paint-order": "stroke", stroke: "#eef2f7", "stroke-width": 3.2,
+    "stroke-linejoin": "round", "pointer-events": "none" }, s));
+}
+
+/* ==================================================================
+   10. L'ANIMATION — §1.2 bis : ce qui bouge doit SE VOIR bouger
+   ==================================================================
+   ⚠ `setTimeout` + `Date.now()`, jamais `requestAnimationFrame` (§13.5 bis).
+   ⚠ L'état d'arrivée est posé AVANT que l'animation ne commence ; elle ne
+      fait que le rejoindre (§12.37).
+   ⚠ DEUX `animer()` DE SUITE, C'EST UN SEUL QUI TOURNE : le second annule le
+      premier. Un geste qui déplace ET pose se joue en UNE animation — payé
+      sur E2AC-25, et invisible autrement que par le contrôle d'animation.  */
+var ANIM_ON = false, ANIM_TOK = 0;
+function adoucir(u) { return u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u); }
+function animer(ms, pas, fin) {
+  var t0 = Date.now(), tok = ++ANIM_TOK;
+  ANIM_ON = true;
+  function bat() {
+    if (!ANIM_ON || tok !== ANIM_TOK) return;
+    var u = (Date.now() - t0) / ms;
+    pas(u >= 1 ? 1 : adoucir(borne(u, 0, 1)));
+    redessiner();
+    if (u < 1) { tard(bat, 40); return; }
+    ANIM_ON = false;
+    if (fin) fin();
+  }
+  tard(bat, 0);
+  return ms;
+}
+function calerVU() {
+  ETAT.vuRemp = ETAT.remplissage;
+  ETAT.vuLampe = ETAT.lampe ? 1 : 0;
+  ETAT.vuVerse = ETAT.verse ? 1 : 0;
+  ETAT.vuLu = 0; ETAT.vuBascule = 0;
+  ETAT.vuConcl = ETAT.conclu ? 1 : 0;
+  Object.keys(ETAT.vuPose).forEach(function (q) {
+    ETAT.vuPose[q] = pose(q) ? 1 : 0;
+  });
+}
+
+/* ==================================================================
+   11. LE DÉCOR ET LA SCÈNE
+   ================================================================== */
+var gDecor, gLampe, gBoc = [], gCotes, gPlateau;
+var OBJ = {};
+function construireDecor() {
+  gDecor = ajout("fond", el("g", { "pointer-events": "none" }));
+  gDecor.appendChild(el("rect", { x: 0, y: 0, width: W, height: MEUBLE_Y,
+    fill: "url(#mur)" }));
+  gDecor.appendChild(el("rect", { x: 0, y: PAILL_Y, width: W, height: 14,
+    fill: "url(#bois)" }));
+  gDecor.appendChild(el("rect", { x: 0, y: MEUBLE_Y, width: W, height: H - MEUBLE_Y,
+    fill: "url(#meuble)" }));
+  ajout("poste", el("rect", { x: PLAT_X0, y: PLAT_Y, width: PLAT_X1 - PLAT_X0,
+    height: PLAT_H, rx: 10, fill: "#e7e2d4", stroke: "#a8956f", "stroke-width": 2,
+    "pointer-events": "none" }));
+  gPlateau = ajout("poste", el("g", { "pointer-events": "none" }));
+  gLampe = ajout("poste", el("g", { "pointer-events": "none" }));
+  gCotes = ajout("avant", el("g", { "pointer-events": "none" }));
+  gBoc = [ajout("arriere", el("g", { "pointer-events": "none" })),
+          ajout("arriere", el("g", { "pointer-events": "none" }))];
+}
+function construireScene() {
+  ["thermoA", "thermoB", "couvA", "couvB", "regle", "tube", "chaux"]
+    .forEach(function (q) {
+      OBJ[q] = { g: ajout("objets", el("g", { cursor: "grab", "data-act": "obj-" + q })) };
+    });
+}
+function plaque(g, x, y, w, h) {
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+}
+/* ---- LA LAMPE ---- */
+function redessinerLampe() {
+  var ecl = ETAT.vuLampe;
+  vide(gLampe);
+  gLampe.appendChild(el("rect", { x: X_LAMPE - 5, y: Y_AMPOULE + 44, width: 10,
+    height: PAILL_Y - Y_AMPOULE - 44, rx: 3, fill: "url(#inoxV)",
+    stroke: "#5d6670" }));
+  gLampe.appendChild(el("ellipse", { cx: X_LAMPE, cy: PAILL_Y + 2, rx: 40, ry: 9,
+    fill: "url(#inox)", stroke: "#5d6670" }));
+  if (ecl > 0.02) {
+    gLampe.appendChild(el("circle", { cx: X_LAMPE, cy: Y_AMPOULE,
+      r: 44 + 78 * ecl, fill: "url(#halo)", opacity: 0.35 + 0.65 * ecl }));
+  }
+  /* §10.3 : une AMPOULE est une POIRE, pas un cercle. */
+  var yb = Y_AMPOULE + 44;
+  gLampe.appendChild(el("path", { d: "M " + pt(X_LAMPE - 15, yb) + " L " +
+    pt(X_LAMPE - 15, yb - 12) + " Q " + pt(X_LAMPE - 34, yb - 26) + " " +
+    pt(X_LAMPE - 30, yb - 48) + " Q " + pt(X_LAMPE, yb - 86) + " " +
+    pt(X_LAMPE + 30, yb - 48) + " Q " + pt(X_LAMPE + 34, yb - 26) + " " +
+    pt(X_LAMPE + 15, yb - 12) + " L " + pt(X_LAMPE + 15, yb) + " Z",
+    fill: ecl > 0.5 ? "#fff6d0" : "url(#verre)", opacity: 0.9,
+    stroke: "#7f93a6", "stroke-width": 2 }));
+  gLampe.appendChild(el("ellipse", { cx: X_LAMPE - 11, cy: yb - 50, rx: 6, ry: 13,
+    fill: "#ffffff", opacity: 0.55 }));
+  gLampe.appendChild(el("rect", { x: X_LAMPE - 15, y: yb - 12, width: 30,
+    height: 20, rx: 3, fill: "url(#laiton)", stroke: "#6b520f" }));
+  /* le filament : zigzag, qui blanchit et s'épaissit avec l'éclat */
+  var d = "M " + pt(X_LAMPE - 13, Y_AMPOULE), i;
+  for (i = 0; i < 6; i++) {
+    d += " L " + pt(X_LAMPE - 13 + (i + 0.5) * 4.4, Y_AMPOULE + (i % 2 ? -9 : 9));
+  }
+  d += " L " + pt(X_LAMPE + 13, Y_AMPOULE);
+  gLampe.appendChild(el("path", { d: d, fill: "none",
+    stroke: ecl > 0.05 ? melange("#8a94a4", "#fffbe8", ecl) : "#8a94a4",
+    "stroke-width": 1.6 + 2.2 * ecl }));
+  etiqG(gLampe, X_LAMPE, Y_ETIQ.lampe, "lampe à incandescence — " +
+        nb(REG.pLampe, 0) + " W", "middle", ETAT.lampe ? "#b4530f" : GRIS);
+  /* les deux rayons vers les bocaux : ils NAISSENT quand on allume, et ils
+     s'allongent jusqu'au verre — pas d'un saut (§1.2 bis) */
+  if (ecl > 0.05) {
+    [0, 1].forEach(function (k) {
+      var xb = xBocal(k) + (k === 0 ? W_BOC / 2 : -W_BOC / 2), s = k === 0 ? -1 : 1;
+      gLampe.appendChild(el("path", { d: "M " + pt(X_LAMPE + s * 32, Y_AMPOULE) +
+        " L " + pt(X_LAMPE + s * 32 + (xb - X_LAMPE - s * 32) * ecl,
+                   Y_AMPOULE + (Y_BOC + 70 - Y_AMPOULE) * ecl),
+        fill: "none", stroke: "#ffcf3a", "stroke-width": 3.4, opacity: 0.8 }));
+    });
+  }
+}
+/* ---- UN BOCAL ---- */
+function redessinerBocal(k) {
+  var g = gBoc[k], x = xBocal(k), y = Y_BOC, T = temperature(k);
+  var remp = k === 1 ? ETAT.vuRemp : 0;
+  vide(g);
+  /* l'intérieur AVANT la paroi (§8) : peinte d'abord, la paroi recouvre le
+     contenu et le bocal se lit plein… et gris. */
+  g.appendChild(el("rect", { x: x - W_BOC / 2 + 5, y: y + 18,
+    width: W_BOC - 10, height: H_BOC - 22, rx: 5,
+    fill: k === 1 ? melange("#eef4fa", "#dce9dc", remp) : "#eef4fa",
+    opacity: 0.72 }));
+  if (k === 1 && remp > 0.02) {
+    /* le dioxyde de carbone, PLUS LOURD que l'air, s'accumule PAR LE FOND —
+       et c'est la raison que la fiche donne pour y conduire le tube. */
+    g.appendChild(el("rect", { x: x - W_BOC / 2 + 5,
+      y: y + 18 + (H_BOC - 22) * (1 - remp), width: W_BOC - 10,
+      height: (H_BOC - 22) * remp, rx: 4, fill: "#cfe3cf", opacity: 0.75 }));
+    g.appendChild(el("line", { x1: x - W_BOC / 2 + 8,
+      y1: y + 18 + (H_BOC - 22) * (1 - remp), x2: x + W_BOC / 2 - 8,
+      y2: y + 18 + (H_BOC - 22) * (1 - remp), stroke: "#7fae7f",
+      "stroke-width": 1.6, "stroke-dasharray": "6 4" }));
+  }
+  /* la paroi de verre : voile, reflet, arête */
+  g.appendChild(el("rect", { x: x - W_BOC / 2, y: y + 14, width: W_BOC,
+    height: H_BOC - 14, rx: 6, fill: "url(#verre)", opacity: 0.42,
+    stroke: "#7f93a6", "stroke-width": 3 }));
+  g.appendChild(el("rect", { x: x - W_BOC / 2 + 12, y: y + 26, width: 9,
+    height: H_BOC - 46, rx: 4, fill: "#ffffff", opacity: 0.66 }));
+  g.appendChild(el("line", { x1: x + W_BOC / 2 - 7, y1: y + 24,
+    x2: x + W_BOC / 2 - 7, y2: y + H_BOC - 10, stroke: "#8fa2b4",
+    "stroke-width": 2, opacity: 0.6 }));
+  /* le bourrelet du col */
+  g.appendChild(el("ellipse", { cx: x, cy: y + 16, rx: W_BOC / 2 - 4, ry: 8,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3 }));
+  /* le couvercle, quand il est posé */
+  if (ETAT.couv[k]) {
+    g.appendChild(el("rect", { x: x - W_BOC / 2 - 3,
+      y: y - 2 - 26 * (ETAT.vuBascule || 0), width: W_BOC + 6,
+      height: 18, rx: 4,
+      fill: ETAT.couvercleVerre ? "url(#inox)" : "#dfe9f2",
+      opacity: ETAT.couvercleVerre ? 1 : 0.72,
+      stroke: ETAT.couvercleVerre ? "#5d6670" : "#9fb4c6", "stroke-width": 2 }));
+  }
+  /* le thermomètre : tige, réservoir, et la colonne QUI MONTE avec T */
+  if (ETAT.thermo[k]) {
+    var yh = y + 40, yb = y + H_BOC - 26, f = borne((T - 10) / 40, 0, 1);
+    g.appendChild(el("rect", { x: x + 26, y: yh, width: 10, height: yb - yh,
+      rx: 5, fill: "#f4f7fa", stroke: "#9aa5b2", "stroke-width": 1.6 }));
+    g.appendChild(el("rect", { x: x + 29, y: yb - (yb - yh - 8) * f,
+      width: 4, height: (yb - yh - 8) * f, fill: "#c2262b" }));
+    g.appendChild(el("circle", { cx: x + 31, cy: yb - 4, r: 7, fill: "#c2262b",
+      stroke: "#8a1a1e", "stroke-width": 1.2 }));
+    /* LE RELEVÉ SE VOIT SE FAIRE : un cercle s'ouvre autour du réservoir au
+       moment où l'on lit. Sans lui, la lecture est un nombre qui paraît — et
+       `verifier_animation.py` la compte, à juste titre, comme un SAUT. */
+    if (ETAT.vuLu > 0.01) {
+      g.appendChild(el("circle", { cx: x + 31, cy: yb - 4,
+        r: 8 + 26 * ETAT.vuLu, fill: "none",
+        stroke: k === 0 ? "#1f6feb" : "#b4530f", "stroke-width": 3,
+        opacity: 1 - ETAT.vuLu }));
+    }
+    etiqG(g, x - 14, Y_ETIQ.temp, nb(T, 1) + " °C", "middle",
+          k === 0 ? "#1f6feb" : "#b4530f", 15);
+  }
+  etiqG(g, x, Y_ETIQ.bocal, k === 0 ? "bocal 1 — AIR (témoin)"
+        : "bocal 2 — " + (remp > 0.5 ? "DIOXYDE DE CARBONE" : "à remplir"),
+        "middle", k === 0 ? "#1f6feb" : "#375623");
+  g.appendChild(el("ellipse", { cx: x, cy: PAILL_Y + 2, rx: W_BOC / 2 - 4, ry: 7,
+    fill: "#00000022" }));
+}
+/* ---- LES DEUX COTES, celles que la règle vérifie ---- */
+function redessinerCotes() {
+  var u = ETAT.vuConcl || 0;
+  vide(gCotes);
+  if (u > 0.01 && lesDeuxThermos()) {
+    var x0 = xBocal(0) - 14, x1 = xBocal(1) - 14, y = Y_ETIQ.temp + 24;
+    var xf = x0 + (x1 - x0) * u, e = temperature(1) - temperature(0);
+    gCotes.appendChild(el("line", { x1: x0, y1: y, x2: xf, y2: y,
+      stroke: "#375623", "stroke-width": 2.4 }));
+    [x0, xf].forEach(function (xx) {
+      gCotes.appendChild(el("line", { x1: xx, y1: y - 6, x2: xx, y2: y + 6,
+        stroke: "#375623", "stroke-width": 2.4 }));
+    });
+    if (u > 0.55) {
+      gCotes.appendChild(el("text", { x: (x0 + xf) / 2, y: y - 9,
+        "text-anchor": "middle", "font-size": 13, "font-weight": "bold",
+        fill: "#375623", "paint-order": "stroke", stroke: "#eef2f7",
+        "stroke-width": 3.2 }, "écart = " + nb(e, 1) + " °C"));
+    }
+  }
+  [0, 1].forEach(function (k) {
+    var x = xBocal(k), y = Y_ETIQ.cote, col = ETAT.mesureFaite ? VERT : ORANGE;
+    gCotes.appendChild(el("line", { x1: Math.min(x, X_LAMPE), y1: y,
+      x2: Math.max(x, X_LAMPE), y2: y, stroke: col, "stroke-width": 1.6 }));
+    [x, X_LAMPE].forEach(function (xx) {
+      gCotes.appendChild(el("line", { x1: xx, y1: y - 5, x2: xx, y2: y + 5,
+        stroke: col, "stroke-width": 1.6 }));
+    });
+    gCotes.appendChild(el("text", { x: (x + X_LAMPE) / 2, y: y - 7,
+      "text-anchor": "middle", "font-size": 11.5, "font-weight": "bold",
+      fill: col, "paint-order": "stroke", stroke: "#eef2f7", "stroke-width": 3.2 },
+      nb(REG.dist, 1) + " cm"));
+  });
+}
+/* ---- LE PLATEAU : l'erlenmeyer et l'eau de chaux ---- */
+function redessinerPlateau() {
+  var xe = PLAT_X0 + 46, ye = PLAT_CY;
+  vide(gPlateau);
+  /* l'erlenmeyer où se fait le dioxyde de carbone */
+  gPlateau.appendChild(el("path", { d: "M " + pt(xe - 9, ye - 30) + " L " +
+    pt(xe - 9, ye - 14) + " L " + pt(xe - 30, ye + 26) + " L " +
+    pt(xe + 30, ye + 26) + " L " + pt(xe + 9, ye - 14) + " L " +
+    pt(xe + 9, ye - 30) + " Z", fill: "url(#verre)", opacity: 0.6,
+    stroke: "#7f93a6", "stroke-width": 2 }));
+  if (ETAT.vuVerse > 0.02) {
+    var hv = 18 * ETAT.vuVerse, lv = 26 + 4 * ETAT.vuVerse;
+    gPlateau.appendChild(el("path", { d: "M " + pt(xe - lv + 4, ye + 26 - hv) +
+      " L " + pt(xe + lv - 4, ye + 26 - hv) + " L " + pt(xe + 30, ye + 26) +
+      " L " + pt(xe - 30, ye + 26) + " Z", fill: "#e8dfc6", opacity: 0.9 }));
+    /* les bulles : elles montent tant que le dégagement dure */
+    var i, n = ETAT.degagementFini ? 0 : 5;
+    for (i = 0; i < n; i++) {
+      var ph = (ETAT.vuBulles + i / n) % 1;
+      gPlateau.appendChild(el("circle", { cx: xe - 14 + 9 * i,
+        cy: ye + 22 - 44 * ph, r: 2.2 + 1.4 * ph,
+        fill: "#ffffff", opacity: 0.75 * (1 - ph) }));
+    }
+  }
+  gPlateau.appendChild(el("text", { x: xe, y: Y_ETIQ.plateau,
+    "text-anchor": "middle", "font-size": 10.5, "font-weight": "bold",
+    fill: "#8a6a2a" }, "bicarbonate + vinaigre"));
+}
+function temperature(k) {
+  if (!ETAT.lampe && ETAT.t <= 0) return REG.salle;
+  return tPrevue(k, ETAT.t / 60);
+}
+function redessinerObjets() {
+  var e, p, k;
+  ["thermoA", "thermoB"].forEach(function (q, i) {
+    e = OBJ[q].g; vide(e);
+    p = place(q);
+    plaque(e, -16, -70, 32, 150);
+    e.appendChild(el("rect", { x: -5, y: -64, width: 10, height: 128, rx: 5,
+      fill: "#f4f7fa", stroke: "#9aa5b2", "stroke-width": 1.6 }));
+    e.appendChild(el("rect", { x: -2, y: 20, width: 4, height: 40, fill: "#c2262b" }));
+    e.appendChild(el("circle", { cx: 0, cy: 62, r: 7, fill: "#c2262b",
+      stroke: "#8a1a1e", "stroke-width": 1.2 }));
+    if (!ETAT.thermo[i]) {
+      etiqG(e, 0, -74, "thermo. " + (i + 1), "middle", "#8a6a2a", 10);
+    }
+    e.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+    e.setAttribute("opacity", ETAT.thermo[i] ? 0 : 1);
+    e.setAttribute("pointer-events", ETAT.thermo[i] ? "none" : "auto");
+  });
+  ["couvA", "couvB"].forEach(function (q, i) {
+    e = OBJ[q].g; vide(e);
+    p = place(q);
+    plaque(e, -34, -16, 68, 32);
+    e.appendChild(el("rect", { x: -30, y: -9, width: 60, height: 18, rx: 4,
+      fill: ETAT.couvercleVerre ? "url(#inox)" : "#dfe9f2",
+      opacity: ETAT.couvercleVerre ? 1 : 0.75,
+      stroke: ETAT.couvercleVerre ? "#5d6670" : "#9fb4c6", "stroke-width": 2 }));
+    if (!ETAT.couv[i]) {
+      etiqG(e, 0, -18, (ETAT.couvercleVerre ? "couvercle " : "film ") + (i + 1),
+            "middle", "#8a6a2a", 10);
+    }
+    e.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+    e.setAttribute("opacity", ETAT.couv[i] ? 0 : 1);
+    e.setAttribute("pointer-events", ETAT.couv[i] ? "none" : "auto");
+  });
+  /* la règle graduée */
+  e = OBJ.regle.g; vide(e);
+  p = place("regle");
+  plaque(e, -90, -12, 180, 24);
+  e.appendChild(el("rect", { x: -84, y: -7, width: 168, height: 14, rx: 2,
+    fill: "#f3e6b8", stroke: "#b39a4e", "stroke-width": 1.4 }));
+  for (k = 0; k <= 8; k++) {
+    e.appendChild(el("line", { x1: -84 + k * 21, y1: -7, x2: -84 + k * 21,
+      y2: k % 2 ? -1 : 3, stroke: "#8a6a2a", "stroke-width": 1.1 }));
+  }
+  if (!ETAT.mesureFaite) etiqG(e, 0, -14, "règle graduée", "middle", GRIS, 10);
+  e.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+  /* le tube coudé */
+  e = OBJ.tube.g; vide(e);
+  p = place("tube");
+  plaque(e, -14, -40, 100, 90);
+  e.appendChild(el("path", { d: "M " + pt(0, -34) + " L " + pt(0, 10) +
+    " Q " + pt(0, 30) + " " + pt(22, 30) + " L " + pt(78, 30),
+    fill: "none", stroke: "#c9d2db", "stroke-width": 7, "stroke-linecap": "round" }));
+  e.appendChild(el("path", { d: "M " + pt(0, -34) + " L " + pt(0, 10) +
+    " Q " + pt(0, 30) + " " + pt(22, 30) + " L " + pt(78, 30),
+    fill: "none", stroke: "#eef2f6", "stroke-width": 3, "stroke-linecap": "round" }));
+  if (!ETAT.tubePose) etiqG(e, 40, -42, "tube à dégagement", "middle", "#8a6a2a", 10);
+  e.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+  /* le tube d'eau de chaux */
+  e = OBJ.chaux.g; vide(e);
+  p = place("chaux");
+  plaque(e, -16, -46, 32, 92);
+  e.appendChild(el("path", { d: "M " + pt(-9, -40) + " L " + pt(-9, 28) +
+    " Q " + pt(-9, 40) + " " + pt(0, 40) + " Q " + pt(9, 40) + " " +
+    pt(9, 28) + " L " + pt(9, -40), fill: "url(#verre)", opacity: 0.6,
+    stroke: "#7f93a6", "stroke-width": 2 }));
+  e.appendChild(el("path", { d: "M " + pt(-7, 2) + " L " + pt(-7, 28) +
+    " Q " + pt(-7, 38) + " " + pt(0, 38) + " Q " + pt(7, 38) + " " +
+    pt(7, 28) + " L " + pt(7, 2) + " Z",
+    fill: ETAT.chaux ? "#eef0e6" : "#eaf2f8", opacity: 0.95 }));
+  if (ETAT.chaux) {
+    e.appendChild(el("ellipse", { cx: 0, cy: 20, rx: 6, ry: 12, fill: "#ffffff",
+      opacity: 0.85 }));
+  }
+  etiqG(e, 0, -48, ETAT.chaux ? "TROUBLE" : "eau de chaux", "middle",
+        ETAT.chaux ? VERT : "#8a6a2a", 10);
+  e.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+}
+function encreDouce() { return GRIS; }
+/* Où chaque objet se range, et où il travaille. */
+function repos(q) {
+  if (q === "thermoA") return { x: PLAT_X0 + 214, y: PLAT_CY - 4 };
+  if (q === "thermoB") return { x: PLAT_X0 + 256, y: PLAT_CY - 4 };
+  if (q === "couvA") return { x: PLAT_X0 + 324, y: PLAT_CY };
+  if (q === "couvB") return { x: PLAT_X0 + 404, y: PLAT_CY };
+  /* la règle est longue : elle se range au MUR, sous le journal, et non sur
+     un plateau où elle couvrirait tout le reste */
+  if (q === "regle") return { x: 268, y: 176 };
+  if (q === "tube") return { x: PLAT_X0 + 122, y: PLAT_CY - 26 };
+  return { x: PLAT_X1 + 44, y: PLAT_CY - 6 };            /* l'eau de chaux */
+}
+function poste(q) {
+  if (q === "thermoA") return { x: xBocal(0) - 30, y: Y_BOC + 92 };
+  if (q === "thermoB") return { x: xBocal(1) - 30, y: Y_BOC + 92 };
+  if (q === "couvA") return { x: xBocal(0), y: Y_BOC + 7 };
+  if (q === "couvB") return { x: xBocal(1), y: Y_BOC + 7 };
+  if (q === "regle") return { x: (X_LAMPE + xBocal(0)) / 2, y: Y_ETIQ.cote };
+  if (q === "tube") return { x: xBocal(1) - 60, y: Y_BOC + 40 };
+  return { x: xBocal(1) + W_BOC / 2 + 30, y: Y_BOC + 60 };
+}
+function pose(q) {
+  if (q === "thermoA") return ETAT.thermo[0];
+  if (q === "thermoB") return ETAT.thermo[1];
+  if (q === "couvA") return ETAT.couv[0];
+  if (q === "couvB") return ETAT.couv[1];
+  if (q === "regle") return ETAT.mesureFaite;
+  if (q === "tube") return ETAT.tubePose;
+  return ETAT.chaux;
+}
+/* ⚠ L'OBJET PARCOURT SON TRAJET. Rendre tout de suite la place d'arrivée
+   montre deux états, pas un geste — et c'est la même famille de refus que
+   « les boutons qui rejouent le YAML » (§1.1, §1.2 bis). L'état, lui, reste
+   posé AVANT l'animation : celle-ci ne décide de rien. */
+function place(q) {
+  var a = repos(q), b = poste(q), u = ETAT.vuPose ? (ETAT.vuPose[q] || 0) : 0;
+  if (pose(q) && u === 0 && !ANIM_ON) u = 1;
+  return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
+}
+/* Un geste de dépôt, ou de retrait : UNE seule animation, jamais deux à la
+   suite — le second `animer()` annulerait le premier (payé sur E2AC-25). */
+function animerVersPose(q) {
+  var de = ETAT.vuPose[q] || 0, vers = pose(q) ? 1 : 0;
+  return animer(520, function (u) { ETAT.vuPose[q] = de + (vers - de) * u; });
+}
+function redessiner() {
+  redessinerLampe(); redessinerBocal(0); redessinerBocal(1);
+  redessinerCotes(); redessinerPlateau(); redessinerObjets();
+}
+
+/* ==================================================================
+   12. LES BOUTONS DE SCÈNE
+   ================================================================== */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var t = [0, 1].map(function () {
+    return g.appendChild(el("text", { x: cx, y: cy, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: GRIS,
+      "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, ""));
+  });
+  function poserLibelle(s) {
+    var q = lignes(s, 18);
+    if (q.length < 2) {
+      t[0].textContent = q[0] || ""; t[0].setAttribute("y", cy + 5);
+      t[1].textContent = "";
+    } else {
+      t[0].textContent = q[0]; t[0].setAttribute("y", cy - 2);
+      t[1].textContent = q.slice(1).join(" "); t[1].setAttribute("y", cy + 12);
+    }
+  }
+  poserLibelle(l1);
+  function peindre(fond, trait, enc, ep) {
+    r.setAttribute("fill", fond); r.setAttribute("stroke", trait);
+    r.setAttribute("stroke-width", ep);
+    t.forEach(function (n) { n.setAttribute("fill", enc); });
+  }
+  BOUTONS[act] = { cx: cx, cy: cy, w: w, h: ht, libelle: poserLibelle,
+    armer: function (v) {
+      if (r.getAttribute("data-fait") === "1") return;
+      peindre("#ffffff", v ? GOLD : LIGNE, v ? INK : GRIS, v ? 2.6 : 1.8);
+    },
+    fait: function () { r.setAttribute("data-fait", "1"); peindre("#eef6e6", VERT, VERT, 2); },
+    neuf: function () { r.removeAttribute("data-fait"); peindre("#ffffff", LIGNE, GRIS, 1.8); } };
+  return BOUTONS[act];
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (e) {
+    var n = e.target, a = null;
+    while (n && n !== svg) {
+      if (n.getAttribute && n.getAttribute("data-act")) { a = n.getAttribute("data-act"); break; }
+      n = n.parentNode;
+    }
+    if (!a || /^obj-/.test(a)) return;
+    agir(a);
+  });
+}
+function agir(a) {
+  if (a === "verser") { verserVinaigre(); return; }
+  if (a === "lampe") { allumerLampe(); return; }
+  if (a === "relever") { relever(); return; }
+  if (a === "film") { basculerCouvercle(); return; }
+  if (a === "conclure") { conclure(); return; }
+}
+
+/* ==================================================================
+   13. PRENDRE ET DÉPOSER — §9
+   ================================================================== */
+var prise = null, ptSVG = null, cibles = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function noeudDe(q) { return OBJ[q] ? OBJ[q].g : null; }
+/* §12.16 : de la plus PETITE zone à la plus GRANDE. */
+function emplacements(q) {
+  var z = [], p = poste(q);
+  z.push({ type: "poste", x: p.x, y: p.y, r: q === "regle" ? 130 : 78 });
+  z.push({ type: "plateau", x: repos(q).x, y: repos(q).y, r: 92 });
+  if (q === "couvB" || q === "thermoB" || q === "tube" || q === "chaux") {
+    /* la zone du PREMIER bocal existe pour que le refus soit atteignable :
+       c'est le refus le plus instructif de la page (§13.6.2). */
+    z.splice(1, 0, { type: "autre", x: xBocal(0), y: Y_BOC + 60, r: 70 });
+  }
+  if (q === "couvA" || q === "thermoA") {
+    z.splice(1, 0, { type: "autre", x: xBocal(1), y: Y_BOC + 60, r: 70 });
+  }
+  return z;
+}
+function zoneType(q, type) {
+  var z = emplacements(q), i;
+  for (i = 0; i < z.length; i++) if (z[i].type === type) return z[i];
+  return null;
+}
+function montrerCibles(q) {
+  effacerCibles();
+  if (!q) return;
+  emplacements(q).forEach(function (c) {
+    if (c.type === "autre") return;
+    var n = ajout("arriere", el("circle", { cx: c.x, cy: c.y, r: c.r * 0.6,
+      fill: "none", stroke: GOLD, "stroke-width": 3, "stroke-dasharray": "9 6",
+      "pointer-events": "none" }));
+    n.appendChild(el("animate", { attributeName: "opacity", values: "1;.35;1",
+      dur: "1.2s", repeatCount: "indefinite" }));
+    cibles.push(n);
+  });
+}
+function effacerCibles() {
+  cibles.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  cibles = [];
+}
+function cibleLaPlusProche(q, p) {
+  var z = emplacements(q), i, d, best = null, bd = 1e9;
+  for (i = 0; i < z.length; i++) {
+    d = Math.sqrt(Math.pow(p.x - z[i].x, 2) + Math.pow(p.y - z[i].y, 2));
+    if (d <= z[i].r && d < bd) { bd = d; best = z[i]; }
+  }
+  return best;
+}
+function saisir(q, e) {
+  if (prise) return;                                  /* verrou en 1re ligne */
+  e.preventDefault();
+  var m = place(q), p = versSVG(e), g = noeudDe(q);
+  if (!g) return;
+  prise = { quoi: q, id: e.pointerId, dx: m.x - p.x, dy: m.y - p.y,
+            x0: p.x, y0: p.y, bouge: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  g.setAttribute("filter", "url(#ombrePrise)");
+  g.setAttribute("cursor", "grabbing");
+  COUCHES.drag.appendChild(g);
+  montrerCibles(q);
+  secuGeste(q);
+}
+function brancherPrise() {
+  Object.keys(OBJ).forEach(function (q) {
+    OBJ[q].g.addEventListener("pointerdown", function (e) { saisir(q, e); });
+  });
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    var p = versSVG(e), g = noeudDe(prise.quoi);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    g.setAttribute("transform", "translate(" + (p.x + prise.dx).toFixed(1) +
+      "," + (p.y + prise.dy).toFixed(1) + ")");
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var p = versSVG(e), d = prise, g = noeudDe(prise.quoi), cible;
+    prise = null;
+    effacerCibles();
+    if (g) {
+      g.removeAttribute("filter"); g.setAttribute("cursor", "grab");
+      COUCHES.objets.appendChild(g);
+    }
+    if (!d.bouge) { redessiner(); signaler(ouPoser(d.quoi)); return; }
+    cible = cibleLaPlusProche(d.quoi, { x: p.x + d.dx, y: p.y + d.dy });
+    if (!cible) { redessiner(); signaler(ouPoser(d.quoi)); return; }
+    deposer(d.quoi, cible);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);     /* ne PAS l'oublier */
+}
+function ouPoser(q) {
+  if (q === "thermoA") return "Ce thermomètre va dans le <b>premier</b> bocal, " +
+    "celui qui garde son air : c'est le témoin.";
+  if (q === "thermoB") return "Ce thermomètre va dans le <b>second</b> bocal, " +
+    "à la <b>même hauteur</b> que l'autre — la fiche y insiste.";
+  if (q === "couvA") return "Ce couvercle ferme le <b>premier</b> bocal.";
+  if (q === "couvB") return "Ce couvercle ferme le <b>second</b> bocal, et " +
+    "seulement quand le dégagement a cessé.";
+  if (q === "regle") return "La règle se pose <b>entre la lampe et un bocal</b> : " +
+    "c'est ainsi qu'on vérifie que les deux distances sont égales.";
+  if (q === "tube") return "Le tube à dégagement se conduit <b>jusqu'au fond</b> " +
+    "du second bocal.";
+  return "Le tube d'eau de chaux se porte <b>au-dessus du second bocal</b>, pour " +
+    "y prélever un peu de gaz.";
+}
+
+/* ==================================================================
+   14. CE QUE FONT LES GESTES
+   ==================================================================
+   La logique d'état vit ICI, sur le chemin COMMUN au glisser et au bouton
+   (§12.13). ⚠ §6.2 : l'état est posé TOUT DE SUITE, pas à la fin de
+   l'animation.                                                            */
+function deposer(q, cible) {
+  var i;
+  if (!cible) { redessiner(); return; }
+  if (cible.type === "autre") {
+    redessiner();
+    refus("Pas ce bocal-là. Les deux montages ne diffèrent que par le GAZ : " +
+      "s'ils diffèrent par autre chose, la comparaison ne prouve plus rien.",
+      S_VERRE);
+    return;
+  }
+  if (cible.type === "plateau") {
+    if (q === "thermoA" || q === "thermoB") ETAT.thermo[q === "thermoA" ? 0 : 1] = false;
+    if (q === "couvA" || q === "couvB") ETAT.couv[q === "couvA" ? 0 : 1] = false;
+    if (q === "regle") ETAT.mesureFaite = false;
+    if (q === "tube") ETAT.tubePose = false;
+    animerVersPose(q);
+    majTout();
+    return;
+  }
+  if (q === "thermoA" || q === "thermoB") {
+    i = q === "thermoA" ? 0 : 1;
+    if (ETAT.couv[i]) {
+      redessiner();
+      refus("Le bocal est déjà fermé : on n'y glisse plus rien. Le rouvrir " +
+        "laisserait entrer l'air, et le second bocal perdrait son gaz.", S_BOUCHON);
+      return;
+    }
+    ETAT.thermo[i] = true;
+    succes("Thermomètre placé dans le bocal " + (i + 1) + ", à mi-hauteur, sans " +
+      "toucher le verre ni le fond. ⚠ Les deux doivent être à la MÊME hauteur : " +
+      "un bocal est stratifié, il fait plusieurs degrés de plus en haut qu'en bas.");
+    animerVersPose(q);
+    majTout(); return;
+  }
+  if (q === "couvA" || q === "couvB") {
+    i = q === "couvA" ? 0 : 1;
+    if (!ETAT.thermo[i]) {
+      redessiner();
+      refus("Le thermomètre doit être DANS le bocal avant qu'on le ferme.", S_VERRE);
+      return;
+    }
+    if (i === 1 && ETAT.verse && !ETAT.degagementFini) {
+      redessiner();
+      refus("⛔ " + S_BOUCHON, S_BOUCHON);
+      return;
+    }
+    if (i === 1 && !ETAT.chaux) {
+      redessiner();
+      refus("Vérifier d'abord à l'eau de chaux que le bocal contient bien du " +
+        "dioxyde de carbone : une fois fermé, on ne peut plus le prélever.", S_CHAUX);
+      return;
+    }
+    ETAT.couv[i] = true;
+    succes("Bocal " + (i + 1) + " fermé " +
+      (ETAT.couvercleVerre ? "par son couvercle" : "par le film alimentaire") + ".");
+    animerVersPose(q);
+    majTout(); return;
+  }
+  if (q === "regle") { mesurerDistances(); return; }
+  if (q === "tube") { poserTube(); return; }
+  if (q === "chaux") { testerChaux(); return; }
+  redessiner();
+}
+function animerPose(q) { return animerVersPose(q); }
+function mesurerDistances() {
+  ETAT.mesureFaite = true;                            /* verrou en 1re ligne */
+  succes("Distances vérifiées à la règle : " + nb(REG.dist, 1) + " cm de part " +
+    "et d'autre. C'est la condition de la comparaison — la puissance reçue " +
+    "varie comme l'inverse du CARRÉ de la distance, et un centimètre d'écart " +
+    "en fait déjà " + nb(100 * (Math.pow(REG.dist / (REG.dist + 1), 2) - 1), 1) +
+    " %.");
+  animerVersPose("regle");
+  majTout();
+}
+function poserTube() {
+  if (!ETAT.verse) {
+    redessiner();
+    signaler("Il n'y a encore rien à conduire : préparer d'abord le gaz.");
+    return;
+  }
+  ETAT.tubePose = true;
+  succes("Tube conduit JUSQU'AU FOND du second bocal. Le dioxyde de carbone " +
+    "est une fois et demie plus lourd que l'air : il s'accumule par le bas et " +
+    "chasse l'air vers le haut. Conduit près du col, il ressortirait aussitôt.");
+  animerVersPose("tube");
+  majTout();
+}
+function verserVinaigre() {
+  if (ETAT.verse) { signaler("Le vinaigre est déjà versé."); return; }
+  ETAT.verse = true;
+  succes("Vinaigre versé sur le bicarbonate, et l'erlenmeyer bouché aussitôt. " +
+    "Le dégagement commence : conduire le tube au fond du second bocal.");
+  secuDire(S_BOUCHON, "");
+  /* le vinaigre COULE dans l'erlenmeyer : le niveau monte, il ne paraît pas */
+  animer(700, function (u) { ETAT.vuVerse = u; });
+  majTout();
+}
+function testerChaux() {
+  if (ETAT.remplissage < 0.98) {
+    redessiner();
+    signaler("Le bocal n'est pas encore plein : le prélèvement donnerait " +
+      "surtout de l'air. Remplissage " + nb(100 * ETAT.remplissage, 0) + " %.");
+    return;
+  }
+  if (ETAT.couv[1]) { signaler("Le bocal est fermé : on ne peut plus prélever."); return; }
+  ETAT.chaux = true;
+  succes("L'eau de chaux se TROUBLE : le bocal contient bien du dioxyde de " +
+    "carbone. C'est le test de la leçon 4, et il sert ici de contrôle du " +
+    "remplissage — sans lui, on ne saurait pas ce qu'on a mis dans le bocal.");
+  secuDire(S_CHAUX, "ok");
+  animerVersPose("chaux");
+  majTout();
+}
+function allumerLampe() {
+  if (ETAT.lampe) { signaler("La lampe est déjà allumée."); return; }
+  if (!bocalPret(0) || !bocalPret(1)) {
+    refus("Les deux bocaux doivent être équipés et FERMÉS avant d'allumer : " +
+      "sinon ils ne diffèrent pas que par le gaz.", S_LAMPE);
+    return;
+  }
+  if (!ETAT.rel[0][C_AIR]) {
+    refus("Noter d'abord les DEUX températures de départ : c'est la ligne " +
+      "« " + depouille(cel(0, C_T)) + " min » du tableau, et sans elle il n'y a " +
+      "pas d'origine.", S_LAMPE);
+    return;
+  }
+  ETAT.lampe = true;                                  /* verrou en 1re ligne */
+  succes("Lampe allumée et chronomètre déclenché. Elle dépose " +
+    nb(phiFond(0), 2) + " W sur le fond de chaque bocal — le MÊME. Tout ce " +
+    "qui suivra ne pourra donc venir que du gaz.");
+  secuDire(S_PAPIER, "");
+  animer(700, function (u) { ETAT.vuLampe = u; });
+  majTout();
+}
+function basculerCouvercle() {
+  ETAT.couvercleVerre = !ETAT.couvercleVerre;
+  videMemo();
+  ETAT.vuBascule = 0;
+  noter(ETAT.couvercleVerre
+    ? "Fermeture par le COUVERCLE : le verre est opaque à l'infrarouge " +
+      "thermique, et il renvoie au fond tout ce que celui-ci émet. Le dioxyde " +
+      "de carbone n'a alors presque plus rien à retenir."
+    : "Fermeture par le FILM ALIMENTAIRE — la variante que la fiche propose " +
+      "aussi. Le polyéthylène, lui, est TRANSPARENT à l'infrarouge thermique : " +
+      "le rayonnement du fond peut sortir, et c'est le gaz, et lui seul, qui " +
+      "peut encore l'arrêter. Regarder ce que devient l'écart.", false);
+  /* le couvercle se soulève et se repose : le changement SE VOIT */
+  animer(560, function (u) { ETAT.vuBascule = Math.sin(Math.PI * u); });
+  majTout();
+}
+/* LE RELEVÉ — il n'écrit que ce qui est calculé, et seulement à l'instant
+   que la fiche prescrit (§12.40 : la ligne « 0 min » n'est pas un relevé de
+   chauffage, c'est l'état de départ, et elle se fait AVANT d'allumer). */
+function relever() {
+  var k = instantRelevable(), i, a, b;
+  if (k < 0) {
+    signaler("La fiche relève à " + INSTANTS.map(function (t) {
+      return nb(t, 0); }).join(", ") + " min. Le chronomètre marque " +
+      mmss(ETAT.t) + " — attendre l'instant prescrit.");
+    return;
+  }
+  if (k > 0 && !ETAT.lampe) {
+    signaler("La lampe n'est pas allumée : il n'y a rien à relever.");
+    return;
+  }
+  if (!lesDeuxThermos()) {
+    refus("Les deux thermomètres doivent être en place : on relève les deux " +
+      "températures AU MÊME INSTANT.", S_VERRE);
+    return;
+  }
+  a = lireThermometre(temperature(0));
+  b = lireThermometre(temperature(1));
+  for (i = 0; i < COLS.length; i++) {
+    ETAT.rel[k][COLS[i]] = true;
+    revelerCellule(k, COLS[i]);
+  }
+  ETAT.mes[k] = { t: INSTANTS[k], air: temperature(0), co2: temperature(1),
+                  lueA: a, lueB: b };
+  animer(620, function (u) { ETAT.vuLu = u; }, function () { ETAT.vuLu = 0; });
+  succes("À " + nb(INSTANTS[k], 0) + " min : le témoin lit " + nb(a, 0) +
+    " °C, le bocal au dioxyde de carbone " + nb(b, 0) + " °C, soit un écart de " +
+    nb(b - a, 0) + " °C. Le solveur donne " + nb(temperature(0), 2) + " et " +
+    nb(temperature(1), 2) + " ; le thermomètre est gradué au degré, on LIT " +
+    "donc des entiers.");
+  majTout();
+}
+function conclure() {
+  if (!toutesLignesFaites()) {
+    signaler("Les quatre relevés doivent être faits : c'est leur SUITE qui " +
+      "montre que l'écart grandit, pas une ligne isolée.");
+    return;
+  }
+  ETAT.conclu = true;
+  $("concl").classList.remove("masque");
+  /* LA CONCLUSION SE TRACE : la double flèche de l'écart s'étend d'un bocal à
+     l'autre. C'est le geste que la fiche demande — « calculer chaque fois
+     l'écart » —, et il doit SE VOIR se faire. */
+  animer(760, function (u) { ETAT.vuConcl = u; });
+  var d = decomposer();
+  succes("Les deux bocaux ont reçu la MÊME lumière, à la MÊME distance, " +
+    "pendant le MÊME temps ; la seule différence est le gaz. Le modèle " +
+    "obtient un écart de " + nb(d.total, 1) + " °C à " + nb(DUREE_TOTALE, 0) +
+    " min, dont " + nb(d.radiatif, 1) + " par absorption de l'infrarouge. " +
+    "La fiche en relève " + nb(d.fiche, 0) + " : le panneau « Ce que le modèle " +
+    "trouve » chiffre l'écart et dit d'où il peut venir.");
+  majTout();
+}
+
+/* ==================================================================
+   15. LE TEMPS — un PAS FIXE, et une seule horloge (§12.37, §12bis.6)
+   ==================================================================
+   ⚠ Le pas d'intégration ne suit PAS l'affichage. Une étape chronométrée se
+   joue par tranches fines, jamais d'un bloc : c'est le piège le plus cher de
+   la campagne, et il coûtait l'ordre des résultats sur E3AC-01.            */
+/* ⚠ LE BUTOIR — sans lui, l'instant du relevé est INATTEIGNABLE en accéléré.
+   La fiche tolère une demi-minute autour de chaque instant prescrit ; à ×150,
+   cette demi-minute passe en deux dixièmes de seconde de montre, et le
+   déroulé la manque une fois sur deux. La simulation s'ARRÊTE donc sur
+   l'instant, et repart quand le relevé est fait — c'est aussi ce que fait le
+   binôme désigné. Même famille que §12.4 : un état qu'on ne peut pas
+   atteindre n'est pas un état. */
+function butoir() {
+  if (!ETAT.lampe) return Infinity;
+  var k = prochainInstant();
+  return ligneFaite(k) ? Infinity : INSTANTS[k] * 60;
+}
+function avancerSimulation(dtSim) {
+  var reste = dtSim, pas, b = butoir();
+  while (reste > 1e-9) {
+    pas = Math.min(PAS_SIM, reste);
+    reste -= pas;
+    /* le remplissage du second bocal, tant que le tube y conduit le gaz */
+    if (ETAT.verse && ETAT.tubePose && ETAT.remplissage < 1) {
+      ETAT.remplissage = Math.min(1, ETAT.remplissage + pas / DUREE_REMPLISSAGE);
+      if (ETAT.remplissage >= 1) ETAT.degagementFini = true;
+    }
+    /* ⚠ LE CHRONOMÈTRE PART AVEC LA LAMPE, ET PAS AVANT. Avancé aussi pendant
+       le remplissage, il valait déjà 40 s quand on voulait relever la ligne
+       « 0 min » — et cette ligne devenait INATTEIGNABLE, la tolérance étant
+       d'une demi-minute. C'est le §12.4 : un état qu'on ne peut plus atteindre
+       n'est pas un état, et la consigne le réclamait en boucle. */
+    if (!ETAT.lampe) continue;
+    if (ETAT.t >= b - 1e-9) { ETAT.t = Math.min(ETAT.t, b); break; }
+    ETAT.t += Math.min(pas, b - ETAT.t);
+    /* ⚠ ON SE RECALE SUR L'INSTANT PRESCRIT (§12.43) : après mille pas, le
+       chronomètre vaudrait 899,999999 et afficherait 14:59 pendant que le
+       tableau dévoile « 15 min ». Un seul chiffre faux, et il contredit la
+       ligne que la page vient d'écrire. */
+    INSTANTS.forEach(function (m) {
+      if (Math.abs(ETAT.t - m * 60) < PAS_SIM / 2) ETAT.t = m * 60;
+    });
+  }
+}
+var DUREE_REMPLISSAGE = 40;          /* secondes de simulation pour un bocal */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 250);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(0.6, (m - DERNIER) / 1000);
+  DERNIER = m;
+  /* Le minuteur de séance court en temps RÉEL : il mesure ce que la
+     manipulation coûte à l'enseignant, pas ce que le modèle simule (§5.4). */
+  ETAT.tSeance += dt;
+  majSeance();
+  if ((ETAT.lampe && ETAT.t < DUREE_TOTALE * 60 && ETAT.t < butoir() - 1e-9) ||
+      (ETAT.verse && ETAT.tubePose && ETAT.remplissage < 1)) {
+    avancerSimulation(dt * ETAT.vitesse);
+    ETAT.vuBulles = (ETAT.vuBulles + dt * 1.6) % 1;
+    if (!ANIM_ON) calerVU();
+    majTout();
+    return;
+  }
+  if (!ANIM_ON) calerVU();
+  dire(consigne(), ETAT.conclu);
+}
+function majSeance() {
+  var f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceJ").style.width = borne(f, 0, 1) * 100 + "%";
+  $("seanceT").parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+
+/* ==================================================================
+   16. CONSIGNE, JOURNAL, SÉCURITÉ, TABLEAU
+   ================================================================== */
+function dire(t, fini) {
+  if (ETAT.retenue && Date.now() < ETAT.retenue) return;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  ETAT.retenue = 0;
+  var n = $("consigne");
+  n.innerHTML = md(t); n.className = "consigne";
+  ETAT.retenue = Date.now() + 4000;
+}
+function succes(t) { ETAT.retenue = 0; noter(t, true); }
+function refus(t, ligne) { signaler(t); noter(t, false); secuDire(ligne, "refus"); }
+function noter(t, positif) {
+  var n = $("obs"); n.textContent = t;
+  n.className = "obs" + (positif ? " pos" : "");
+}
+function secuDire(t, cls) {
+  var b = $("secuBande"), i, ul;
+  $("secuTexte").textContent = t || "";
+  $("secuPic").textContent = cls === "ok" ? "✔" : (cls === "refus" ? "⛔" : "⚠");
+  b.className = "secubande" + (cls ? " " + cls : "");
+  ul = $("securite");
+  if (!ul) return;
+  for (i = 0; i < ul.children.length; i++) {
+    ul.children[i].className = (SECU[i] === t) ? "actif" : "";
+  }
+}
+function secuGeste(q) {
+  if (q === "chaux") secuDire(S_CHAUX, "");
+  else if (q === "couvB" || q === "tube") secuDire(S_BOUCHON, "");
+  else if (q === "regle") secuDire(S_LAMPE, "");
+  else secuDire(S_VERRE, "");
+}
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;                          /* §11.3 */
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+function consigne() {
+  var k;
+  if (ETAT.conclu) return "Expérience terminée : la conclusion est démasquée.";
+  if (!ETAT.mesureFaite) return "Vérifier à la règle que les deux bocaux sont " +
+    "à la même distance de la lampe.";
+  if (!lesDeuxThermos()) return "Placer un thermomètre dans chaque bocal, à la " +
+    "même hauteur.";
+  if (!ETAT.couv[0]) return "Fermer le premier bocal : il garde son air, c'est " +
+    "le témoin.";
+  if (!ETAT.verse) return "Préparer le dioxyde de carbone : verser le vinaigre " +
+    "sur le bicarbonate.";
+  if (ETAT.remplissage < 1) return "Conduire le tube JUSQU'AU FOND du second " +
+    "bocal — remplissage " + nb(100 * ETAT.remplissage, 0) + " %.";
+  if (!ETAT.chaux) return "Vérifier le remplissage à l'eau de chaux.";
+  if (!ETAT.couv[1]) return "Le dégagement a cessé : fermer le second bocal.";
+  if (!ETAT.rel[0][C_AIR]) return "Noter les deux températures de départ.";
+  if (!ETAT.lampe) return "Allumer la lampe et déclencher le chronomètre.";
+  k = prochainInstant();
+  if (!toutesLignesFaites()) return "Relever les deux températures à " +
+    nb(INSTANTS[k], 0) + " min — le chronomètre marque " + mmss(ETAT.t) + ".";
+  return "Reporter les écarts et conclure.";
+}
+
+/* ==================================================================
+   17. LE PARCOURS D'ÉTAPES — déduit de l'état, jamais compté (§11.1)
+   ================================================================== */
+var ETAPES = [
+  { n: "Distances égales", f: function () { return ETAT.mesureFaite; } },
+  { n: "Les deux thermomètres", f: lesDeuxThermos },
+  { n: "Témoin fermé", f: function () { return ETAT.couv[0]; } },
+  { n: "Préparer le CO₂", f: function () { return ETAT.verse; } },
+  { n: "Remplir le 2ᵉ bocal", f: function () { return ETAT.remplissage >= 1; } },
+  { n: "Eau de chaux", f: function () { return ETAT.chaux; } },
+  { n: "Allumer la lampe", f: function () { return ETAT.lampe; } },
+  { n: "Les quatre relevés", f: toutesLignesFaites }
+];
+function majEtapes() {
+  var d = $("etapes"), i, k = -1, c;
+  for (i = 0; i < ETAPES.length; i++) if (!ETAPES[i].f()) { k = i; break; }
+  if (!d.children.length) {
+    ETAPES.forEach(function (e, j) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">' + (j + 1) + '</span>' + e.n;
+      d.appendChild(n);
+    });
+  }
+  for (i = 0; i < ETAPES.length; i++) {
+    d.children[i].className = ETAPES[i].f() ? "faite" : (i === k ? "actif" : "");
+  }
+  c = $("checks");
+  if (!c.children.length) {
+    CHECKS.forEach(function (h) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">contrôle</span>' + h.n;
+      c.appendChild(n);
+    });
+  }
+  CHECKS.forEach(function (h, j) { c.children[j].className = ETAT[h.k] ? "oui" : "non"; });
+}
+
+/* ==================================================================
+   18. LES PANNEAUX HTML
+   ================================================================== */
+function construireHTML() {
+  var t, tr, td, i, j, ul, ct, k, src;
+  $("titre").textContent = "Paillasse virtuelle — " + depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E2AC-15") + " · " + DONNEES.niveau +
+    " · " + DONNEES.unite + " · " + DONNEES.lecon;
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation ||
+    DONNEES.observation || "");
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion ||
+    DONNEES.conclusion || "");
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation || "");
+  $("seanceM").textContent = nb(DUREE_SEANCE, 0) + " min · " + MODALITE;
+
+  t = $("tab"); tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < NL; i++) {
+    tr = document.createElement("tr");
+    for (j = 0; j < NC; j++) {
+      td = document.createElement("td");
+      if (LIG[i] && LIG[i][j]) { td.innerHTML = md(LIG[i][j]); }
+      else { td.className = "vide"; td.textContent = ""; }
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  ul = $("materiel");
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  ul = $("securite");
+  SECU.forEach(function (s) {
+    var li = document.createElement("li"); li.textContent = s; ul.appendChild(li);
+  });
+
+  ct = $("capotConst"); src = {};
+  for (k in PHYS) src[k] = PHYS[k];
+  for (k in AJOUTS) src[k] = AJOUTS[k];
+  src.EPS_AIR = { v: GAZ.air.eps, u: "", n: "émissivité infrarouge de l'air",
+                  s: GAZ.air.s };
+  src.EPS_CO2 = { v: GAZ.co2.eps, u: "", n: "émissivité infrarouge du CO₂ sur 10 cm",
+                  s: GAZ.co2.s };
+  tr = document.createElement("tr");
+  ["Constante", "Valeur", "Provenance"].forEach(function (h) {
+    var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+  });
+  ct.appendChild(tr);
+  for (k in src) {
+    tr = document.createElement("tr");
+    td = document.createElement("td"); td.textContent = src[k].n; tr.appendChild(td);
+    td = document.createElement("td"); td.className = "mes";
+    td.textContent = sci(src[k].v, 4) + (src[k].u ? " " + src[k].u : "");
+    tr.appendChild(td);
+    td = document.createElement("td"); td.className = "src";
+    td.textContent = src[k].s; tr.appendChild(td);
+    ct.appendChild(tr);
+  }
+  $("capotSrc").innerHTML = "La température de la salle est LUE dans la ligne " +
+    "« " + depouille(cel(0, C_T)) + " min » du tableau, et les quatre instants " +
+    "de relevé dans sa colonne « " + depouille(ENTETES[C_T]) + " » — que le " +
+    "protocole répète en toutes lettres (« toutes les " + nb(PAS_RELEVE, 0) +
+    " minutes pendant " + nb(DUREE_TOTALE, 0) + " minutes »). Deux grandeurs " +
+    "seulement sont <b>calibrées</b>, et sur le TÉMOIN seul : la distance de " +
+    "la lampe et la masse du bocal, que la fiche ne donne ni l'une ni l'autre. " +
+    "Les quatre valeurs du bocal au dioxyde de carbone sont donc entièrement " +
+    "<b>prédites</b>.";
+  $("eqModele").textContent =
+    "trois nœuds    S le fond · G le gaz (le thermomètre le lit) · V le verre\n" +
+    "lampe          Φ = P·0,85 · (d·h)/(4πD²) · τ_verre · α_fond\n" +
+    "prise du CO₂   Φg = P·0,85 · (d·h)/(4πD²) · F_Planck(2,55–2,90 µm) · τ₂,₇ · a\n" +
+    "infrarouge     modèle à DEUX FLUX, couche de gaz d'émissivité ε_g :\n" +
+    "               fond   : σTs⁴ − (1−ε_g)σTv⁴ − ε_g σTg⁴\n" +
+    "               gaz    : ε_g (σTs⁴ + σTv⁴ − 2σTg⁴)\n" +
+    "               verre  : (1−ε_g)σTs⁴ + ε_g σTg⁴ − σTv⁴\n" +
+    "               (les trois se somment à ZÉRO — c'est le seul contrôle)\n" +
+    "convection     Nu = 0,59·Ra^0,25,  Ra = gβΔT L³/(ν·α)\n" +
+    "intégration    Runge-Kutta 4, pas FIXE de " + nb(PAS_SIM, 0) + " s\n" +
+    "lecture        thermomètre gradué au degré → on écrit des entiers";
+  $("eqBilan").textContent =
+    "bicarbonate + vinaigre :\n" +
+    "  NaHCO₃ + CH₃COOH  →  CH₃COO⁻Na⁺ + H₂O + CO₂↑\n\n" +
+    "le contrôle, celui de la leçon 4 :\n" +
+    "  CO₂ + Ca(OH)₂  →  CaCO₃↓ + H₂O      (l'eau de chaux se trouble)\n\n" +
+    "et rien d'autre ne change : les deux bocaux sont le même verre, le même\n" +
+    "volume, la même lampe, la même distance. Seul le GAZ diffère.";
+  $("legendeSeuils").innerHTML = "Le thermomètre de la fiche est gradué de " +
+    "−10 à 110 °C : sa division est le <b>degré</b>, et la fiche écrit " +
+    "d'ailleurs ses seize valeurs en entiers. Le carnet donne le nombre du " +
+    "solveur à côté de la lecture, pour qu'on voie ce que la graduation coûte.";
+  $("srcTemps").innerHTML = "Le facteur de compression ne change RIEN au " +
+    "résultat : le pas d'intégration est fixe à " + nb(PAS_SIM, 0) + " s, et " +
+    "l'horloge se recale exactement sur chaque instant prescrit. Le protocole " +
+    "dure " + nb(DUREE_TOTALE, 0) + " minutes ; à ×" + nb(ETAT.vitesse, 0) +
+    " il tient en " + nb(DUREE_TOTALE * 60 / ETAT.vitesse, 0) + " secondes.";
+}
+/* LE PANNEAU QUI NE MASQUE RIEN */
+function majAccord() {
+  var t = $("accord"), tr, td, k, i, e, pire = 0;
+  vide(t);
+  tr = document.createElement("tr");
+  ["", "témoin — modèle / fiche", "CO₂ — modèle / fiche", "écart — modèle / fiche"]
+    .forEach(function (h) {
+      td = document.createElement("th"); td.textContent = h; tr.appendChild(td);
+    });
+  t.appendChild(tr);
+  for (k = 0; k < NL; k++) {
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.textContent = depouille(cel(k, C_T)) + " min";
+    tr.appendChild(td);
+    for (i = 0; i < COLS.length; i++) {
+      e = ecartCellule(k, COLS[i]);
+      if (Math.abs(e) > pire) pire = Math.abs(e);
+      td = document.createElement("td");
+      td.className = "mes";
+      td.textContent = celluleCalculee(k, COLS[i]) + " / " +
+                       celluleFiche(k, COLS[i]) +
+                       (Math.abs(e) >= 1 ? "   (" + nb(e, 0) + ")" : "");
+      if (Math.abs(e) >= 2) td.style.color = "var(--rouge)";
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  var d = decomposer();
+  $("motAccord").innerHTML =
+    "<b>Le modèle retrouve le témoin, il ne retrouve pas le bocal au dioxyde " +
+    "de carbone.</b> Écart maximal : <b>" + nb(pire, 0) + " division" +
+    (pire > 1 ? "s" : "") + "</b> de thermomètre. À " + nb(DUREE_TOTALE, 0) +
+    " min il prédit <b>" + nb(d.total, 1) + " °C</b> d'écart là où la fiche en " +
+    "relève <b>" + nb(d.fiche, 0) + "</b>. La raison est calculée, pas " +
+    "supposée : dans un bocal fermé par du <b>verre</b>, le verre est déjà " +
+    "opaque à l'infrarouge thermique, et le dioxyde de carbone n'a presque " +
+    "plus rien à retenir. Reste l'absorption directe du rayonnement de la " +
+    "lampe dans la bande à 2,7 µm — " + nb(1000 * phiGaz(1), 0) + " mW, soit " +
+    nb(d.radiatif, 1) + " °C ; les propriétés thermiques du gaz pèsent " +
+    nb(d.thermique, 2) + " °C. <b>Trois pistes, et la page n'en tranche " +
+    "aucune :</b> la stratification (le CO₂ est 1,5 fois plus dense, et deux " +
+    "thermomètres « à la même hauteur » n'y lisent pas la même chose), des " +
+    "bocaux qui ne sont pas rigoureusement identiques, ou la fermeture par " +
+    "<b>film alimentaire</b> que la fiche propose aussi — celui-là est " +
+    "transparent à l'infrarouge thermique. Le bouton du couvercle permet " +
+    "d'essayer.";
+}
+
+/* ==================================================================
+   19. LES GRAPHES
+   ================================================================== */
+var GR_HAUT = 24, GR_BAS = 28, GR_G = 44, GR_D = 10;
+function cadre(g, w, h, xl, yl) {
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#fbfcfd",
+    stroke: "#e3e6ea" }));
+  g.appendChild(el("line", { x1: GR_G, y1: h - GR_BAS, x2: w - GR_D,
+    y2: h - GR_BAS, stroke: "#b7bfca" }));
+  g.appendChild(el("line", { x1: GR_G, y1: GR_HAUT, x2: GR_G, y2: h - GR_BAS,
+    stroke: "#b7bfca" }));
+  g.appendChild(el("text", { x: w - 6, y: h - 5, "text-anchor": "end",
+    "font-size": 10, fill: GRIS }, xl));
+  g.appendChild(el("text", { x: 6, y: 15, "font-size": 10, fill: GRIS }, yl));
+}
+function tracerCourbes() {
+  var g = $("gCourbes"), w = 360, h = 200, k, c, i, pts, x, y;
+  var tMax = DUREE_TOTALE, tmin = REG.salle - 1, tmax = REG.salle + 18;
+  cadre(g, w, h, "temps (min)", "température (°C)");
+  function X(t) { return GR_G + (w - GR_G - GR_D) * borne(t / tMax, 0, 1); }
+  function Y(v) {
+    return (h - GR_BAS) - (h - GR_HAUT - GR_BAS) * borne((v - tmin) / (tmax - tmin), 0, 1);
+  }
+  [0, 1].forEach(function (kk) {
+    c = courbe(kk, tMax); pts = [];
+    for (i = 0; i < c.length; i++) pts.push(pt(X(c[i][0]), Y(c[i][1])));
+    g.appendChild(el("polyline", { points: pts.join(" "), fill: "none",
+      stroke: kk === 0 ? "#1f6feb" : "#b4530f", "stroke-width": 2.2 }));
+  });
+  /* les points de la fiche, en croix : ce sont eux qu'on cherche à retrouver */
+  for (k = 0; k < NL; k++) {
+    [[C_AIR, "#1f6feb"], [C_CO2, "#b4530f"]].forEach(function (cc) {
+      var v = parseFloat(celluleFiche(k, cc[0]).replace(",", "."));
+      if (!isFinite(v)) return;
+      x = X(INSTANTS[k]); y = Y(v);
+      g.appendChild(el("path", { d: "M " + pt(x - 4, y - 4) + " L " + pt(x + 4, y + 4) +
+        " M " + pt(x - 4, y + 4) + " L " + pt(x + 4, y - 4), fill: "none",
+        stroke: cc[1], "stroke-width": 2 }));
+    });
+  }
+  /* le curseur du temps courant */
+  x = X(ETAT.t / 60);
+  g.appendChild(el("line", { x1: x, y1: GR_HAUT, x2: x, y2: h - GR_BAS,
+    stroke: GOLD, "stroke-width": 1.6 }));
+  INSTANTS.forEach(function (m) {
+    g.appendChild(el("text", { x: X(m), y: h - GR_BAS + 12, "text-anchor": "middle",
+      "font-size": 9, fill: GRIS }, nb(m, 0)));
+  });
+  [tmin + 2, REG.salle + 6, REG.salle + 12, tmax - 1].forEach(function (v) {
+    g.appendChild(el("text", { x: GR_G - 4, y: Y(v) + 3, "text-anchor": "end",
+      "font-size": 8.5, fill: GRIS }, nb(v, 0)));
+  });
+  g.appendChild(el("text", { x: w - GR_D, y: GR_HAUT - 6, "text-anchor": "end",
+    "font-size": 9.5, fill: "#b4530f" }, "CO₂"));
+  g.appendChild(el("text", { x: w - GR_D - 34, y: GR_HAUT - 6, "text-anchor": "end",
+    "font-size": 9.5, fill: "#1f6feb" }, "air"));
+}
+function tracerBilan() {
+  var g = $("gBilan"), w = 360, h = 186, d = decomposer(), i;
+  var barres = [["propriétés du gaz", d.thermique, "#7c3aed"],
+                ["absorption 2,7 µm", d.radiatif, "#b4530f"],
+                ["TOTAL du modèle", d.total, "#375623"],
+                ["la FICHE relève", d.fiche, "#b03030"]];
+  var mx = 0.5;
+  barres.forEach(function (b) { mx = Math.max(mx, Math.abs(b[1])); });
+  cadre(g, w, h, "écart à " + nb(DUREE_TOTALE, 0) + " min (°C)", "");
+  var x0 = GR_G + 6, larg = w - GR_G - GR_D - 18;
+  barres.forEach(function (b, k) {
+    var y = GR_HAUT + 6 + k * 34, L = larg * Math.abs(b[1]) / mx;
+    g.appendChild(el("rect", { x: x0, y: y, width: Math.max(L, 1), height: 14,
+      rx: 3, fill: b[2], opacity: b[1] < 0 ? 0.35 : 0.85 }));
+    g.appendChild(el("text", { x: x0, y: y - 3, "font-size": 9.5, fill: GRIS },
+      b[0]));
+    g.appendChild(el("text", { x: x0 + Math.max(L, 1) + 6, y: y + 11,
+      "font-size": 10, "font-weight": "bold", fill: b[2] },
+      nb(b[1], b[1] === d.fiche ? 0 : 2) + " °C"));
+  });
+  $("srcBilan").innerHTML = "Les trois premières barres sont <b>calculées</b> ; " +
+    "la quatrième est celle de la fiche. La décomposition se fait en refaisant " +
+    "tourner le second bocal avec son gaz rendu <b>transparent</b> à " +
+    "l'infrarouge : ce qui reste alors n'est plus que la conductivité et la " +
+    "densité du dioxyde de carbone.";
+}
+
+/* ==================================================================
+   20. LES LECTURES ET LE CARNET
+   ================================================================== */
+function majLectures() {
+  function put(id, s, off) {
+    var n = $(id); n.textContent = s; n.className = "v" + (off ? " off" : "");
+  }
+  $("nomPhase").textContent = ETAT.lampe
+    ? "la lampe chauffe" : (ETAT.remplissage >= 1 ? "montage prêt" : "montage");
+  put("lT", mmss(ETAT.t));
+  put("lTa", ETAT.thermo[0] ? nb(temperature(0), 1) + " °C" : "—", !ETAT.thermo[0]);
+  put("lTc", ETAT.thermo[1] ? nb(temperature(1), 1) + " °C" : "—", !ETAT.thermo[1]);
+  put("lEc", lesDeuxThermos()
+    ? nb(temperature(1) - temperature(0), 2) + " °C" : "—", !lesDeuxThermos());
+  put("lPhi", nb(phiFond(0), 2) + " W");
+  put("lPhiG", nb(1000 * phiGaz(1), 0) + " mW");
+  put("lRemp", nb(100 * ETAT.remplissage, 0) + " %");
+  put("lChaux", ETAT.chaux ? "troublée ✓" : "limpide", !ETAT.chaux);
+  majCarnet();
+  majAccord();
+}
+function majCarnet() {
+  var t = $("carnet"), tr, td, k, m, L = [];
+  vide(t);
+  tr = document.createElement("tr");
+  ["t", "air — solveur", "air — lu", "CO₂ — solveur", "CO₂ — lu", "écart lu",
+   "fiche"].forEach(function (h) {
+    td = document.createElement("th"); td.textContent = h; tr.appendChild(td);
+  });
+  t.appendChild(tr);
+  for (k = 0; k < NL; k++) {
+    m = ETAT.mes[k];
+    if (!m) continue;
+    L.push([nb(m.t, 0) + " min", nb(m.air, 2) + " °C", nb(m.lueA, 0) + " °C",
+            nb(m.co2, 2) + " °C", nb(m.lueB, 0) + " °C",
+            nb(m.lueB - m.lueA, 0) + " °C",
+            celluleFiche(k, C_AIR) + " · " + celluleFiche(k, C_CO2) + " · " +
+            celluleFiche(k, C_ECART)]);
+  }
+  if (!L.length) {
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.setAttribute("colspan", 7); td.className = "vide";
+    td.textContent = "aucun relevé : monter les deux bocaux, allumer la lampe, " +
+      "puis relever aux instants prescrits";
+    tr.appendChild(td); t.appendChild(tr);
+    return;
+  }
+  L.forEach(function (ligne) {
+    tr = document.createElement("tr");
+    ligne.forEach(function (x, j) {
+      td = document.createElement("td");
+      if (j >= 1 && j <= 5) td.className = "mes";
+      td.textContent = x; tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  });
+}
+
+/* ==================================================================
+   21. LES COMMANDES HTML — §12.12 : chaque `value` sur la grille des pas
+   ================================================================== */
+var CURSEURS = [
+  { id: "rDist", k: "dist", o: "oDist", a: "aideDist",
+    f: function (v) { return nb(v, 1) + " cm"; },
+    aide: function () {
+      return "La fiche dit « à <b>égale distance</b> », sans nombre : c'est " +
+        "l'une des deux grandeurs que le <b>témoin</b> sert à fixer. La " +
+        "puissance reçue varie comme l'inverse du CARRÉ de la distance — ici " +
+        nb(phiFond(0), 2) + " W sur chaque fond.";
+    } },
+  { id: "rP", k: "pLampe", o: "oP", a: "aideP",
+    f: function (v) { return nb(v, 0) + " W"; },
+    aide: function () {
+      return "La fiche prescrit une lampe de <b>100 W</b>. Environ 85 % en " +
+        "sortent en rayonnement, dont 9 % seulement de visible : une lampe à " +
+        "incandescence est d'abord un <b>radiateur</b>, et c'est pour cela " +
+        "qu'elle chauffe les bocaux.";
+    } },
+  { id: "rCO2", k: "co2", o: "oCO2", a: "aideCO2",
+    f: function (v) { return nb(v, 0) + " %"; },
+    aide: function () {
+      return "Le second bocal n'est jamais rempli à 100 % en salle. À 0 % les " +
+        "deux bocaux sont identiques et l'écart doit tomber à zéro — c'est le " +
+        "meilleur contrôle de la page : si l'écart ne s'annule pas, c'est que " +
+        "quelque chose d'autre les distingue.";
+    } },
+  { id: "rSalle", k: "salle", o: "oSalle", a: "aideSalle",
+    f: function (v) { return nb(v, 1) + " °C"; },
+    aide: function () {
+      return "Lue dans la ligne « " + depouille(cel(0, C_T)) + " min » du " +
+        "tableau : la fiche relève <b>" + nb(T0_FICHE, 0) + " °C</b> de départ " +
+        "dans les deux bocaux, et c'est la température de la salle.";
+    } },
+  { id: "rMasse", k: "masse", o: "oMasse", a: "aideMasse",
+    f: function (v) { return nb(1000 * v, 0) + " g"; },
+    aide: function () {
+      return "La seconde grandeur que la fiche ne donne pas, et que le témoin " +
+        "fixe. C'est elle qui règle l'<b>inertie</b> du bocal, donc la vitesse " +
+        "à laquelle il approche son palier — pas le palier lui-même. Un bocal " +
+        "de 1 L pèse 400 à 600 g à vide.";
+    } }
+];
+function lireReglages() {
+  CURSEURS.forEach(function (c) { REG[c.k] = +$(c.id).value; });
+  ETAT.horsProto = horsProtocole();
+  videMemo();
+}
+function majAffichageReglages() {
+  CURSEURS.forEach(function (c) {
+    $(c.o).textContent = c.f(REG[c.k]);
+    $(c.a).innerHTML = typeof c.aide === "function" ? c.aide() : c.aide;
+  });
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+function construireVitesses() {
+  var d = $("vit");
+  vide(d);
+  [1, 15, 45, 90].forEach(function (v) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("data-v", v);
+    b.textContent = "×" + v;
+    b.className = v === ETAT.vitesse ? "on" : "";
+    b.addEventListener("click", function () { reglerVitesse(v); });
+    d.appendChild(b);
+  });
+}
+function reglerVitesse(v) {
+  ETAT.vitesse = v;
+  var bs = $("vit").children, i;
+  for (i = 0; i < bs.length; i++) {
+    bs[i].className = (+bs[i].getAttribute("data-v") === v) ? "on" : "";
+  }
+  noter("Temps × " + nb(v, 0) + " — le protocole de " + nb(DUREE_TOTALE, 0) +
+    " min tient en " + nb(DUREE_TOTALE * 60 / v, 0) + " s. ⚠ Le pas " +
+    "d'intégration ne change pas : le résultat non plus.", false);
+  majTout();
+}
+function brancherCommandes() {
+  CURSEURS.forEach(function (c) {
+    $(c.id).addEventListener("input", function () {
+      lireReglages();
+      majAffichageReglages();
+      majTout();
+    });
+  });
+  $("bProto").addEventListener("click", function () {
+    CURSEURS.forEach(function (c) { $(c.id).value = String(PROTO[c.k]); });
+    lireReglages(); majAffichageReglages(); majTout();
+    noter("Réglages ramenés à ceux du protocole.", true);
+  });
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+}
+function majTout() {
+  redessiner();
+  majEtapes();
+  majLectures();
+  tracerCourbes(); tracerBilan();
+  majAffichageReglages();
+  majBoutons();
+  $("bilan").textContent = ETAT.conclu
+    ? "seul l'ÉCART entre les deux bocaux a un sens — jamais la valeur absolue"
+    : "les deux bocaux ne diffèrent que par le gaz : tout le reste est commun";
+  majProtocole();
+  dire(consigne(), ETAT.conclu);
+}
+function majBoutons() {
+  var a, k = instantRelevable();
+  for (a in BOUTONS) BOUTONS[a].armer(false);
+  BOUTONS.verser.armer(!ETAT.verse && ETAT.couv[0]);
+  BOUTONS.lampe.libelle(ETAT.lampe ? "Lampe allumée" : "Allumer la lampe");
+  BOUTONS.lampe.armer(!ETAT.lampe && bocalPret(0) && bocalPret(1) &&
+    ETAT.rel[0][C_AIR]);
+  BOUTONS.relever.armer(k >= 0 && lesDeuxThermos());
+  BOUTONS.film.libelle(ETAT.couvercleVerre
+    ? "Fermer au film alimentaire" : "Revenir au couvercle");
+  BOUTONS.conclure.armer(toutesLignesFaites() && !ETAT.conclu);
+  if (ETAT.verse) BOUTONS.verser.fait();
+  if (ETAT.lampe) BOUTONS.lampe.fait();
+  if (ETAT.conclu) BOUTONS.conclure.fait();
+}
+
+/* ==================================================================
+   22. RECOMMENCER
+   ================================================================== */
+function recommencer() {
+  purger(); effacerCibles(); prise = null;
+  effacerGuide();          /* aucun halo ne survit a la remise en etat */
+  arreterDeroule();        /* ni un deroule en cours */
+  ANIM_ON = false;
+  var garde = ETAT.tSeance || 0, vit = ETAT.vitesse || 45;
+  ETAT = neufEtat();
+  ETAT.tSeance = garde;
+  ETAT.vitesse = vit;
+  lireReglages();
+  calerVU();
+  Object.keys(OBJ).forEach(function (q) {
+    OBJ[q].g.removeAttribute("filter");
+    COUCHES.objets.appendChild(OBJ[q].g);
+  });
+  Object.keys(BOUTONS).forEach(function (a) { BOUTONS[a].neuf(); });
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  $("concl").classList.add("masque");
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  secuDire(S_VERRE, "");
+  majAffichageReglages();
+  majTout();
+  noter("Poste remis en état : les deux bocaux sont vides et ouverts, les " +
+    "thermomètres et les couvercles sur le plateau, la lampe éteinte.", false);
+}
+
+/* ==================================================================
+   23. LE GUIDAGE
+   ================================================================== */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", { x: x, y: y, width: w, height: h,
+    rx: r === undefined ? 12 : r, fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity", values: "1;0.35;1",
+    dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b || b.cx === undefined) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+function surlignerObjet(q) {
+  var m = place(q);
+  halo(m.x - 46, m.y - 56, 92, 116, 14);
+}
+function surlignerBocal(k) {
+  halo(xBocal(k) - W_BOC / 2 - 8, Y_BOC - 10, W_BOC + 16, H_BOC + 20, 12);
+}
+
+var GUIDE = [
+  /* 1. « Placer les deux bocaux côte à côte, à la MÊME DISTANCE de la lampe,
+         mesurée à la règle. » */
+  { fait: function () { return ETAT.mesureFaite; },
+    aide: "Prendre la <b>règle graduée</b> et la poser entre la lampe et un " +
+      "bocal : c'est ainsi qu'on vérifie que les deux distances sont égales.",
+    montre: function () { surlignerObjet("regle"); montrerCibles("regle"); } },
+
+  /* 2. « Introduire dans chaque bocal un thermomètre identique, à la même
+         hauteur, sans qu'il touche le verre ni le fond. » */
+  { fait: lesDeuxThermos,
+    aide: function () {
+      if (!ETAT.thermo[0]) return "Glisser le premier <b>thermomètre</b> dans " +
+        "le bocal 1.";
+      return "Glisser le second <b>thermomètre</b> dans le bocal 2, à la " +
+        "<b>même hauteur</b>.";
+    },
+    montre: function () {
+      var q = ETAT.thermo[0] ? "thermoB" : "thermoA";
+      surlignerObjet(q); montrerCibles(q); surlignerBocal(ETAT.thermo[0] ? 1 : 0);
+    } },
+
+  /* 3. « Laisser le premier bocal rempli d'air ordinaire : c'est le témoin.
+         Le fermer. » */
+  { fait: function () { return ETAT.couv[0]; },
+    aide: "Poser le <b>couvercle</b> sur le bocal 1 : il garde son air, et " +
+      "c'est cela qui en fait le témoin.",
+    montre: function () {
+      surlignerObjet("couvA"); montrerCibles("couvA"); surlignerBocal(0);
+    } },
+
+  /* 4. « Préparer le dioxyde de carbone : verser le vinaigre sur le
+         bicarbonate dans l'erlenmeyer et boucher aussitôt. » */
+  { fait: function () { return ETAT.verse; },
+    aide: "Presser <b>« Verser le vinaigre »</b> : le dégagement commence, et " +
+      "l'erlenmeyer se bouche aussitôt.",
+    montre: function () { surlignerBouton("verser"); } },
+
+  /* 5. « Conduire le gaz par le tube JUSQU'AU FOND du second bocal. » */
+  { fait: function () { return ETAT.remplissage >= 1; },
+    aide: function () {
+      if (!ETAT.tubePose) return "Glisser le <b>tube à dégagement</b> jusqu'au " +
+        "FOND du bocal 2 : le dioxyde de carbone est plus lourd que l'air, il " +
+        "s'y accumule par le bas.";
+      return "Le bocal se remplit — " + nb(100 * ETAT.remplissage, 0) + " %. " +
+        "Le sélecteur de vitesse accélère l'attente.";
+    },
+    montre: function () {
+      surlignerObjet("tube"); montrerCibles("tube"); surlignerBocal(1);
+    } },
+
+  /* 6. « Vérifier le remplissage : prélever un peu du gaz et le faire barboter
+         dans l'eau de chaux, qui doit se troubler. » */
+  { fait: function () { return ETAT.chaux; },
+    aide: "Porter le tube d'<b>eau de chaux</b> au-dessus du bocal 2 pour y " +
+      "prélever un peu de gaz : elle doit se troubler.",
+    montre: function () { surlignerObjet("chaux"); montrerCibles("chaux"); } },
+
+  /* 7. « Fermer le second bocal dès que le dégagement a cessé. » */
+  { fait: function () { return ETAT.couv[1]; },
+    aide: "Poser le <b>couvercle</b> sur le bocal 2. La fiche l'interdit tant " +
+      "que le dégagement dure : la pression ferait sauter le bouchon.",
+    montre: function () {
+      surlignerObjet("couvB"); montrerCibles("couvB"); surlignerBocal(1);
+    } },
+
+  /* 8. « Noter les deux températures de départ, puis allumer la lampe et
+         déclencher le chronomètre. » */
+  { fait: function () { return ETAT.lampe; },
+    aide: function () {
+      if (!ETAT.rel[0][C_AIR]) return "Presser <b>« Relever »</b> : c'est la " +
+        "ligne « " + depouille(cel(0, C_T)) + " min », l'état de départ — et " +
+        "elle se relève AVANT d'allumer.";
+      return "Presser <b>« Allumer la lampe »</b> : le chronomètre part avec elle.";
+    },
+    montre: function () {
+      surlignerBouton(ETAT.rel[0][C_AIR] ? "lampe" : "relever");
+    } },
+
+  /* 9. « Relever les deux températures toutes les 5 minutes pendant
+         15 minutes, et calculer chaque fois l'écart. » */
+  /* ⚠ La conclusion se démasque sur un geste que la fiche n'écrit pas —
+         « reporter les écarts » est le terme que l'étape demande d'atteindre,
+         et c'est lui qui clôt le protocole (§12bis.6). Le prédicat porte donc
+         sur la conclusion, et non sur le seul dernier relevé. */
+  { fait: function () { return ETAT.conclu; },
+    aide: function () {
+      var k = prochainInstant();
+      if (toutesLignesFaites()) return "Les quatre relevés sont faits : presser " +
+        "<b>« Reporter et conclure »</b>.";
+      if (instantRelevable() === k) return "Presser <b>« Relever »</b> : le " +
+        "chronomètre marque l'instant prescrit.";
+      return "Attendre " + nb(INSTANTS[k], 0) + " min — le chronomètre marque " +
+        mmss(ETAT.t) + ". Le sélecteur de vitesse est là pour cela.";
+    },
+    montre: function () {
+      surlignerBouton(toutesLignesFaites() ? "conclure" : "relever");
+    } }
+];
+
+/* ==================================================================
+   24. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ETAT = neufEtat();
+  CURSEURS.forEach(function (c) { $(c.id).value = String(PROTO[c.k]); });
+  lireReglages();
+  calerVU();
+  ajouterDefs(); ajouterCouches();
+  construireDecor();
+  construireScene();
+
+  var lib = ["Verser le vinaigre", "Allumer la lampe", "Relever les deux",
+             "Fermer au film alimentaire", "Reporter et conclure"];
+  var act = ["verser", "lampe", "relever", "film", "conclure"];
+  var n = lib.length, wB = 188, dxB = (W - 2 * 118) / (n - 1);
+  lib.forEach(function (l, i) { boutonScene(118 + i * dxB, Y_BOUTONS, wB, 46, l, act[i]); });
+
+  brancherPrise(); brancherBoutons();
+  brancherPlein();   /* le plein ecran : sans cet appel, le bouton du cadre est mort */
+  construireHTML(); brancherCommandes(); construireVitesses();
+  majAffichageReglages();
+  construireProtocole();
+  recommencer();
+  demarrerHorloge();
+}
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. LES DEUX DISTANCES, VÉRIFIÉES À LA RÈGLE. La zone se demande à
+     `emplacements()` DANS L'ÉTAT COURANT — jamais une position en dur. */
+  function () {
+    var z = zoneDe("regle", "poste");
+    if (z) { deposer("regle", z); return 560; }
+    return 0;
+  },
+
+  /* 2. UN THERMOMÈTRE DANS CHAQUE BOCAL, à la même hauteur. Deux gestes, et
+     l'étape reste courante entre les deux : c'est normal, l'aide porte le
+     compte et le déroulé repasse. */
+  function () {
+    var z;
+    if (!ETAT.thermo[0]) {
+      z = zoneDe("thermoA", "poste");
+      if (z) { deposer("thermoA", z); return 540; }
+      return 0;
+    }
+    z = zoneDe("thermoB", "poste");
+    if (z) { deposer("thermoB", z); return 540; }
+    return 0;
+  },
+
+  /* 3. FERMER LE TÉMOIN. Il garde son air, et c'est cela qui en fait un
+     témoin : on n'y touche plus jusqu'à la fin. */
+  function () {
+    var z = zoneDe("couvA", "poste");
+    if (z) { deposer("couvA", z); return 540; }
+    return 0;
+  },
+
+  /* 4. PRÉPARER LE DIOXYDE DE CARBONE */
+  function () { presserBouton("verser"); return 660; },
+
+  /* 5. CONDUIRE LE TUBE JUSQU'AU FOND, ET LAISSER LE BOCAL SE REMPLIR.
+     Le remplissage est une phase minutée : tant qu'elle court, le geste rend
+     un délai NÉGATIF — « j'attends » —, ce qui empêche le déroulé de la
+     prendre pour une panne. Le temps se joue, il ne se saute pas. */
+  function () {
+    var z;
+    if (!ETAT.tubePose) {
+      z = zoneDe("tube", "poste");
+      if (z) { deposer("tube", z); return 620; }
+      return 0;
+    }
+    accelererTemps();
+    if (ETAT.remplissage < 1) return -1200;
+    return 0;
+  },
+
+  /* 6. LE CONTRÔLE À L'EAU DE CHAUX — celui de la leçon 4. La page refuse le
+     prélèvement tant que le bocal n'est pas plein, et elle a raison : on ne
+     prélèverait que de l'air. */
+  function () {
+    var z = zoneDe("chaux", "poste");
+    if (z) { deposer("chaux", z); return 700; }
+    return 0;
+  },
+
+  /* 7. FERMER LE SECOND BOCAL, le dégagement ayant cessé */
+  function () {
+    var z = zoneDe("couvB", "poste");
+    if (z) { deposer("couvB", z); return 540; }
+    return 0;
+  },
+
+  /* 8. LES DEUX TEMPÉRATURES DE DÉPART, PUIS LA LAMPE. L'ordre est de la
+     fiche, et la page le fait respecter : sans la ligne « 0 min » il n'y a
+     pas d'origine, et allumer est refusé. */
+  function () {
+    if (!ETAT.rel[0][C_AIR]) { presserBouton("relever"); return 520; }
+    presserBouton("lampe");
+    return 760;
+  },
+
+  /* 9. LES QUATRE RELEVÉS. La simulation s'ARRÊTE d'elle-même sur chaque
+     instant prescrit et attend le relevé — sans quoi, à ×150, la demi-minute
+     de tolérance passerait en deux dixièmes de seconde et le déroulé la
+     manquerait une fois sur deux. */
+  function () {
+    accelererTemps();
+    if (instantRelevable() >= 0) { presserBouton("relever"); return 560; }
+    if (toutesLignesFaites()) { presserBouton("conclure"); return 640; }
+    return -1500;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, ce qui est le premier
+   usage de cette page en classe. On agrandit le CADRE, pas la mise en
+   page.                                                                    */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

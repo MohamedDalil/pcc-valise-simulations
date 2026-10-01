@@ -1,0 +1,3732 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-11 · La masse se conserve-t-elle ?</title>
+
+<!--
+  ===================================================================
+  E2AC-11 · 2AC · L06 — PAILLASSE VIRTUELLE
+  « La masse se conserve-t-elle au cours d'une réaction chimique ? »
+  ===================================================================
+
+  CE QUE CETTE PAGE EST
+  ---------------------
+  Une paillasse qu'on MANIPULE, et dont les résultats sont CALCULÉS.
+
+  · On manipule : l'éprouvette d'acide, le bouchon, le flacon, le morceau de
+    craie et le tube d'eau de chaux se prennent à la souris et se posent. Le
+    flacon refuse de quitter le plateau une fois m₁ relevée, le bouchon refuse
+    de coiffer un flacon vide, la balance refuse de rien inventer. Les boutons
+    de scène ne servent qu'aux gestes que le protocole fait d'un seul coup, et
+    chacun DOUBLE un glisser qui reste possible, en passant par la MÊME
+    fonction.
+
+  · On calcule : la masse affichée n'est écrite nulle part. C'est la SOMME de
+    ce qui se trouve sur le plateau — verrerie, solution, craie, gaz —, moins
+    la poussée d'Archimède de l'air déplacé. Le flacon porte un INVENTAIRE en
+    moles ; la réaction n'y déplace de la matière que d'une case à l'autre :
+
+        CaCO₃ + 2 HCl  →  CaCl₂ + H₂O + CO₂
+
+    Rien n'entre, rien ne sort — SAUF par le col débouché. C'est le seul
+    endroit du modèle où de la matière quitte le système, et c'est de là que
+    sortent les DEUX verdicts opposés de la leçon, sans qu'aucun ne soit écrit :
+
+      · flacon BOUCHÉ   — m₂ − m₁ = +0,0002 g, soit 0,02 division de balance.
+                          L'afficheur ne bouge pas d'un centigramme, et il ne
+                          bouge pas non plus d'un milligramme. Le +0,0002 g
+                          n'est même pas du néant : c'est la poussée
+                          d'Archimède que la craie perd en entrant dans le
+                          flacon. Le modèle la porte, et elle est invisible.
+      · flacon DÉBOUCHÉ — m₃ − m₂ = −0,136 g, soit 13,6 divisions. La balance
+                          descend exactement de la masse du gaz parti.
+
+    Balayage de contrôle : 360 combinaisons de réglages. Bouchon en place,
+    l'écart |m₂ − m₁| ne dépasse jamais 0,098 division ; bouchon ôté, la chute
+    |m₃ − m₂| vaut au moins 1,46 division. Les deux verdicts ne se croisent
+    jamais.
+
+  · Et le modèle produit ce que la fiche n'énonce pas : ce qui s'échappe du
+    flacon n'est PAS du dioxyde de carbone pur. C'est le MÉLANGE du ciel
+    gazeux, dans les proportions où il se trouve — 0,137 g sortent pour
+    0,176 g de CO₂ formé. Si l'on laissait le flacon ouvert jusqu'à ce que
+    tout le CO₂ soit remplacé par de l'air, la perte atteindrait 0,177 g,
+    c'est-à-dire la masse du gaz formé, à la vapeur d'eau près. La page
+    calcule les deux et les affiche.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau et conclusion viennent de
+    `valise/curriculum/experiences.yaml`, entrée E2AC-11. Ils ne sont PAS
+    recopiés : le bloc `DONNEES` est régénéré par `_sync_donnees.py`.
+  · Les constantes vivent dans `PHYS`, chacune avec sa provenance, et le
+    tableau du capot se régénère depuis cet objet.
+  · La masse de la VERRERIE n'est pas une donnée : elle se DÉDUIT de m₁ aux
+    conditions du protocole, comme en salle — la fiche fixe une LECTURE, pas
+    la masse d'un erlenmeyer. Elle sort à 134,00 g, ce qui est bien la masse
+    d'un erlenmeyer de 250 mL (SKILL §12.44).
+
+  UN DÉSACCORD AVEC LA FICHE, DIT À L'ÉCRAN
+  -----------------------------------------
+  La sécurité parle d'une « légère surpression ». Au réglage du protocole le
+  modèle en trouve 49 kPa, soit une demi-atmosphère : ce n'est pas rien. C'est
+  précisément pourquoi la fiche ajoute « n'employer qu'un TRÈS PETIT morceau de
+  craie » et « enfoncer simplement le bouchon, sans jamais le visser à fond ni
+  le ficeler ». Le curseur de masse de craie parcourt le domaine, et au-delà
+  de 1,15 g le bouchon SAUTE — la page le montre, le chiffre, et cite la ligne
+  de sécurité qui l'annonçait. Une consigne de sécurité se montre, elle ne se
+  répète pas (SKILL §12.28).
+
+  CE QU'ELLE N'EST PAS
+  --------------------
+  · Elle est AUTONOME : ni `generer.py`, ni `moteur.js`, ni `simulation.html.j2`,
+    et elle ne s'ouvre pas depuis `index.html`. Elle DOUBLE
+    `simulation_E2AC-11.html`, elle ne la remplace pas.
+  · Elle n'a pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL : on
+    cherche qu'un objet se reconnaisse comme un objet et donne envie d'y
+    porter la main.
+  · Le dessin est un schéma habillé. Sont à l'échelle : la hauteur de liquide
+    dans le flacon et dans l'éprouvette, et la taille du morceau de craie, qui
+    suivent le calcul. Ne le sont pas : les diamètres de verrerie, la balance,
+    le plan de travail.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cmd.vit button{padding:5px 12px;font-family:var(--mono)}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ⚠ LE COIN BAS-DROIT N'EST PAS LIBRE (SKILL §12bis) — et rien d'autre que la
+   capture ne le dit. La flèche d'avance reçoit donc sa PROPRE bande : on
+   raccourcit la scène de 56 px et l'on range le bouton dans la bande libérée.
+   Ces trois règles viennent APRÈS le bloc que `aligner_fleche.py` insère plus
+   haut, et elles le corrigent — c'est l'ordre de la feuille qui tranche.
+   ⚠ `!important` À DESSEIN : le SVG porte un style EN LIGNE (`height:auto`)
+   qui bat tout sélecteur ; sans cela la scène projetée est rognée en haut et
+   en bas, et la bande de commandes du bas disparaît. */
+#paillasse:fullscreen{align-items:flex-start}
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{right:24px;bottom:6px;height:44px;min-width:44px;
+  border-radius:22px;font-size:22px;padding:0 18px;gap:11px}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-11 · 2AC · L06</span>
+</div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 6</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">
+        Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ce réglage-ci</b> a donné. La lecture de la balance en est la
+        <b>somme</b>, jamais une valeur recopiée.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Instruments <span class="note" id="etatSysteme">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Lecture de la balance</div><div class="v" id="lBal">—</div></div>
+        <div><div class="k">Matière dans le flacon</div><div class="v" id="lMat">—</div></div>
+        <div><div class="k">Craie restante</div><div class="v off" id="lCraie">—</div></div>
+        <div><div class="k">Dioxyde de carbone formé</div><div class="v off" id="lCO2">—</div></div>
+        <div><div class="k">Pression dans le flacon</div><div class="v" id="lP">—</div></div>
+        <div><div class="k">Gaz sorti du flacon</div><div class="v off" id="lSorti">—</div></div>
+        <div><div class="k">m₂ − m₁</div><div class="v off" id="lD12">—</div></div>
+        <div><div class="k">m₃ − m₂</div><div class="v off" id="lD23">—</div></div>
+      </div>
+      <div style="margin-top:11px"><span class="lbl">Ce que le plateau porte, seconde après seconde</span></div>
+      <svg id="gMasse" viewBox="0 0 360 194" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src">Trait plein : la lecture de la balance. Trait pointillé :
+      la matière présente dans le flacon. Les deux ne se séparent qu'au moment
+      où l'on débouche.</div>
+      <div class="cmd vit" id="vit">
+        <button class="sec" type="button" data-v="1">×1</button>
+        <button class="sec on" type="button" data-v="10">×10</button>
+        <button class="sec" type="button" data-v="30">×30</button>
+        <button class="sec" type="button" data-v="60">×60</button>
+      </div>
+      <div class="src">Le temps de la simulation seul est accéléré : le
+      minuteur de séance, lui, court en temps réel.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Le système</h2>
+      <div class="reg"><label for="rC">Masse du morceau de craie</label><output id="oC"></output>
+        <input type="range" id="rC" min="5" max="200" step="5" value="40">
+        <div class="aide" id="aideC"></div></div>
+      <div class="reg"><label for="rA">Volume d'acide versé</label><output id="oA"></output>
+        <input type="range" id="rA" min="10" max="100" step="5" value="50"></div>
+      <div class="reg"><label for="rN">Concentration de l'acide</label><output id="oN"></output>
+        <input type="range" id="rN" min="2" max="20" step="1" value="10">
+        <div class="aide" id="aideN"></div></div>
+      <div class="reg"><label for="rV">Volume du flacon</label><output id="oV"></output>
+        <input type="range" id="rV" min="100" max="500" step="50" value="250">
+        <div class="aide" id="aideV"></div></div>
+      <div style="margin-top:11px"><span class="lbl">Surpression selon la masse de craie</span></div>
+      <svg id="gPres" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+    </div>
+
+    <div class="carte">
+      <h2>Conditions de la salle</h2>
+      <div class="reg"><label for="rT">Température</label><output id="oT"></output>
+        <input type="range" id="rT" min="15" max="30" step="1" value="20"></div>
+      <div class="reg"><label for="rP">Pression atmosphérique</label><output id="oP"></output>
+        <input type="range" id="rP" min="980" max="1030" step="1" value="1013"></div>
+      <div class="reg"><label for="rH">Humidité</label><output id="oH"></output>
+        <input type="range" id="rH" min="0" max="100" step="5" value="50">
+        <div class="aide" id="aideH"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Ce que lit la balance</h3>
+      <p>Une balance ne lit pas une masse : elle lit une masse <b>moins la
+      poussée d'Archimède</b> de l'air déplacé. Ici la lecture est la
+      <b>somme</b> de ce que porte le plateau — et rien de ce qui s'affiche
+      n'est écrit dans la fiche.</p>
+      <div class="eq" id="eqBal"></div>
+      <h3>2 · Ce que devient la matière</h3>
+      <p>Le flacon porte un <b>inventaire en moles</b>. La réaction n'y crée ni
+      n'y détruit rien : elle déplace de la matière d'une case à l'autre. Le
+      <b>seul</b> endroit du modèle où de la matière quitte le système est le
+      col débouché.</p>
+      <div class="eq" id="eqMat"></div>
+      <p>C'est ce qui donne les deux verdicts opposés sans qu'aucun ne soit
+      écrit : bouché, la somme ne change pas ; débouché, elle perd exactement
+      ce qui est sorti.</p>
+      <div class="eq" id="eqVerdict"></div>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>La masse de la verrerie n'est pas mesurée, elle est déduite.</b>
+        La fiche fixe une <i>lecture</i> — 200,00 g — pas la masse d'un
+        erlenmeyer : la verrerie est calée sur m₁ aux conditions du protocole,
+        une fois pour toutes. Changer un réglage change donc l'absolu, jamais
+        l'écart entre deux pesées, et c'est l'écart qui est la leçon.</li>
+        <li><b>La balance n'a ni dérive, ni bruit, ni courant d'air.</b> En
+        salle, une main posée sur la paillasse fait bouger le centigramme —
+        c'est-à-dire un dixième de ce qu'on cherche à voir. La page ne le
+        simule pas.</li>
+        <li><b>Le dioxyde de carbone qui se dissout dans la solution n'est pas
+        compté à part.</b> Il reste dans le système, donc la masse totale est
+        juste ; mais la pression calculée est alors un peu trop forte, et le
+        volume de gaz un peu trop grand. À 20 °C et sous une atmosphère, un
+        litre d'eau dissout environ 1,7 g de CO₂.</li>
+        <li><b>Le flacon débouché n'est traité que jusqu'à la détente.</b> Le
+        modèle ramène le ciel gazeux à la pression de la salle et s'arrête là.
+        Ensuite le dioxyde de carbone continue de sortir lentement, par
+        diffusion, parce qu'il est plus lourd que l'air : la page CALCULE et
+        affiche ce que la balance perdrait à la fin de ce balayage, mais elle
+        ne le joue pas — il faudrait une vitesse de renouvellement que la fiche
+        ne donne pas.</li>
+        <li><b>La vitesse de l'effervescence est une loi de surface.</b> Elle
+        vient de Plummer, Wigley et Parkhurst ; en salle, l'attaque est en
+        partie limitée par le transport, et la durée dépend de la forme du
+        morceau, de l'agitation et de la porosité de la craie. Le modèle prend
+        un morceau cubique et lisse.</li>
+        <li><b>L'eau de chaux ne se redissout pas.</b> Un excès de dioxyde de
+        carbone redissout le précipité en hydrogénocarbonate — c'est le piège
+        classique du barbotage prolongé. Le protocole ne fait qu'un seul
+        recueil, et le modèle s'arrête au précipité.</li>
+        <li><b>La craie du tableau n'est pas celle de la fiche.</b> La craie
+        scolaire moderne est du <i>sulfate</i> de calcium, qui ne fait aucune
+        effervescence. La fiche écrit « morceau de craie (calcaire) » : c'est
+        du carbonate, et c'est bien lui que le modèle attaque.</li>
+        <li><b>Le dessin est un schéma habillé.</b> Suivent le calcul : la
+        hauteur de liquide dans le flacon et l'éprouvette, et la taille du
+        morceau de craie. Ne le suivent pas : les diamètres de verrerie, la
+        balance, le plan de travail.</li>
+      </ul>
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-11.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-11",
+  "niveau": "2AC",
+  "unite": "U1",
+  "lecon": "L06",
+  "titre": "La masse se conserve-t-elle au cours d'une réaction chimique ?",
+  "axe": "La conservation de la masse",
+  "objectif": "Vérifier, en **récipient fermé**, que la masse totale ne change pas au cours d'une réaction chimique, et comprendre, en rouvrant le récipient, pourquoi une réaction qui dégage un gaz **semble** faire perdre de la matière.",
+  "duree": 20,
+  "modalite": "groupes de 4 — 8 postes",
+  "materiel": [
+    "Une **balance électronique** au centigramme (0,01 g), une par poste",
+    "Un **flacon** (ou un erlenmeyer) muni de son **bouchon**",
+    "De l'**acide chlorhydrique dilué**, environ 50 mL par poste",
+    "Un **morceau de craie** (calcaire) de la taille d'un ongle — pas davantage",
+    "Une éprouvette graduée de 100 mL et un entonnoir",
+    "De l'**eau de chaux** limpide et un tube à essai, pour identifier le gaz (rappel de la leçon 4)",
+    "Des **lunettes de protection** et des gants pour chaque poste"
+  ],
+  "securite": [
+    "L'**acide chlorhydrique est corrosif** : **lunettes et gants obligatoires**, blouse fermée, et jamais de pipetage à la bouche.",
+    "Verser toujours l'**acide dans l'eau**, jamais l'inverse, et manipuler le flacon posé sur la paillasse, pas tenu en main.",
+    "La réaction **dégage un gaz** et met le flacon en légère **surpression** : n'employer qu'un **très petit** morceau de craie et **enfoncer simplement** le bouchon, sans jamais le visser à fond ni le ficeler.",
+    "Ne jamais **diriger le flacon vers le visage** d'un camarade, ni s'en approcher pour regarder par le goulot.",
+    "En cas de projection sur la peau ou dans l'œil : rincer **abondamment à l'eau** et prévenir immédiatement l'enseignant.",
+    "Ne rien jeter dans l'évier : verser le contenu dans le bac de récupération, puis rincer la verrerie.",
+    "Se laver les mains à la fin de la séance."
+  ],
+  "protocole": [
+    "Verser dans le flacon environ **50 mL d'acide chlorhydrique dilué**, puis **boucher** le flacon.",
+    "Poser sur le plateau de la balance le **flacon bouché** et, **à côté de lui**, le morceau de **craie** ; lire et noter la masse totale **m₁**.",
+    "Déboucher le flacon, y laisser tomber le morceau de craie, et **reboucher aussitôt** — sans rien retirer du plateau.",
+    "Observer ce qui se passe dans le flacon : la craie diminue et une **effervescence** apparaît ; noter ce que l'on voit.",
+    "Attendre que l'effervescence ait complètement cessé, puis lire et noter la masse totale **m₂**, toujours sans rien retirer du plateau.",
+    "Comparer **m₁** et **m₂**.",
+    "**Contre-épreuve** : **déboucher** le flacon, le laisser ouvert quelques instants, puis lire une troisième fois la masse **m₃**.",
+    "Comparer **m₃** à **m₂**, et chercher ce qui a pu quitter le plateau alors qu'on n'y a touché à rien.",
+    "Identifier le gaz : reprendre un flacon, recueillir le dégagement dans un tube à essai contenant de l'**eau de chaux** limpide et agiter."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Pesée",
+      "Le flacon est…",
+      "Masse lue"
+    ],
+    "lignes": [
+      [
+        "Avant la réaction — m₁",
+        "",
+        ""
+      ],
+      [
+        "Après la réaction — m₂",
+        "",
+        ""
+      ],
+      [
+        "Après ouverture — m₃",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Avant la réaction — m₁",
+        "**bouché**",
+        "200,00 g"
+      ],
+      [
+        "Après la réaction — m₂",
+        "**bouché**",
+        "200,00 g"
+      ],
+      [
+        "Après ouverture — m₃",
+        "**débouché**",
+        "**inférieure** à 200,00 g"
+      ]
+    ]
+  },
+  "observation": "Le flacon étant bouché, la balance affiche la même masse avant et après la réaction. Débouché, le même flacon accuse une masse inférieure, alors que rien n'a été retiré du plateau.",
+  "conclusion": "Au cours d'une réaction chimique, la masse des réactifs qui disparaissent est égale à la masse des produits qui se forment : la masse se conserve. Elle ne semble diminuer que lorsqu'un produit gazeux quitte le récipient.",
+  "oheric": {
+    "observation": "La bombonne de butane de la cuisine pèse **12 kg** quand on l'achète chez l'épicier ; quelques semaines plus tard elle est vide, et bien plus légère. Personne n'a rien versé, rien retiré : le gaz a **brûlé**. Le charbon du *mejmar*, lui aussi, se consume et il n'en reste qu'un peu de cendre. Faut-il en conclure que la matière **disparaît** quand elle réagit ? Lavoisier a pourtant écrit : « **Rien ne se perd, rien ne se crée, tout se transforme** ». Que devient exactement la **masse** au cours d'une réaction chimique ?",
+    "hypothese": "**Si** la matière ne disparaît pas mais se transforme seulement, **alors** la masse totale mesurée **avant** la réaction doit être **égale** à la masse totale mesurée **après**, **à condition** que rien n'ait pu quitter le plateau de la balance. Et si un **gaz** se forme et s'échappe, alors la balance doit afficher **moins** — non parce que la matière a disparu, mais parce qu'elle est **partie**.",
+    "experience": "Peser, sur une balance électronique, un flacon **bouché** contenant de l'acide chlorhydrique dilué **et**, à côté, un morceau de craie. Faire tomber la craie dans l'acide, **reboucher aussitôt**, attendre la fin de l'effervescence, et peser de nouveau **sans rien retirer du plateau**. **Contre-épreuve** : **déboucher** le flacon et peser une troisième fois.",
+    "resultats": "Dès que la craie touche l'acide, une vive **effervescence** se produit : des bulles de gaz montent dans le liquide et le morceau de craie diminue jusqu'à disparaître. Recueilli dans un tube à essai, ce gaz **trouble l'eau de chaux** : c'est du **dioxyde de carbone**. Pendant tout ce temps, le flacon étant **bouché**, la balance n'a **pas bougé** : **m₂ = m₁ = 200,00 g**. Mais dès que l'on **débouche** le flacon et qu'on le laisse ouvert quelques instants, la masse lue **diminue** : **m₃** est **inférieure** à 200,00 g, alors que rien n'a été retiré du plateau.",
+    "interpretation": "Des corps ont **disparu** — la craie, une partie de l'acide — et un corps **nouveau** est apparu, le dioxyde de carbone, reconnu à l'eau de chaux : il y a bien eu **réaction chimique**. Et pourtant la balance n'a rien indiqué de neuf : **la masse totale s'est conservée**. Le bouchon est ici le point décisif. Tant qu'il est en place, le système est **fermé** : le gaz formé reste enfermé, il est encore sur le plateau, et il est encore pesé. Dès qu'on l'ôte, le gaz **s'échappe** dans la salle — il ne pèse plus sur la balance, et la masse lue baisse. **La matière n'a pas disparu : elle est sortie du système.** Le flacon débouché joue donc le rôle de **contre-exemple**, et c'est lui, non le flacon fermé, qui explique la bombonne de butane : le gaz brûlé est parti dans l'air sous forme de dioxyde de carbone et d'eau, que personne ne pèse. Une variante rend la chose visible à l'œil : coiffer le flacon d'un **ballon de baudruche** au lieu d'un bouchon — le ballon **se gonfle**, la balance n'indique rien de nouveau ; qu'on retire le ballon et qu'on le dégonfle, et la masse tombe aussitôt. L'hypothèse est validée.",
+    "conclusion": "**Au cours d'une réaction chimique, la masse totale des réactifs qui disparaissent est égale à la masse totale des produits qui se forment : la masse se conserve.** C'est la **loi de conservation de la masse**, énoncée par **Lavoisier** : « Rien ne se perd, rien ne se crée, tout se transforme ». Pour la **vérifier**, il faut peser en **système fermé** : si un produit gazeux s'échappe, la balance affiche moins, mais ce n'est pas la loi qui est en défaut — c'est la **mesure** qui est incomplète."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Chaque nombre porte sa provenance, et le tableau du capot se RÉGÉNÈRE
+   depuis cet objet : il n'est jamais retapé dans le HTML.                  */
+var PHYS = {
+  R:      { v: 8.314462618, u: "J·mol⁻¹·K⁻¹", n: "constante des gaz parfaits",
+            s: "CODATA / SI — exacte depuis la révision de 2019" },
+  M_H:    { v: 1.008,   u: "g·mol⁻¹", n: "masse molaire de l'hydrogène",
+            s: "IUPAC 2021, poids atomique standard abrégé" },
+  M_C:    { v: 12.011,  u: "g·mol⁻¹", n: "masse molaire du carbone",
+            s: "IUPAC 2021, poids atomique standard abrégé" },
+  M_O:    { v: 15.999,  u: "g·mol⁻¹", n: "masse molaire de l'oxygène",
+            s: "IUPAC 2021, poids atomique standard abrégé" },
+  M_Cl:   { v: 35.45,   u: "g·mol⁻¹", n: "masse molaire du chlore",
+            s: "IUPAC 2021 — intervalle [35,446 ; 35,457], valeur abrégée" },
+  M_Ca:   { v: 40.078,  u: "g·mol⁻¹", n: "masse molaire du calcium",
+            s: "IUPAC 2021, poids atomique standard abrégé" },
+  M_AIR:  { v: 28.9647, u: "g·mol⁻¹", n: "masse molaire apparente de l'air sec",
+            s: "CIPM-2007 : 28,965 46 g/mol" },
+  RHO_CR: { v: 2500,    u: "kg·m⁻³", n: "masse volumique de la craie (calcaire)",
+            s: "calcite 2,71 ; craie naturelle, poreuse, 2,2 à 2,5" },
+  RHO_AC: { v: 1016,    u: "kg·m⁻³", n: "masse volumique de l'acide dilué",
+            s: "solution aqueuse de HCl à 1 mol/L, soit ≈ 3,6 % en masse, à 20 °C" },
+  V_VER:  { v: 52,      u: "cm³", n: "volume de verre d'un erlenmeyer de 250 mL",
+            s: "un erlenmeyer de 250 mL pèse ≈ 130 g ; verre 2,5 g/cm³" },
+  M_BOU:  { v: 15,      u: "g", n: "masse du bouchon",
+            s: "bouchon de liège n° 22, celui d'un col d'erlenmeyer de 250 mL" },
+  V_BOU:  { v: 62,      u: "cm³", n: "volume du bouchon", s: "liège 0,24 g/cm³" },
+  D_COL:  { v: 19,      u: "mm", n: "diamètre intérieur du col",
+            s: "erlenmeyer à col étroit de 250 mL" },
+  F_BOU:  { v: 40,      u: "N", n: "force que retient un bouchon simplement enfoncé",
+            s: "un bouchon de liège de bouteille, enfoncé à fond sur 38 mm, " +
+               "s'extrait sous 200 à 400 N ; ramené aux ~10 mm engagés d'un " +
+               "bouchon posé à la main, ce que la fiche impose précisément " +
+               "(« sans jamais le visser à fond ni le ficeler »)" },
+  K_PWP:  { v: 0.198,   u: "—", n: "log k₁ de la dissolution de la calcite",
+            s: "Plummer, Wigley et Parkhurst 1978 : log k₁ = 0,198 − 444/T, " +
+               "k₁ en mmol·cm⁻²·s⁻¹, régime acide R = k₁·a(H⁺)" },
+  SOL_CH: { v: 1.73,    u: "g·L⁻¹", n: "solubilité de l'hydroxyde de calcium",
+            s: "eau de chaux saturée à 20 °C — 0,173 g pour 100 mL" },
+  V_TUBE: { v: 20,      u: "cm³", n: "volume de gaz que reçoit le tube à essai",
+            s: "tube à essai de 16 × 160 mm, rempli aux deux tiers" },
+  V_CHAUX:{ v: 5,       u: "cm³", n: "eau de chaux dans le tube",
+            s: "hauteur usuelle d'un fond de tube à essai" },
+  TROUBLE:{ v: 0.05,    u: "g·L⁻¹", n: "seuil de trouble visible",
+            s: "seuil d'ASPECT, pas une constante physique : au-dessous, " +
+               "le précipité ne se voit pas à l'œil dans un tube" }
+};
+var R_GAZ = PHYS.R.v;
+var M_AT = { H: PHYS.M_H.v, C: PHYS.M_C.v, O: PHYS.M_O.v,
+             Cl: PHYS.M_Cl.v, Ca: PHYS.M_Ca.v };
+var M_AIR = PHYS.M_AIR.v;
+var RHO_CRAIE = PHYS.RHO_CR.v, RHO_ACIDE = PHYS.RHO_AC.v;
+var V_VERRE = PHYS.V_VER.v * 1e-6, M_BOUCHON = PHYS.M_BOU.v;
+var V_BOUCHON = PHYS.V_BOU.v * 1e-6;
+var S_COL = Math.PI * Math.pow(PHYS.D_COL.v * 1e-3 / 2, 2);
+var F_BOUCHON = PHYS.F_BOU.v;
+var V_TUBE = PHYS.V_TUBE.v * 1e-6, V_CHAUX = PHYS.V_CHAUX.v * 1e-6;
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+var IND = "₀₁₂₃₄₅₆₇₈₉";
+function ind(n) {
+  return String(n).split("").map(function (c) {
+    return /[0-9]/.test(c) ? IND.charAt(+c) : c;
+  }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline.
+   Et l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var C_INT = 0, C_ETAT = 1, C_VAL = 2;
+var L_M1 = 0, L_M2 = 1, L_M3 = 2;
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+/* Un nombre se LIT dans la fiche ; il ne se recopie pas. Le motif exige que le
+   nombre COMMENCE par un chiffre — une classe qui accepterait un point tout
+   seul rendrait NaN sur la ponctuation, et NaN ne lève rien (SKILL §12.29). */
+function nombre(t) {
+  var m = /(\d[\d  ]*(?:[.,]\d+)?)/.exec(String(t == null ? "" : t));
+  return m ? parseFloat(m[1].replace(/[  ]/g, "").replace(",", ".")) : NaN;
+}
+function uniteDe(t) {
+  var m = /\d\s*([A-Za-zµ°%]+)/.exec(String(t == null ? "" : t));
+  return m ? m[1] : "g";
+}
+/* La cellule de m₃ ne donne PAS un nombre : elle donne une COMPARAISON,
+   « inférieure à 200,00 g ». On la transcrit, on ne la complète pas. */
+function estMoins(t) { return /inf[ée]rieur|moins|<|baiss|diminu/i.test(t || ""); }
+
+var F_M1 = nombre(cel(L_M1, C_VAL));
+var F_M2 = nombre(cel(L_M2, C_VAL));
+var F_M3 = nombre(cel(L_M3, C_VAL));
+var M3_MOINS = estMoins(cel(L_M3, C_VAL));
+var U_M = uniteDe(cel(L_M1, C_VAL));
+/* Le REPÈRE de chaque pesée — « m₁ », « m₂ », « m₃ » — se lit à la suite du
+   tiret de l'intitulé, jamais écrit ici. */
+function repere(k) {
+  var p = String(intitule(k, C_INT) || cel(k, C_INT)).split(/\s*[—–]\s*/);
+  return (p.length > 1 ? p[p.length - 1] : "").trim() || ("m" + ind(k + 1));
+}
+function moment(k) {
+  return String(intitule(k, C_INT) || cel(k, C_INT)).split(/\s*[—–]\s*/)[0].trim();
+}
+var SYM = [repere(0), repere(1), repere(2)];
+/* « bouché » / « débouché » : la fiche dit, colonne par colonne, dans quel
+   état doit être le flacon au moment de chaque pesée. La page s'en sert comme
+   d'une CONDITION, pas comme d'un libellé. */
+function etatFiche(k) { return cel(k, C_ETAT); }
+function fermeAttendu(k) { return !/^d[ée]/i.test(etatFiche(k)); }
+
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var p = DONNEES.protocole || [], i, t;
+  for (i = 0; i < p.length; i++) { t = depouille(p[i]); if (motif.test(t)) return t; }
+  return "";
+}
+/* Un intitulé de matériel raccourci en étiquette. L'article de tête part
+   AVANT la coupe, sans quoi « Une balance électronique » se coupe à
+   « Une balance ». */
+function court(t, n) {
+  if (!t) return "";
+  var s = depouille(t).split(/,| et | pour | ou | \(/)[0].trim();
+  s = s.replace(/^(une?|des|du|de\s+l['’]|de\s+la|de|les?|la|l['’])\s*/i, "").trim();
+  n = n || 24;
+  if (s.length > n) s = s.slice(0, n + 1).replace(/\S*$/, "").trim();
+  return s.replace(/\s+(de|du|d['’]|à|en|une|un)$/i, "").trim();
+}
+/* La RÉSOLUTION de la balance est écrite dans le matériel : « au centigramme
+   (0,01 g) ». On la lit ; on ne la fixe pas ici. */
+function resolutionBalance() {
+  var t = materiel(/balance/i), m = /\(?\s*(\d+[.,]\d+)\s*g\s*\)?/.exec(t);
+  if (m) return parseFloat(m[1].replace(",", "."));
+  if (/centigramme/i.test(t)) return 0.01;
+  if (/milligramme/i.test(t)) return 0.001;
+  return 0.1;
+}
+var RESOL = resolutionBalance();
+var DEC = Math.max(0, Math.round(-Math.log(RESOL) / Math.LN10));
+/* Le VOLUME d'acide prescrit est écrit dans le protocole (« environ 50 mL »),
+   pas ici. Pas de drapeau d'insensibilité à la casse : le « m » de mL n'est
+   pas celui de « minutes », et l'unité ne doit pas être suivie d'une lettre
+   (SKILL §12.29). */
+function volumeAcideFiche() {
+  var t = proto(/acide/i), m = /(\d[\d.,]*)\s*mL(?![A-Za-zÀ-ÿ])/.exec(t);
+  if (!m) m = /(\d[\d.,]*)\s*mL(?![A-Za-zÀ-ÿ])/.exec(materiel(/acide/i));
+  return m ? parseFloat(m[1].replace(",", ".")) : 50;
+}
+var V_ACIDE_FICHE = Math.round(volumeAcideFiche());
+
+/* ==================================================================
+   3 bis. LES DURÉES — lues dans la fiche, jamais fixées ici
+   ==================================================================
+   La fiche n'écrit AUCUN instant de relevé : elle dit « attendre que
+   l'effervescence ait complètement cessé » et « le laisser ouvert quelques
+   instants ». Le relevé est donc conditionné par un ÉTAT, pas par une durée,
+   et la page ne s'en invente pas une (SKILL §5). `minutesReleve()` est écrite
+   quand même : si la fiche venait à porter une durée, la page la lirait.     */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, quinze: 15, vingt: 20,
+                trente: 30 };
+function minutesReleve() {
+  var p = (DONNEES.protocole || []).join(" · ");
+  var m = p.match(/(\d+(?:,\d+)?)\s*min(?![A-Za-zÀ-ÿ])/);
+  if (m) return parseFloat(m[1].replace(",", "."));
+  m = p.match(/\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze)\s+minutes?\b/i);
+  if (m) return MOTS_NB[m[1].toLowerCase()];
+  return null;
+}
+var MIN_RELEVE = minutesReleve();
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO : les valeurs prescrites. REG : les courantes.
+   ==================================================================
+   ⚠️ SKILL §12.12 : chaque `value` initiale tombe sur la grille des `step`, et
+   toutes les grilles sont ENTIÈRES. Une valeur hors grille est ramenée en
+   silence par le navigateur, `horsProtocole()` rend `true` dès le chargement,
+   et le tableau de la fiche ne se remplit JAMAIS — sans la moindre erreur.
+   Contrôle : 40 = 5 + 7×5 ; 50 = 10 + 8×5 ; 10 = 2 + 8×1 ; 250 = 100 + 3×50 ;
+   20, 1013 et 50 sont sur des grilles de pas 1, 1 et 5.                      */
+var PROTO = { craieCg: 40, acideML: V_ACIDE_FICHE, conc: 10, flaconML: 250,
+              tc: 20, phPa: 1013, hr: 50 };
+var REG   = { craieCg: 40, acideML: V_ACIDE_FICHE, conc: 10, flaconML: 250,
+              tc: 20, phPa: 1013, hr: 50 };
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+function mCraie()  { return REG.craieCg / 100; }        // g
+function vAcide()  { return REG.acideML * 1e-6; }       // m³
+function cAcide()  { return REG.conc / 10; }            // mol/L
+function vFlacon() { return REG.flaconML * 1e-6; }      // m³
+function pPa()     { return REG.phPa * 100; }
+function tK()      { return REG.tc + 273.15; }
+
+/* ==================================================================
+   5. LE SOLVEUR — UN SEUL BILAN DE MATIÈRE
+   ==================================================================
+   Un inventaire d'espèces, chacune décrite par ses ATOMES. Tout en découle :
+   la masse molaire est la somme des masses atomiques, la masse du système la
+   somme des n·M, et une réaction n'est qu'un avancement qui déplace des moles
+   d'une case à l'autre. C'est le MÊME modèle que la page voisine E2AC-12
+   emploie pour compter les atomes.                                          */
+var ESPECES = {
+  CaCO3: { at: { Ca: 1, C: 1, O: 3 }, nom: "carbonate de calcium" },
+  HCl:   { at: { H: 1, Cl: 1 },       nom: "chlorure d'hydrogène" },
+  CaCl2: { at: { Ca: 1, Cl: 2 },      nom: "chlorure de calcium" },
+  H2O:   { at: { H: 2, O: 1 },        nom: "eau" },
+  CO2:   { at: { C: 1, O: 2 },        nom: "dioxyde de carbone" },
+  CaOH2: { at: { Ca: 1, O: 2, H: 2 }, nom: "hydroxyde de calcium" }
+};
+function M(sp) {
+  var a = ESPECES[sp].at, s = 0, k;
+  for (k in a) s += M_AT[k] * a[k];
+  return s;
+}
+/* La formule écrite, DÉDUITE de la table des atomes — jamais retapée. */
+function formule(sp) {
+  var a = ESPECES[sp].at, o = ["Ca", "C", "H", "O", "Cl"], s = "", i, k;
+  for (i = 0; i < o.length; i++) {
+    k = o[i];
+    if (a[k]) s += k + (a[k] > 1 ? ind(a[k]) : "");
+  }
+  return s;
+}
+/* Le compte d'atomes d'un inventaire — c'est lui qui prouve que rien ne se
+   crée : il est le MÊME avant et après la réaction. */
+function atomes(inv) {
+  var c = {}, sp, k, a;
+  for (sp in inv) {
+    if (!ESPECES[sp] || !inv[sp]) continue;
+    a = ESPECES[sp].at;
+    for (k in a) c[k] = (c[k] || 0) + a[k] * inv[sp];
+  }
+  return c;
+}
+function masseInv(inv) {
+  var s = 0, sp;
+  for (sp in inv) if (ESPECES[sp]) s += inv[sp] * M(sp);
+  return s;
+}
+
+function psat(tc) { return 610.94 * Math.exp(17.625 * tc / (tc + 243.04)); }
+function rhoAir(tc, p, hr) {
+  var pv = hr * psat(tc);
+  return ((p - pv) * M_AIR + pv * M("H2O")) * 1e-3 / (R_GAZ * (tc + 273.15));
+}
+function rhoAirCourant() { return rhoAir(REG.tc, pPa(), REG.hr / 100); }
+
+/* Le ciel gazeux : ce qui n'est pas liquide dans le flacon. Tant que l'acide
+   n'est pas versé, c'est tout le flacon — d'où le paramètre explicite. Une
+   valeur par défaut lue dans `ETAT` ne conviendrait pas : la masse de la
+   verrerie se déduit AVANT que `ETAT` existe.                               */
+function vGazV(verse) {
+  return Math.max(1e-6, vFlacon() - (verse ? vAcide() : 0));
+}
+function vGaz() { return vGazV(!!(ETAT && ETAT.verse)); }
+function nTotalGazV(verse) { return pPa() * vGazV(verse) / (R_GAZ * tK()); }
+function nVapeurV(verse) { return psat(REG.tc) * vGazV(verse) / (R_GAZ * tK()); }
+function nAirInitialV(verse) {
+  return Math.max(0, nTotalGazV(verse) - nVapeurV(verse));
+}
+function nTotalGaz() { return nTotalGazV(!!(ETAT && ETAT.verse)); }
+function nVapeur() { return nVapeurV(!!(ETAT && ETAT.verse)); }
+function nAirInitial() { return nAirInitialV(!!(ETAT && ETAT.verse)); }
+
+/* L'inventaire de départ du flacon, une fois l'acide versé. */
+function inventaireNeuf() {
+  var mSol = vAcide() * RHO_ACIDE * 1e3;              // g de solution
+  var nHCl = cAcide() * REG.acideML * 1e-3;           // mol
+  return {
+    HCl: nHCl,
+    H2O: Math.max(0, (mSol - nHCl * M("HCl")) / M("H2O")),
+    CaCO3: 0, CaCl2: 0, CO2: 0
+  };
+}
+/* CaCO₃ + 2 HCl → CaCl₂ + H₂O + CO₂ — l'avancement, et rien d'autre. */
+var STOECH = { CaCO3: -1, HCl: -2, CaCl2: 1, H2O: 1, CO2: 1 };
+function avancementMax(inv) {
+  return Math.max(0, Math.min(inv.CaCO3, inv.HCl / 2));
+}
+function avancer2(inv, xi) {
+  var k;
+  xi = Math.min(xi, avancementMax(inv));
+  for (k in STOECH) inv[k] += STOECH[k] * xi;
+  return xi;
+}
+/* La VITESSE de l'attaque : loi de surface de Plummer, Wigley et Parkhurst,
+   régime acide. Le morceau est traité comme un cube qui rétrécit ; sa surface
+   suit donc la puissance 2/3 de ce qu'il en reste.                           */
+function k1PWP() {
+  return Math.pow(10, PHYS.K_PWP.v - 444 / tK()) * 1e-3;   // mol·cm⁻²·s⁻¹
+}
+function surfaceCraie(nCaCO3) {
+  var m = nCaCO3 * M("CaCO3");                              // g
+  if (m <= 0) return 0;
+  var v = m / (RHO_CRAIE * 1e-3);                           // cm³
+  return 6 * Math.pow(v, 2 / 3);                            // cube équivalent
+}
+function vitesseAttaque(inv) {
+  var nH = inv.HCl;
+  if (nH <= 0 || inv.CaCO3 <= 0) return 0;
+  var vLitre = REG.acideML * 1e-3;
+  var aH = vLitre > 0 ? nH / vLitre : 0;                    // mol/L ≈ activité
+  return k1PWP() * aH * surfaceCraie(inv.CaCO3);            // mol/s
+}
+
+/* --- l'état du gaz, la pression, et le bouchon ---------------------------- */
+function nGazSec(E) { return E.nAir + E.n.CO2; }
+function pression(E) {
+  return (nGazSec(E) + E.nVap) * R_GAZ * tK() / vGaz();
+}
+function surpression(E) { return pression(E) - pPa(); }
+function surpressionMax() { return F_BOUCHON / S_COL; }
+
+/* ⚠ LE SEUL ENDROIT DU MODÈLE OÙ DE LA MATIÈRE QUITTE LE SYSTÈME.
+   Ce qui sort n'est PAS du dioxyde de carbone pur : c'est le MÉLANGE du ciel
+   gazeux, dans les proportions où il se trouve. La vapeur, elle, se rétablit
+   à saturation depuis le liquide, et la masse qui part avec elle est
+   comptée.                                                                  */
+function detendre(E) {
+  var nApres = nTotalGaz(), nSecApres = Math.max(0, nApres - E.nVap);
+  var nSecAvant = nGazSec(E), f, sorti;
+  if (nSecAvant <= 0 || nSecApres >= nSecAvant) return 0;
+  f = nSecApres / nSecAvant;
+  sorti = (1 - f) * (E.nAir * M_AIR + E.n.CO2 * M("CO2") + E.nVap * M("H2O"));
+  E.nAir *= f;
+  E.n.CO2 *= f;
+  E.perdu += sorti;
+  return sorti;
+}
+/* L'ASYMPTOTE : ce que la balance perdrait EN PLUS si l'on laissait le flacon
+   ouvert jusqu'à ce que tout le CO₂ soit remplacé par de l'air. Calculée,
+   affichée — jamais jouée : la fiche ne donne aucune vitesse de balayage. */
+function resteAPerdre(E) {
+  return Math.max(0, E.n.CO2 * (M("CO2") - M_AIR));
+}
+
+/* --- ce que le flacon PÈSE, et ce que la balance en LIT ------------------- */
+function masseGaz(E) { return E.nAir * M_AIR + E.n.CO2 * M("CO2") + E.nVap * M("H2O"); }
+function masseContenu(E) { return masseInv(E.n) + masseGaz(E); }
+function vExtFlacon() { return vFlacon() + V_VERRE; }
+function vCraie(m) { return m * 1e-3 / RHO_CRAIE; }
+
+/* La masse de la VERRERIE se DÉDUIT de m₁ aux conditions du protocole, comme
+   en salle : la fiche fixe une LECTURE, pas la masse d'un erlenmeyer
+   (SKILL §12.44). Déduite une fois pour toutes, elle ne bouge plus.          */
+var M_VERRE = (function () {
+  var sauve = {}, k, E, obj, brut;
+  for (k in REG) { sauve[k] = REG[k]; REG[k] = PROTO[k]; }
+  E = { n: inventaireNeuf(), nAir: nAirInitialV(true), nVap: nVapeurV(true),
+        perdu: 0 };
+  obj = [[masseContenu(E), vExtFlacon()],
+         [M_BOUCHON, V_BOUCHON],
+         [mCraie(), vCraie(mCraie())]];
+  brut = lectureDe(obj);
+  for (k in sauve) REG[k] = sauve[k];
+  return (isFinite(F_M1) ? F_M1 : 200) - brut;
+})();
+
+/* CE QUE LA BALANCE LIT : la SOMME de ce que porte le plateau, moins la
+   poussée d'Archimède de l'air déplacé. Rien d'autre, et surtout rien qui
+   vienne de la fiche.                                                       */
+function lectureDe(objets) {
+  var ra = rhoAirCourant(), s = 0, i;
+  for (i = 0; i < objets.length; i++) {
+    s += objets[i][0] - ra * objets[i][1] * 1e3;
+  }
+  return s;
+}
+function surLePlateau() {
+  var o = [];
+  if (ETAT.flaconSur) {
+    o.push([M_VERRE + masseContenu(ETAT), vExtFlacon()]);
+  }
+  if (ETAT.bouchonOu === "plateau" ||
+      (ETAT.bouchonOu === "col" && ETAT.flaconSur)) {
+    o.push([M_BOUCHON, V_BOUCHON]);
+  }
+  if (ETAT.craieOu === "plateau") o.push([mCraie(), vCraie(mCraie())]);
+  return o;
+}
+function lectureBalance() { return lectureDe(surLePlateau()); }
+function arrondiBalance(x) { return Math.round(x / RESOL) * RESOL; }
+
+/* --- l'eau de chaux : Ca(OH)₂ + CO₂ → CaCO₃ + H₂O ------------------------ */
+function nCaOH2() { return PHYS.SOL_CH.v * V_CHAUX * 1e3 / M("CaOH2"); }
+/* Le ciel gazeux du SECOND poste, celui que le protocole demande de reprendre :
+   même montage, réaction achevée. Sa composition est CALCULÉE, pas posée. */
+function cielPoste2() {
+  var inv = inventaireNeuf(), nA = nAirInitialV(true), nV = nVapeurV(true);
+  inv.CaCO3 = mCraie() / M("CaCO3");
+  var xi = avancer2(inv, 1e9);
+  var nSec = nA + inv.CO2;
+  var x = nSec + nV > 0 ? inv.CO2 / (nSec + nV) : 0;
+  return { x: x, xi: xi };
+}
+function co2Recueilli() {
+  return cielPoste2().x * pPa() * V_TUBE / (R_GAZ * tK());
+}
+function precipite(nCO2) { return Math.min(nCO2, nCaOH2()); }
+function troubleGpL(nPrec) { return nPrec * M("CaCO3") / (V_CHAUX * 1e3); }
+
+/* ==================================================================
+   6. GÉOMÉTRIE DE LA PAILLASSE
+   ==================================================================
+   viewBox 1120 × 760 — volontairement ÉTROIT : le SVG est ajusté sur la
+   largeur de sa colonne, et chaque unité gagnée en largeur est une unité
+   perdue sur la taille apparente des objets.
+
+   TROIS ZONES INTERDITES, REMESURÉES SUR CETTE PAGE (SKILL §12.42, §12.9) :
+     · la consigne — max-width 60 %, soit 672 unités centrées : x 224..896,
+                     et jusqu'à y ≈ 92 sur trois lignes ;
+     · le journal  — 24 % de large : x 14..291, et jusqu'à y ≈ 330 sur sa
+                     phrase la plus longue ;
+     · « Recommencer » et le plein écran — x 950..1105, y ≤ 60.
+   Le plateau commence donc à x = 292 et le flacon posé dessus s'arrête à
+   y = 314 ; le second poste, à droite, ne monte pas au-dessus de y = 400.  */
+var W = 1120, H = 760, BANC = 616, Y_BOUTONS = 692;
+
+var PLAT_X0 = 292, PLAT_X1 = 540, PLAT_CY = 510;   // dessus du plateau
+var BAL_X0 = 282, BAL_X1 = 550;                    // corps de la balance
+var FL_PLAT_X = 350;                               // le flacon, sur le plateau
+var CRAIE_PLAT_X = 452, BOU_PLAT_X = 508;          // craie et bouchon, dessus
+var FL_BANC_X = 640;                               // le flacon, au repos
+var EPR_X = 742, EPR_Y = BANC;                     // l'éprouvette graduée
+var BOU_X = 812, BOU_Y = 596;                      // le bouchon, au repos
+var CR_X = 862, CR_Y = 604;                        // la craie, au repos
+var P2_X = 960, P2_Y = BANC;                       // le second poste
+var TUBE_X = 1064, TUBE_Y = 592;                   // le tube d'eau de chaux
+var TUBE_COL_X = P2_X + 46, TUBE_COL_Y = P2_Y - 214;
+
+/* Le flacon, en coordonnées LOCALES : origine au CENTRE DU FOND, corps vers
+   les y négatifs. Un erlenmeyer : fond plat, corps conique, col étroit. */
+var FL_R0 = 56, FL_R1 = 20, FL_HC = 146, FL_HB = 196;
+var D_FLACON = "M -50 0 Q -" + FL_R0 + " 0 -54 -8 L -" + FL_R1 + " -" + FL_HC +
+               " L -" + FL_R1 + " -" + FL_HB + " L " + FL_R1 + " -" + FL_HB +
+               " L " + FL_R1 + " -" + FL_HC + " L 54 -8 Q " + FL_R0 + " 0 50 0 Z";
+/* Le volume dessiné, en unités de dessin : solide de révolution du tronc de
+   cône, plus le col cylindrique. Il sert à placer la SURFACE du liquide à sa
+   vraie hauteur — le dessin RELIT le modèle, il ne le recopie pas (§12.18). */
+function volDessin(h) {                       // h mesuré depuis le fond
+  var r;
+  if (h <= 0) return 0;
+  if (h <= FL_HC) {
+    r = FL_R0 + (FL_R1 - FL_R0) * h / FL_HC;
+    return Math.PI * h / 3 * (FL_R0 * FL_R0 + FL_R0 * r + r * r);
+  }
+  return volDessin(FL_HC) + Math.PI * FL_R1 * FL_R1 * (h - FL_HC);
+}
+var VOL_DESSIN_TOTAL = volDessin(FL_HB);
+/* La hauteur de liquide qui correspond à la fraction de volume demandée :
+   bissection, trente pas — le dessin suit donc le curseur de volume. */
+function hauteurLiquide(frac) {
+  var a = 0, b = FL_HB, m, i, cible = borne(frac, 0, 1) * VOL_DESSIN_TOTAL;
+  for (i = 0; i < 30; i++) {
+    m = (a + b) / 2;
+    if (volDessin(m) < cible) a = m; else b = m;
+  }
+  return (a + b) / 2;
+}
+/* Le rayon intérieur à la hauteur h — pour poser la craie et les bulles. */
+function rayonA(h) {
+  if (h >= FL_HC) return FL_R1;
+  return FL_R0 + (FL_R1 - FL_R0) * borne(h, 0, FL_HC) / FL_HC;
+}
+
+/* Toutes les hauteurs d'étiquette DANS UN SEUL OBJET (SKILL §12.7) :
+   dispersées dans le code, elles ne se comparent pas — et c'est la
+   comparaison, pas le calcul, qui montre la collision. AUCUNE n'est posée sur
+   le meuble sombre ; seul le plateau de bois clair en accepte. */
+var Y_ETIQ = {
+  balance: 500, flaconBanc: 396, flaconPlateau: 296, eprouvette: 392,
+  bouchon: 556, craie: 570, poste2: 396, tube: 520, chaux: 470,
+  legende: 748
+};
+
+/* ==================================================================
+   7. L'ÉTAT
+   ================================================================== */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0;
+var svg = null, DEFS = null, COUCHES = {};
+var OBJ = {};              // position courante de chaque objet manipulable
+var PAS_SIM = 0.05;        // le pas du temps réel à ×1 (SKILL §12bis.6)
+
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+/* ⚠️ SKILL §12.17 — TOUTE clé lue dans le code figure ici. Une clé oubliée
+   rend une branche entière morte, sans une seule erreur JS. */
+function neufEtat() {
+  return {
+    n: { HCl: 0, H2O: 0, CaCO3: 0, CaCl2: 0, CO2: 0 },
+    nAir: 0, nVap: 0, perdu: 0,
+    verse: false, flaconSur: false,
+    bouchonOu: "reserve",          // reserve · col · plateau · banc
+    craieOu: "reserve",            // reserve · plateau · flacon
+    reagit: false, finie: false, saute: false, detendu: false,
+    m1: null, m2: null, m3: null, cmp12: false, cmp23: false, observe: false,
+    chauxSur: false, chauxN: 0, chauxAgite: false, precip: 0,
+    t: 0, tSeance: 0, vitesse: 10, serie: [],
+    horsProto: false, nCell: 0, diverge: ""
+  };
+}
+function bouche() { return ETAT.bouchonOu === "col"; }
+/* Le nombre de cellules à dévoiler : lignes × colonnes vides du tableau. Il
+   se COMPTE, il ne s'écrit pas (SKILL §13.6.9). */
+var N_CELL = (function () {
+  var k, c, n = 0;
+  for (k = 0; k < N_LIG; k++) {
+    for (c = 0; c < (VAL[k] || []).length; c++) {
+      if (!intitule(k, c) && cel(k, c)) n++;
+    }
+  }
+  return n;
+})();
+
+/* ==================================================================
+   8. LES DÉGRADÉS ET FILTRES
+   ================================================================== */
+function ajouterDefs() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* L'acide : le bleu pâle de la figure de la fiche. Sur fond clair un aplat
+     pâle disparaît : opacité haute ET contour net. */
+  g = el("linearGradient", { id: "acide", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#cfe9f2" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#6aa8c4" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "chaux", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#f4f8fa" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#dbe6ec" }));
+  DEFS.appendChild(g);
+
+  /* LE VERRE — trois choses, et il en faut trois : un voile de teinte, un
+     reflet vertical net près du bord gauche, une arête sombre à droite.
+     Sans le reflet, ce n'est jamais du verre (SKILL §10.2). */
+  g = el("linearGradient", { id: "verrerie", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#a9b8c8", "stop-opacity": .55 }));
+  g.appendChild(el("stop", { offset: .18, "stop-color": "#dce8f1", "stop-opacity": .42 }));
+  g.appendChild(el("stop", { offset: .55, "stop-color": "#ffffff", "stop-opacity": .28 }));
+  g.appendChild(el("stop", { offset: .86, "stop-color": "#c8d5e1", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#8fa2b4", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "inox", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#f2f5f8" }));
+  g.appendChild(el("stop", { offset: .5, "stop-color": "#c6ced8" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#98a3b0" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "lcd", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#dfe8d8" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c3d2b6" }));
+  DEFS.appendChild(g);
+
+  /* Le liège : brun, grenu. C'est le bouchon de la figure de la fiche. */
+  g = el("linearGradient", { id: "liege", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#8a6b3a" }));
+  g.appendChild(el("stop", { offset: .22, "stop-color": "#c9a678" }));
+  g.appendChild(el("stop", { offset: .55, "stop-color": "#e0c49b" }));
+  g.appendChild(el("stop", { offset: .82, "stop-color": "#bd9866" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7d5f31" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "craie", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#d8d8d0" }));
+  g.appendChild(el("stop", { offset: .35, "stop-color": "#f6f6f1" }));
+  g.appendChild(el("stop", { offset: .7, "stop-color": "#ffffff" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9c9c0" }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 8, stdDeviation: 7,
+                                     "flood-color": "#12203a", "flood-opacity": .4 }));
+  DEFS.appendChild(f);
+
+  f = el("filter", { id: "grain" });
+  f.appendChild(el("feTurbulence", { type: "fractalNoise", baseFrequency: "0.9",
+                                     numOctaves: 2, result: "b" }));
+  f.appendChild(el("feColorMatrix", { in: "b", type: "saturate", values: "0" }));
+  f.appendChild(el("feComposite", { operator: "in", in2: "SourceGraphic" }));
+  DEFS.appendChild(f);
+
+  var c = el("clipPath", { id: "clipFlacon" });
+  c.appendChild(el("path", { d: D_FLACON }));
+  DEFS.appendChild(c);
+  c = el("clipPath", { id: "clipFlacon2" });
+  c.appendChild(el("path", { d: D_FLACON }));
+  DEFS.appendChild(c);
+}
+
+/* ==================================================================
+   9. LES COUCHES — l'ordre est la moitié du dessin
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées, halos — DERRIÈRE les appareils
+     poste   le mobilier fixe : balance, support, second poste
+     arriere l'intérieur de la verrerie, le liquide, les zones de dépôt
+     objets  ce qui se manipule
+     avant   les PAROIS DE VERRE, la vapeur et les étiquettes
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout             */
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function titrePoste(x, y, s, ancre) {
+  return txt("avant", x, y, s, { ancre: ancre || "middle", taille: 11.5, gras: true,
+                                 couleur: GOLD, halo: true });
+}
+function ombreAuSol(cx, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: BANC + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+
+/* ==================================================================
+   10. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: 7, fill: "#8f9aa8" }));
+  ajout("fond", el("rect", { x: 0, y: BANC + 7, width: W, height: H - BANC - 7,
+                             fill: "url(#banc)" }));
+  txt("fond", W - 14, Y_ETIQ.legende,
+      "schéma habillé — hauteurs de liquide et taille du morceau de craie à " +
+      "l'échelle du calcul ; les diamètres de verrerie sont agrandis",
+      { ancre: "end", taille: 10.5, couleur: "#7d8896" });
+}
+
+/* ==================================================================
+   11. LA BALANCE — l'instrument de toute l'expérience
+   ================================================================== */
+var balAff, balSous, balVoyant, etiqBalance;
+function construireBalance() {
+  ombreAuSol((BAL_X0 + BAL_X1) / 2, 148, .34);
+  var g = ajout("poste", el("g", {}));
+  g.appendChild(el("rect", { x: BAL_X0, y: 528, width: BAL_X1 - BAL_X0, height: 80,
+    rx: 9, fill: "#e7ecdd", stroke: "#b9c2ab", "stroke-width": 1.6,
+    filter: "url(#ombreDouce)" }));
+  g.appendChild(el("rect", { x: BAL_X0, y: 598, width: BAL_X1 - BAL_X0, height: 10,
+    rx: 5, fill: "#c9d0bc" }));
+  /* le plateau */
+  g.appendChild(el("rect", { x: PLAT_X0, y: PLAT_CY, width: PLAT_X1 - PLAT_X0,
+    height: 18, rx: 4, fill: "url(#inox)", stroke: "#6f7885", "stroke-width": 1.4 }));
+  g.appendChild(el("ellipse", { cx: (PLAT_X0 + PLAT_X1) / 2, cy: PLAT_CY,
+    rx: (PLAT_X1 - PLAT_X0) / 2 - 4, ry: 7, fill: "#2f5c9e", opacity: .8 }));
+  /* l'afficheur */
+  g.appendChild(el("rect", { x: BAL_X0 + 18, y: 542, width: 152, height: 44, rx: 5,
+    fill: "url(#lcd)", stroke: "#7c8a6b", "stroke-width": 1.6 }));
+  /* ⚠ L'UNITÉ SE POSE À CÔTÉ DU NOMBRE, PAS DESSUS (piège 7). Les deux textes
+     étaient ancrés `end` sur la MÊME abscisse (BAL_X0 + 160) : le « g », plus
+     petit et remonté de 18 unités, retombait sur le dernier chiffre du
+     « 0,00 » et le recouvrait à 71 %. Un afficheur de balance écrit sa valeur
+     et son unité sur la MÊME ligne de base, l'unité à droite. */
+  balAff = g.appendChild(el("text", { x: BAL_X0 + 150, y: 575, "text-anchor": "end",
+    "font-size": 26, "font-weight": "bold", fill: "#1d2a16",
+    "font-family": "ui-monospace, Consolas, monospace", "pointer-events": "none" },
+    nb(0, DEC)));
+  balSous = g.appendChild(el("text", { x: BAL_X0 + 154, y: 575, "text-anchor": "start",
+    "font-size": 10.5, fill: "#3f5030", "pointer-events": "none" }, U_M));
+  balVoyant = g.appendChild(el("circle", { cx: BAL_X0 + 28, cy: 552, r: 4,
+    fill: "#5aa02c" }));
+  g.appendChild(el("text", { x: BAL_X1 - 16, y: 570, "text-anchor": "end",
+    "font-size": 11, fill: "#6b7686", "font-family": "Arial, Helvetica, sans-serif",
+    "pointer-events": "none" }, "d = " + nb(RESOL, DEC) + " " + U_M));
+  etiqBalance = txt("avant", BAL_X0 - 8, Y_ETIQ.balance,
+    court(materiel(/balance/i), 30) || "balance",
+    { ancre: "end", taille: 11.5, gras: true, couleur: GOLD, halo: true });
+}
+
+/* ==================================================================
+   12. LE FLACON, SON CONTENU, SES BULLES
+   ================================================================== */
+var gFlacon, flVerre, flLiquide, flSurface, flCraie, flPrise, etiqFlacon;
+var flBulles = [], flCiel, gVolutes;
+function construireFlacon() {
+  gFlacon = ajout("objets", el("g", { cursor: "grab", "data-act": "flacon" }));
+  /* ⚠ LA PLAQUE DE PRÉHENSION EN PREMIER (SKILL §12.38) : un col de 40 unités
+     n'offre presque rien au pointeur, et le milieu du cône est vide. */
+  flPrise = gFlacon.appendChild(el("rect", { x: -FL_R0 - 4, y: -FL_HB - 4,
+    width: 2 * FL_R0 + 8, height: FL_HB + 8, fill: "#000", "fill-opacity": 0.001,
+    "data-role": "prise" }));
+  var dedans = gFlacon.appendChild(el("g", { "clip-path": "url(#clipFlacon)",
+    "pointer-events": "none" }));
+  dedans.appendChild(el("rect", { x: -FL_R0, y: -FL_HB, width: 2 * FL_R0,
+    height: FL_HB, fill: "#f7fbfd" }));
+  flCiel = dedans.appendChild(el("rect", { x: -FL_R0, y: -FL_HB, width: 2 * FL_R0,
+    height: 0, fill: "#c9d8e2", opacity: 0 }));
+  flLiquide = dedans.appendChild(el("rect", { x: -FL_R0, y: -1, width: 2 * FL_R0,
+    height: 0, fill: "url(#acide)", opacity: .92 }));
+  flSurface = dedans.appendChild(el("ellipse", { cx: 0, cy: 0, rx: FL_R0, ry: 5,
+    fill: "#9fd0e8", opacity: 0 }));
+  flCraie = dedans.appendChild(el("rect", { x: -14, y: -20, width: 28, height: 14,
+    rx: 3, fill: "url(#craie)", stroke: "#8a94a4", "stroke-width": 1.2, opacity: 0 }));
+  var i;
+  for (i = 0; i < 9; i++) {
+    flBulles.push(dedans.appendChild(el("circle", { cx: 0, cy: 0, r: 3,
+      fill: "none", stroke: "#2f7f9c", "stroke-width": 1.4, opacity: 0 })));
+  }
+  flVerre = gFlacon.appendChild(el("path", { d: D_FLACON, fill: "url(#verrerie)",
+    stroke: "#7f93a6", "stroke-width": 2.6, "stroke-linejoin": "round",
+    "pointer-events": "none" }));
+  /* le reflet vertical net, près du bord gauche — sans lui, ce n'est pas du
+     verre (SKILL §10.2) */
+  gFlacon.appendChild(el("path", { d: "M -40 -14 L -17 -128", fill: "none",
+    stroke: "#ffffff", opacity: .66, "stroke-width": 6, "stroke-linecap": "round",
+    "pointer-events": "none" }));
+  gFlacon.appendChild(el("path", { d: "M -" + (FL_R1 - 3) + " -" + (FL_HB - 6) +
+    " L -" + (FL_R1 - 3) + " -" + (FL_HC + 6), fill: "none", stroke: "#ffffff",
+    opacity: .6, "stroke-width": 4, "stroke-linecap": "round",
+    "pointer-events": "none" }));
+  /* le bourrelet du col : c'est lui, plus que la paroi, qui fait reconnaître
+     de la verrerie */
+  gFlacon.appendChild(el("ellipse", { cx: 0, cy: -FL_HB, rx: FL_R1 + 3, ry: 4.5,
+    fill: "#cfdce8", stroke: "#7f93a6", "stroke-width": 1.6,
+    "pointer-events": "none" }));
+  gVolutes = ajout("avant", el("g", { "pointer-events": "none" }));
+  etiqFlacon = titrePoste(FL_BANC_X, Y_ETIQ.flaconBanc,
+    court(materiel(/flacon/i), 28) || "flacon");
+}
+
+/* ==================================================================
+   13. L'ÉPROUVETTE, LE BOUCHON, LA CRAIE
+   ================================================================== */
+var gEprou, eprLiquide, eprSurface, etiqEprou, filet;
+var EPR_H = 186, EPR_R = 22;
+function construireEprouvette() {
+  gEprou = ajout("objets", el("g", { cursor: "grab", "data-act": "eprouvette" }));
+  gEprou.appendChild(el("rect", { x: -EPR_R - 6, y: -EPR_H - 8, width: 2 * EPR_R + 12,
+    height: EPR_H + 12, fill: "#000", "fill-opacity": 0.001, "data-role": "prise" }));
+  var cl = el("clipPath", { id: "clipEprou" });
+  cl.appendChild(el("rect", { x: -EPR_R, y: -EPR_H, width: 2 * EPR_R, height: EPR_H }));
+  DEFS.appendChild(cl);
+  var dd = gEprou.appendChild(el("g", { "clip-path": "url(#clipEprou)",
+    "pointer-events": "none" }));
+  dd.appendChild(el("rect", { x: -EPR_R, y: -EPR_H, width: 2 * EPR_R, height: EPR_H,
+    fill: "#f7fbfd" }));
+  eprLiquide = dd.appendChild(el("rect", { x: -EPR_R, y: -1, width: 2 * EPR_R,
+    height: 0, fill: "url(#acide)", opacity: .92 }));
+  eprSurface = dd.appendChild(el("ellipse", { cx: 0, cy: 0, rx: EPR_R, ry: 4,
+    fill: "#9fd0e8", opacity: .9 }));
+  /* le pied, puis la colonne, puis les graduations */
+  gEprou.appendChild(el("path", { d: "M -30 0 L 30 0 L 24 -10 L -24 -10 Z",
+    fill: "#dde5ee", stroke: "#7f93a6", "stroke-width": 2, "pointer-events": "none" }));
+  gEprou.appendChild(el("rect", { x: -EPR_R, y: -EPR_H, width: 2 * EPR_R,
+    height: EPR_H, rx: 3, fill: "url(#verrerie)", stroke: "#7f93a6",
+    "stroke-width": 2.4, "pointer-events": "none" }));
+  gEprou.appendChild(el("rect", { x: -EPR_R + 5, y: -EPR_H + 12, width: 5,
+    height: EPR_H - 30, fill: "#ffffff", opacity: .62, "pointer-events": "none" }));
+  var i, y;
+  for (i = 1; i < 10; i++) {
+    y = -EPR_H * i / 10;
+    gEprou.appendChild(el("line", { x1: EPR_R - (i % 5 === 0 ? 16 : 9), y1: y,
+      x2: EPR_R - 2, y2: y, stroke: "#7f93a6",
+      "stroke-width": i % 5 === 0 ? 2 : 1.1, "pointer-events": "none" }));
+  }
+  filet = ajout("arriere", el("path", { d: "", fill: "none", stroke: "#8ec3d8",
+    "stroke-width": 7, "stroke-linecap": "round", opacity: 0,
+    "pointer-events": "none" }));
+  etiqEprou = titrePoste(EPR_X, Y_ETIQ.eprouvette,
+    court(materiel(/éprouvette/i), 22) || "éprouvette graduée");
+}
+
+var gBouchon, etiqBouchon;
+function construireBouchon() {
+  gBouchon = ajout("objets", el("g", { cursor: "grab", "data-act": "bouchon" }));
+  gBouchon.appendChild(el("rect", { x: -22, y: -30, width: 44, height: 42,
+    fill: "#000", "fill-opacity": 0.001, "data-role": "prise" }));
+  gBouchon.appendChild(el("path", {
+    d: "M -19 8 L -15 -22 Q -15 -28 -9 -28 L 9 -28 Q 15 -28 15 -22 L 19 8 Z",
+    fill: "url(#liege)", stroke: "#6d5228", "stroke-width": 1.5,
+    "stroke-linejoin": "round", "pointer-events": "none" }));
+  gBouchon.appendChild(el("ellipse", { cx: 0, cy: -28, rx: 15, ry: 4.5,
+    fill: "#e0c49b", stroke: "#6d5228", "stroke-width": 1.3,
+    "pointer-events": "none" }));
+  gBouchon.appendChild(el("path", { d: "M -10 -2 l 5 -14 M 3 4 l 4 -18",
+    fill: "none", stroke: "#8a6b3a", "stroke-width": 1.1, opacity: .8,
+    "pointer-events": "none" }));
+  etiqBouchon = titrePoste(BOU_X, Y_ETIQ.bouchon,
+    court(materiel(/bouchon/i), 18) || "bouchon");
+}
+
+var gCraie, craieCorps, etiqCraie;
+function construireCraie() {
+  gCraie = ajout("objets", el("g", { cursor: "grab", "data-act": "craie" }));
+  gCraie.appendChild(el("rect", { x: -26, y: -18, width: 52, height: 30,
+    fill: "#000", "fill-opacity": 0.001, "data-role": "prise" }));
+  craieCorps = gCraie.appendChild(el("rect", { x: -16, y: -10, width: 32,
+    height: 15, rx: 3, fill: "url(#craie)", stroke: "#8a94a4", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  gCraie.appendChild(el("rect", { x: -16, y: -10, width: 32, height: 15, rx: 3,
+    fill: "#8a94a4", opacity: .13, filter: "url(#grain)", "pointer-events": "none" }));
+  etiqCraie = titrePoste(CR_X, Y_ETIQ.craie, "morceau de craie");
+}
+
+/* ==================================================================
+   14. LE SECOND POSTE ET L'EAU DE CHAUX
+   ==================================================================
+   Le protocole dit « reprendre UN flacon » : c'est un second montage, monté
+   comme le premier et déjà attaqué. Sa composition n'est pas posée — elle est
+   CALCULÉE par le même bilan, sous les mêmes réglages.                       */
+var g2, f2Liquide, f2Bulles = [], etiq2;
+var gTube, tubeLiq, tubeTrouble, tubeGaz, etiqTube;
+var TUBE_H = 116, TUBE_R = 17;
+function construirePoste2() {
+  ombreAuSol(P2_X, 66, .26);
+  g2 = ajout("poste", el("g", { transform: "translate(" + P2_X + "," + P2_Y + ")" }));
+  var dd = g2.appendChild(el("g", { "clip-path": "url(#clipFlacon2)" }));
+  dd.appendChild(el("rect", { x: -FL_R0, y: -FL_HB, width: 2 * FL_R0, height: FL_HB,
+    fill: "#f7fbfd" }));
+  f2Liquide = dd.appendChild(el("rect", { x: -FL_R0, y: -1, width: 2 * FL_R0,
+    height: 0, fill: "url(#acide)", opacity: .92 }));
+  var i;
+  for (i = 0; i < 6; i++) {
+    f2Bulles.push(dd.appendChild(el("circle", { cx: 0, cy: 0, r: 3, fill: "none",
+      stroke: "#2f7f9c", "stroke-width": 1.3, opacity: 0 })));
+  }
+  g2.appendChild(el("path", { d: D_FLACON, fill: "url(#verrerie)", stroke: "#7f93a6",
+    "stroke-width": 2.6, "stroke-linejoin": "round" }));
+  g2.appendChild(el("path", { d: "M -40 -14 L -17 -128", fill: "none",
+    stroke: "#ffffff", opacity: .6, "stroke-width": 5, "stroke-linecap": "round" }));
+  g2.appendChild(el("ellipse", { cx: 0, cy: -FL_HB, rx: FL_R1 + 3, ry: 4.5,
+    fill: "#cfdce8", stroke: "#7f93a6", "stroke-width": 1.6 }));
+  etiq2 = titrePoste(P2_X, Y_ETIQ.poste2, "second flacon");
+  txt("avant", P2_X, Y_ETIQ.poste2 + 15,
+      "le protocole dit « reprendre un flacon »",
+      { taille: 9.5, couleur: GRIS, halo: true, hw: 3 });
+}
+function construireTube() {
+  gTube = ajout("objets", el("g", { cursor: "grab", "data-act": "tube" }));
+  gTube.appendChild(el("rect", { x: -TUBE_R - 6, y: -TUBE_H - 8,
+    width: 2 * TUBE_R + 12, height: TUBE_H + 14, fill: "#000",
+    "fill-opacity": 0.001, "data-role": "prise" }));
+  var cl = el("clipPath", { id: "clipTube" });
+  cl.appendChild(el("path", { d: "M -" + TUBE_R + " -" + TUBE_H + " L -" + TUBE_R +
+    " -" + TUBE_R + " A " + TUBE_R + " " + TUBE_R + " 0 0 0 " + TUBE_R + " -" +
+    TUBE_R + " L " + TUBE_R + " -" + TUBE_H + " Z" }));
+  DEFS.appendChild(cl);
+  var dd = gTube.appendChild(el("g", { "clip-path": "url(#clipTube)",
+    "pointer-events": "none" }));
+  dd.appendChild(el("rect", { x: -TUBE_R, y: -TUBE_H, width: 2 * TUBE_R,
+    height: TUBE_H, fill: "#fbfdfe" }));
+  tubeGaz = dd.appendChild(el("rect", { x: -TUBE_R, y: -TUBE_H, width: 2 * TUBE_R,
+    height: TUBE_H - 46, fill: "#c9d8e2", opacity: 0 }));
+  tubeLiq = dd.appendChild(el("rect", { x: -TUBE_R, y: -46, width: 2 * TUBE_R,
+    height: 46, fill: "url(#chaux)" }));
+  tubeTrouble = dd.appendChild(el("rect", { x: -TUBE_R, y: -46, width: 2 * TUBE_R,
+    height: 46, fill: "#ffffff", opacity: 0 }));
+  gTube.appendChild(el("path", { d: "M -" + TUBE_R + " -" + TUBE_H + " L -" +
+    TUBE_R + " -" + TUBE_R + " A " + TUBE_R + " " + TUBE_R + " 0 0 0 " + TUBE_R +
+    " -" + TUBE_R + " L " + TUBE_R + " -" + TUBE_H,
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2.2,
+    "pointer-events": "none" }));
+  gTube.appendChild(el("rect", { x: -TUBE_R + 4, y: -TUBE_H + 8, width: 4,
+    height: TUBE_H - 34, fill: "#ffffff", opacity: .62, "pointer-events": "none" }));
+  gTube.appendChild(el("ellipse", { cx: 0, cy: -TUBE_H, rx: TUBE_R + 2, ry: 4,
+    fill: "#cfdce8", stroke: "#7f93a6", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  etiqTube = titrePoste(TUBE_X, Y_ETIQ.tube, "eau de chaux");
+}
+
+/* ==================================================================
+   15. LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13) :
+
+     « Verser l'acide »      étape 1, premier verbe. Double le glisser de
+                             l'éprouvette au-dessus du col.
+     « Boucher le flacon »   étape 1, second verbe. Double le glisser du bouchon.
+     « Déboucher »           étapes 3 et 7. Le bouchon va SUR LE PLATEAU :
+                             « sans rien retirer du plateau ».
+     « Lire et noter »       étapes 2, 5 et 7 — la fiche dit « lire et noter ».
+     « Comparer »            étapes 6 et 8, qui sont des comparaisons, pas des
+                             gestes.
+     « Agiter le tube »      étape 9, « … et agiter ».                        */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function construireBoutons() {
+  boutonScene(96, Y_BOUTONS, 168, 42, "Verser l'acide", null, "verser");
+  boutonScene(272, Y_BOUTONS, 176, 42, "Boucher le flacon", null, "boucher");
+  boutonScene(456, Y_BOUTONS, 182, 42, "Déboucher le flacon", null, "deboucher");
+  boutonScene(644, Y_BOUTONS, 184, 42, "Lire et noter", "la masse affichée", "noter");
+  boutonScene(818, Y_BOUTONS, 154, 42, "Comparer", null, "comparer");
+  boutonScene(988, Y_BOUTONS, 174, 42, "Agiter le tube", null, "agiter");
+}
+
+/* ==================================================================
+   16. PLACEMENT
+   ================================================================== */
+var GROUPES = {};
+function poser(id, x, y, rot) {
+  var o = OBJ[id];
+  o.x = x; o.y = y; o.rot = rot === undefined ? o.rot : rot;
+  GROUPES[id].setAttribute("transform", "translate(" + x.toFixed(1) + "," +
+    y.toFixed(1) + ") rotate(" + o.rot.toFixed(1) + ")");
+}
+/* Le col du flacon, LÀ OÙ IL EST : une seule constante, relue partout
+   (SKILL §12.20). Le bouchon, l'éprouvette et la craie s'y réfèrent tous. */
+function colFlacon() {
+  return [OBJ.flacon.x, OBJ.flacon.y - FL_HB];
+}
+function ancre(id, place) {
+  var c;
+  if (id === "flacon") {
+    return place === "plateau" ? [FL_PLAT_X, PLAT_CY, 0] : [FL_BANC_X, BANC, 0];
+  }
+  if (id === "eprouvette") return [EPR_X, EPR_Y, 0];
+  if (id === "bouchon") {
+    if (place === "col") { c = colFlacon(); return [c[0], c[1] + 10, 0]; }
+    if (place === "platB") return [BOU_PLAT_X, PLAT_CY - 2, 0];
+    return [BOU_X, BOU_Y, 0];
+  }
+  if (id === "craie") {
+    if (place === "platC") return [CRAIE_PLAT_X, PLAT_CY - 4, 0];
+    return [CR_X, CR_Y, 0];
+  }
+  if (id === "tube") {
+    if (place === "col2") return [TUBE_COL_X, TUBE_COL_Y, 0];
+    return [TUBE_X, TUBE_Y, 0];
+  }
+  return [0, 0, 0];
+}
+function replacer(id) {
+  var a = ancre(id, OBJ[id].place);
+  poser(id, a[0], a[1], a[2]);
+}
+function replacerTout() { var k; for (k in OBJ) replacer(k); }
+/* Déplacement interpolé par une ÉCHELLE DE MINUTERIES, jamais par une
+   transition CSS sur un groupe SVG. */
+function glisserVers(id, x1, y1, rot1, ms, fin) {
+  var o = OBJ[id], x0 = o.x, y0 = o.y, r0 = o.rot, PAS = 12, i;
+  for (i = 1; i <= PAS; i++) (function (i) {
+    tard(function () {
+      var t = i / PAS, e = t * t * (3 - 2 * t);
+      poser(id, x0 + (x1 - x0) * e, y0 + (y1 - y0) * e, r0 + (rot1 - r0) * e);
+      if (i === PAS && fin) fin();
+    }, ms * i / PAS);
+  })(i);
+}
+
+/* ==================================================================
+   17. PRENDRE ET DÉPOSER
+   ==================================================================
+   Le pointeur est capturé sur le SVG lui-même, pas sur l'objet : sans cela,
+   un mouvement rapide sort de la forme et le glissement s'arrête net au
+   milieu du geste, sans erreur.                                             */
+var prise = null, ptSVG = null;
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+/* Les emplacements possibles dans l'ÉTAT COURANT, rendus de la plus PETITE à
+   la plus GRANDE (SKILL §12.16) : c'est `deposer` qui dit laquelle est la
+   bonne, pas l'ordre dans lequel on souhaiterait qu'on les vise. Le col du
+   flacon est CONTENU dans la zone du plateau : sans ce tri, « déboucher »
+   serait inatteignable dès que le flacon est pesé.                          */
+function emplacements(id) {
+  var z = [], c = colFlacon();
+  if (id === "flacon") {
+    z.push({ type: "plateau", x: FL_PLAT_X, y: PLAT_CY, r: 132,
+             hw: 74, hh: 110, quoi: "le flacon sur le plateau de la balance" });
+    z.push({ type: "banc", x: FL_BANC_X, y: BANC, r: 190, hw: 66, hh: 108,
+             quoi: "le flacon sur la paillasse" });
+  } else if (id === "eprouvette") {
+    if (!ETAT.verse) {
+      z.push({ type: "verser", x: c[0], y: c[1] - 6, r: 112, hw: 52, hh: 46,
+               quoi: "l'éprouvette au-dessus du col du flacon" });
+    }
+    z.push({ type: "rangeE", x: EPR_X, y: EPR_Y, r: 175, hw: 34, hh: 96,
+             quoi: "l'éprouvette à sa place" });
+  } else if (id === "bouchon") {
+    if (!bouche()) {
+      z.push({ type: "col", x: c[0], y: c[1] + 4, r: 92, hw: 34, hh: 34,
+               quoi: "le bouchon sur le col du flacon" });
+    }
+    if (ETAT.flaconSur) {
+      z.push({ type: "platB", x: BOU_PLAT_X, y: PLAT_CY - 2, r: 106, hw: 30, hh: 30,
+               quoi: "le bouchon SUR LE PLATEAU, à côté du flacon" });
+    }
+    z.push({ type: "rangeB", x: BOU_X, y: BOU_Y, r: 150, hw: 26, hh: 26,
+             quoi: "le bouchon sur la paillasse" });
+  } else if (id === "craie") {
+    if (ETAT.craieOu !== "flacon" && !bouche()) {
+      z.push({ type: "dansFlacon", x: c[0], y: c[1] - 2, r: 96, hw: 34, hh: 32,
+               quoi: "la craie dans le col du flacon" });
+    }
+    z.push({ type: "platC", x: CRAIE_PLAT_X, y: PLAT_CY - 4, r: 112, hw: 30, hh: 24,
+             quoi: "la craie sur le plateau, À CÔTÉ du flacon" });
+    z.push({ type: "rangeC", x: CR_X, y: CR_Y, r: 150, hw: 28, hh: 22,
+             quoi: "la craie sur la paillasse" });
+  } else if (id === "tube") {
+    if (!ETAT.chauxSur) {
+      z.push({ type: "col2", x: TUBE_COL_X, y: TUBE_COL_Y, r: 116, hw: 30, hh: 64,
+               quoi: "le tube au-dessus du col du second flacon" });
+    }
+    z.push({ type: "rangeT", x: TUBE_X, y: TUBE_Y, r: 165, hw: 26, hh: 62,
+             quoi: "le tube à sa place" });
+  }
+  z.sort(function (a, b) { return a.r - b.r; });
+  return z;
+}
+var surbrillance = [];
+function montrerCibles(id) {
+  effacerCibles();
+  if (!id) return;
+  emplacements(id).forEach(function (z) {
+    if (z.type.indexOf("range") === 0 || z.type === "banc") return;  // sa place
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 12,
+      fill: GOLD, opacity: .16, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* La zone que `deposer` accepterait — un bouton ne vise jamais
+   `emplacements(id)[0]`, sinon bouton et glisser divergent (SKILL §12.16). */
+function zoneVoulue(id, type) {
+  var z = emplacements(id), i;
+  for (i = 0; i < z.length; i++) if (z[i].type === type) return z[i];
+  return null;
+}
+
+function brancherPrise() {
+  ["flacon", "eprouvette", "bouchon", "craie", "tube"].forEach(function (id) {
+    GROUPES[id].addEventListener("pointerdown", function (e) {
+      if (prise) return;                                  // verrou en 1re ligne
+      e.preventDefault();
+      var p = versSVG(e), o = OBJ[id];
+      prise = { id: id, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+                x0: p.x, y0: p.y, bouge: false };
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      GROUPES[id].setAttribute("filter", "url(#ombrePrise)");
+      GROUPES[id].setAttribute("cursor", "grabbing");
+      COUCHES.drag.appendChild(GROUPES[id]);
+      montrerCibles(id);
+    });
+  });
+
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    poser(prise.id, p.x + prise.dx, p.y + prise.dy);
+    dessiner();
+  });
+
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var id = prise.id, o = OBJ[id], bouge = prise.bouge;
+    GROUPES[id].removeAttribute("filter");
+    GROUPES[id].setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(GROUPES[id]);
+    effacerCibles();
+    prise = null;
+    if (!bouge) {
+      /* un CLIC, pas un glissement : c'est le geste d'OBSERVER. Le seuil de
+         5 px sépare les deux (SKILL §9.3). */
+      replacer(id);
+      if (id === "flacon") observerFlacon();
+      dessiner();
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(id).forEach(function (z) {
+      var d = Math.hypot(o.x - z.x, o.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposer(id, best);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);
+}
+
+/* ==================================================================
+   18. CE QUI SE PASSE QUAND ON DÉPOSE
+   ==================================================================
+   Un refus n'est jamais muet : il dit la raison, et il CITE la fiche.
+   Un objet qui n'a nulle part où aller revient chez lui.                    */
+function deposer(id, z) {
+  if (!z) {
+    replacer(id);
+    var d = emplacements(id).map(function (e) { return e.quoi; }).join(", ou ");
+    signaler("Rien ici. " + (d ? "Poser " + d + "." : "Reposer l'objet à sa place."));
+    dessiner(); return;
+  }
+  if (z.type === "plateau")    { poserFlaconPlateau(); return; }
+  if (z.type === "banc")       { retirerFlaconPlateau(); return; }
+  if (z.type === "verser")     { verserAcide(); return; }
+  if (z.type === "col")        { boucherFlacon(); return; }
+  if (z.type === "platB")      { poserBouchonPlateau(); return; }
+  if (z.type === "rangeB")     { rangerBouchon(); return; }
+  if (z.type === "dansFlacon") { introduireCraie(); return; }
+  if (z.type === "platC")      { poserCraiePlateau(); return; }
+  if (z.type === "col2")       { poserTubeCol2(); return; }
+  /* toutes les autres zones sont « sa propre place » */
+  OBJ[id].place = z.type;
+  var a = ancre(id, z.type);
+  glisserVers(id, a[0], a[1], a[2], 180);
+  succes(); avancer();
+}
+
+/* ---- LE GARDE-FOU DE TOUTE L'EXPÉRIENCE --------------------------
+   « Ne rien retirer ni ajouter au plateau entre deux pesées » : dès que m₁
+   est relevée, le plateau est FIGÉ jusqu'à la dernière pesée. C'est le refus
+   le plus instructif de la page, et il cite le protocole mot pour mot.      */
+function plateauFige() {
+  return ETAT.m1 !== null && ETAT.m3 === null;
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+
+function poserFlaconPlateau() {
+  if (ETAT.flaconSur) { replacer("flacon"); return; }
+  if (!ETAT.verse) {
+    replacer("flacon");
+    signaler("Le protocole verse l'acide AVANT de poser le flacon sur le " +
+             "plateau : rien ne s'ajoute au plateau entre deux pesées.");
+    dessiner(); return;
+  }
+  ETAT.flaconSur = true;
+  OBJ.flacon.place = "plateau";
+  var a = ancre("flacon", "plateau");
+  glisserVers("flacon", a[0], a[1], 0, 260);
+  /* ⚠ LE BOUCHON VOYAGE AVEC SON FLACON. `replacer("bouchon")` resolvait son
+     ancre par `colFlacon()`, qui lit `OBJ.flacon.x/y` — la position du flacon
+     A CET INSTANT, c'est-a-dire AVANT que les 260 ms de `glisserVers` ne
+     l'aient deplace. Le bouchon partait donc vers le col d'ou le flacon
+     venait, et restait en l'air au-dessus de la paillasse pendant que le
+     flacon, lui, etait sur le plateau. On vise la DESTINATION du flacon, et
+     on part en meme temps que lui : un flacon bouche emporte son bouchon. */
+  if (ETAT.bouchonOu === "col")
+    glisserVers("bouchon", a[0], a[1] - FL_HB + 10, 0, 260);
+  noter("Flacon posé sur le plateau. La balance lit la somme de ce qu'elle " +
+        "porte : " + nb(arrondiBalance(lectureBalance()), DEC) + " " + U_M + ".", true);
+  succes(); armer(); avancer();
+}
+function retirerFlaconPlateau() {
+  if (!ETAT.flaconSur) { replacer("flacon"); return; }
+  if (plateauFige()) {
+    replacer("flacon");
+    signaler("Le flacon ne quitte pas le plateau : le protocole l'écrit deux " +
+             "fois," + citerProto(/sans rien retirer/i) + " La lecture ne " +
+             "vaudrait plus rien.");
+    dessiner(); return;
+  }
+  ETAT.flaconSur = false;
+  OBJ.flacon.place = "banc";
+  var a = ancre("flacon", "banc");
+  glisserVers("flacon", a[0], a[1], 0, 260);
+  /* ⚠ LE BOUCHON VOYAGE AVEC SON FLACON. `replacer("bouchon")` resolvait son
+     ancre par `colFlacon()`, qui lit `OBJ.flacon.x/y` — la position du flacon
+     A CET INSTANT, c'est-a-dire AVANT que les 260 ms de `glisserVers` ne
+     l'aient deplace. Le bouchon partait donc vers le col d'ou le flacon
+     venait, et restait en l'air au-dessus de la paillasse pendant que le
+     flacon, lui, etait sur le plateau. On vise la DESTINATION du flacon, et
+     on part en meme temps que lui : un flacon bouche emporte son bouchon. */
+  if (ETAT.bouchonOu === "col")
+    glisserVers("bouchon", a[0], a[1] - FL_HB + 10, 0, 260);
+  succes(); armer(); avancer();
+}
+function verserAcide() {
+  if (ETAT.verse) { replacer("eprouvette"); return; }
+  if (bouche()) {
+    replacer("eprouvette");
+    signaler("Le flacon est bouché : ôter le bouchon avant de verser.");
+    dessiner(); return;
+  }
+  if (ETAT.flaconSur) {
+    replacer("eprouvette");
+    signaler("On ne verse pas au-dessus du plateau : le protocole verse " +
+             "d'abord, puis pose le flacon bouché sur la balance.");
+    dessiner(); return;
+  }
+  /* L'ÉTAT D'ABORD, l'image ensuite (SKILL §6.2). */
+  ETAT.verse = true;
+  ETAT.n = inventaireNeuf();
+  ETAT.nAir = nAirInitialV(true);
+  ETAT.nVap = nVapeurV(true);
+  BOUTONS.verser.fait();
+  var c = colFlacon();
+  glisserVers("eprouvette", c[0] + 4, c[1] - 4, -26, 260, function () {
+    filet.setAttribute("opacity", 1);
+    tard(function () {
+      filet.setAttribute("opacity", 0);
+      var a = ancre("eprouvette", "rangeE");
+      glisserVers("eprouvette", a[0], a[1], 0, 240);
+    }, 460);
+  });
+  noter(majuscule(court(materiel(/acide/i), 40)) + " : " + nb(REG.acideML, 0) +
+        " mL versés, soit " + nb(ETAT.n.HCl * 1e3, 1) + " mmol de " +
+        formule("HCl") + ".", true);
+  succes(); armer(); avancer();
+}
+function boucherFlacon() {
+  if (bouche()) { replacer("bouchon"); return; }
+  if (!ETAT.verse) {
+    replacer("bouchon");
+    signaler("Boucher un flacon vide n'apprend rien : verser l'acide d'abord.");
+    dessiner(); return;
+  }
+  if (ETAT.saute) {
+    replacer("bouchon");
+    signaler("Le bouchon a sauté : la manipulation est perdue pour cette " +
+             "pesée. Presser « Recommencer », et prendre un morceau de craie " +
+             "plus petit —" + citerProto(/surpression/i));
+    dessiner(); return;
+  }
+  ETAT.bouchonOu = "col";
+  OBJ.bouchon.place = "col";
+  var a = ancre("bouchon", "col");
+  glisserVers("bouchon", a[0], a[1], 0, 200);
+  BOUTONS.boucher.fait(); BOUTONS.deboucher.neuf();
+  noter("Flacon bouché : le système est FERMÉ. Rien ne peut plus en sortir.",
+        true);
+  succes(); armer(); avancer();
+}
+function poserBouchonPlateau() {
+  ETAT.bouchonOu = "plateau";
+  OBJ.bouchon.place = "platB";
+  var a = ancre("bouchon", "platB");
+  glisserVers("bouchon", a[0], a[1], 0, 200);
+  succes(); armer(); avancer();
+}
+function rangerBouchon() {
+  var etait = ETAT.bouchonOu;
+  ETAT.bouchonOu = "banc";
+  OBJ.bouchon.place = "rangeB";
+  var a = ancre("bouchon", "rangeB");
+  glisserVers("bouchon", a[0], a[1], 0, 200);
+  if (plateauFige() && etait !== "banc") {
+    noter("Le bouchon a QUITTÉ le plateau : la balance perd ses " +
+          nb(M_BOUCHON, 1) + " " + U_M + ", soit " +
+          nb(M_BOUCHON / RESOL, 0) + " divisions. Ce n'est pas le gaz qui " +
+          "est parti, c'est le bouchon — le protocole dit" +
+          citerProto(/sans rien retirer/i), false);
+  }
+  succes(); armer(); avancer();
+}
+/* Déboucher : le bouchon va SUR LE PLATEAU si le flacon y est — c'est ce que
+   « sans rien retirer du plateau » impose. Le geste passe par les mêmes
+   fonctions que le glisser. */
+function debouchonner() {
+  if (!bouche()) { signaler("Le flacon n'est pas bouché."); return; }
+  if (ETAT.flaconSur) { poserBouchonPlateau(); } else { rangerBouchon(); }
+  BOUTONS.deboucher.fait(); BOUTONS.boucher.neuf();
+  /* Le flacon ouvert revient à la pression de la salle : c'est LÀ, et
+     seulement là, que de la matière quitte le système. */
+  var sorti = detendre(ETAT);
+  if (sorti > 0) {
+    ETAT.detendu = true;
+    noter("Flacon débouché : " + nb(sorti, 4) + " " + U_M + " de gaz ont " +
+          "quitté le flacon. Ce n'est pas du dioxyde de carbone pur — c'est " +
+          "le mélange du ciel gazeux, dans les proportions où il s'y trouve.",
+          false);
+    volutes(6);
+  } else {
+    noter("Flacon débouché : le système est OUVERT.", false);
+  }
+  succes(); armer(); avancer();
+}
+function introduireCraie() {
+  if (ETAT.craieOu === "flacon") { replacer("craie"); return; }
+  if (!ETAT.verse) {
+    replacer("craie");
+    signaler("Il n'y a pas encore d'acide dans le flacon.");
+    dessiner(); return;
+  }
+  if (ETAT.m1 === null) {
+    replacer("craie");
+    signaler("Peser AVANT de faire tomber la craie : une fois la réaction " +
+             "commencée, " + SYM[L_M1] + " ne se mesure plus." +
+             citerProto(/lire et noter la masse totale/i));
+    dessiner(); return;
+  }
+  ETAT.craieOu = "flacon";
+  OBJ.craie.place = "flacon";
+  ETAT.n.CaCO3 += mCraie() / M("CaCO3");
+  ETAT.reagit = true; ETAT.finie = false;
+  var c = colFlacon();
+  glisserVers("craie", c[0], c[1] - 6, 0, 200, function () {
+    GROUPES.craie.setAttribute("opacity", 0);
+  });
+  noter("Craie introduite : " + nb(mCraie(), 2) + " " + U_M + " de " +
+        formule("CaCO3") + ", soit " + nb(mCraie() / M("CaCO3") * 1e3, 2) +
+        " mmol. L'effervescence commence.", false);
+  succes(); armer(); avancer();
+}
+function poserCraiePlateau() {
+  if (ETAT.craieOu === "flacon") { replacer("craie"); return; }
+  if (plateauFige()) {
+    replacer("craie");
+    signaler("Plus rien ne s'ajoute au plateau après " + SYM[L_M1] + " :" +
+             citerProto(/sans rien retirer/i));
+    dessiner(); return;
+  }
+  ETAT.craieOu = "plateau";
+  OBJ.craie.place = "platC";
+  var a = ancre("craie", "platC");
+  glisserVers("craie", a[0], a[1], 0, 200);
+  succes(); armer(); avancer();
+}
+function poserTubeCol2() {
+  if (ETAT.chauxSur) { replacer("tube"); return; }
+  ETAT.chauxSur = true;
+  OBJ.tube.place = "col2";
+  var a = ancre("tube", "col2");
+  glisserVers("tube", a[0], a[1], 0, 260);
+  /* Ce que le tube recueille est CALCULÉ sur le ciel gazeux du second poste,
+     pas posé : si la craie ne dégage rien, le tube ne recueille rien. */
+  ETAT.chauxN = co2Recueilli();
+  noter("Le dégagement du second flacon monte dans le tube : " +
+        nb(ETAT.chauxN * 1e3, 3) + " mmol de gaz du ciel du flacon, dont " +
+        nb(cielPoste2().x * 100, 1) + " % de " + formule("CO2") + ".", false);
+  succes(); armer(); avancer();
+}
+function agiterTube() {
+  if (!ETAT.chauxSur) {
+    signaler("Il faut d'abord recueillir le dégagement dans le tube d'eau de " +
+             "chaux.");
+    return;
+  }
+  if (ETAT.chauxAgite) { signaler("Le tube a déjà été agité."); return; }
+  ETAT.chauxAgite = true;
+  ETAT.precip = precipite(ETAT.chauxN);
+  var c = troubleGpL(ETAT.precip);
+  BOUTONS.agiter.fait();
+  if (c > PHYS.TROUBLE.v) {
+    noter("L'eau de chaux se trouble : " + nb(ETAT.precip * M("CaCO3") * 1e3, 2) +
+          " mg de " + formule("CaCO3") + " précipitent, soit " + nb(c, 2) +
+          " g/L. Le gaz dégagé est bien du dioxyde de carbone.", true);
+  } else {
+    noter("L'eau de chaux reste limpide : " +
+          nb(ETAT.precip * M("CaCO3") * 1e3, 3) + " mg de précipité, soit " +
+          nb(c, 3) + " g/L — au-dessous de ce que l'œil distingue. Il n'y a " +
+          "pas eu assez de dégagement.", false);
+  }
+  if (ETAT.m3 !== null) demasquerConclusion();
+  succes(); armer(); avancer();
+}
+/* Le clic sur le flacon : OBSERVER. Ce que le journal écrit est ce que le
+   MODÈLE dit à cet instant, jamais une phrase de la fiche. */
+function observerFlacon() {
+  if (!ETAT.verse) {
+    noter("Le flacon est vide : rien à observer.", null);
+    return;
+  }
+  ETAT.observe = true;
+  var reste = ETAT.n.CaCO3 * M("CaCO3");
+  if (ETAT.reagit) {
+    noter("Effervescence : il reste " + nb(reste, 3) + " " + U_M + " de craie " +
+          "sur les " + nb(mCraie(), 2) + " du départ, et " +
+          nb(ETAT.n.CO2 * M("CO2"), 3) + " " + U_M + " de " + formule("CO2") +
+          " se sont déjà formés.", false);
+  } else if (ETAT.finie) {
+    noter("L'effervescence a cessé : " + (reste > 1e-6
+      ? "il reste " + nb(reste, 3) + " " + U_M + " de craie, l'acide est épuisé."
+      : "toute la craie a disparu.") + " " +
+      nb(ETAT.n.CO2 * M("CO2"), 3) + " " + U_M + " de " + formule("CO2") +
+      " formés.", true);
+  } else {
+    noter("Le flacon contient " + nb(REG.acideML, 0) + " mL d'acide, et son " +
+          "ciel gazeux " + nb(vGaz() * 1e6, 0) + " mL d'air à " +
+          nb(pression(ETAT) / 1000, 1) + " kPa.", null);
+  }
+  succes(); avancer();
+}
+function brancherBoutons() {
+  function ec(act, fn) {
+    var n = svg.querySelector('[data-act="' + act + '"]');
+    if (n) n.addEventListener("click", fn);
+  }
+  /* Le bouton DOUBLE le glisser et passe par la MÊME fonction : les deux
+     voies mènent au même état (SKILL §12.13). */
+  ec("verser", function () {
+    if (ETAT.verse) { signaler("L'acide est déjà versé."); return; }
+    var z = zoneVoulue("eprouvette", "verser");
+    if (!z) { signaler("L'acide est déjà versé."); return; }
+    poser("eprouvette", z.x, z.y);
+    verserAcide();
+  });
+  ec("boucher", function () {
+    if (bouche()) { signaler("Le flacon est déjà bouché."); return; }
+    var z = zoneVoulue("bouchon", "col");
+    if (!z) return;
+    poser("bouchon", z.x, z.y);
+    boucherFlacon();
+  });
+  ec("deboucher", debouchonner);
+  ec("noter", noterMasse);
+  ec("comparer", comparer);
+  ec("agiter", agiterTube);
+}
+
+/* ==================================================================
+   19. LES PESÉES ET LES COMPARAISONS
+   ==================================================================
+   « Lire et noter » ne fabrique aucun nombre : il enregistre ce que
+   l'afficheur porte, c'est-à-dire la somme calculée par le modèle. Et la
+   COLONNE « Le flacon est… » de la fiche sert de CONDITION : la page refuse
+   de noter une pesée dans un état que la fiche n'a pas prévu.               */
+function prochainePesee() {
+  if (ETAT.m1 === null) return L_M1;
+  if (ETAT.m2 === null) return L_M2;
+  if (ETAT.m3 === null) return L_M3;
+  return -1;
+}
+function noterMasse() {
+  var k = prochainePesee(), lect, d;
+  if (k < 0) { signaler("Les trois pesées de la fiche sont faites."); return; }
+  if (!ETAT.flaconSur) {
+    signaler("Le plateau ne porte pas le flacon : la balance n'a rien à lire.");
+    return;
+  }
+  if (fermeAttendu(k) !== bouche()) {
+    signaler("La fiche écrit, pour « " + moment(k) + " », que le flacon est " +
+             etatFiche(k) + ". " + (fermeAttendu(k) ? "Boucher" : "Déboucher") +
+             " le flacon, puis lire.");
+    return;
+  }
+  if (k === L_M1 && ETAT.craieOu !== "plateau") {
+    signaler("Le protocole pose le flacon bouché ET, à côté de lui, le " +
+             "morceau de craie :" + citerProto(/à côté de lui/i));
+    return;
+  }
+  if (k === L_M2) {
+    if (ETAT.craieOu !== "flacon") {
+      signaler("La craie n'est pas encore tombée dans l'acide : il n'y a rien " +
+               "à peser de neuf.");
+      return;
+    }
+    /* ⚠ ON NE REFUSE PLUS : ON MÈNE L'ATTAQUE À SON TERME.
+       La fiche exige d'attendre — mais elle exige d'attendre la CHIMIE, pas
+       une horloge. Presser « Lire et noter » pendant l'effervescence portait
+       un refus qu'il fallait subir en temps réel ; il porte maintenant la
+       fin de l'attaque, calculée d'un coup, et la pesée suit dans le même
+       geste. La condition de la fiche est tenue : quand la balance est lue,
+       l'effervescence a bel et bien cessé.                                */
+    if (ETAT.reagit) {
+      finirEffervescence();
+      noter("On laisse l'attaque aller jusqu'à son terme avant de peser —" +
+            citerProto(/complètement cessé/i), false);
+    }
+  }
+  lect = arrondiBalance(lectureBalance());
+  if (k === L_M1) ETAT.m1 = lect;
+  else if (k === L_M2) ETAT.m2 = lect;
+  else ETAT.m3 = lect;
+  revelerCellule(k, C_ETAT);
+  revelerCellule(k, C_VAL);
+  noter(moment(k) + " — " + SYM[k] + " = " + nb(lect, DEC) + " " + U_M +
+        (k === L_M2 ? " : la balance n'a pas bougé, et pourtant la craie a " +
+          "disparu."
+         : k === L_M3 ? " : la balance a descendu de " +
+           nb(Math.abs(lect - ETAT.m2) / RESOL, 0) + " divisions, sans que " +
+           "rien n'ait été retiré du plateau." : "."), true);
+  verifierContreFiche(k, lect);
+  if (k === L_M3 && ETAT.chauxAgite) demasquerConclusion();
+  succes(); armer(); avancer();
+}
+function comparer() {
+  var d;
+  if (ETAT.m1 !== null && ETAT.m2 !== null && !ETAT.cmp12) {
+    ETAT.cmp12 = true;
+    d = ETAT.m2 - ETAT.m1;
+    noter(SYM[L_M2] + " − " + SYM[L_M1] + " = " + nb(ETAT.m2, DEC) + " − " +
+          nb(ETAT.m1, DEC) + " = " + nb(d, DEC) + " " + U_M + ". Sans arrondi, " +
+          "le modèle donne " + nb(ecartFerme(), 5) + " " + U_M + ", soit " +
+          nb(Math.abs(ecartFerme()) / RESOL, 3) + " division — la balance ne " +
+          "peut pas le voir, et il ne vient pas de la réaction : c'est la " +
+          "poussée d'Archimède que la craie a perdue en entrant dans le flacon.",
+          Math.abs(d) < RESOL / 2);
+    BOUTONS.comparer.armer(false);
+    succes(); armer(); avancer(); return;
+  }
+  if (ETAT.m2 !== null && ETAT.m3 !== null && !ETAT.cmp23) {
+    ETAT.cmp23 = true;
+    d = ETAT.m3 - ETAT.m2;
+    noter(SYM[L_M3] + " − " + SYM[L_M2] + " = " + nb(d, DEC) + " " + U_M +
+          ", soit " + nb(Math.abs(d) / RESOL, 0) + " divisions. Ce qui a quitté " +
+          "le plateau pèse " + nb(ETAT.perdu, 4) + " " + U_M + " : c'est le gaz " +
+          "sorti par le col. La matière n'a pas disparu, elle est sortie du " +
+          "système.", true);
+    if (ETAT.chauxAgite && ETAT.m3 !== null) demasquerConclusion();
+    succes(); armer(); avancer(); return;
+  }
+  signaler("Il faut deux pesées consécutives pour comparer : " +
+           (ETAT.m1 === null ? "relever " + SYM[L_M1] + " d'abord."
+            : ETAT.m2 === null ? "relever " + SYM[L_M2] + "."
+            : "relever " + SYM[L_M3] + "."));
+}
+/* L'écart FERMÉ, sans arrondi : la poussée d'Archimède que la craie perd en
+   passant du plateau à l'intérieur du flacon. C'est le seul terme qui sépare
+   m₂ de m₁, et il vaut deux dix-millièmes de gramme. */
+function ecartFerme() {
+  return rhoAirCourant() * vCraie(mCraie()) * 1e3;
+}
+function demasquerConclusion() { $("concl").classList.remove("masque"); }
+
+/* Le bouchon SAUTE — la sécurité de la fiche l'annonçait, et le modèle le
+   chiffre. Ce n'est pas une punition : c'est ce qui arrive (SKILL §12.28). */
+function sauterBouchon() {
+  ETAT.saute = true;
+  ETAT.bouchonOu = "banc";
+  OBJ.bouchon.place = "rangeB";
+  var a = ancre("bouchon", "rangeB");
+  glisserVers("bouchon", a[0], a[1], 32, 320, function () {
+    poser("bouchon", a[0], a[1], 0);
+  });
+  BOUTONS.boucher.neuf();
+  volutes(9);
+  var sorti = detendre(ETAT);
+  noter("LE BOUCHON A SAUTÉ. La surpression a dépassé " +
+        nb(surpressionMax() / 1000, 0) + " kPa, ce qu'un bouchon simplement " +
+        "enfoncé retient. La sécurité de la fiche le disait :" +
+        citerProto(/surpression/i) +
+        (sorti > 0 ? " " + nb(sorti, 3) + " " + U_M + " de gaz sont partis." : ""),
+        false);
+}
+function terminerReaction() {
+  ETAT.reagit = false;
+  ETAT.finie = true;
+  var reste = ETAT.n.CaCO3 * M("CaCO3");
+  noter("L'effervescence a cessé. " + (reste > 1e-6
+    ? "Il reste " + nb(reste, 3) + " " + U_M + " de craie : c'est l'acide qui " +
+      "est épuisé."
+    : "Toute la craie a disparu.") + " " + nb(ETAT.n.CO2 * M("CO2"), 3) + " " +
+    U_M + " de " + formule("CO2") + " se sont formés" +
+    (bouche() ? ", et ils sont TOUJOURS sur le plateau." : "."), true);
+  armer(); avancer();
+}
+/* Décor pur : des volutes qui montent du col et se retirent toutes seules. */
+function volutes(n) {
+  var c = colFlacon(), i;
+  for (i = 0; i < n; i++) (function (i) {
+    tard(function () {
+      var g = gVolutes.appendChild(el("path", {
+        d: "M 0 0 q 9 -15 0 -28 q -9 -13 0 -26", fill: "none", stroke: "#8fa8b8",
+        "stroke-width": 2.4, "stroke-linecap": "round", opacity: .85 }));
+      var x0 = c[0] - 16 + Math.random() * 32, y0 = c[1] - 6, k;
+      for (k = 1; k <= 12; k++) (function (k) {
+        tard(function () {
+          var t = k / 12;
+          g.setAttribute("transform", "translate(" + (x0 + 30 * t).toFixed(1) +
+            "," + (y0 - 92 * t).toFixed(1) + ") scale(" + (1 + t).toFixed(2) + ")");
+          g.setAttribute("opacity", (0.85 * (1 - t)).toFixed(2));
+          if (k === 12 && g.parentNode) g.parentNode.removeChild(g);
+        }, 62 * k);
+      })(k);
+    }, 130 * i);
+  })(i);
+}
+
+/* ==================================================================
+   20. LE CALCUL — l'intégration, par pas fins
+   ==================================================================
+   ⚠ SKILL §12bis.6 : une étape chronométrée se joue PAR TRANCHES FINES,
+   jamais d'un bloc. `tick()` ET l'accéléré passent tous deux par ici, et le
+   pas vaut PAS_SIM quelle que soit la vitesse choisie : un résultat n'a pas
+   le droit de dépendre d'un sélecteur d'affichage.                          */
+function avancerSimulation(dtSim) {
+  var reste = dtSim, dt, v, dxi;
+  while (reste > 1e-9) {
+    dt = Math.min(PAS_SIM, reste);
+    reste -= dt;
+    ETAT.t += dt;
+    if (ETAT.reagit) {
+      v = vitesseAttaque(ETAT.n);
+      dxi = Math.min(v * dt, avancementMax(ETAT.n));
+      if (dxi > 0) avancer2(ETAT.n, dxi);
+      if (bouche() && !ETAT.saute && surpression(ETAT) > surpressionMax()) {
+        sauterBouchon();
+      }
+      if (!bouche()) detendre(ETAT);
+      if (avancementMax(ETAT.n) <= 1e-13) { terminerReaction(); }
+    } else if (!bouche()) {
+      detendre(ETAT);
+    }
+    echantillonner();
+  }
+}
+/* ⚠ PERSONNE N'ATTEND L'EFFERVESCENCE À SA MONTRE.
+   La fiche demande d'attendre que l'attaque ait cessé avant de peser m₂, et
+   la page a raison de le refuser autrement. Mais l'attaque est acide-limitée
+   dès que la craie est en excès : `HCl` décroît alors en exponentielle et met
+   une vingtaine de constantes de temps à passer sous le seuil d'arrêt. À ×10,
+   cela faisait une minute de classe passée à regarder un compteur — et
+   « Faire l'étape », qui presse « Lire et noter » puis se fait refuser,
+   semblait bloqué.
+   On ne supprime pas la condition, on SUPPRIME L'ATTENTE : le modèle est
+   intégré jusqu'à son terme d'un seul coup, par le même `avancerSimulation`
+   et le même PAS_SIM que l'horloge. Le résultat est numériquement celui
+   qu'on aurait obtenu en patientant — la craie est réellement consommée, le
+   CO₂ réellement formé, et le bouchon saute s'il doit sauter.              */
+function finirEffervescence() {
+  var garde = 0;
+  while (ETAT.reagit && garde++ < 3000) avancerSimulation(1);
+  if (ETAT.reagit) terminerReaction();   // filet : jamais de boucle sans fin
+  dessiner();
+  majPanneaux();
+}
+
+/* La série du graphe : ce que le plateau porte, et la même somme en y
+   remettant ce qui est sorti. La seconde ne bouge pas — c'est la leçon. */
+function echantillonner() {
+  if (!ETAT.flaconSur || !ETAT.verse) return;
+  var s = ETAT.serie, l = lectureBalance();
+  if (s.length && ETAT.t - s[s.length - 1].t < 0.25) return;
+  s.push({ t: ETAT.t, l: l, tot: l + ETAT.perdu });
+  if (s.length > 480) s.shift();
+}
+
+/* ==================================================================
+   21. LE RENDU — tout ce qui se voit relit le modèle
+   ================================================================== */
+function coteCraie(m) {
+  /* le morceau est à l'échelle : 60 unités de dessin par centimètre, et son
+     côté suit la racine cubique du volume que la masse lui donne */
+  if (m <= 0) return 0;
+  return 60 * Math.pow(m / (RHO_CRAIE * 1e-3), 1 / 3);
+}
+function dessiner() {
+  var i, h, y, r, ph, c;
+
+  /* --- la balance : la SOMME de ce qu'elle porte --- */
+  var obj = surLePlateau();
+  if (!obj.length) {
+    balAff.textContent = nb(0, DEC);
+    balVoyant.setAttribute("fill", "#5aa02c");
+  } else {
+    balAff.textContent = nb(arrondiBalance(lectureBalance()), DEC);
+    balVoyant.setAttribute("fill", ETAT.reagit ? ORANGE : "#5aa02c");
+  }
+  balSous.textContent = U_M;
+
+  /* --- le flacon : la hauteur de liquide SUIT le calcul --- */
+  var fracLiq = ETAT.verse ? vAcide() / vFlacon() : 0;
+  h = ETAT.verse ? hauteurLiquide(fracLiq) : 0;
+  flLiquide.setAttribute("y", (-h).toFixed(1));
+  flLiquide.setAttribute("height", h.toFixed(1));
+  flLiquide.setAttribute("opacity", ETAT.verse ? .92 : 0);
+  flSurface.setAttribute("cy", (-h).toFixed(1));
+  flSurface.setAttribute("rx", rayonA(h).toFixed(1));
+  flSurface.setAttribute("opacity", ETAT.verse ? .9 : 0);
+  /* le ciel gazeux se teinte quand il se charge de dioxyde de carbone */
+  var xco2 = (nGazSec(ETAT) + ETAT.nVap) > 0
+    ? ETAT.n.CO2 / (nGazSec(ETAT) + ETAT.nVap) : 0;
+  flCiel.setAttribute("y", (-FL_HB).toFixed(1));
+  flCiel.setAttribute("height", Math.max(0, FL_HB - h).toFixed(1));
+  flCiel.setAttribute("opacity", (borne(xco2 * 1.1, 0, .42)).toFixed(3));
+
+  /* la craie dans le flacon : sa taille SUIT ce qu'il en reste */
+  var mReste = ETAT.n.CaCO3 * M("CaCO3");
+  if (ETAT.craieOu === "flacon" && mReste > 1e-7) {
+    c = coteCraie(mReste);
+    flCraie.setAttribute("width", c.toFixed(1));
+    flCraie.setAttribute("height", (c * .45).toFixed(1));
+    flCraie.setAttribute("x", (-c / 2).toFixed(1));
+    flCraie.setAttribute("y", (-c * .45 - 2).toFixed(1));
+    flCraie.setAttribute("opacity", 1);
+  } else {
+    flCraie.setAttribute("opacity", 0);
+  }
+  /* les bulles : décor, mais leur nombre suit la vitesse d'attaque */
+  var actif = ETAT.reagit && vitesseAttaque(ETAT.n) > 0;
+  for (i = 0; i < flBulles.length; i++) {
+    if (!actif) { flBulles[i].setAttribute("opacity", 0); continue; }
+    ph = (ETAT.t * 1.1 + i * 0.37) % 1;
+    y = -6 - (h - 10) * ph;
+    r = rayonA(-y) - 8;
+    flBulles[i].setAttribute("cx", ((i % 5 - 2) * r / 3).toFixed(1));
+    flBulles[i].setAttribute("cy", y.toFixed(1));
+    flBulles[i].setAttribute("r", (2.4 + 2.2 * ph).toFixed(1));
+    flBulles[i].setAttribute("opacity", (0.85 * (1 - ph * .6)).toFixed(2));
+  }
+
+  /* --- l'éprouvette : ce qu'il lui reste --- */
+  var hE = ETAT.verse ? 0 : EPR_H * borne(REG.acideML / 100, 0, 1);
+  eprLiquide.setAttribute("y", (-hE).toFixed(1));
+  eprLiquide.setAttribute("height", hE.toFixed(1));
+  eprSurface.setAttribute("cy", (-hE).toFixed(1));
+  eprSurface.setAttribute("opacity", hE > 1 ? .9 : 0);
+  if (ETAT.verse) filet.setAttribute("d", "");
+  else {
+    c = colFlacon();
+    filet.setAttribute("d", "M " + pt(OBJ.eprouvette.x + 10, OBJ.eprouvette.y - 16) +
+      " Q " + pt(OBJ.eprouvette.x + 4, c[1] + 14) + " " + pt(c[0], c[1] + 22));
+  }
+
+  /* --- la craie hors du flacon : sa taille suit le réglage --- */
+  c = coteCraie(mCraie());
+  craieCorps.setAttribute("width", c.toFixed(1));
+  craieCorps.setAttribute("height", (c * .45).toFixed(1));
+  craieCorps.setAttribute("x", (-c / 2).toFixed(1));
+  craieCorps.setAttribute("y", (-c * .45 / 2).toFixed(1));
+  GROUPES.craie.setAttribute("opacity", ETAT.craieOu === "flacon" ? 0 : 1);
+  GROUPES.craie.setAttribute("pointer-events",
+    ETAT.craieOu === "flacon" ? "none" : "auto");
+
+  /* --- les étiquettes suivent leur objet (SKILL §12.18) --- */
+  etiqFlacon.setAttribute("x", OBJ.flacon.x);
+  etiqFlacon.setAttribute("y", ETAT.flaconSur ? Y_ETIQ.flaconPlateau
+                                              : Y_ETIQ.flaconBanc);
+  etiqFlacon.textContent = ETAT.verse
+    ? (bouche() ? "flacon BOUCHÉ — système fermé" : "flacon DÉBOUCHÉ — système ouvert")
+    : (court(materiel(/flacon/i), 28) || "flacon");
+  etiqFlacon.setAttribute("fill", ETAT.verse ? (bouche() ? VERT : ORANGE) : GOLD);
+  etiqBouchon.setAttribute("opacity", ETAT.bouchonOu === "col" ? 0 : 1);
+  etiqBouchon.setAttribute("x", OBJ.bouchon.x);
+  etiqBouchon.setAttribute("y", ETAT.bouchonOu === "plateau" ? PLAT_CY - 42
+                                                             : Y_ETIQ.bouchon);
+  etiqCraie.setAttribute("opacity", ETAT.craieOu === "flacon" ? 0 : 1);
+  etiqCraie.setAttribute("x", OBJ.craie.x);
+  etiqCraie.setAttribute("y", ETAT.craieOu === "plateau" ? PLAT_CY - 40
+                                                         : Y_ETIQ.craie);
+  etiqEprou.setAttribute("opacity", ETAT.verse ? 0 : 1);
+  etiqTube.setAttribute("x", OBJ.tube.x);
+  etiqTube.setAttribute("y", ETAT.chauxSur ? Y_ETIQ.chaux : Y_ETIQ.tube);
+
+  /* --- le second poste, et le tube d'eau de chaux --- */
+  var h2 = hauteurLiquide(vAcide() / vFlacon());
+  f2Liquide.setAttribute("y", (-h2).toFixed(1));
+  f2Liquide.setAttribute("height", h2.toFixed(1));
+  for (i = 0; i < f2Bulles.length; i++) {
+    if (!ETAT.chauxSur || cielPoste2().x <= 0) {
+      f2Bulles[i].setAttribute("opacity", 0); continue;
+    }
+    ph = (ETAT.tSeance * 1.3 + i * 0.29) % 1;
+    y = -6 - (h2 - 8) * ph;
+    f2Bulles[i].setAttribute("cx", ((i % 4 - 1.5) * 12).toFixed(1));
+    f2Bulles[i].setAttribute("cy", y.toFixed(1));
+    f2Bulles[i].setAttribute("r", (2.2 + 2 * ph).toFixed(1));
+    f2Bulles[i].setAttribute("opacity", (0.8 * (1 - ph * .6)).toFixed(2));
+  }
+  tubeGaz.setAttribute("opacity", ETAT.chauxSur ? .55 : 0);
+  var tr = ETAT.chauxAgite ? borne(troubleGpL(ETAT.precip) / 1.2, 0, .92) : 0;
+  tubeTrouble.setAttribute("opacity", tr.toFixed(3));
+}
+
+/* ==================================================================
+   22. CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3).         */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function majCompteurCellules() {
+  $("nbCell").textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre EN DIVISIONS DE BALANCE : c'est la seule
+   unité dans laquelle il veut dire quelque chose. Pour m₃ la fiche ne donne
+   pas un nombre mais une COMPARAISON : c'est elle qu'on vérifie.            */
+function verifierContreFiche(k, calc) {
+  if (ETAT.horsProto) return;
+  var fiche = k === L_M1 ? F_M1 : (k === L_M2 ? F_M2 : F_M3), msg = "";
+  if (typeof fiche !== "number" || !isFinite(fiche)) return;
+  if (k === L_M3 && M3_MOINS) {
+    if (calc < fiche - RESOL / 2) return;
+    msg = "<b>Le modèle et la fiche divergent sur " + SYM[k] + ".</b> La fiche " +
+      "écrit « " + cel(k, C_VAL) + " » ; le modèle lit " + nb(calc, DEC) + " " +
+      U_M + ", qui n'est pas inférieure.";
+  } else {
+    if (Math.abs(calc - fiche) <= RESOL / 2) return;
+    msg = "<b>Le modèle et la fiche divergent sur " + SYM[k] + ".</b> Le calcul " +
+      "donne " + nb(calc, DEC) + " " + U_M + ", la fiche écrit " +
+      nb(fiche, DEC) + " " + U_M + " — " +
+      nb(Math.abs(calc - fiche) / RESOL, 1) + " division" +
+      (Math.abs(calc - fiche) / RESOL >= 2 ? "s" : "") + " de balance.";
+  }
+  if (ETAT.diverge.indexOf(SYM[k]) < 0) {
+    ETAT.diverge += (ETAT.diverge ? "<br>" : "") + msg;
+    $("diverge").innerHTML = ETAT.diverge;
+    $("diverge").style.display = "block";
+  }
+}
+
+/* La consigne : une cascade de `if` sur ETAT — une SEULE vérité. Elle décrit
+   toujours un geste que la page accepte (SKILL §11.2).                      */
+function consigne() {
+  if (!ETAT.verse) return "Glisser l'éprouvette au-dessus du col et verser " +
+    "l'acide dans le flacon.";
+  if (ETAT.saute && !ETAT.finie) return "Le bouchon a sauté : prendre un " +
+    "morceau de craie plus petit, puis « Recommencer ».";
+  if (!bouche() && ETAT.m1 === null) return "Boucher le flacon.";
+  if (ETAT.m1 === null) {
+    if (!ETAT.flaconSur) return "Poser le flacon bouché sur le plateau de la balance.";
+    if (ETAT.craieOu !== "plateau") return "Poser le morceau de craie sur le " +
+      "plateau, À CÔTÉ du flacon — il fait partie de la pesée.";
+    return "Lire et noter " + SYM[L_M1] + ".";
+  }
+  if (ETAT.craieOu !== "flacon") {
+    if (bouche()) return "Déboucher le flacon — le bouchon reste SUR LE PLATEAU.";
+    return "Faire tomber la craie dans l'acide.";
+  }
+  if (!bouche() && !ETAT.saute && ETAT.m2 === null) return "Reboucher aussitôt.";
+  if (ETAT.reagit) return "Effervescence : attendre qu'elle ait complètement " +
+    "cessé. Cliquer le flacon pour observer.";
+  if (!ETAT.observe) return "Cliquer le flacon et noter ce que l'on voit.";
+  if (ETAT.m2 === null) return "Lire et noter " + SYM[L_M2] + ".";
+  if (!ETAT.cmp12) return "Comparer " + SYM[L_M1] + " et " + SYM[L_M2] + ".";
+  if (ETAT.m3 === null) {
+    if (bouche()) return "Contre-épreuve : déboucher le flacon — le bouchon " +
+      "reste sur le plateau.";
+    return "Lire et noter " + SYM[L_M3] + ".";
+  }
+  if (!ETAT.cmp23) return "Comparer " + SYM[L_M3] + " à " + SYM[L_M2] + ".";
+  if (!ETAT.chauxSur) return "Identifier le gaz : amener le tube d'eau de " +
+    "chaux au col du second flacon.";
+  if (!ETAT.chauxAgite) return "Agiter le tube.";
+  return "La masse s'est conservée : elle n'a semblé diminuer que lorsque le " +
+    "gaz a quitté le flacon.";
+}
+var ETAPES = ["Verser et boucher", "Peser — " + SYM[L_M1],
+              "Introduire la craie", "Observer l'effervescence",
+              "Peser — " + SYM[L_M2], "Comparer " + SYM[L_M2] + " et " + SYM[L_M1],
+              "Déboucher, peser — " + SYM[L_M3], "Comparer, identifier le gaz"];
+function faits() {
+  return [ETAT.verse && (bouche() || ETAT.saute), ETAT.m1 !== null,
+          ETAT.craieOu === "flacon", ETAT.observe, ETAT.m2 !== null,
+          ETAT.cmp12, ETAT.m3 !== null, ETAT.cmp23 && ETAT.chauxAgite];
+}
+function construireEtapes() {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < ETAPES.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + ETAPES[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majProtocole();
+  majPanneaux();
+}
+function armer() {
+  BOUTONS.verser.armer(!ETAT.verse);
+  BOUTONS.boucher.armer(ETAT.verse && !bouche() && !ETAT.saute &&
+                        (ETAT.m1 === null || ETAT.craieOu === "flacon") &&
+                        ETAT.m2 === null);
+  BOUTONS.deboucher.armer(bouche() && ETAT.verse &&
+                          (ETAT.m1 !== null || ETAT.craieOu === "flacon" ||
+                           ETAT.m2 !== null));
+  BOUTONS.noter.armer(ETAT.flaconSur && prochainePesee() >= 0 && !ETAT.reagit);
+  BOUTONS.comparer.armer((ETAT.m1 !== null && ETAT.m2 !== null && !ETAT.cmp12) ||
+                         (ETAT.m2 !== null && ETAT.m3 !== null && !ETAT.cmp23));
+  BOUTONS.agiter.armer(ETAT.chauxSur && !ETAT.chauxAgite);
+}
+
+/* ==================================================================
+   23. LES PANNEAUX HTML
+   ================================================================== */
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.textContent = cells[i];
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireHTML() {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E2AC-11") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · résultats calculés";
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+
+  $("eqBal").textContent =
+    "lecture   = Σ ( m − ρ_air · V )   sur tout ce que porte le plateau\n" +
+    "m(flacon) = m_verre + Σ n_i · M_i          M_i = Σ (atomes × masse atomique)\n" +
+    "ρ_air     = ((P − Pv)·M_air + Pv·M_eau) / (R·T)      Pv = HR · Psat(T)\n" +
+    "m_verre   = " + nb(M_VERRE, 2) + " g, DÉDUITE de " + SYM[L_M1] + " = " +
+    nb(F_M1, DEC) + " " + U_M + " aux conditions du protocole";
+  $("eqMat").textContent =
+    formule("CaCO3") + " + 2 " + formule("HCl") + "  →  " + formule("CaCl2") +
+    " + " + formule("H2O") + " + " + formule("CO2") + "\n" +
+    "avancement ξ = min( n(" + formule("CaCO3") + ") , n(" + formule("HCl") +
+    ")/2 )      M(" + formule("CO2") + ") = " + nb(M("CO2"), 3) + " g/mol\n" +
+    "vitesse    = k₁ · a(H⁺) · S        k₁ = 10^(0,198 − 444/T) mmol·cm⁻²·s⁻¹\n" +
+    "P(flacon)  = (n_air + n(" + formule("CO2") + ") + n_vap)·R·T / V_ciel\n" +
+    "SORTIE     — et elle seule : quand P > P_salle et que le col est ouvert,\n" +
+    "             le ciel se détend et emporte le MÉLANGE, pas du " +
+    formule("CO2") + " pur.";
+  $("eqVerdict").textContent =
+    "bouché   : " + SYM[L_M2] + " − " + SYM[L_M1] + " = ρ_air · V(craie) = " +
+    nb(ecartFerme(), 5) + " g = " + nb(ecartFerme() / RESOL, 3) + " division\n" +
+    "débouché : " + SYM[L_M3] + " − " + SYM[L_M2] + " = − (masse du gaz sorti)\n" +
+    "les deux verdicts sortent de la MÊME somme ; aucun n'est écrit.";
+
+  var ct = $("capotConst");
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  Object.keys(PHYS).forEach(function (c) {
+    var p = PHYS[c];
+    ct.appendChild(ligneTab([p.n, nb(p.v, p.v < 1 ? 3 : (p.v < 100 ? 3 : 0)) +
+      " " + p.u, p.s]));
+  });
+  ct.appendChild(ligneTab(["masse de la verrerie, DÉDUITE", nb(M_VERRE, 2) + " g",
+    "calée sur " + SYM[L_M1] + " = " + nb(F_M1, DEC) + " " + U_M +
+    " aux conditions du protocole ; un erlenmeyer de 250 mL en pèse ≈ 130"]));
+  ct.appendChild(ligneTab(["surpression que retient le bouchon, DÉDUITE",
+    nb(surpressionMax() / 1000, 0) + " kPa",
+    "force retenue divisée par la section du col : " + nb(F_BOUCHON, 0) +
+    " N / " + sci(S_COL, 2) + " m²"]));
+  $("capotSrc").innerHTML =
+    "Aucune de ces valeurs n'a été retouchée pour faire tomber le résultat de " +
+    "la fiche. La seule grandeur ajustée est la masse de la verrerie, et elle " +
+    "l'est sur la première pesée : la fiche fixe une <b>lecture</b>, pas la " +
+    "masse d'un erlenmeyer.";
+
+  construireEtapes();
+  construireProtocole();
+  construireSeance();
+  construireGrapheMasse();
+  construireGraphePres();
+  majCompteurCellules();
+}
+function limitant() {
+  var nCa = mCraie() / M("CaCO3"), nH = cAcide() * REG.acideML * 1e-3;
+  if (nCa <= 0) return "aucune craie";
+  return nCa <= nH / 2 ? "la craie" : "l'acide";
+}
+function majCarnet() {
+  var t = $("carnet"), ra = rhoAirCourant();
+  var nCa = mCraie() / M("CaCO3"), nH = cAcide() * REG.acideML * 1e-3;
+  var xco2 = (nGazSec(ETAT) + ETAT.nVap) > 0
+    ? ETAT.n.CO2 / (nGazSec(ETAT) + ETAT.nVap) : 0;
+  var d12 = (ETAT.m1 !== null && ETAT.m2 !== null) ? ETAT.m2 - ETAT.m1 : null;
+  var d23 = (ETAT.m2 !== null && ETAT.m3 !== null) ? ETAT.m3 - ETAT.m2 : null;
+  vide(t);
+  t.appendChild(ligneTab(["Grandeur", "Valeur", "D'où elle sort"], true));
+  [["Craie pesée", nb(mCraie(), 2) + " " + U_M + " · " + nb(nCa * 1e3, 2) + " mmol",
+      "réglage · M(" + formule("CaCO3") + ") = " + nb(M("CaCO3"), 3) + " g/mol"],
+   ["Acide versé", nb(REG.acideML, 0) + " mL à " + nb(cAcide(), 1) + " mol/L · " +
+      nb(nH * 1e3, 1) + " mmol", "réglage"],
+   ["Réactif limitant", limitant(),
+      nb(nCa * 1e3, 2) + " mmol de craie pour " + nb(nH * 1e3, 1) +
+      " mmol d'acide, deux pour un"],
+   ["Craie restante", nb(ETAT.n.CaCO3 * M("CaCO3"), 3) + " " + U_M,
+      ETAT.reagit ? "l'attaque court" : (ETAT.finie ? "l'attaque est finie"
+                                                    : "rien n'a commencé")],
+   [formule("CO2") + " formé", nb(ETAT.n.CO2 * M("CO2"), 4) + " " + U_M + " · " +
+      nb(ETAT.n.CO2 * 1e3, 3) + " mmol", "avancement de l'équation-bilan"],
+   ["Ciel gazeux", nb(vGaz() * 1e6, 0) + " mL · " + nb(xco2 * 100, 1) + " % de " +
+      formule("CO2"), "volume du flacon moins celui du liquide"],
+   ["Pression dans le flacon", nb(pression(ETAT) / 1000, 1) + " kPa",
+      "surpression " + nb(surpression(ETAT) / 1000, 1) + " kPa ; le bouchon " +
+      "en retient " + nb(surpressionMax() / 1000, 0)],
+   ["Masse volumique de l'air", nb(ra, 4) + " kg·m⁻³",
+      nb(REG.tc, 0) + " °C, " + nb(REG.phPa, 0) + " hPa, HR " + nb(REG.hr, 0) + " %"],
+   ["Poussée d'Archimède sur le flacon", nb(ra * vExtFlacon() * 1e3, 3) + " " + U_M,
+      "elle ne change pas : le flacon est rigide"],
+   [SYM[L_M1] + " relevée", ETAT.m1 === null ? "—" : nb(ETAT.m1, DEC) + " " + U_M,
+      "somme de ce que porte le plateau"],
+   [SYM[L_M2] + " relevée", ETAT.m2 === null ? "—" : nb(ETAT.m2, DEC) + " " + U_M,
+      "la même somme, la craie ayant changé de case"],
+   [SYM[L_M3] + " relevée", ETAT.m3 === null ? "—" : nb(ETAT.m3, DEC) + " " + U_M,
+      "la même somme, moins ce qui est sorti"],
+   [SYM[L_M2] + " − " + SYM[L_M1], d12 === null ? "—" : nb(d12, DEC) + " " + U_M,
+      "sans arrondi : " + nb(ecartFerme(), 5) + " " + U_M + ", soit " +
+      nb(ecartFerme() / RESOL, 3) + " division"],
+   [SYM[L_M3] + " − " + SYM[L_M2], d23 === null ? "—" : nb(d23, DEC) + " " + U_M,
+      d23 === null ? "—" : nb(Math.abs(d23) / RESOL, 0) + " divisions"],
+   ["Gaz sorti du flacon", nb(ETAT.perdu, 4) + " " + U_M,
+      "le mélange du ciel, pas du " + formule("CO2") + " pur"],
+   ["S'il restait ouvert jusqu'au bout", "− " + nb(resteAPerdre(ETAT), 4) + " " +
+      U_M + " de plus", "le " + formule("CO2") + " restant remplacé par de l'air"],
+   ["Eau de chaux", ETAT.chauxAgite
+      ? nb(ETAT.precip * M("CaCO3") * 1e3, 2) + " mg · " +
+        nb(troubleGpL(ETAT.precip), 2) + " g/L" : "—",
+      "Ca(OH)₂ + " + formule("CO2") + " → " + formule("CaCO3") + " + " +
+      formule("H2O")]
+  ].forEach(function (l) { t.appendChild(ligneTab(l)); });
+}
+function majLectures() {
+  function set(id, v, off) {
+    var n = $(id); if (!n) return;
+    n.textContent = v; n.className = "v" + (off ? " off" : "");
+  }
+  var d12 = (ETAT.m1 !== null && ETAT.m2 !== null) ? ETAT.m2 - ETAT.m1 : null;
+  var d23 = (ETAT.m2 !== null && ETAT.m3 !== null) ? ETAT.m3 - ETAT.m2 : null;
+  set("lBal", ETAT.flaconSur || ETAT.bouchonOu === "plateau" ||
+      ETAT.craieOu === "plateau"
+      ? nb(arrondiBalance(lectureBalance()), DEC) + " " + U_M
+      : nb(0, DEC) + " " + U_M, !ETAT.flaconSur);
+  set("lMat", ETAT.verse ? nb(masseContenu(ETAT), 3) + " " + U_M : "—", !ETAT.verse);
+  set("lCraie", ETAT.craieOu === "flacon"
+      ? nb(ETAT.n.CaCO3 * M("CaCO3"), 3) + " " + U_M : "—",
+      ETAT.craieOu !== "flacon");
+  set("lCO2", ETAT.n.CO2 > 0 ? nb(ETAT.n.CO2 * M("CO2"), 4) + " " + U_M : "—",
+      ETAT.n.CO2 <= 0);
+  set("lP", ETAT.verse ? nb(pression(ETAT) / 1000, 1) + " kPa" : "—", !ETAT.verse);
+  set("lSorti", ETAT.perdu > 0 ? nb(ETAT.perdu, 4) + " " + U_M : "—",
+      ETAT.perdu <= 0);
+  set("lD12", d12 === null ? "—" : nb(d12, DEC) + " " + U_M, d12 === null);
+  set("lD23", d23 === null ? "—" : nb(d23, DEC) + " " + U_M, d23 === null);
+  $("etatSysteme").textContent = !ETAT.verse ? "flacon vide"
+    : (bouche() ? "système FERMÉ" : "système OUVERT");
+}
+function majPanneaux() { majCarnet(); majLectures(); majGrapheMasse(); majGraphePres(); }
+
+/* ---- graphe : ce que le plateau porte, seconde après seconde ---- */
+var gM = {};
+function construireGrapheMasse() {
+  var g = $("gMasse"), X0 = 52, X1 = 348, Y0 = 12, Y1 = 150;
+  vide(g);
+  g.appendChild(el("line", { x1: X0, y1: Y1, x2: X1, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  g.appendChild(el("line", { x1: X0, y1: Y0, x2: X0, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  gM.tot = g.appendChild(el("polyline", { points: "", fill: "none", stroke: GRIS,
+    "stroke-width": 1.8, "stroke-dasharray": "6 4" }));
+  gM.lect = g.appendChild(el("polyline", { points: "", fill: "none", stroke: INK,
+    "stroke-width": 2.4, "stroke-linejoin": "round" }));
+  gM.haut = g.appendChild(el("text", { x: X0 - 4, y: Y0 + 4, "text-anchor": "end",
+    "font-size": 9.5, fill: GRIS }, ""));
+  gM.bas = g.appendChild(el("text", { x: X0 - 4, y: Y1 + 3, "text-anchor": "end",
+    "font-size": 9.5, fill: GRIS }, ""));
+  gM.xmax = g.appendChild(el("text", { x: X1, y: Y1 + 14, "text-anchor": "end",
+    "font-size": 9.5, fill: GRIS }, ""));
+  g.appendChild(el("text", { x: X0, y: Y1 + 14, "font-size": 9.5, fill: GRIS }, "0 s"));
+  gM.lab = g.appendChild(el("text", { x: X0, y: 176, "font-size": 9.5, fill: GRIS },
+    ""));
+  gM.b = { X0: X0, X1: X1, Y0: Y0, Y1: Y1 };
+}
+function majGrapheMasse() {
+  var b = gM.b, s = ETAT.serie, i, lo = 1e9, hi = -1e9, tmax = 1, a = [], c = [];
+  if (!s.length) {
+    gM.lect.setAttribute("points", ""); gM.tot.setAttribute("points", "");
+    gM.haut.textContent = ""; gM.bas.textContent = ""; gM.xmax.textContent = "";
+    gM.lab.textContent = "en abscisse le temps, en ordonnée la masse lue (" +
+      U_M + ")";
+    return;
+  }
+  for (i = 0; i < s.length; i++) {
+    lo = Math.min(lo, s[i].l, s[i].tot); hi = Math.max(hi, s[i].l, s[i].tot);
+    tmax = Math.max(tmax, s[i].t);
+  }
+  var marge = Math.max(0.02, (hi - lo) * 0.25);
+  lo -= marge; hi += marge;
+  function sx(t) { return b.X0 + (b.X1 - b.X0) * borne(t / tmax, 0, 1); }
+  function sy(m) { return b.Y1 - (b.Y1 - b.Y0) * borne((m - lo) / (hi - lo), 0, 1); }
+  for (i = 0; i < s.length; i++) {
+    a.push(pt(sx(s[i].t), sy(s[i].l)));
+    c.push(pt(sx(s[i].t), sy(s[i].tot)));
+  }
+  gM.lect.setAttribute("points", a.join(" "));
+  gM.tot.setAttribute("points", c.join(" "));
+  gM.haut.textContent = nb(hi, DEC);
+  gM.bas.textContent = nb(lo, DEC);
+  gM.xmax.textContent = nb(tmax, 0) + " s";
+  gM.lab.textContent = "écart entre les deux traits : " + nb(ETAT.perdu, 4) +
+    " " + U_M + " — ce qui a quitté le flacon";
+}
+/* ---- graphe : la surpression selon la masse de craie ---- */
+var gP = {};
+function construireGraphePres() {
+  var g = $("gPres"), X0 = 48, X1 = 348, Y0 = 12, Y1 = 132;
+  vide(g);
+  g.appendChild(el("line", { x1: X0, y1: Y1, x2: X1, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  g.appendChild(el("line", { x1: X0, y1: Y0, x2: X0, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  gP.lim = g.appendChild(el("line", { x1: X0, y1: Y1, x2: X1, y2: Y1,
+    stroke: ROUGE, "stroke-width": 1.4, "stroke-dasharray": "5 4" }));
+  gP.c = g.appendChild(el("polyline", { points: "", fill: "none", stroke: INK,
+    "stroke-width": 2.2 }));
+  gP.pt = g.appendChild(el("circle", { cx: X0, cy: Y1, r: 4.5, fill: GOLD,
+    stroke: "#fff", "stroke-width": 1.6 }));
+  gP.haut = g.appendChild(el("text", { x: X0 - 4, y: Y0 + 4, "text-anchor": "end",
+    "font-size": 9.5, fill: GRIS }, ""));
+  gP.limT = g.appendChild(el("text", { x: X1, y: Y1 - 3, "text-anchor": "end",
+    "font-size": 9.5, fill: ROUGE }, ""));
+  gP.lab = g.appendChild(el("text", { x: X0, y: 158, "font-size": 9.5, fill: GRIS }, ""));
+  g.appendChild(el("text", { x: X0, y: Y1 + 14, "font-size": 9.5, fill: GRIS }, "0 g"));
+  gP.xmax = g.appendChild(el("text", { x: X1, y: Y1 + 14, "text-anchor": "end",
+    "font-size": 9.5, fill: GRIS }, ""));
+  gP.b = { X0: X0, X1: X1, Y0: Y0, Y1: Y1 };
+}
+/* La surpression qu'atteindrait le flacon BOUCHÉ pour une masse de craie
+   donnée, tout le reste étant au réglage courant. Le même bilan, sans le
+   moindre nombre écrit. */
+function surpressionPour(m) {
+  var inv = inventaireNeuf();
+  inv.CaCO3 = m / M("CaCO3");
+  var xi = avancer2(inv, 1e9);
+  return xi * R_GAZ * tK() / vGazV(true);
+}
+function majGraphePres() {
+  var b = gP.b, i, m, s = [], mmax = 2.0;
+  var ymax = Math.max(surpressionMax() * 1.3, surpressionPour(mmax));
+  function sx(x) { return b.X0 + (b.X1 - b.X0) * borne(x / mmax, 0, 1); }
+  function sy(p) { return b.Y1 - (b.Y1 - b.Y0) * borne(p / ymax, 0, 1); }
+  for (i = 0; i <= 40; i++) {
+    m = mmax * i / 40;
+    s.push(pt(sx(m), sy(surpressionPour(m))));
+  }
+  gP.c.setAttribute("points", s.join(" "));
+  gP.lim.setAttribute("y1", sy(surpressionMax()).toFixed(1));
+  gP.lim.setAttribute("y2", sy(surpressionMax()).toFixed(1));
+  gP.limT.textContent = "le bouchon lâche à " + nb(surpressionMax() / 1000, 0) +
+    " kPa";
+  gP.haut.textContent = nb(ymax / 1000, 0) + " kPa";
+  gP.xmax.textContent = nb(mmax, 1) + " g";
+  gP.pt.setAttribute("cx", sx(mCraie()).toFixed(1));
+  gP.pt.setAttribute("cy", sy(surpressionPour(mCraie())).toFixed(1));
+  var seuil = mmax, p0;
+  for (i = 0; i <= 400; i++) {
+    m = mmax * i / 400;
+    if (surpressionPour(m) > surpressionMax()) { seuil = m; break; }
+  }
+  p0 = surpressionPour(mCraie());
+  gP.lab.textContent = "à " + nb(mCraie(), 2) + " g : " + nb(p0 / 1000, 0) +
+    " kPa — le bouchon saute au-delà de " + nb(seuil, 2) + " g";
+}
+
+/* ==================================================================
+   24. L'HORLOGE
+   ==================================================================
+   `setInterval` + `Date.now()`, jamais `requestAnimationFrame` : sous le
+   pilote, rAF n'est jamais appelé et l'attaque de la craie — dont dépend TOUT
+   le résultat — ne se jouerait pas du tout (SKILL §13.5 bis).               */
+var nTick = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 50);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(0.25, (m - DERNIER) / 1000);
+  DERNIER = m;
+  /* Le minuteur de séance court en temps RÉEL : il mesure ce que la
+     manipulation coûte à l'enseignant, pas ce que le modèle simule. */
+  ETAT.tSeance += dt;
+  majSeance();
+  if (ETAT.verse) avancerSimulation(dt * ETAT.vitesse);
+  dessiner();
+  if (++nTick % 4 === 0 && ETAT.reagit) majPanneaux();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance() {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    " · " + (MIN_RELEVE === null
+      ? "la fiche ne fixe aucun instant de relevé : on pèse quand " +
+        "l'effervescence a cessé"
+      : "relevé à " + MIN_RELEVE + " min");
+  majSeance();
+}
+
+/* ==================================================================
+   25. LES COMMANDES HTML
+   ================================================================== */
+function lireReglages() {
+  REG.craieCg = +$("rC").value;
+  REG.acideML = +$("rA").value;
+  REG.conc = +$("rN").value;
+  REG.flaconML = +$("rV").value;
+  REG.tc = +$("rT").value;
+  REG.phPa = +$("rP").value;
+  REG.hr = +$("rH").value;
+}
+function majAffichageReglages() {
+  $("oC").value = nb(mCraie(), 2) + " g";
+  $("oA").value = nb(REG.acideML, 0) + " mL";
+  $("oN").value = nb(cAcide(), 1) + " mol/L";
+  $("oV").value = nb(REG.flaconML, 0) + " mL";
+  $("oT").value = nb(REG.tc, 0) + " °C";
+  $("oP").value = nb(REG.phPa, 0) + " hPa";
+  $("oH").value = nb(REG.hr, 0) + " %";
+  $("aideC").textContent = "Le morceau est dessiné à l'échelle : " +
+    nb(Math.pow(mCraie() / (RHO_CRAIE * 1e-3), 1 / 3) * 10, 1) +
+    " mm de côté. Il dégagerait " +
+    nb(Math.min(mCraie() / M("CaCO3"), cAcide() * REG.acideML * 1e-3 / 2) *
+       M("CO2"), 3) + " g de " + formule("CO2") + " et ferait monter le flacon " +
+    "à " + nb(surpressionPour(mCraie()) / 1000, 0) + " kPa de surpression.";
+  $("aideN").textContent = "L'attaque est d'autant plus vive que l'acide est " +
+    "concentré : la vitesse est proportionnelle à l'activité des ions H⁺.";
+  $("aideV").textContent = "Un flacon plus grand laisse plus de place au gaz : " +
+    "la surpression baisse, mais la masse qui sort en débouchant, elle, " +
+    "augmente — il y a plus de ciel à renouveler.";
+  $("aideH").textContent = "L'air humide est plus LÉGER que l'air sec : sa " +
+    "masse volumique vaut ici " + nb(rhoAirCourant(), 4) + " kg·m⁻³.";
+}
+/* Un curseur périme l'enregistrement : laisser à l'écran des pesées prises
+   sous d'autres conditions afficherait des nombres qui ne correspondent plus
+   au dispositif dessiné (SKILL §12.19). */
+function perimer() {
+  var avait = ETAT.m1 !== null || ETAT.verse || ETAT.nCell > 0;
+  var seance = ETAT.tSeance, vit = ETAT.vitesse;
+  purger();
+  ETAT = neufEtat();
+  ETAT.tSeance = seance; ETAT.vitesse = vit;
+  ETAT.horsProto = horsProtocole();
+  OBJ.flacon.place = "banc"; OBJ.eprouvette.place = "rangeE";
+  OBJ.bouchon.place = "rangeB"; OBJ.craie.place = "rangeC";
+  OBJ.tube.place = "rangeT";
+  ["verser", "boucher", "deboucher", "noter", "comparer", "agiter"]
+    .forEach(function (a) { BOUTONS[a].neuf(); });
+  replacerTout();
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  if (avait) {
+    noter("Un réglage a changé : le montage est défait et les pesées sont " +
+          "périmées. Le tableau redevient vierge.", false);
+  }
+}
+function appliquerReglages() {
+  succes();                /* le reglage resout le refus, il ne le garde pas */
+  lireReglages(); majAffichageReglages();
+  var hp = horsProtocole();
+  if (hp && !ETAT.horsProto) {
+    noter("Réglages hors protocole : le tableau de la fiche n'est plus " +
+          "renseigné, le carnet de mesures continue.", false);
+  }
+  perimer();
+  ETAT.horsProto = hp;
+  $("alerte").className = "alerte" + (hp ? " on" : "");
+  dessiner(); majPanneaux(); armer(); avancer();
+}
+function reglerVitesse(v) {
+  ETAT.vitesse = v;
+  var bs = document.querySelectorAll("#vit button[data-v]"), i;
+  for (i = 0; i < bs.length; i++) {
+    bs[i].className = "sec" + (+bs[i].getAttribute("data-v") === v ? " on" : "");
+  }
+}
+function brancherCommandes() {
+  /* Le guide MONTRE, il n'exécute pas : il n'a rien à défaire. */
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  ["rC", "rA", "rN", "rV", "rT", "rP", "rH"].forEach(function (id) {
+    $(id).addEventListener("input", function () { appliquerReglages(); });
+  });
+  var bs = document.querySelectorAll("#vit button[data-v]"), i;
+  for (i = 0; i < bs.length; i++) (function (b) {
+    b.addEventListener("click", function () {
+      reglerVitesse(+b.getAttribute("data-v"));
+    });
+  })(bs[i]);
+  $("bProto").addEventListener("click", function () {
+    $("rC").value = PROTO.craieCg; $("rA").value = PROTO.acideML;
+    $("rN").value = PROTO.conc; $("rV").value = PROTO.flaconML;
+    $("rT").value = PROTO.tc; $("rP").value = PROTO.phPa; $("rH").value = PROTO.hr;
+    appliquerReglages();
+    noter("Réglages du protocole rétablis.", true);
+  });
+  $("rezero").addEventListener("click", recommencer);
+}
+
+/* ==================================================================
+   26. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages : on refait la même
+   manipulation dans les mêmes conditions. Le minuteur de séance SURVIT — la
+   séance ne se rembobine pas.                                               */
+function recommencer() {
+  var seance = ETAT.tSeance || 0, vit = ETAT.vitesse || 10;
+  succes();                    /* un refus ne survit pas a la remise en etat */
+  purger();
+  effacerCibles();
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  prise = null;
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  ETAT.vitesse = vit;
+  ETAT.horsProto = horsProtocole();
+
+  OBJ.flacon.place = "banc"; OBJ.eprouvette.place = "rangeE";
+  OBJ.bouchon.place = "rangeB"; OBJ.craie.place = "rangeC";
+  OBJ.tube.place = "rangeT";
+  var k;
+  for (k in GROUPES) {
+    COUCHES.objets.appendChild(GROUPES[k]);
+    GROUPES[k].removeAttribute("filter");
+    GROUPES[k].setAttribute("cursor", "grab");
+    GROUPES[k].setAttribute("opacity", 1);
+    GROUPES[k].setAttribute("pointer-events", "auto");
+  }
+  vide(gVolutes);
+  ["verser", "boucher", "deboucher", "noter", "comparer", "agiter"]
+    .forEach(function (a) { BOUTONS[a].neuf(); });
+  replacerTout();
+  reglerVitesse(vit);
+
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  dessiner(); majPanneaux(); majSeance();
+  noter("Paillasse remise en état. Le flacon est vide et débouché, " +
+        "l'éprouvette pleine, la craie sur la paillasse.", false);
+  armer(); avancer();
+}
+
+/* ==================================================================
+   27. LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire : ôter le bouchon ramène de l'étape 3 à l'étape 1.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire.                                                          */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+function surlignerObjet(id) {
+  var b = boiteSVG(GROUPES[id]);
+  if (b) { halo(b.x - 9, b.y - 9, b.w + 18, b.h + 18, 16); return; }
+  var o = OBJ[id];                              // repli, si la mise en page manque
+  halo(o.x - 60, o.y - 60, 120, 120, 16);
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+
+/* Les étapes de la fiche, chacune avec son prédicat « faite » et ce que le
+   guide montre. L'ordre suit le protocole ; les prédicats, eux, LISENT
+   l'état — les deux ne se recopient pas. */
+var GUIDE = [
+  /* ⚠ UNE ÉTAPE FAITE RESTE FAITE. `etapeCourante()` rend la PREMIÈRE étape
+     dont `fait` est faux ; ce test-ci retombait à faux dès que le flacon
+     était débouché — or l'étape 3 DOIT le déboucher pour y laisser tomber la
+     craie. L'étape 1 redevenait donc courante, son geste rebouchait, l'étape
+     3 redébouchait : « Faire l'étape » oscillait indéfiniment entre les deux
+     et la craie n'entrait jamais. Une fois m₁ relevée, « verser et boucher »
+     est acquis : le protocole ne le défait pas, il ouvre le flacon pour la
+     suite. */
+  { fait: function () { return ETAT.verse && (bouche() || ETAT.m1 !== null); },
+    aide: function () {
+      return ETAT.verse
+        ? "Prendre le <b>bouchon</b> et l'enfoncer sur le col du flacon."
+        : "Glisser l'<b>éprouvette</b> au-dessus du col et verser l'acide.";
+    },
+    montre: function () {
+      var id = ETAT.verse ? "bouchon" : "eprouvette";
+      surlignerObjet(id); montrerCibles(id);
+      surlignerBouton(ETAT.verse ? "boucher" : "verser");
+    } },
+  { fait: function () { return ETAT.m1 !== null; },
+    aide: function () {
+      if (!ETAT.flaconSur) return "Glisser le <b>flacon bouché</b> sur le plateau.";
+      if (ETAT.craieOu !== "plateau") return "Poser la <b>craie</b> sur le " +
+        "plateau, à côté du flacon : elle fait partie de la pesée.";
+      return "Presser <b>« Lire et noter »</b> : c'est " + SYM[L_M1] + ".";
+    },
+    montre: function () {
+      if (!ETAT.flaconSur) { surlignerObjet("flacon"); montrerCibles("flacon"); return; }
+      if (ETAT.craieOu !== "plateau") {
+        surlignerObjet("craie"); montrerCibles("craie"); return;
+      }
+      surlignerBouton("noter");
+    } },
+  /* ⚠ « BOUCHÉ » NE PEUT PAS RESTER DANS LA CONDITION APRÈS LA PESÉE m₂.
+     Cette étape se lisait `craieOu === "flacon" && bouche()`. Or l'étape 7
+     DOIT déboucher — c'est elle qui fait la leçon, le gaz part et la balance
+     descend. Au moment où elle débouche, cette condition-ci redevenait
+     fausse, `etapeCourante()` renvoyait 3 (la première non faite), et le
+     guidé rebouchait : l'étape 7 ne s'atteignait jamais. Même défaut que
+     l'étape 1 corrigée plus haut, et même remède — une étape ACQUISE le
+     reste : dès m₂ relevée, « introduire la craie et reboucher » est faite,
+     et rouvrir le flacon est la suite du protocole, pas son défaisage. */
+  { fait: function () {
+      return ETAT.craieOu === "flacon" && (bouche() || ETAT.m2 !== null);
+    },
+    aide: function () {
+      if (bouche() && ETAT.craieOu !== "flacon") return "Presser " +
+        "<b>« Déboucher le flacon »</b> — le bouchon se pose SUR LE PLATEAU.";
+      if (ETAT.craieOu !== "flacon") return "Faire tomber la <b>craie</b> dans " +
+        "l'acide, par le col.";
+      return "Reboucher <b>aussitôt</b>.";
+    },
+    montre: function () {
+      if (bouche() && ETAT.craieOu !== "flacon") { surlignerBouton("deboucher"); return; }
+      if (ETAT.craieOu !== "flacon") {
+        surlignerObjet("craie"); montrerCibles("craie"); return;
+      }
+      surlignerObjet("bouchon"); montrerCibles("bouchon"); surlignerBouton("boucher");
+    } },
+  { fait: function () { return ETAT.observe; },
+    aide: "<b>Cliquer le flacon</b> pour l'observer : la page dit ce qu'il " +
+          "reste de craie et ce qui s'est formé.",
+    montre: function () { surlignerObjet("flacon"); } },
+  { fait: function () { return ETAT.m2 !== null; },
+    aide: function () {
+      if (ETAT.reagit) return "L'effervescence court : il reste " +
+        nb(ETAT.n.CaCO3 * M("CaCO3"), 3) + " " + U_M + " de craie. Presser " +
+        "<b>« Lire et noter »</b> : l'attaque est menée à son terme, puis " +
+        "la balance est lue — sans rien attendre.";
+      return "Presser <b>« Lire et noter »</b> : c'est " + SYM[L_M2] + ".";
+    },
+    montre: function () { surlignerBouton("noter"); } },
+  { fait: function () { return ETAT.cmp12; },
+    aide: "Presser <b>« Comparer »</b> : " + SYM[L_M2] + " et " + SYM[L_M1] + ".",
+    montre: function () { surlignerBouton("comparer"); } },
+  { fait: function () { return ETAT.m3 !== null; },
+    aide: function () {
+      if (bouche()) return "Contre-épreuve : presser <b>« Déboucher le " +
+        "flacon »</b>, sans rien retirer du plateau.";
+      return "Presser <b>« Lire et noter »</b> : c'est " + SYM[L_M3] + ".";
+    },
+    montre: function () { surlignerBouton(bouche() ? "deboucher" : "noter"); } },
+  { fait: function () { return ETAT.cmp23; },
+    aide: "Presser <b>« Comparer »</b> : " + SYM[L_M3] + " et " + SYM[L_M2] +
+          ". Qu'est-ce qui a quitté le plateau ?",
+    montre: function () { surlignerBouton("comparer"); } },
+  { fait: function () { return ETAT.chauxAgite; },
+    aide: function () {
+      return ETAT.chauxSur
+        ? "Presser <b>« Agiter le tube »</b>."
+        : "Glisser le <b>tube d'eau de chaux</b> au col du second flacon.";
+    },
+    montre: function () {
+      if (!ETAT.chauxSur) { surlignerObjet("tube"); montrerCibles("tube"); return; }
+      surlignerBouton("agiter");
+    } }
+];
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, premier usage de cette
+   page en classe. On agrandit le CADRE, pas la mise en page.             */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. verser l'acide, puis boucher — deux gestes, une étape de la fiche */
+  function () {
+    if (!ETAT.verse) { presserBouton("verser"); return 520; }
+    presserBouton("boucher");
+    return 420;
+  },
+
+  /* 2. la première pesée, flacon bouché. ⚠ Il faut d'abord POSER le flacon
+     sur le plateau : la balance refuse de lire un plateau vide, et elle a
+     raison. Le dépôt passe par le même `deposer()` que le glisser, sur la
+     zone qu'`emplacements()` propose. Une seule fois : dès m₁ relevée, le
+     protocole FIGE le plateau jusqu'à la troisième pesée. */
+  function () {
+    var z;
+    if (OBJ.flacon.place !== "plateau") {
+      z = zoneDe("flacon", "plateau");
+      if (z) { deposer("flacon", z); return 560; }
+    }
+    /* ⚠ ET LA CRAIE. L'étape en demande DEUX : « le flacon bouché ET, à côté
+       de lui, le morceau de craie ». Ce geste ne posait que le flacon, puis
+       pressait « Lire et noter » — que la pesée refuse tant que la craie est
+       restée sur la paillasse, puisqu'elle fait partie de la masse m₁. Le
+       bouton était donc pressé, refusé, et « Faire l'étape » ne bougeait
+       plus : l'aide de l'étape le disait déjà (« Poser la craie sur le
+       plateau »), le geste ne le faisait pas. Sa zone s'appelle `platC` et
+       non `plateau` — c'est celle qu'`emplacements("craie")` propose. */
+    if (ETAT.craieOu !== "plateau") {
+      z = zoneDe("craie", "platC");
+      if (z) { deposer("craie", z); return 560; }
+    }
+    presserBouton("noter");
+    return 460;
+  },
+
+  /* 3. introduire la craie. Le flacon est bouché depuis l'étape 1 : il faut
+     le déboucher, introduire, puis reboucher — c'est l'ordre de la fiche, et
+     la page refuse tout autre. `introduireCraie()` est la fonction du geste
+     lui-même, celle qu'appelle le glisser-déposer. */
+  function () {
+    if (ETAT.craieOu !== "flacon") {
+      if (bouche()) { presserBouton("deboucher"); return 420; }
+      introduireCraie();
+      return 520;
+    }
+    presserBouton("boucher");
+    return 420;
+  },
+
+  /* 4. observer l'effervescence — un clic sur le flacon, pas un bouton */
+  function () { observerFlacon(); return 520; },
+
+  /* 5. la deuxième pesée, toujours bouché : le système est FERMÉ */
+  function () { presserBouton("noter"); return 460; },
+
+  /* 6. comparer m₁ et m₂ — la masse s'est-elle conservée ? */
+  function () { presserBouton("comparer"); return 520; },
+
+  /* 7. la troisième pesée, flacon OUVERT : c'est elle qui fait la leçon,
+     le gaz part et la balance descend. */
+  function () {
+    if (bouche()) { presserBouton("deboucher"); return 520; }
+    presserBouton("noter");
+    return 460;
+  },
+
+  /* 8. comparer m₂ et m₃ */
+  function () { presserBouton("comparer"); return 520; },
+
+  /* 9. le tube d'eau de chaux au col du second flacon, puis on agite :
+     ce qui est parti n'a pas disparu, il est là. */
+  function () {
+    if (!ETAT.chauxSur) { poserTubeCol2(); return 560; }
+    presserBouton("agiter");
+    return 620;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   28. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ajouterDefs();
+  ajouterCouches();
+
+  ETAT = neufEtat();
+  OBJ = {
+    flacon:     { x: FL_BANC_X, y: BANC, rot: 0, place: "banc" },
+    eprouvette: { x: EPR_X, y: EPR_Y, rot: 0, place: "rangeE" },
+    bouchon:    { x: BOU_X, y: BOU_Y, rot: 0, place: "rangeB" },
+    craie:      { x: CR_X, y: CR_Y, rot: 0, place: "rangeC" },
+    tube:       { x: TUBE_X, y: TUBE_Y, rot: 0, place: "rangeT" }
+  };
+
+  construireDecor();
+  construireBalance();
+  construirePoste2();
+  construireFlacon();
+  construireEprouvette();
+  construireBouchon();
+  construireCraie();
+  construireTube();
+  construireBoutons();
+  GROUPES = { flacon: gFlacon, eprouvette: gEprou, bouchon: gBouchon,
+              craie: gCraie, tube: gTube };
+  brancherPrise();
+  brancherBoutons();
+
+  construireHTML();
+  brancherCommandes();
+  lireReglages(); majAffichageReglages();
+  reglerVitesse(10);
+  recommencer();
+  demarrerHorloge();
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>
+

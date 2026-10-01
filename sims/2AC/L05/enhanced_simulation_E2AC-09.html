@@ -1,0 +1,4036 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-09 · Le fer et le soufre</title>
+<!-- L'ECOUTEUR D'ERREURS EST ICI, ET PAS EN FIN DE BODY (SKILL §12.47) :
+     pose apres le script de la page, il ne verrait aucune erreur de
+     demarrage — celles-ci ont deja eu lieu. -->
+<script>
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message) + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<!--
+  ===================================================================
+  E2AC-09 · 2AC · U1 · L05 — PAILLASSE VIRTUELLE
+  « Le fer réagit-il avec le soufre ? »
+  ===================================================================
+
+  CE QUE CETTE PAGE CALCULE PLUTÔT QUE DE LE REJOUER
+  --------------------------------------------------
+  Les trois lignes du tableau ne sont écrites nulle part dans le code.
+
+  · L'ACTION DE L'AIMANT, avant ET après, sort d'un bilan de FORCES. Le
+    barreau donne un champ axial exact (aimantation uniforme, formule du
+    cylindre) ; un grain quasi sphérique a un facteur démagnétisant 1/3,
+    donc une aimantation M = min(3B/µ₀, M_sat) ; la force par unité de
+    volume vaut M·dB/dz et se compare au poids ρg. Le rapport vaut
+    **107** pour le fer et **0,036** pour le sulfure de fer : c'est un
+    facteur 3 000, et c'est lui qui fait le « rien n'est attiré » de la
+    fiche. Rien n'est déclaré ; il faudrait un aimant de **2,01 T** pour
+    soulever le sulfure, et le néodyme le plus fort plafonne à 1,45 T.
+  · LA PROPAGATION est un bilan de chaleur de tranche à tranche : la
+    chaleur dégagée par la tranche qui réagit doit porter la suivante
+    au-dessus de la température d'amorçage, pertes déduites. La marge
+    vaut **×6,3** aux masses de la fiche — c'est pourquoi l'incandescence
+    « se propage d'elle-même » une fois la flamme retirée.
+  · LE BLOC UNIQUE n'est pas décrété : la température adiabatique du
+    produit vaut **1 320 °C** et la fusion du sulfure de fer est à
+    1 188 °C. La totalité du sulfure formé passe donc par l'état liquide,
+    et c'est pour cela que le tas « se prend en un seul bloc ».
+  · LE REFROIDISSEMENT est intégré (rayonnement + convection) : le bloc
+    met **11,3 min** à revenir à 50 °C, et la fiche prescrit une séance de
+    15 min. La consigne « laisser refroidir complètement » n'est donc pas
+    une politesse : elle occupe les trois quarts du temps disponible.
+  · ET LE FER CHAUD N'EST PAS MAGNÉTIQUE. Le point de Curie du fer est à
+    **770 °C** ; le bloc y repasse au bout de 20 s. Un aimant approché
+    trop tôt ne prendrait rien — pour une raison qui n'a rien à voir avec
+    la chimie. La page refuse le geste, et dit pourquoi.
+
+  Et deux résultats que la fiche ne donne pas :
+  · avec **6 g de fer pour 2 g de soufre**, l'aimant REPREND du fer après
+    le chauffage — il en reste 2,5 g. Le « rien n'est attiré » de la
+    fiche tient à ce que ses masses sont à 0,47 % de la proportion exacte ;
+  · l'aimant ne distingue pas le sulfure du soufre : ni l'un ni l'autre
+    n'est attiré. Ce qu'il montre, c'est la DISPARITION du fer.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau, durée, modalité et conclusion
+    viennent de `valise/curriculum/experiences.yaml`, entrée E2AC-09. Ils
+    ne sont PAS recopiés : le bloc `DONNEES` est régénéré par
+    `_sync_donnees.py` (SKILL §0, corollaire 3).
+  · Les deux masses sont LUES dans `materiel` (« de l'ordre de 2 g »,
+    « de l'ordre de 3,5 g »), les couleurs de départ aussi (« poudre
+    jaune », « poudre grise »), la durée de séance dans `duree`.
+  · Les constantes physiques sont sourcées une par une dans `PHYS` et
+    réaffichées dans « Sous le capot » avec leur provenance.
+  · Deux grandeurs ne sont PAS dans la fiche et la page le dit à l'écran :
+    la **distance à laquelle on approche l'aimant** et sa **rémanence**.
+    Les deux sont des curseurs, et les deux sont étiquetées « ajout ».
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome : elle ne passe pas par `generer.py`, n'utilise ni
+    `moteur.js` ni `simulation.html.j2` ni `icones.js`, et ne s'ouvre pas
+    depuis `index.html`. Elle DOUBLE `simulation_E2AC-09.html`.
+  · Pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL : on
+    cherche ici qu'un objet se reconnaisse comme un objet.
+  · Le dessin est un SCHÉMA HABILLÉ. Sont à l'échelle : la hauteur de
+    l'aimant au-dessus de la poudre (elle suit le curseur), le rayon du
+    tas (il suit les deux masses), la position du front d'incandescence
+    (elle suit le temps), la teinte du tas (elle suit sa température) et
+    le nombre de grains repris par l'aimant (il suit la masse de fer
+    libre). Ne le sont pas : le mortier, la brique, le bec Bunsen.
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §6.2   aucun état ne dépend de la fin d'une animation ; verrous en
+         PREMIÈRE ligne ; horloge en `setInterval` lisant `Date.now()`.
+  §6.11  rien ne passe par `style.transform` : tout par l'ATTRIBUT.
+  §6.12  toute cible saisissable porte une plaque de préhension pleine et
+         transparente ; tout le reste porte `pointer-events:none`.
+  §12.2  les attributs `points` et `d` passent par `pt()`, jamais `nb()`.
+  §12.5  chaque curseur bouge un nombre affiché sur TOUTE sa course.
+  §12.12 chaque `value` de curseur est ramenée sur la grille du `step`.
+  §12.47 l'écouteur d'erreurs est dans le `<head>`, AVANT le script.
+  §12bis.6 le résultat ne dépend pas du sélecteur de vitesse : l'amorçage,
+         la traversée et le refroidissement sont TABULÉS une fois pour
+         toutes, et l'horloge ne fait que parcourir la table par pas fixe.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --rouge:#b03030; --suie:#2a2a2a;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #00000077;
+          pointer-events:none;max-width:52%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(244px,22%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #00000055}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0006}
+.rezero:hover{filter:brightness(1.09)}
+
+/* ---- LE BANDEAU DE SÉCURITÉ ----
+   Cette fiche est une DÉMONSTRATION qui dégage des vapeurs irritantes
+   devant une classe de deuxième année. La sécurité n'est donc pas un
+   encadré à côté du montage : c'est une condition d'exécution, et le
+   bandeau porte en permanence la ligne de `securite` qui motive le geste
+   en cours. */
+.secubande{margin-top:10px;border-radius:9px;padding:10px 14px;
+           border-left:6px solid var(--rouge);background:var(--redbg);
+           display:flex;gap:12px;align-items:flex-start}
+.secubande .pic{font-size:22px;line-height:1.1}
+.secubande .co{flex:1;min-width:0}
+.secubande .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+              font-weight:700;color:var(--rouge);display:block;margin-bottom:2px}
+.secubande .t{font-size:13.5px;color:#4a1f1f;line-height:1.45}
+.secubande.refus{background:#f7d9d9;border-left-color:#8c1c1c}
+.secubande.refus .k{color:#8c1c1c}
+.secubande.ok{background:var(--greenbg);border-left-color:var(--green)}
+.secubande.ok .k{color:var(--green)}
+.secubande.ok .t{color:#22380f}
+
+.checks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.checks div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted);
+            position:relative;min-width:120px}
+.checks div .n{font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+               font-weight:700;color:#c0a0a0;display:block}
+.checks div.non{border-color:#e6b9b9;background:#fdf4f4}
+.checks div.non .n{color:var(--rouge)}
+.checks div.oui{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.checks div.oui .n{color:var(--green)}
+.checks div.oui::after{content:"✓";position:absolute;right:7px;top:5px;
+                       font-weight:700;color:var(--green)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:92px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect div.ajout{background:#f4f0fa}
+.lect div.ajout .k{color:#6b4b9a}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:var(--rouge);background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.box.secu li{margin-bottom:4px}
+.box.secu li.actif{background:#f7d9d9;border-radius:4px;padding:2px 4px;
+                   margin-left:-4px;font-weight:600}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   ⚠ `!important` À DESSEIN : le SVG porte un style qui bat tout sélecteur ;
+   sans cela la scène projetée est rognée en haut et en bas, et la bande de
+   commandes du bas disparaît (SKILL §12bis). Les 56 px retranchés sont la
+   bande réservée à la flèche d'avance. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:flex-start;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte : déroulée en entier, une fiche de neuf
+   étapes repousse les instruments hors du champ — or on les regarde pendant
+   que la scène tourne. `majProtocole` ramène l'étape courante dans la vue. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit en clair : passée par un échappement CSS, la séquence se
+   fait avaler par le chiffre qui la suit et sort en « ¹3 ». */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--serif);font-size:16px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-09 · 2AC · L05</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <!-- LA SÉCURITÉ, EN PREMIER — la consigne du geste en cours, lue dans le YAML -->
+    <div class="secubande" id="secuBande">
+      <span class="pic" id="secuPic">⚠</span>
+      <span class="co">
+        <span class="k" id="secuTitre">Consigne de sécurité du geste en cours</span>
+        <span class="t" id="secuTexte">…</span>
+      </span>
+    </div>
+    <div class="checks" id="checks"></div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeSeuils"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:var(--rouge)">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <!-- Le protocole de la fiche, MOT POUR MOT, en tête de colonne : posé
+         sous la scène il commencerait à y ≈ 950 px, donc invisible sans
+         dérouler. L'étape courante s'y déduit de l'état, jamais d'un
+         compteur : le panneau avance de lui-même dès que le geste est fait,
+         et il recule si on le défait. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>L'aimant <span class="note" id="nomSuivi">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Ce qu'il y a sous l'aimant</div><div class="v" id="lCorps">—</div></div>
+        <div><div class="k">Masse de fer libre</div><div class="v" id="lFeLibre">—</div></div>
+        <div><div class="k">Force magnétique / poids</div><div class="v" id="lRatio">—</div></div>
+        <div><div class="k">Verdict de l'aimant</div><div class="v" id="lVerdict">—</div></div>
+        <div><div class="k">Champ au ras de la poudre</div><div class="v" id="lB">—</div></div>
+        <div><div class="k">Distance de décollage</div><div class="v" id="lZdec">—</div></div>
+        <div class="ajout"><div class="k">Point de Curie du fer (ajout)</div>
+          <div class="v" id="lCurie">—</div></div>
+        <div class="ajout"><div class="k">Rémanence qu'il faudrait (ajout)</div>
+          <div class="v" id="lBrNec">—</div></div>
+      </div>
+      <div class="src" style="margin-top:6px">
+        Les deux dernières lectures sont un <b>ajout — la fiche ne les cite
+        pas</b>. Ce sont pourtant elles qui bornent le résultat : au-dessus de
+        770 °C le fer lui-même cesse d'être magnétique, et aucun aimant
+        permanent existant ne peut soulever le sulfure de fer.
+      </div>
+      <div style="margin-top:11px"><span class="lbl">L'aimant, en fonction de la distance</span></div>
+      <svg id="gAimant" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        L'échelle des ordonnées est <b>logarithmique</b> : les deux courbes
+        sont séparées d'un facteur trois mille, et sans elle celle du sulfure
+        serait collée à l'axe. Le trait rouge est le seuil de décollage —
+        force magnétique égale au poids.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>La propagation <span class="note">la flamme retirée</span></h2>
+      <svg id="gFront" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        La marge d'entretien est le rapport de la chaleur <b>disponible</b> à
+        la chaleur <b>requise</b> pour amorcer la tranche suivante. Au-dessus
+        de 1, le front avance seul ; en dessous, il s'arrête dès qu'on retire
+        la flamme. Le maximum tombe sur la proportion exacte.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Le refroidissement <span class="note">et pourquoi il faut l'attendre</span></h2>
+      <svg id="gRefroid" viewBox="0 0 360 176" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Trois seuils, et ils ne disent pas la même chose : le <b>point de
+        Curie</b> (770 °C) au-dessous duquel le fer redevient magnétique, le
+        <b>point de Draper</b> (525 °C) au-dessous duquel le bloc cesse de
+        rougeoyer, et le seuil de <b>manipulation</b> (50 °C) que la fiche
+        impose avant d'approcher l'aimant.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg"><label for="rFe">Masse de limaille de fer</label><output id="oFe"></output>
+        <input type="range" id="rFe" min="1" max="16" step="0.5" value="3.5">
+        <div class="aide" id="aideFe"></div></div>
+      <div class="reg"><label for="rS">Masse de fleur de soufre</label><output id="oS"></output>
+        <input type="range" id="rS" min="0.5" max="6" step="0.5" value="2">
+        <div class="aide" id="aideS"></div></div>
+      <div class="reg"><label for="rZ">Distance de l'aimant à la poudre</label><output id="oZ"></output>
+        <input type="range" id="rZ" min="1" max="40" step="1" value="2">
+        <div class="aide" id="aideZ"></div></div>
+      <div class="reg"><label for="rBr">Rémanence du barreau aimanté</label><output id="oBr"></output>
+        <input type="range" id="rBr" min="0.05" max="1.45" step="0.01" value="0.38">
+        <div class="aide" id="aideBr"></div></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+      <div style="margin-top:11px"><span class="lbl">Vitesse du temps</span></div>
+      <div class="cmd" id="vit">
+        <button class="sec" type="button" data-v="1">×1</button>
+        <button class="sec" type="button" data-v="10">×10</button>
+        <button class="sec on" type="button" data-v="30">×30</button>
+        <button class="sec" type="button" data-v="60">×60</button>
+      </div>
+      <div class="src" style="margin-top:5px">
+        Le refroidissement complet demande <b id="dureeRef">—</b> : la fiche
+        prescrit une séance de <b id="dureeSeance">—</b>, et l'on ne peut pas
+        la passer à regarder un bloc tiédir. Le temps est donc
+        <b>comprimé</b>, et l'accélération est affichée en permanence dans le
+        cadre. Le résultat, lui, ne dépend pas de ce réglage : l'amorçage, la
+        traversée et le refroidissement sont tabulés une fois pour toutes, et
+        l'horloge ne fait que parcourir la table par pas fixe.
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle, en équations</h3>
+      <div class="eq" id="eqModele"></div>
+      <p>Rien n'est « affiché parce que la fiche le dit ». L'action de
+      l'aimant est une comparaison de deux forces, la propagation un bilan de
+      chaleur de tranche à tranche, le bloc unique une température comparée à
+      un point de fusion, et le délai avant de pouvoir toucher une intégration
+      des pertes.</p>
+      <h3>2 · Ce que devient la matière</h3>
+      <div class="eq" id="eqBilan"></div>
+      <p>Le bilan est écrit <b>en toutes lettres</b> : la fiche de 2AC/L05
+      l'exige, et les formules chimiques ne sont introduites qu'en L06. Les
+      quantités, elles, sortent des masses molaires.</p>
+      <h3>3 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>4 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Il ne modélise pas un tas de poudre, il modélise un milieu
+        continu.</b> Un vrai mélange fer-soufre réagit grain contre grain :
+        la vitesse dépend de la finesse du broyage, de la surface de contact
+        et de la compacité du tas, dont rien n'est ici. La vitesse du front
+        est une estimation de diffusion thermique, pas une mesure.</li>
+        <li><b>La température d'amorçage est un intervalle, pas un nombre.</b>
+        Le mélange s'amorce entre 250 et 300 °C selon le broyage. La page en
+        retient 280 °C ; à 200 °C le délai d'amorçage passe de 2,4 à 1,1 s, et
+        à 350 °C il monte à 4,0 s. La conclusion, elle, ne bouge pas : la
+        marge d'entretien reste supérieure à 2 sur tout l'intervalle.</li>
+        <li><b>Les vapeurs irritantes ne sont pas modélisées.</b> La fiche les
+        signale et impose la ventilation ; la page l'écrit, l'exige avant de
+        chauffer, et s'arrête là. Elle ne sait ni combien il s'en dégage, ni
+        ce qu'elles contiennent — un excès de soufre en donne davantage, et
+        c'est tout ce qu'elle peut en dire.</li>
+        <li><b>Le grain est supposé sphérique et isolé.</b> Le facteur
+        démagnétisant 1/3 vaut pour une sphère ; une paillette de limaille en
+        a un bien plus faible dans sa longueur et se soulève donc plus
+        facilement. Le modèle sous-estime l'attraction du fer — dans le sens
+        prudent, celui qui ne fabrique pas le résultat.</li>
+        <li><b>Le sulfure obtenu est supposé pur.</b> En vrai, le bloc
+        renferme du fer et du soufre non réagis piégés au cœur, et un peu de
+        sulfate en surface. Le modèle ne connaît que le réactif limitant.</li>
+        <li><b>Le refroidissement suppose le bloc isotherme.</b> Un bloc
+        poreux de 16 mm a un cœur plus chaud que sa peau pendant plusieurs
+        minutes : la page annonce donc une durée un peu courte, jamais
+        longue.</li>
+        <li><b>Aucune odeur, aucune chaleur, aucune vapeur.</b> Une page ne
+        peut pas rendre cela : elle l'écrit, c'est tout.</li>
+        <li><b>La sécurité simulée n'est pas la sécurité.</b> Cette page fait
+        répéter des gestes ; elle ne remplace ni la hotte, ni la fenêtre
+        ouverte, ni la présence de l'enseignant.</li>
+      </ul>
+      <h3>5 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-09.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-09",
+  "niveau": "2AC",
+  "unite": "U1",
+  "lecon": "L05",
+  "titre": "Le fer réagit-il avec le soufre ?",
+  "axe": "Une transformation chimique sans dioxygène : le fer et le soufre",
+  "objectif": "Montrer qu'un mélange de fer et de soufre, chauffé en un seul point, donne un corps entièrement nouveau — le sulfure de fer — et établir, à l'aide de l'aimant, la différence entre un simple **mélange** et une **transformation chimique**, sans qu'aucun dioxygène n'intervienne.",
+  "duree": 15,
+  "modalite": "démonstration, salle ventilée — les apprenants observent et consignent",
+  "materiel": [
+    "**Fleur de soufre** (poudre jaune) — quelques grammes seulement, de l'ordre de 2 g",
+    "**Limaille de fer** (poudre grise) — de l'ordre de 3,5 g",
+    "Une balance électronique et deux coupelles",
+    "Un mortier et son pilon",
+    "Un **aimant droit**, glissé dans un sachet de plastique fin pour le garder propre",
+    "Une **brique réfractaire** posée sur le plan de travail",
+    "Un bec Bunsen, des allumettes longues, une spatule et une pince en bois"
+  ],
+  "securite": [
+    "**Expérience de démonstration** : elle est conduite par l'enseignant seul ; les apprenants restent assis, à distance, et se contentent d'observer et de consigner.",
+    "Le chauffage du mélange fer-soufre dégage des **vapeurs irritantes** : travailler dans une **salle ventilée**, fenêtres ouvertes, ou sous la hotte si le laboratoire en possède une.",
+    "**Ne jamais respirer les vapeurs** et ne pas se pencher au-dessus du tas pendant le chauffage.",
+    "N'employer que des **quantités faibles** — quelques grammes suffisent ; un tas plus gros dégage d'autant plus de vapeurs.",
+    "Chauffer **sur une brique réfractaire**, jamais directement sur la paillasse, et écarter tout papier du bec Bunsen.",
+    "**Laisser refroidir complètement** le solide obtenu avant de le manipuler ou d'en approcher l'aimant : il reste brûlant longtemps.",
+    "Attacher les cheveux longs, porter une blouse, éteindre le bec Bunsen dès la fin de l'expérience et se laver les mains."
+  ],
+  "protocole": [
+    "Peser séparément, dans deux coupelles, la poudre de **soufre** et la poudre de **fer** ; faire décrire la couleur de chacune — le soufre est **jaune**, le fer est **gris**.",
+    "Verser les deux poudres dans le mortier et les mélanger au pilon jusqu'à obtenir une **poudre grise homogène**.",
+    "Approcher l'**aimant** du mélange : observer ce qui vient s'y accrocher, puis remettre dans le mortier le fer ainsi récupéré.",
+    "Déposer le mélange en un petit tas sur la **brique réfractaire**, loin de tout papier.",
+    "Allumer le bec Bunsen et chauffer **un seul point** du tas jusqu'à ce qu'il devienne **incandescent**.",
+    "**Retirer aussitôt la flamme** et éteindre le bec ; observer ce que devient le reste du tas, sans y toucher.",
+    "Laisser le solide **refroidir complètement** sur la brique.",
+    "Décrire l'aspect et la couleur du solide obtenu, puis le détacher à la spatule.",
+    "Approcher de nouveau l'**aimant** du solide obtenu et comparer avec ce qui s'était produit à l'étape 3."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Ce que l'on examine",
+      "Avant le chauffage — le mélange",
+      "Après le chauffage — le solide obtenu"
+    ],
+    "lignes": [
+      [
+        "Couleur et aspect",
+        "",
+        ""
+      ],
+      [
+        "Action de l'aimant",
+        "",
+        ""
+      ],
+      [
+        "Les corps de départ sont-ils encore là ?",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Couleur et aspect",
+        "poudre **grise**, dans laquelle on distingue encore des grains jaunes de soufre",
+        "solide **noir grisâtre**, **poreux et friable**, d'un seul bloc"
+      ],
+      [
+        "Action de l'aimant",
+        "le fer est **attiré** par l'aimant et se sépare du soufre",
+        "**rien n'est attiré** : l'aimant ne sépare plus rien"
+      ],
+      [
+        "Les corps de départ sont-ils encore là ?",
+        "**oui** — le fer et le soufre sont seulement mélangés",
+        "**non** — un corps **nouveau** est apparu : le **sulfure de fer**"
+      ]
+    ]
+  },
+  "observation": "Un aimant approché du mélange de fer et de soufre en retire le fer ; approché du solide noir obtenu après chauffage, il ne retire plus rien.",
+  "conclusion": "Le fer et le soufre chauffés ensemble donnent un corps nouveau, le sulfure de fer : fer + soufre → sulfure de fer. Une réaction chimique n'a pas besoin de dioxygène.",
+  "oheric": {
+    "observation": "Dans une coupelle, de la poudre de fer, grise ; dans une autre, de la fleur de soufre, jaune. On les mélange soigneusement au mortier : la poudre obtenue est grise, et pourtant un **aimant** en retire encore le fer, grain par grain — les deux corps sont toujours là, côte à côte. Que se passera-t-il si l'on **chauffe** ce mélange ? Restera-t-il un mélange de fer et de soufre, ou obtiendra-t-on autre chose ?",
+    "hypothese": "Si le chauffage ne fait que réunir les deux poudres, alors le fer restera du fer et l'**aimant** devra encore le retirer du tas. Si au contraire un corps **nouveau** se forme, alors le fer aura disparu et l'aimant ne devra plus rien retirer.",
+    "experience": "Mélanger au mortier de la poudre de fer et de la fleur de soufre, vérifier à l'aimant qu'il ne s'agit que d'un mélange, déposer le tas sur une brique réfractaire, en chauffer **un seul point** à la flamme du bec Bunsen jusqu'à l'incandescence, **retirer la flamme**, laisser refroidir, puis approcher de nouveau l'aimant du solide obtenu.",
+    "resultats": "Avant le chauffage, l'aimant approché du mélange en retire la poudre de fer, qui s'y accroche, et laisse seul le soufre jaune. Dès qu'un point du tas devient incandescent et que l'on **retire la flamme**, l'incandescence **se propage d'elle-même** à tout le tas, en dégageant de la chaleur. Après refroidissement, il reste un **solide noir grisâtre, poreux et friable**, d'un seul bloc. Approché de ce solide, l'aimant **ne retire plus rien**.",
+    "interpretation": "L'**aimant est le témoin** de cette expérience. Avant le chauffage, il sépare le fer du soufre : les deux corps étaient simplement **mélangés**, et chacun gardait ses propriétés — le fer restait gris et magnétique, le soufre restait jaune. Après le chauffage, il ne sépare plus rien : le fer et le soufre **ont disparu** en tant que tels, et un corps **nouveau** est apparu, le **sulfure de fer**, qui n'a ni la couleur, ni l'aspect, ni les propriétés magnétiques des corps dont il provient. L'état initial du système — du fer et du soufre — et son état final — du sulfure de fer — ne contiennent pas les mêmes corps : il y a bien eu **transformation chimique**. Que l'incandescence se propage seule, la flamme retirée, montre que la transformation dégage elle-même la chaleur qui l'entretient. Et il faut le souligner : **aucun dioxygène n'est intervenu** ; les deux réactifs sont le fer et le soufre. Une réaction chimique n'a donc pas besoin de dioxygène, et « réaction chimique » ne signifie pas « combustion ». L'hypothèse est validée.",
+    "conclusion": "Le chauffage d'un mélange de fer et de soufre donne un corps nouveau, le **sulfure de fer**. Le bilan de la réaction s'écrit **en toutes lettres** : **fer + soufre → sulfure de fer**. Le fer et le soufre, qui disparaissent, sont les **réactifs** ; le sulfure de fer, qui apparaît, est le **produit**. Un mélange n'est pas une transformation chimique : c'est le chauffage qui a provoqué la réaction, et c'est l'aimant qui le prouve."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* §12.47 : `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0 — le
+   garde-fou d'origine laissait donc passer `null`, et `null.toFixed` levait
+   PENDANT le démarrage, sur une page qui avait l'air de charger. Le TYPE se
+   teste avant la finitude. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+function nbAuto(x) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  var a = Math.abs(x);
+  return nb(x, a >= 100 ? 0 : (a >= 10 ? 1 : (a >= 1 ? 2 : (a >= 0.01 ? 3 : 4))));
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x) || x === 0) return nb(x, d);
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10);
+  if (e >= -2 && e <= 3) return nbAuto(x);
+  return nb(x / Math.pow(10, e), d === undefined ? 1 : d) + "·10" + expo(e);
+}
+function expo(e) {
+  var s = "" + e, o = "", i, T = { "0": "⁰", "1": "¹", "2": "²", "3": "³",
+    "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  for (i = 0; i < s.length; i++) o += T[s.charAt(i)] || s.charAt(i);
+  return o;
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+/* Le mini-markdown du YAML. Le gras se dépouille AVANT l'italique : le motif
+   de l'italique ne doit jamais voir une paire d'astérisques doubles. */
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* §12.2 : `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de nb(). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function n2(x) { return x.toFixed(2); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function rgb(r, v, b) {
+  function h(x) { return ("0" + Math.round(borne(x, 0, 255)).toString(16)).slice(-2); }
+  return "#" + h(r) + h(v) + h(b);
+}
+function lignes(txt, n) {
+  var mots = String(txt || "").split(/\s+/), out = [], cur = "";
+  mots.forEach(function (m) {
+    if (!cur.length) { cur = m; return; }
+    if ((cur + " " + m).length <= n) { cur += " " + m; }
+    else { out.push(cur); cur = m; }
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+/* §12.12 : une valeur de curseur DOIT tomber sur la grille des pas, sinon le
+   navigateur la déplace en silence, `horsProtocole()` est vrai dès le
+   chargement et le tableau de la fiche ne se remplit JAMAIS. Comme les deux
+   masses sont LUES dans la fiche, on les ramène explicitement sur la grille
+   au lieu de croire qu'elles y tombent. */
+function grille(v, min, step, dec) {
+  return +(min + Math.round((v - min) / step) * step).toFixed(dec);
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Le tableau « Sous le capot » se régénère depuis cet objet ; il n'est
+   jamais retapé dans le HTML.                                            */
+var PHYS = {
+  M_FE:   { v: 55.845, u: "g/mol", n: "masse molaire du fer",
+            s: "poids atomiques standard" },
+  M_S:    { v: 32.06, u: "g/mol", n: "masse molaire du soufre",
+            s: "poids atomiques standard" },
+  M_FES:  { v: 87.905, u: "g/mol", n: "masse molaire du sulfure de fer",
+            s: "somme des deux précédentes — un atome de chacun" },
+
+  DH_FES: { v: -100.0, u: "kJ/mol", n: "chaleur de la réaction fer + soufre",
+            s: "enthalpie de formation du sulfure de fer (troïlite " +
+               "cristalline) à 298 K ; −95 à −102 kJ/mol selon les tables" },
+  CP_FES: { v: 50.5, u: "J·mol⁻¹·K⁻¹", n: "capacité thermique du sulfure de fer",
+            s: "à 298 K" },
+  DH_FUS_FES: { v: 31.5, u: "kJ/mol", n: "chaleur de fusion du sulfure de fer",
+            s: "enthalpie de fusion à 1 461 K" },
+  T_FUS_FES: { v: 1461, u: "K", n: "point de fusion du sulfure de fer",
+            s: "1 188 °C — c'est lui qui décide que le tas se prend en UN " +
+               "SEUL BLOC, et non en poudre" },
+  T_IGN:  { v: 553, u: "K", n: "amorçage du mélange fer-soufre",
+            s: "280 °C ; le mélange s'amorce entre 250 et 300 °C selon la " +
+               "finesse du broyage. La conclusion ne dépend pas du choix : " +
+               "voir « ce que le modèle ne sait pas »" },
+
+  RHO_FE: { v: 7874, u: "kg/m³", n: "masse volumique du fer", s: "fer pur à 20 °C" },
+  C_FE:   { v: 449, u: "J·kg⁻¹·K⁻¹", n: "capacité thermique du fer", s: "à 25 °C" },
+  RHO_S:  { v: 2070, u: "kg/m³", n: "masse volumique du soufre",
+            s: "soufre orthorhombique (fleur de soufre)" },
+  C_S:    { v: 706, u: "J·kg⁻¹·K⁻¹", n: "capacité thermique du soufre", s: "à 25 °C" },
+  RHO_FES2: { v: 4740, u: "kg/m³", n: "masse volumique du sulfure de fer",
+            s: "troïlite ; le produit obtenu est poreux, donc plus léger" },
+
+  MU0:    { v: 1.25663706e-6, u: "T·m/A", n: "perméabilité du vide",
+            s: "CODATA" },
+  MS_FE:  { v: 1.71e6, u: "A/m", n: "aimantation à saturation du fer",
+            s: "fer doux à 20 °C ; c'est elle qui borne l'attraction " +
+               "quand l'aimant est tout près" },
+  TC_FE:  { v: 1043, u: "K", n: "point de Curie du fer",
+            s: "770 °C — au-dessus, le fer lui-même n'est plus attiré par " +
+               "un aimant. Rien à voir avec la chimie, et c'est pour cela " +
+               "qu'il faut attendre le refroidissement" },
+  CHI_FES: { v: 6.0e-4, u: "", n: "susceptibilité du sulfure de fer",
+            s: "troïlite, antiferromagnétique ; susceptibilité volumique " +
+               "en unités SI. Trois mille fois trop faible pour soulever " +
+               "un grain" },
+  CHI_S:  { v: -1.28e-5, u: "", n: "susceptibilité du soufre",
+            s: "diamagnétique — susceptibilité massique −6,2·10⁻⁹ m³/kg ; " +
+               "le soufre est très légèrement REPOUSSÉ" },
+  BR_FERRITE: { v: 0.38, u: "T", n: "rémanence d'un barreau de ferrite",
+            s: "l'aimant droit ordinaire d'un laboratoire de collège ; " +
+               "0,20 à 0,43 T selon la nuance" },
+  BR_NEO: { v: 1.45, u: "T", n: "rémanence maximale du néodyme",
+            s: "nuance N52 — la plus forte rémanence d'aimant permanent " +
+               "qui existe aujourd'hui" },
+  L_AIMANT: { v: 0.050, u: "m", n: "longueur du barreau aimanté",
+            s: "aimant droit de collège ; entre dans la formule du champ axial" },
+  R_AIMANT: { v: 0.006, u: "m", n: "rayon du barreau aimanté", s: "idem" },
+
+  SIGMA:  { v: 5.670374419e-8, u: "W·m⁻²·K⁻⁴", n: "constante de Stefan-Boltzmann",
+            s: "CODATA, valeur exacte depuis la redéfinition du SI" },
+  EPS_OX: { v: 0.85, u: "", n: "émissivité du solide obtenu",
+            s: "surface de sulfure/oxyde de fer, mate et sombre ; 0,8 à 0,9" },
+  H_LIBRE: { v: 12, u: "W·m⁻²·K⁻¹", n: "convection libre sur la brique",
+            s: "objet chaud à l'air calme ; 5 à 25 selon l'écart de " +
+               "température" },
+  DRAPER: { v: 798, u: "K", n: "point de Draper",
+            s: "525 °C — température au-dessus de laquelle tout solide " +
+               "rougeoie visiblement (Draper, 1847). En dessous il rayonne " +
+               "encore, mais dans l'infrarouge" },
+  T_MANIP: { v: 323, u: "K", n: "seuil de manipulation",
+            s: "50 °C — au-dessous, un solide se prend à la spatule sans " +
+               "danger. C'est ce que la fiche appelle « refroidir " +
+               "complètement »" },
+
+  LAM_TAS: { v: 0.50, u: "W·m⁻¹·K⁻¹", n: "conductivité du tas de poudre",
+            s: "poudre métallique en vrac, 45 % de vide ; c'est la " +
+               "conduction du tas, pas celle du fer massif" },
+  RHO_TAS: { v: 2500, u: "kg/m³", n: "masse volumique du tas en vrac",
+            s: "mélange fer + soufre foisonné" },
+  TAU_REAC: { v: 0.10, u: "s", n: "temps de réaction d'une couche",
+            s: "ordre de grandeur d'une réaction solide-solide amorcée ; " +
+               "c'est lui, avec la diffusivité, qui donne la vitesse du front" },
+  H_FLAMME: { v: 80, u: "W·m⁻²·K⁻¹", n: "impact de flamme sur un plan",
+            s: "flamme laminaire sur une surface plane ; 50 à 150" },
+  EPS_FLAMME: { v: 0.03, u: "", n: "émissivité de la flamme du bec",
+            s: "flamme PRÉMÉLANGÉE, quasi non lumineuse : elle chauffe par " +
+               "contact, presque pas par rayonnement" },
+  T_FLAMME: { v: 1773, u: "K", n: "température du cône du bec Bunsen",
+            s: "1 500 °C, cône intérieur, virole ouverte" },
+  R_CONTACT: { v: 0.002, u: "m", n: "rayon du point chauffé",
+            s: "AJOUT — la fiche dit « chauffer un seul point » sans le " +
+               "dimensionner. Retenu : le rayon du cône bleu au contact" },
+  G: { v: 9.81, u: "m/s²", n: "pesanteur", s: "valeur normale" }
+};
+
+/* Seuils d'ASPECT — des repères de LECTURE, pas des mesures.
+   §12.3 : un seuil qui ferait basculer une conclusion à 1 % près n'est pas
+   un seuil, c'est un piège. Celui-ci a 3 de marge d'un côté (16 mg restants
+   aux masses de la fiche) et 50 de l'autre (2 520 mg à 6 g de fer).       */
+var S_GRAIN = 0.050;     /* g de fer libre : en dessous, aucun grain ne se voit */
+
+var M_FE = PHYS.M_FE.v, M_S = PHYS.M_S.v, M_FES = PHYS.M_FES.v;
+var MU0 = PHYS.MU0.v, SIGMA = PHYS.SIGMA.v, GG = PHYS.G.v;
+var TC_FE = PHYS.TC_FE.v, DRAPER = PHYS.DRAPER.v, T_MANIP = PHYS.T_MANIP.v;
+var T_FUS_FES = PHYS.T_FUS_FES.v, T_IGN = PHYS.T_IGN.v;
+var RHO_FE = PHYS.RHO_FE.v, RHO_S = PHYS.RHO_S.v, RHO_FES = PHYS.RHO_FES2.v;
+var C_FE = PHYS.C_FE.v, C_S = PHYS.C_S.v;
+var T0 = 293.15;
+
+/* ==================================================================
+   5. LE SOLVEUR — l'entretien, le bloc, le refroidissement, l'aimant
+   ==================================================================
+   Deux entrées, et deux seulement : les DEUX MASSES pesées. Tout le reste
+   en découle — la marge d'entretien, la température atteinte, l'état du
+   produit, ce qui reste de fer libre, et donc ce que l'aimant reprend. */
+
+/* --- (a) L'ENTRETIEN : un bilan de chaleur de tranche à tranche --------
+   La chaleur dégagée par la tranche qui réagit doit porter la tranche
+   SUIVANTE au-dessus de la température d'amorçage, pertes déduites. */
+var F_PERTES = 0.22;        /* part perdue par la tranche vers l'extérieur */
+function front(mFe, mS) {
+  var nFe = mFe / M_FE, nS = mS / M_S;
+  var nFeS = Math.min(nFe, nS);                        /* réactif limitant */
+  var mTot = mFe + mS;
+  var qDispo = Math.abs(PHYS.DH_FES.v * 1e3) * nFeS / (mTot * 1e-3);   /* J/kg */
+  var cpMel = (mFe * C_FE + mS * C_S) / mTot;
+  var qRequis = cpMel * (T_IGN - T0);
+  var marge = qDispo * (1 - F_PERTES) / qRequis;
+  return { nFeS: nFeS, feRestant: (nFe - nFeS) * M_FE,
+           sRestant: (nS - nFeS) * M_S, mFeS: nFeS * M_FES,
+           qDispo: qDispo, qRequis: qRequis, cpMel: cpMel,
+           marge: marge, entretient: marge >= 1 };
+}
+/* --- (b) LA TEMPÉRATURE ATTEINTE, fusion du sulfure comprise ----------- */
+function tAdiabatique(mFe, mS) {
+  var nFeS = Math.min(mFe / M_FE, mS / M_S);
+  var Q = Math.abs(PHYS.DH_FES.v * 1e3) * nFeS;
+  var nFeEx = mFe / M_FE - nFeS, nSEx = mS / M_S - nFeS;
+  var cp = nFeS * PHYS.CP_FES.v + nFeEx * M_FE * 1e-3 * C_FE
+         + nSEx * M_S * 1e-3 * C_S;
+  var Q1 = cp * (T_FUS_FES - T0);
+  if (Q <= Q1) return { T: T0 + Q / cp, fondu: 0 };
+  Q -= Q1;
+  var Q2 = nFeS * PHYS.DH_FUS_FES.v * 1e3;
+  if (Q <= Q2) return { T: T_FUS_FES, fondu: Q / Q2 };
+  Q -= Q2;
+  return { T: T_FUS_FES + Q / (cp * 1.4), fondu: 1 };
+}
+/* --- (c) LA GÉOMÉTRIE DU TAS ET DU BLOC -------------------------------- */
+var FOISON = 0.55;          /* compacité d'une poudre foisonnée : 45 % de vide */
+function rayonTas(mFe, mS) {
+  var v = (mFe * 1e-3 / RHO_FE + mS * 1e-3 / RHO_S) / FOISON;
+  return { r: Math.pow(3 * v / (2 * Math.PI), 1 / 3), v: v };   /* calotte */
+}
+function rayonBloc(mFe, mS) {
+  var m = (mFe + mS) * 1e-3, v = m / RHO_FES;
+  return { r: Math.pow(3 * v / (2 * Math.PI), 1 / 3), m: m, v: v };
+}
+function pertes(T, h) {
+  return PHYS.EPS_OX.v * SIGMA * (Math.pow(T, 4) - Math.pow(T0, 4))
+       + h * (T - T0);
+}
+
+/* --- (d) L'AIMANT : champ axial exact d'un barreau uniformément aimanté -
+   Puis la force par unité de volume sur un grain quasi sphérique
+   (facteur démagnétisant 1/3) comparée à son poids par unité de volume.  */
+function champAimant(z, Br) {
+  var L = PHYS.L_AIMANT.v, R = PHYS.R_AIMANT.v;
+  return 0.5 * Br * ((z + L) / Math.sqrt((z + L) * (z + L) + R * R)
+                     - z / Math.sqrt(z * z + R * R));
+}
+function gradAimant(z, Br) {
+  var e = 1e-5;
+  return (champAimant(z + e, Br) - champAimant(z - e, Br)) / (2 * e);
+}
+var CORPS = {
+  fer:     { rho: RHO_FE,  ms: PHYS.MS_FE.v, tc: TC_FE, nom: "fer" },
+  soufre:  { rho: RHO_S,   chi: PHYS.CHI_S.v,           nom: "soufre" },
+  sulfure: { rho: RHO_FES, chi: PHYS.CHI_FES.v,         nom: "sulfure de fer" }
+};
+function attire(z, corps, T, Br) {
+  var B = Math.abs(champAimant(z, Br)), dB = Math.abs(gradAimant(z, Br)), M;
+  if (corps.ms && T < corps.tc) {
+    var ms = corps.ms * Math.pow(1 - T / corps.tc, 0.34);
+    M = Math.min(3 * B / MU0, ms);
+  } else {
+    M = (corps.chi || 0) * B / MU0;
+  }
+  var f = M * dB, p = corps.rho * GG;
+  return { B: B, dB: dB, M: M, f: f, p: p, k: f / p };
+}
+/* À quelle distance le grain décolle-t-il ? −1 s'il ne décolle jamais. */
+function distanceDecollage(corps, T, Br) {
+  var z = 1e-4, dernier = -1;
+  while (z < 0.30) {
+    if (attire(z, corps, T, Br).k >= 1) dernier = z;
+    z += 1e-4;
+  }
+  return dernier;
+}
+/* La rémanence qu'il FAUDRAIT pour soulever un corps : la force varie
+   comme Br², donc Br_nécessaire = Br · racine(1/k). */
+function remanenceNecessaire(z, corps, T, Br) {
+  var k = attire(z, corps, T, Br).k;
+  if (k <= 0) return Infinity;
+  return Br / Math.sqrt(k);
+}
+
+/* --- (e) LES TROIS TABLES DU TEMPS ------------------------------------
+   ⚠ §12bis.6 : le résultat n'a pas le droit de dépendre du sélecteur de
+   vitesse. Les trois durées sont donc TABULÉES une fois pour toutes, à pas
+   fixe, au moment où les réglages changent ; l'horloge ne fait ensuite que
+   parcourir la table. Un ×60 ne peut pas sauter un événement, puisqu'aucun
+   événement n'est décidé par l'horloge.                                  */
+var TAB = null;
+function tabuler() {
+  var mFe = REG.mFe, mS = REG.mS, i;
+  var f = front(mFe, mS), ad = tAdiabatique(mFe, mS);
+  var aTh = PHYS.LAM_TAS.v / (PHYS.RHO_TAS.v * f.cpMel);
+  var vFront = Math.sqrt(aTh / PHYS.TAU_REAC.v);
+  var g = rayonTas(mFe, mS);
+  var dureeFront = 2 * g.r / vFront;
+
+  /* --- l'amorçage : méthode intégrale de Goodman sur un solide
+     semi-infini. rho·c·delta(t)·dT/dt = h·(Tf − T) + eps·sigma·(Tf⁴ − T⁴),
+     avec delta = racine(pi·a·t). Rien n'y est ajusté. */
+  var T = T0, t = 1e-3, dt = 1e-3, q, d, courbeAm = [[0, T0]];
+  while (t < 600 && T < T_IGN) {
+    d = Math.sqrt(Math.PI * aTh * t);
+    q = PHYS.H_FLAMME.v * (PHYS.T_FLAMME.v - T)
+      + PHYS.EPS_FLAMME.v * SIGMA * (Math.pow(PHYS.T_FLAMME.v, 4) - Math.pow(T, 4));
+    T += q / (PHYS.RHO_TAS.v * f.cpMel * d) * dt;
+    t += dt;
+    if (courbeAm.length < 400 && Math.abs(t / 0.05 - Math.round(t / 0.05)) < 1e-9) {
+      courbeAm.push([t, T]);
+    }
+  }
+  var dureeAmorce = T >= T_IGN ? t : -1;
+  courbeAm.push([t, T]);
+
+  /* --- le refroidissement du bloc sur la brique */
+  var b = rayonBloc(mFe, mS);
+  var cFeS = PHYS.CP_FES.v / (M_FES * 1e-3);          /* J/kg/K */
+  var A = 3 * Math.PI * b.r * b.r;                    /* calotte posée */
+  var Tr = ad.T, tr = 0, dtr = 0.02, courbeRef = [[0, ad.T]];
+  var jal = {};
+  while (Tr > T_MANIP && tr < 7200) {
+    Tr -= A * pertes(Tr, PHYS.H_LIBRE.v) / (b.m * cFeS) * dtr;
+    tr += dtr;
+    [TC_FE, DRAPER, T_MANIP].forEach(function (s) {
+      if (jal[s] === undefined && Tr <= s) jal[s] = tr;
+    });
+    if (courbeRef.length < 900 && Math.abs(tr / 0.8 - Math.round(tr / 0.8)) < 1e-9) {
+      courbeRef.push([tr, Tr]);
+    }
+  }
+  courbeRef.push([tr, Tr]);
+
+  TAB = { f: f, ad: ad, aTh: aTh, vFront: vFront, rTas: g.r, vTas: g.v,
+          dureeFront: dureeFront, dureeAmorce: dureeAmorce,
+          courbeAm: courbeAm, courbeRef: courbeRef, jal: jal,
+          dureeRefroid: tr, rBloc: b.r, mBloc: b.m, cFeS: cFeS, aireBloc: A };
+  return TAB;
+}
+function interpole(courbe, t) {
+  var n = courbe.length, i, ff;
+  if (!n) return T0;
+  if (t <= courbe[0][0]) return courbe[0][1];
+  if (t >= courbe[n - 1][0]) return courbe[n - 1][1];
+  for (i = 1; i < n; i++) {
+    if (t <= courbe[i][0]) {
+      ff = (t - courbe[i - 1][0]) / Math.max(1e-12, courbe[i][0] - courbe[i - 1][0]);
+      return courbe[i - 1][1] + ff * (courbe[i][1] - courbe[i - 1][1]);
+    }
+  }
+  return courbe[n - 1][1];
+}
+/* L'échelle du forgeron — une LECTURE, pas une mesure. */
+function lectureIncandescence(T) {
+  var C = T - 273.15;
+  if (C < 525) return "aucune lueur visible";
+  if (C < 750) return "rouge sombre";
+  if (C < 950) return "rouge cerise";
+  if (C < 1100) return "orange";
+  if (C < 1300) return "jaune";
+  return "blanc";
+}
+function teinteIncandescence(T) {
+  var t = borne(T, 800, 6500) / 100, r, v, b;
+  if (t <= 66) { r = 255; } else { r = 329.7 * Math.pow(t - 60, -0.1332); }
+  if (t <= 66) { v = 99.47 * Math.log(t) - 161.12; }
+  else { v = 288.12 * Math.pow(t - 60, -0.0755); }
+  if (t >= 66) { b = 255; }
+  else if (t <= 19) { b = 0; }
+  else { b = 138.52 * Math.log(t - 10) - 305.04; }
+  return rgb(r, v, b);
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ==================================================================
+   Le tableau est à DOUBLE ENTRÉE : une LIGNE par chose examinée, une
+   COLONNE par ÉTAT du système (avant / après le chauffage). Les lignes
+   sont reconnues par leur INTITULÉ et jamais par leur rang.              */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var NL = Math.min(LIG.length, VAL.length);
+var ETATS = ENTETES.slice(1).map(function (e) { return depouille(e); });
+var NE = ETATS.length;                                 /* 2 états */
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k) { return depouille((LIG[k] || [])[0]); }
+function rang(motif) {
+  var i;
+  for (i = 0; i < NL; i++) if (motif.test(intitule(i))) return i;
+  return -1;
+}
+var R_ASPECT = rang(/couleur|aspect/i);
+var R_AIMANT = rang(/aimant/i);
+var R_CORPS  = rang(/corps de d[ée]part/i);
+
+/* Le nom court de chaque colonne, LU dans son en-tête. */
+function courtNom(i) {
+  var t = ETATS[i] || "";
+  var m = t.match(/—\s*(.+)$/);
+  return m ? m[1] : t;
+}
+
+/* La sécurité : on va chercher LA ligne qui parle du geste en cours. Aucune
+   consigne n'est réécrite ici — seulement retrouvée. */
+var SECU = (DONNEES.securite || []).map(function (s) { return depouille(s); });
+function secuOu(motif, repli) {
+  var i;
+  for (i = 0; i < SECU.length; i++) if (motif.test(SECU[i])) return SECU[i];
+  return repli || "";
+}
+var S_DEMO    = secuOu(/d[ée]monstration/i);
+var S_VAPEURS = secuOu(/vapeurs irritantes|salle ventil/i);
+var S_RESPIRE = secuOu(/respirer/i);
+var S_FAIBLES = secuOu(/quantit[ée]s faibles/i);
+var S_BRIQUE  = secuOu(/brique r[ée]fractaire/i);
+var S_REFROID = secuOu(/refroidir compl/i);
+var S_FIN     = secuOu(/cheveux/i);
+
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) {
+    t = depouille(m[i]);
+    if (motif.test(t)) return t;
+  }
+  return "";
+}
+/* ⚠ §12.29 : le nombre doit COMMENCER par un chiffre, l'unité est sensible
+   à la casse et ne doit pas être suivie d'une lettre — sans quoi le « g » de
+   « grammes » serait pris pour une unité. */
+function masseDe(motif, repli) {
+  var t = materiel(motif);
+  var m = t.match(/(\d[\d,.]*)\s*g(?![A-Za-zÀ-ÿ])/);
+  return m ? parseFloat(m[1].replace(",", ".")) : repli;
+}
+var M_FER_FICHE    = masseDe(/limaille de fer/i, 3.5);
+var M_SOUFRE_FICHE = masseDe(/fleur de soufre/i, 2.0);
+
+/* Les deux couleurs de départ sont LUES elles aussi — « (poudre jaune) »,
+   « (poudre grise) ». La traduction mot → teinte est locale : aucune
+   fonction générique ne connaît « gris », et un blanc cassé serait
+   invisible sur le plan de travail. */
+var TEINTE = { jaune: "#e8c33a", gris: "#8d949c", grise: "#8d949c",
+               noir: "#26262a", brun: "#6a4a2a" };
+function couleurDe(txt, repli) {
+  var k;
+  for (k in TEINTE) if (new RegExp("\\b" + k, "i").test(txt)) return TEINTE[k];
+  return repli;
+}
+var COUL_S  = couleurDe(materiel(/fleur de soufre/i), "#e8c33a");
+var COUL_FE = couleurDe(materiel(/limaille de fer/i), "#8d949c");
+var COUL_PRODUIT = couleurDe(cel(R_ASPECT, 2), "#26262a");
+
+/* ==================================================================
+   3 bis. LES DURÉES — lues dans la fiche (SKILL §5)
+   ================================================================== */
+var DUREE_SEANCE = +(DONNEES.duree || 15);
+var MODALITE = depouille(DONNEES.modalite || "");
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO = ce que la fiche prescrit, REG = le courant
+   ==================================================================
+   ⚠ §12.12 : les deux masses viennent du YAML ; on les ramène donc
+   EXPLICITEMENT sur la grille du curseur au lieu de croire qu'elles y
+   tombent. La distance et la rémanence, elles, sont des AJOUTS : la fiche
+   dit « approcher l'aimant » sans donner ni l'un ni l'autre.             */
+var PROTO = { mFe: grille(M_FER_FICHE, 1, 0.5, 2),
+              mS: grille(M_SOUFRE_FICHE, 0.5, 0.5, 2),
+              z: 2, Br: PHYS.BR_FERRITE.v };
+var REG   = { mFe: PROTO.mFe, mS: PROTO.mS, z: PROTO.z, Br: PROTO.Br };
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+
+/* ==================================================================
+   6. L'ÉTAT
+   ==================================================================
+   Rien n'est prérempli : c'est la manipulation qui construit l'état, et le
+   modèle ne lit que lui.
+   ⚠ §12.17 : TOUTE clé lue ailleurs dans le fichier figure ici. Une clé
+   oubliée rend une branche entière morte, sans la moindre erreur JS.     */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0;
+var svg = null, COUCHES = {};
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+function neufEtat() {
+  return {
+    /* les trois gestes de sécurité — aucun bouton ne les fait */
+    ventile: false, tenue: false, briquePosee: false,
+    /* la pesée et le mélange */
+    peseS: false, peseFe: false, verseS: false, verseFe: false, melange: false,
+    /* le témoin : l'aimant AVANT */
+    testAvant: false, grainsRepris: 0,
+    /* le tas et le chauffage */
+    tasPose: false, allumette: false, becAllume: false, becSurTas: false,
+    tChauffe: 0, amorce: false, tFront: 0,
+    flammeRetiree: false, becEteint: false, tRefroid: 0,
+    /* la fin */
+    detache: false, testApres: false,
+    /* l'affichage */
+    phase: "poudres", tSeance: 0, horsProto: false, retenue: 0, dernierZ: 2
+  };
+}
+
+/* --- les trois conditions du poste sûr, chacune tirée d'une ligne de
+   `securite` : la salle ventilée, la tenue de l'enseignant, la brique
+   réfractaire sous le tas. Aucun bouton ne les fait à la place de
+   l'élève — c'est délibéré, et c'est le seul endroit de cette page où
+   l'on a refusé de doubler un geste. */
+var CHECKS = [
+  { k: "ventile", n: "salle ventilée",
+    faire: "ouvrir la fenêtre — les vapeurs sont irritantes",
+    secu: function () { return S_VAPEURS; } },
+  { k: "tenue", n: "blouse et cheveux",
+    faire: "faire mettre la blouse et attacher les cheveux",
+    secu: function () { return S_FIN; } },
+  { k: "briquePosee", n: "brique réfractaire",
+    faire: "poser la brique réfractaire sur la paillasse",
+    secu: function () { return S_BRIQUE; } }
+];
+function checkManquant() {
+  var i;
+  for (i = 0; i < CHECKS.length; i++) if (!ETAT[CHECKS[i].k]) return CHECKS[i];
+  return null;
+}
+function secuOK() { return !checkManquant(); }
+
+/* --- l'avancement du modèle, DÉDUIT de l'état et des tables ------------ */
+function amorcageEnCours() {
+  return ETAT.becSurTas && ETAT.becAllume && !ETAT.amorce;
+}
+function frontFini() {
+  return ETAT.amorce && ETAT.tFront >= TAB.dureeFront - 1e-9;
+}
+function temperatureTas() {
+  /* AVANT l'amorçage : le point chauffé suit la courbe de Goodman.
+     PENDANT la propagation : le tas est à la température adiabatique.
+     APRÈS : il suit la courbe de refroidissement. Trois régimes, trois
+     tables — et aucune horloge ne décide de rien. */
+  if (!ETAT.tasPose) return T0;
+  if (!ETAT.amorce) {
+    return ETAT.becSurTas && ETAT.becAllume
+      ? interpole(TAB.courbeAm, ETAT.tChauffe) : T0;
+  }
+  if (!frontFini()) return TAB.ad.T;
+  return interpole(TAB.courbeRef, ETAT.tRefroid);
+}
+function refroidi() { return ETAT.amorce && frontFini() && temperatureTas() <= T_MANIP; }
+/* Ce qui se trouve sous l'aimant, et ce qu'il en reprend. C'est LE calcul
+   de cette page : le verdict n'est écrit nulle part, il se compare. */
+function fractionFerLibre() {
+  /* avant le chauffage : TOUT le fer est libre ; après : ce que le
+     réactif limitant a laissé. */
+  return ETAT.amorce && frontFini() ? TAB.f.feRestant : REG.mFe;
+}
+function epreuveAimant(apres) {
+  var T = apres ? temperatureTas() : T0;
+  var z = REG.z / 1000;
+  var mLibre = apres ? TAB.f.feRestant : REG.mFe;
+  var aFe = attire(z, CORPS.fer, T, REG.Br);
+  var aFeS = attire(z, CORPS.sulfure, T, REG.Br);
+  var aS = attire(z, CORPS.soufre, T, REG.Br);
+  var pris = (mLibre >= S_GRAIN) && (aFe.k >= 1);
+  return { T: T, z: z, mLibre: mLibre, fer: aFe, sulfure: aFeS, soufre: aS,
+           prend: pris,
+           /* le nombre de grains qui montent : proportionnel à la masse de
+              fer libre, borné pour le dessin */
+           grains: pris ? Math.max(1, Math.min(14, Math.round(mLibre * 4))) : 0,
+           corps: apres
+             ? (TAB.f.feRestant >= S_GRAIN
+                ? "sulfure de fer + " + nb(TAB.f.feRestant, 2) + " g de fer libre"
+                : "sulfure de fer")
+             : "fer + soufre, seulement mélangés" };
+}
+
+/* ==================================================================
+   7. LA GÉOMÉTRIE DE LA PAILLASSE
+   ==================================================================
+   viewBox 1120 × 760 (§10.5 : le cadre est ÉTROIT — chaque unité gagnée en
+   largeur est une unité perdue sur la taille apparente des objets).
+
+   Le haut du cadre est occupé par TROIS éléments HTML posés par la page :
+   le journal à gauche (x 0→255, y 0→250 dans le pire cas), la consigne au
+   centre (x 224→896, y 15→90 sur trois lignes) et les deux boutons ronds à
+   droite (x 990→1120, y 0→60). La fenêtre est donc peinte en x 900→1080,
+   y 100→236, et l'étagère commence à y = 296.                            */
+var W = 1120, H = 760, BANC = 616;
+var ET_Y = 300, ET_X0 = 26, ET_X1 = 1094, OUTIL_X0 = 128;
+var SIL_X = 76, SIL_Y = 476;
+var BEC_HOME = 246, BEC_H = 158;
+var BRIQ_X = 470, BRIQ_W = 210, BRIQ_H = 34;
+var TAS_X = BRIQ_X - 34;
+var BEC_CHAUFFE = TAS_X - 108;
+var MORT_X = 720, BAL_X = 946;
+var FEN_X = 900, FEN_Y = 104, FEN_W = 180, FEN_H = 132;
+var Y_BOUTONS = 702;
+/* ⚠ §12.7 : TOUTES les hauteurs d'étiquette sont déclarées ici, dans un
+   seul objet. Dispersées dans le code, à trente lignes les unes des
+   autres, elles ne se comparent pas — et c'est la comparaison, pas le
+   calcul, qui montre la collision. Aucune n'est posée sur le meuble
+   sombre : les intitulés vivent au-dessus du plan de travail.            */
+/* ⚠ `etagere` est passée de 262 à 210 APRÈS LA CAPTURE : les objets de
+   l'étagère montent jusqu'à ET_Y − 84, soit y = 216, et le titre posé à
+   262 passait au travers du paquet d'allumettes. Aucune mesure ne le
+   disait — seule la capture (§12.7, §13.4). */
+var Y_ETIQ = { fenetre: FEN_Y - 10, etagere: 210, sousOutil: 344, sousOutil2: 356,
+               bec: 402, brique: 424, mortier: 402, balance: 402,
+               eleve: 574, sousBanc: 596, echelle: H - 10 };
+
+/* ==================================================================
+   8. DÉGRADÉS ET FILTRES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0,
+                               y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  function rgrad(id, stops, cx, cy, r) {
+    g = el("radialGradient", { id: id, cx: cx, cy: cy, r: r });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  /* ⚠ Le mur reste CLAIR : sombre, la verrerie et l'inox s'y lisent comme
+     des boîtes de conserve grises. */
+  grad("mur", [[0, "#fdfefe"], [0.6, "#eef2f7"], [1, "#dfe6ee"]]);
+  grad("banc", [[0, "#8d96a3"], [0.08, "#6f7885"], [1, "#4c545f"]]);
+  grad("meuble", [[0, "#2b323b"], [1, "#171c23"]]);
+  grad("inox", [[0, "#79838f"], [0.26, "#c9d2db"], [0.5, "#eef2f6"],
+                [0.74, "#a3adb9"], [1, "#6d7681"]], true);
+  grad("inoxV", [[0, "#6d7681"], [0.3, "#b7c0cb"], [0.55, "#e6ebf1"],
+                 [1, "#79838f"]]);
+  grad("porcelaine", [[0, "#c9d0d8"], [0.22, "#f4f7fa"], [0.55, "#ffffff"],
+                      [0.82, "#dee5ec"], [1, "#aab3bd"]], true);
+  grad("brique", [[0, "#d9b98c"], [0.3, "#c8a273"], [0.7, "#b98f5d"],
+                  [1, "#9c7442"]]);
+  grad("aimantN", [[0, "#8c2020"], [0.35, "#c94040"], [0.55, "#e88a8a"],
+                   [1, "#7a1a1a"]]);
+  grad("aimantS", [[0, "#1b3a63"], [0.35, "#2f66a8"], [0.55, "#8ab4dd"],
+                   [1, "#16304f"]]);
+  grad("laiton", [[0, "#6d4a12"], [0.3, "#b8862f"], [0.5, "#e6c778"],
+                  [1, "#5b3d0e"]], true);
+  grad("bois", [[0, "#7d5713"], [0.3, "#b8862f"], [0.55, "#dcb264"],
+                [1, "#714d10"]], true);
+  grad("sachet", [[0, "#ffffff", .30], [0.4, "#e8eff5", .18],
+                  [1, "#ffffff", .34]], true);
+  grad("vitre", [[0, "#cfe4f2", .55], [0.5, "#eef7fd", .35], [1, "#bcd8ea", .6]], true);
+  rgrad("flammeBleue", [[0, "#dff2ff"], [0.4, "#79b6e8"], [1, "#2f6ea8", .1]],
+        .5, .8, .6);
+  rgrad("halo", [[0, "#ffcf6a", .55], [1, "#ffcf6a", 0]], .5, .5, .5);
+
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%",
+                     width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#000000", "flood-opacity": .45 }));
+  D.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%",
+                     width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 10, stdDeviation: 9,
+    "flood-color": "#000000", "flood-opacity": .6 }));
+  D.appendChild(f);
+  f = el("filter", { id: "flou", x: "-80%", y: "-80%", width: "260%", height: "260%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 7 }));
+  D.appendChild(f);
+  /* Une poudre lisse ne ressemble à rien : il lui faut du GRAIN. Et un
+     bloc « poreux et friable » encore plus. */
+  f = el("filter", { id: "grain", x: "-10%", y: "-10%", width: "120%", height: "120%" });
+  f.appendChild(el("feTurbulence", { type: "fractalNoise", baseFrequency: "0.75",
+    numOctaves: 3, seed: 11, result: "n" }));
+  f.appendChild(el("feColorMatrix", { in: "n", type: "saturate", values: "0",
+    result: "ng" }));
+  f.appendChild(el("feComponentTransfer", { in: "ng", result: "nc" }))
+    .appendChild(el("feFuncA", { type: "linear", slope: ".40", intercept: ".60" }));
+  f.appendChild(el("feComposite", { in: "SourceGraphic", in2: "nc",
+    operator: "arithmetic", k1: "1.25", k2: "0", k3: "0", k4: "0" }));
+  D.appendChild(f);
+}
+
+/* ==================================================================
+   9. LES COUCHES — l'ordre est la moitié du dessin
+   ================================================================== */
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none",
+    "letter-spacing": o.esp || 0 };
+  /* §12.46 : un liseré de la couleur du fond rend l'étiquette lisible
+     par-dessus n'importe quel trait, et le restera. */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo; a["stroke-width"] = 3;
+    a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function titrePoste(x, y, s) {
+  return txt("poste", x, y, s, { ancre: "start", taille: 11.5, gras: true,
+                                 couleur: ORANGE, esp: 1.1, halo: "#f2f5f9" });
+}
+function ombreAuSol(cx, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: BANC + 2, rx: w, ry: 5,
+    fill: "#000000", opacity: o === undefined ? .4 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+
+/* ==================================================================
+   10. LE DÉCOR ET LA FENÊTRE
+   ================================================================== */
+var gFenG = null, gFenD = null;
+function construireDecor() {
+  var i;
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4,
+    fill: "url(#mur)" }));
+  for (i = 1; i < 7; i++) {
+    ajout("fond", el("line", { x1: 0, y1: 120 + i * 66, x2: W, y2: 120 + i * 66,
+      stroke: "#12203a", opacity: .05, "stroke-width": 1.4 }));
+  }
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: 8,
+    fill: "url(#inox)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC + 8, width: W, height: H - BANC - 8,
+    fill: "url(#meuble)" }));
+  txt("fond", W - 14, Y_ETIQ.echelle,
+      "schéma habillé — hauteur de l'aimant, rayon du tas, position du " +
+      "front et teinte du solide à l'échelle ; mortier et verrerie agrandis",
+      { ancre: "end", taille: 10, couleur: "#7d8896" });
+
+  /* --- LA FENÊTRE : c'est la salle ventilée de la fiche, et c'est un
+     geste. Les vapeurs sont irritantes ; sans elle, rien ne chauffe. */
+  ajout("poste", el("rect", { x: FEN_X - 6, y: FEN_Y - 6, width: FEN_W + 12,
+    height: FEN_H + 12, rx: 4, fill: "#e7ebf0", stroke: "#9aa5b2",
+    "stroke-width": 2.4, "pointer-events": "none" }));
+  gFenG = ajout("poste", el("g", { "pointer-events": "none" }));
+  gFenD = ajout("poste", el("g", { "pointer-events": "none" }));
+  [[gFenG, FEN_X, 1], [gFenD, FEN_X + FEN_W / 2, -1]].forEach(function (b) {
+    b[0].appendChild(el("rect", { x: b[1], y: FEN_Y, width: FEN_W / 2,
+      height: FEN_H, fill: "url(#vitre)", stroke: "#7f93a6", "stroke-width": 2.6 }));
+    b[0].appendChild(el("line", { x1: b[1] + FEN_W / 4, y1: FEN_Y,
+      x2: b[1] + FEN_W / 4, y2: FEN_Y + FEN_H, stroke: "#7f93a6",
+      "stroke-width": 1.6, opacity: .7 }));
+    b[0].appendChild(el("line", { x1: b[1], y1: FEN_Y + FEN_H / 2,
+      x2: b[1] + FEN_W / 2, y2: FEN_Y + FEN_H / 2, stroke: "#7f93a6",
+      "stroke-width": 1.6, opacity: .7 }));
+  });
+  ajout("ui", el("rect", { x: FEN_X - 8, y: FEN_Y - 8, width: FEN_W + 16,
+    height: FEN_H + 16, fill: "#ffffff", "fill-opacity": 0.001,
+    cursor: "pointer", "data-act": "ventiler" }));
+  txt("poste", FEN_X + FEN_W / 2, Y_ETIQ.fenetre,
+      "la fenêtre — cliquer pour ventiler la salle",
+      { taille: 10.5, couleur: "#3c4753", gras: true, halo: "#f2f5f9" });
+}
+
+/* ==================================================================
+   11. L'ÉTAGÈRE ET SES OBJETS — tous cités par `materiel`
+   ================================================================== */
+var OUTILS = [], gOutil = {}, OUTIL_DX = 190;
+var gAimBar = null, gTasCoupS = null, gTasCoupFe = null;
+function construireEtagere() {
+  OUTILS = [
+    { id: "soufre", nom: "fleur de soufre",
+      sous: nb(M_SOUFRE_FICHE, 1) + " g · poudre jaune" },
+    { id: "fer", nom: "limaille de fer",
+      sous: nb(M_FER_FICHE, 1) + " g · poudre grise" },
+    { id: "brique", nom: "brique réfractaire", sous: "à poser sous le tas" },
+    { id: "allum", nom: "allumettes longues", sous: "à craquer d'abord" },
+    { id: "aimant", nom: "aimant droit", sous: "dans son sachet" },
+    { id: "spatule", nom: "spatule", sous: "pour détacher" }
+  ];
+  OUTIL_DX = (ET_X1 - ET_X0 - 148) / (OUTILS.length - 1);
+  /* x = 300, pas 628 : à 628 le titre court jusqu'à x ≈ 930 et mord
+     sur la fenêtre, qui commence à 900. La seule bande libre est
+     au-dessus des objets et à gauche d'elle. */
+  titrePoste(300, Y_ETIQ.etagere,
+             "L'ÉTAGÈRE — prendre un objet et le poser où il va");
+  ajout("poste", el("rect", { x: ET_X0, y: ET_Y, width: ET_X1 - ET_X0,
+    height: 11, rx: 3, fill: "url(#inoxV)", stroke: "#1b2029",
+    "stroke-width": 1.2, "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: ET_X0, y: ET_Y + 11, width: ET_X1 - ET_X0,
+    height: 6, fill: "#00000055", "pointer-events": "none" }));
+
+  OUTILS.forEach(function (o, i) {
+    var x = OUTIL_X0 + i * OUTIL_DX;
+    var g = ajout("objets", el("g", { cursor: "grab", "data-act": "outil-" + o.id }));
+    /* §12.38 : la PLAQUE DE PRÉHENSION vient EN PREMIER dans le groupe, aux
+       cotes de la silhouette. Un objet fin n'offre au pointeur presque
+       rien, et un glisser qui ne démarre pas ne lève aucune erreur. */
+    g.appendChild(el("rect", { x: -48, y: -84, width: 96, height: 92,
+      fill: "#ffffff", "fill-opacity": 0.001 }));
+    dessinerOutil(g, o);
+    g.setAttribute("transform", "translate(" + x + "," + ET_Y + ")");
+    gOutil[o.id] = { g: g, x: x, y: ET_Y, o: o };
+    txt("poste", x, Y_ETIQ.sousOutil, o.nom,
+        { taille: 10.5, couleur: "#3c4753", gras: true });
+    if (o.sous) txt("poste", x, Y_ETIQ.sousOutil2, o.sous,
+                    { taille: 9.5, couleur: "#6b7686" });
+  });
+}
+function coupelle(g, couleur, tas) {
+  /* les deux soucoupes de la photo de la fiche : porcelaine blanche, une
+     poudre dedans. Le tas est un arc, pas un rectangle. */
+  g.appendChild(el("path", { d: "M -32 -20 Q -34 -2 0 -2 Q 34 -2 32 -20 Z",
+    fill: "url(#porcelaine)", stroke: "#96a0ab", "stroke-width": 2,
+    "stroke-linejoin": "round", "pointer-events": "none" }));
+  var t = g.appendChild(el("path", {
+    d: "M -22 -20 Q 0 -38 22 -20 Z", fill: couleur, stroke: melange(couleur, "#000000", .4),
+    "stroke-width": 1.4, filter: "url(#grain)", "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: 0, cy: -20, rx: 32, ry: 5.5,
+    fill: "none", stroke: "#96a0ab", "stroke-width": 2.2,
+    "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: -14, cy: -21, rx: 8, ry: 2, fill: "#ffffff",
+    opacity: .85, "pointer-events": "none" }));
+  return t;
+}
+function dessinerOutil(g, o) {
+  function add(n) { return g.appendChild(n); }
+  var id = o.id, i;
+  if (id === "soufre") { gTasCoupS = coupelle(g, COUL_S); return; }
+  if (id === "fer") { gTasCoupFe = coupelle(g, COUL_FE); return; }
+  if (id === "brique") {
+    add(el("path", { d: "M -40 -30 L 40 -30 L 46 -22 L 46 -2 L -34 -2 L -34 -22 Z",
+      fill: "url(#brique)", stroke: "#7d5a33", "stroke-width": 2,
+      "stroke-linejoin": "round", filter: "url(#grain)", "pointer-events": "none" }));
+    add(el("path", { d: "M -40 -30 L 40 -30 L 46 -22 L -34 -22 Z",
+      fill: "#e0c294", stroke: "#7d5a33", "stroke-width": 1.6,
+      "pointer-events": "none" }));
+    return;
+  }
+  if (id === "allum") {
+    add(el("rect", { x: -22, y: -34, width: 44, height: 34, rx: 3,
+      fill: "#8a3a18", stroke: "#4d1f0b", "stroke-width": 1.4,
+      "pointer-events": "none" }));
+    add(el("rect", { x: -22, y: -24, width: 44, height: 12, fill: "#3a2a22",
+      "pointer-events": "none" }));
+    add(el("rect", { x: 6, y: -56, width: 4, height: 26, rx: 1.6,
+      fill: "#d8c9a8", transform: "rotate(16 8 -43)", "pointer-events": "none" }));
+    add(el("circle", { cx: 13, cy: -56, r: 4, fill: "#b03030",
+      "pointer-events": "none" }));
+    return;
+  }
+  if (id === "aimant") {
+    /* le barreau droit, DANS son sachet de plastique fin — la fiche le dit
+       (« glissé dans un sachet de plastique fin pour le garder propre »). */
+    gAimBar = add(el("g", { "pointer-events": "none" }));
+    gAimBar.appendChild(el("rect", { x: -34, y: -30, width: 34, height: 20, rx: 2,
+      fill: "url(#aimantN)", stroke: "#5a1414", "stroke-width": 1.6 }));
+    gAimBar.appendChild(el("rect", { x: 0, y: -30, width: 34, height: 20, rx: 2,
+      fill: "url(#aimantS)", stroke: "#12283f", "stroke-width": 1.6 }));
+    gAimBar.appendChild(el("text", { x: -17, y: -15.5, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: "#ffffff",
+      "font-family": "Arial, Helvetica, sans-serif" }, "N"));
+    gAimBar.appendChild(el("text", { x: 17, y: -15.5, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: "#ffffff",
+      "font-family": "Arial, Helvetica, sans-serif" }, "S"));
+    add(el("path", { d: "M -40 -36 L 40 -36 L 40 -4 L -40 -4 Z",
+      fill: "url(#sachet)", stroke: "#a9b8c8", "stroke-width": 1.6,
+      "stroke-dasharray": "3 2", "pointer-events": "none" }));
+    return;
+  }
+  if (id === "spatule") {
+    add(el("rect", { x: -3, y: -54, width: 6, height: 40, rx: 2,
+      fill: "url(#inox)", stroke: "#6d7681", "stroke-width": 1.2,
+      "pointer-events": "none" }));
+    add(el("path", { d: "M -9 -16 Q 0 -2 9 -16 L 6 -22 L -6 -22 Z",
+      fill: "url(#inox)", stroke: "#6d7681", "stroke-width": 1.6,
+      "stroke-linejoin": "round", "pointer-events": "none" }));
+    add(el("rect", { x: -4.5, y: -60, width: 9, height: 12, rx: 3,
+      fill: "url(#bois)", stroke: "#5b3d0e", "stroke-width": 1.2,
+      "pointer-events": "none" }));
+    return;
+  }
+}
+
+/* ==================================================================
+   12. LE POSTE : la silhouette, le bec, le mortier, la balance
+   ================================================================== */
+var gFlamme = null, gHalo = null, gRobinet = null, gBec = null;
+var gSilBlouse = null, gSilChev = null;
+var gMortS = null, gMortFe = null, gMortMix = null, gPilon = null;
+var gBalTxt = null, gBalPose = null;
+function construirePoste() {
+  /* --- la silhouette de l'enseignant : cette fiche est une DÉMONSTRATION,
+     et c'est lui qui manipule. Cliquer le prépare (blouse, cheveux). */
+  var s = ajout("poste", el("g", { "pointer-events": "none" }));
+  gSilBlouse = s.appendChild(el("path", { d: "M " + pt(SIL_X - 44, BANC) +
+    " q 0 -70 44 -70 q 44 0 44 70 z", fill: "#c8d2dd", stroke: "#8a94a4",
+    "stroke-width": 2 }));
+  s.appendChild(el("circle", { cx: SIL_X, cy: SIL_Y, r: 32, fill: "#e6dccb",
+    stroke: "#8a94a4", "stroke-width": 2 }));
+  gSilChev = s.appendChild(el("path", { d: "M " + pt(SIL_X - 32, SIL_Y - 6) +
+    " q 6 -34 32 -34 q 26 0 32 34 q -14 -14 -32 -14 q -18 0 -32 14 z",
+    fill: "#4a3b2a", opacity: 1 }));
+  ajout("ui", el("rect", { x: SIL_X - 48, y: SIL_Y - 46, width: 96, height: 120,
+    fill: "#ffffff", "fill-opacity": 0.001, cursor: "pointer",
+    "data-act": "preparer" }));
+  /* §12.7 : sur une seule ligne, cet intitulé sortait du cadre par la
+     gauche de 11,3 unités — la silhouette est à x = 76 et le texte fait
+     175 unités. Coupé en deux exactement comme sa sœur `E2AC-07`, qui
+     portait le même intitulé et l'avait déjà réglé ainsi. */
+  txt("poste", SIL_X, Y_ETIQ.eleve, "l'enseignant",
+      { taille: 10.5, gras: true, couleur: "#3c4753", halo: "#eef2f7" });
+  txt("poste", SIL_X, Y_ETIQ.eleve + 13, "cliquer pour se préparer",
+      { taille: 9.5, couleur: "#6b7686", halo: "#eef2f7" });
+
+  /* --- le bec Bunsen. Il se DÉPLACE : « chauffer un seul point du tas »
+     puis « retirer aussitôt la flamme » sont deux gestes de translation,
+     et c'est ainsi qu'on les fait en salle. */
+  gBec = ajout("objets", el("g", { cursor: "grab", "data-act": "obj-bec" }));
+  gBec.appendChild(el("rect", { x: -52, y: -BEC_H - 12, width: 104,
+    height: BEC_H + 20, fill: "#ffffff", "fill-opacity": 0.001 }));
+  gBec.appendChild(el("ellipse", { cx: 0, cy: -4, rx: 44, ry: 11,
+    fill: "url(#inox)", stroke: "#4c545f", "stroke-width": 2,
+    "pointer-events": "none" }));
+  gBec.appendChild(el("path", { d: "M -30 -8 L -13 -52 L 13 -52 L 30 -8 Z",
+    fill: "url(#inox)", stroke: "#4c545f", "stroke-width": 2,
+    "stroke-linejoin": "round", "pointer-events": "none" }));
+  gBec.appendChild(el("rect", { x: -13, y: -BEC_H, width: 26,
+    height: BEC_H - 50, rx: 3, fill: "url(#inox)", stroke: "#4c545f",
+    "stroke-width": 2, "pointer-events": "none" }));
+  gBec.appendChild(el("rect", { x: -17, y: -82, width: 34, height: 20, rx: 4,
+    fill: "url(#laiton)", stroke: "#5b3d0e", "stroke-width": 1.6,
+    "pointer-events": "none" }));
+  gRobinet = gBec.appendChild(el("g", { "pointer-events": "none" }));
+  gRobinet.appendChild(el("rect", { x: -58, y: -34, width: 28, height: 15, rx: 4,
+    fill: "url(#laiton)", stroke: "#5b3d0e", "stroke-width": 1.6 }));
+  gRobinet.appendChild(el("rect", { x: -49, y: -51, width: 10, height: 19, rx: 3,
+    fill: "#b03030", stroke: "#6d1c1c", "stroke-width": 1.4 }));
+  gHalo = ajout("fils", el("circle", { cx: BEC_HOME, cy: BANC - BEC_H - 46, r: 82,
+    fill: "url(#halo)", opacity: 0, "pointer-events": "none" }));
+  gFlamme = ajout("avant", el("path", { d: "", fill: "url(#flammeBleue)",
+    opacity: 0, "pointer-events": "none" }));
+
+  /* --- le mortier et son pilon --- */
+  ombreAuSol(MORT_X, 62, .4);
+  ajout("arriere", el("path", { d: "M " + pt(MORT_X - 54, BANC - 74) +
+    " Q " + pt(MORT_X - 58, BANC - 8) + " " + pt(MORT_X, BANC - 8) +
+    " Q " + pt(MORT_X + 58, BANC - 8) + " " + pt(MORT_X + 54, BANC - 74) + " Z",
+    fill: "#e9edf2", "pointer-events": "none" }));
+  gMortS = ajout("arriere", el("path", { d: "", fill: COUL_S,
+    stroke: melange(COUL_S, "#000000", .4), "stroke-width": 1.4,
+    filter: "url(#grain)", opacity: 0, "pointer-events": "none" }));
+  gMortFe = ajout("arriere", el("path", { d: "", fill: COUL_FE,
+    stroke: melange(COUL_FE, "#000000", .4), "stroke-width": 1.4,
+    filter: "url(#grain)", opacity: 0, "pointer-events": "none" }));
+  gMortMix = ajout("arriere", el("g", { opacity: 0, "pointer-events": "none" }));
+  ajout("avant", el("path", { d: "M " + pt(MORT_X - 54, BANC - 74) +
+    " Q " + pt(MORT_X - 58, BANC - 8) + " " + pt(MORT_X, BANC - 8) +
+    " Q " + pt(MORT_X + 58, BANC - 8) + " " + pt(MORT_X + 54, BANC - 74) +
+    " L " + pt(MORT_X + 64, BANC - 74) + " L " + pt(MORT_X + 64, BANC - 66) +
+    " L " + pt(MORT_X - 64, BANC - 66) + " L " + pt(MORT_X - 64, BANC - 74) + " Z",
+    fill: "url(#porcelaine)", stroke: "#96a0ab", "stroke-width": 2.4,
+    "stroke-linejoin": "round", "pointer-events": "none" }));
+  ajout("avant", el("ellipse", { cx: MORT_X, cy: BANC - 74, rx: 64, ry: 9,
+    fill: "none", stroke: "#96a0ab", "stroke-width": 2.6,
+    "pointer-events": "none" }));
+  gPilon = ajout("avant", el("g", { "pointer-events": "none" }));
+  gPilon.appendChild(el("rect", { x: MORT_X + 26, y: BANC - 148, width: 13,
+    height: 62, rx: 6, fill: "url(#porcelaine)", stroke: "#96a0ab",
+    "stroke-width": 1.8 }));
+  gPilon.appendChild(el("ellipse", { cx: MORT_X + 32, cy: BANC - 84, rx: 15,
+    ry: 12, fill: "url(#porcelaine)", stroke: "#96a0ab", "stroke-width": 1.8 }));
+  txt("poste", MORT_X, Y_ETIQ.mortier, "mortier et pilon",
+      { taille: 11, couleur: "#3c4753", gras: true, halo: "#eef2f7" });
+
+  /* --- la balance électronique --- */
+  ombreAuSol(BAL_X, 58, .36);
+  ajout("poste", el("rect", { x: BAL_X - 56, y: BANC - 40, width: 112,
+    height: 36, rx: 5, fill: "#3d4652", stroke: "#20262e", "stroke-width": 2,
+    "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: BAL_X - 40, y: BANC - 34, width: 80,
+    height: 22, rx: 3, fill: "#c9e6c9", stroke: "#1d3a1d", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  gBalTxt = ajout("poste", el("text", { x: BAL_X, y: BANC - 18,
+    "text-anchor": "middle", "font-size": 15, "font-weight": "bold",
+    fill: "#12351f", "font-family": "ui-monospace, Consolas, monospace",
+    "pointer-events": "none" }, "0,00 g"));
+  gBalPose = ajout("poste", el("rect", { x: BAL_X - 46, y: BANC - 52,
+    width: 92, height: 12, rx: 3, fill: "url(#inox)", stroke: "#4c545f",
+    "stroke-width": 1.6, "pointer-events": "none" }));
+  txt("poste", BAL_X, Y_ETIQ.balance, "balance électronique",
+      { taille: 11, couleur: "#3c4753", gras: true, halo: "#eef2f7" });
+}
+function dessinerFlamme(x) {
+  var h = 92, y0 = BANC - BEC_H;
+  gFlamme.setAttribute("d",
+    "M " + pt(x - 15, y0) + " q -4 " + (-h * 0.55).toFixed(1) + " 15 " +
+    (-h).toFixed(1) + " q 19 " + (h * 0.45).toFixed(1) + " 15 " + h.toFixed(1) + " z");
+}
+
+/* ==================================================================
+   13. LA BRIQUE, LE TAS, ET L'AIMANT EN ACTION
+   ==================================================================
+   Tout ce qui se voit ici RELIT le modèle : le rayon du tas suit les deux
+   masses, la position du front suit le temps, la teinte suit la
+   température, et le nombre de grains repris suit la masse de fer libre
+   (§12.18 — le dessin relit la grandeur, il ne la recopie pas).          */
+var gBrique = null, gTas = null, gFront = null, gLueurTas = null,
+    gBloc = null, gPores = null, gAimantScene = null, gGrains = null,
+    gDecor = null;
+function construireBrique() {
+  gBrique = ajout("poste", el("g", { opacity: 0, "pointer-events": "none" }));
+  gBrique.appendChild(el("path", {
+    d: "M " + pt(BRIQ_X - BRIQ_W / 2, BANC - BRIQ_H) + " L " +
+       pt(BRIQ_X + BRIQ_W / 2 - 14, BANC - BRIQ_H) + " L " +
+       pt(BRIQ_X + BRIQ_W / 2, BANC - BRIQ_H + 10) + " L " +
+       pt(BRIQ_X + BRIQ_W / 2, BANC - 2) + " L " +
+       pt(BRIQ_X - BRIQ_W / 2 + 14, BANC - 2) + " L " +
+       pt(BRIQ_X - BRIQ_W / 2 + 14, BANC - BRIQ_H + 10) + " Z",
+    fill: "url(#brique)", stroke: "#7d5a33", "stroke-width": 2,
+    "stroke-linejoin": "round", filter: "url(#grain)" }));
+  gBrique.appendChild(el("path", {
+    d: "M " + pt(BRIQ_X - BRIQ_W / 2, BANC - BRIQ_H) + " L " +
+       pt(BRIQ_X + BRIQ_W / 2 - 14, BANC - BRIQ_H) + " L " +
+       pt(BRIQ_X + BRIQ_W / 2, BANC - BRIQ_H + 10) + " L " +
+       pt(BRIQ_X - BRIQ_W / 2 + 14, BANC - BRIQ_H + 10) + " Z",
+    fill: "#e0c294", stroke: "#7d5a33", "stroke-width": 1.6 }));
+  /* l'intérieur du tas AVANT la paroi : ici il n'y a pas de verre, mais
+     l'ordre reste le même — la lueur derrière, le solide devant. */
+  gLueurTas = ajout("arriere", el("ellipse", { cx: TAS_X, cy: BANC - BRIQ_H - 8,
+    rx: 60, ry: 34, fill: "url(#halo)", opacity: 0, "pointer-events": "none" }));
+  gTas = ajout("objets", el("path", { d: "", fill: COUL_FE, stroke: "#5f666e",
+    "stroke-width": 1.6, filter: "url(#grain)", opacity: 0,
+    "pointer-events": "none" }));
+  gPores = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  gFront = ajout("avant", el("path", { d: "", fill: "none", stroke: "#ffd27a",
+    "stroke-width": 5, "stroke-linecap": "round", opacity: 0,
+    "pointer-events": "none" }));
+  /* l'aimant EN SCÈNE : il descend, et ce qui monte est calculé */
+  gAimantScene = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  gAimantScene.appendChild(el("rect", { x: -34, y: -20, width: 34, height: 20,
+    rx: 2, fill: "url(#aimantN)", stroke: "#5a1414", "stroke-width": 1.6 }));
+  gAimantScene.appendChild(el("rect", { x: 0, y: -20, width: 34, height: 20,
+    rx: 2, fill: "url(#aimantS)", stroke: "#12283f", "stroke-width": 1.6 }));
+  gAimantScene.appendChild(el("path", { d: "M -40 -26 L 40 -26 L 40 6 L -40 6 Z",
+    fill: "url(#sachet)", stroke: "#a9b8c8", "stroke-width": 1.4,
+    "stroke-dasharray": "3 2" }));
+  gGrains = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  txt("poste", BRIQ_X, Y_ETIQ.brique, "la brique réfractaire",
+      { taille: 10.5, couleur: "#6b7686", halo: "#eef2f7" });
+  /* LE DÉCOR ANIMÉ vient EN DERNIER, et dans `avant` : ce qui vole passe
+     par-dessus tout le reste, comme la vapeur du §8. Aucun clic ne l'atteint
+     — il ne porte aucun geste (§17 bis). */
+  gDecor = ajout("avant", el("g", { "pointer-events": "none" }));
+}
+/* Le rayon du tas à l'écran : 1 mm réel = 3,2 unités de viewBox. La cote
+   est RELUE du modèle, jamais recopiée. */
+var ECH_TAS = 3.2;
+function rayonTasEcran() { return borne(TAB.rTas * 1000 * ECH_TAS, 14, 96); }
+
+/* ==================================================================
+   14. LES ZONES DE DÉPÔT
+   ==================================================================
+   Calculées à partir de l'état courant, jamais figées. Une zone qui n'a
+   pas de sens maintenant n'existe pas maintenant.
+   §12.16 : de la plus PETITE à la plus GRANDE.                           */
+var surbrillance = [];
+function emplacements(quoi) {
+  var z = [];
+  if (quoi === "brique" && !ETAT.briquePosee) {
+    z.push({ id: "banc", x: BRIQ_X, y: BANC - BRIQ_H / 2, r: 118 });
+  }
+  if (quoi === "soufre") {
+    if (!ETAT.peseS) z.push({ id: "balance", x: BAL_X, y: BANC - 46, r: 94 });
+    else if (!ETAT.verseS) z.push({ id: "mortier", x: MORT_X, y: BANC - 74, r: 96 });
+  }
+  if (quoi === "fer") {
+    if (!ETAT.peseFe) z.push({ id: "balance", x: BAL_X, y: BANC - 46, r: 94 });
+    else if (!ETAT.verseFe) z.push({ id: "mortier", x: MORT_X, y: BANC - 74, r: 96 });
+  }
+  if (quoi === "allum" && !ETAT.becAllume) {
+    z.push({ id: "bec", x: becX(), y: BANC - 92, r: 116 });
+  }
+  if (quoi === "aimant") {
+    /* le mortier AVANT le chauffage, la brique APRÈS. Deux zones, jamais
+       les deux à la fois : c'est le témoin de la fiche. */
+    if (ETAT.melange && !ETAT.testAvant && !ETAT.tasPose) {
+      z.push({ id: "mortier", x: MORT_X, y: BANC - 74, r: 96 });
+    }
+    if (ETAT.detache) {
+      z.push({ id: "brique", x: TAS_X, y: BANC - BRIQ_H - 18, r: 104 });
+    }
+  }
+  if (quoi === "spatule" && refroidi() && !ETAT.detache) {
+    z.push({ id: "brique", x: TAS_X, y: BANC - BRIQ_H - 12, r: 100 });
+  }
+  if (quoi === "bec") {
+    if (!ETAT.becSurTas && ETAT.tasPose && !ETAT.amorce) {
+      z.push({ id: "tas", x: BEC_CHAUFFE, y: BANC - 20, r: 128 });
+    }
+    if (ETAT.becSurTas) {
+      z.push({ id: "home", x: BEC_HOME, y: BANC - 20, r: 150 });
+    }
+  }
+  return z;
+}
+function montrerCibles(quoi) {
+  effacerCibles();
+  if (!quoi) return;
+  emplacements(quoi).forEach(function (e) {
+    surbrillance.push(ajout("arriere", el("circle", {
+      cx: e.x, cy: e.y, r: e.r * 0.76, fill: GOLD, opacity: .16,
+      stroke: GOLD, "stroke-width": 2.6, "stroke-dasharray": "8 6",
+      "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+function cibleLaPlusProche(quoi, p) {
+  var z = emplacements(quoi), best = null, bd = 1e9, i, d;
+  for (i = 0; i < z.length; i++) {
+    d = Math.sqrt(Math.pow(p.x - z[i].x, 2) + Math.pow(p.y - z[i].y, 2));
+    if (d < z[i].r && d < bd) { bd = d; best = z[i]; }
+  }
+  return best;
+}
+/* Le bouton qui double un glisser vise la zone qu'`accepte()` accepterait,
+   jamais une position en dur (§12.16). */
+function zoneVoulue(quoi) {
+  var z = emplacements(quoi);
+  return z.length ? z[0] : null;
+}
+
+/* ==================================================================
+   15. LES BOUTONS DE SCÈNE
+   ==================================================================
+   ⚠ AUCUN bouton ne fait un geste de SÉCURITÉ. Les trois conditions du
+   poste sûr — ventiler, se préparer, poser la brique — se font à la main,
+   et rien ne les fait à la place de l'élève. Le craquage de l'allumette
+   l'est aussi : la fiche exige qu'il précède l'ouverture du gaz, et
+   l'ordre se fait, il ne se clique pas.                                  */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var ls = lignes(l1, 17), t = [];
+  ls.forEach(function (s, i) {
+    t.push(g.appendChild(el("text", {
+      x: cx, y: cy + (ls.length > 1 ? (i === 0 ? -2 : 12) : 5),
+      "text-anchor": "middle", "font-size": 11.5, "font-weight": "bold",
+      fill: GRIS, "font-family": "Arial, Helvetica, sans-serif",
+      "pointer-events": "none" }, s)));
+  });
+  function peindre(fond, trait, encre, ep) {
+    r.setAttribute("fill", fond); r.setAttribute("stroke", trait);
+    r.setAttribute("stroke-width", ep);
+    t.forEach(function (n) { n.setAttribute("fill", encre); });
+  }
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    armer: function (v) {
+      if (r.getAttribute("data-fait") === "1") return;
+      peindre("#ffffff", v ? GOLD : LIGNE, v ? INK : GRIS, v ? 2.6 : 1.8);
+    },
+    fait: function () {
+      r.setAttribute("data-fait", "1");
+      peindre("#eef6e6", VERT, VERT, 2);
+    },
+    neuf: function () {
+      r.removeAttribute("data-fait");
+      peindre("#ffffff", LIGNE, GRIS, 1.8);
+    }
+  };
+  return BOUTONS[act];
+}
+function brancherBoutons() {
+  svg.addEventListener("click", function (e) {
+    var n = e.target, a = null;
+    while (n && n !== svg) {
+      if (n.getAttribute && n.getAttribute("data-act")) {
+        a = n.getAttribute("data-act"); break;
+      }
+      n = n.parentNode;
+    }
+    if (!a || /^outil-|^obj-/.test(a)) return;
+    agir(a);
+  });
+}
+function agir(a) {
+  var z;
+  if (a === "ventiler") { ventiler(); return; }
+  if (a === "preparer") { sePreparer(); return; }
+  if (a === "peser") {
+    if (!ETAT.peseS) { peser("soufre"); return; }
+    if (!ETAT.peseFe) { peser("fer"); return; }
+    signaler("Les deux poudres sont déjà pesées."); return;
+  }
+  if (a === "verser") {
+    if (!ETAT.verseS) { verser("soufre"); return; }
+    if (!ETAT.verseFe) { verser("fer"); return; }
+    signaler("Les deux poudres sont déjà dans le mortier."); return;
+  }
+  if (a === "broyer") { broyer(); return; }
+  if (a === "aimant") {
+    z = zoneVoulue("aimant");
+    if (!z) { signaler(ouPoser("aimant")); return; }
+    deposer("aimant", z); return;
+  }
+  if (a === "tas") { poserTas(); return; }
+  if (a === "gaz") { ouvrirGaz(); return; }
+  if (a === "chauffer") {
+    z = zoneVoulue("bec");
+    if (!z || z.id !== "tas") { signaler(ouPoser("bec")); return; }
+    deposer("bec", z); return;
+  }
+  if (a === "retirer") { retirerFlamme(); return; }
+  if (a === "spatule") {
+    z = zoneVoulue("spatule");
+    if (!z) { signaler(ouPoser("spatule")); return; }
+    deposer("spatule", z); return;
+  }
+}
+
+/* ==================================================================
+   16. PRENDRE ET DÉPOSER
+   ==================================================================
+   §9.1 : le pointeur est capturé sur le SVG lui-même, jamais sur l'objet.
+   Sans cela, un mouvement rapide sort de l'objet et le glissement s'arrête
+   net au milieu du geste, sans lever la moindre erreur.                   */
+var prise = null, ptSVG = null;
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function becX() { return ETAT.becSurTas ? BEC_CHAUFFE : BEC_HOME; }
+function maison(quoi) {
+  if (quoi === "bec") return { x: becX(), y: BANC - 4 };
+  var g = gOutil[quoi];
+  return g ? { x: g.x, y: g.y } : { x: 0, y: 0 };
+}
+function noeudDe(quoi) {
+  if (quoi === "bec") return gBec;
+  return gOutil[quoi] ? gOutil[quoi].g : null;
+}
+function replacer(quoi) {
+  var m = maison(quoi), n = noeudDe(quoi);
+  if (n) n.setAttribute("transform", "translate(" + m.x + "," + m.y + ")");
+  if (quoi === "bec") majFlamme();
+}
+function saisir(quoi, e) {
+  if (prise) return;                                   /* verrou en 1re ligne */
+  e.preventDefault();
+  var m = maison(quoi), p = versSVG(e), g = noeudDe(quoi);
+  if (!g) return;
+  prise = { quoi: quoi, id: e.pointerId, dx: m.x - p.x, dy: m.y - p.y,
+            x0: p.x, y0: p.y, bouge: false };
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  g.setAttribute("filter", "url(#ombrePrise)");
+  g.setAttribute("cursor", "grabbing");
+  COUCHES.drag.appendChild(g);
+  montrerCibles(quoi);
+  secuGeste(quoi);
+}
+function brancherPrise() {
+  OUTILS.forEach(function (o) {
+    gOutil[o.id].g.addEventListener("pointerdown", function (e) { saisir(o.id, e); });
+  });
+  gBec.addEventListener("pointerdown", function (e) { saisir("bec", e); });
+
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    var p = versSVG(e);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    var g = noeudDe(prise.quoi), rot = "";
+    /* §9.5 : une coupelle qu'on approche du mortier SE PENCHE. C'est le
+       geste de verser, et il se lit sans légende. */
+    if ((prise.quoi === "soufre" || prise.quoi === "fer") &&
+        (cibleLaPlusProche(prise.quoi, p) || {}).id === "mortier") rot = " rotate(-46)";
+    g.setAttribute("transform", "translate(" + (p.x + prise.dx).toFixed(1) + "," +
+      (p.y + prise.dy).toFixed(1) + ")" + rot);
+    if (prise.quoi === "bec") majFlamme(p.x + prise.dx);
+  });
+
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var p = versSVG(e), d = prise, g = noeudDe(prise.quoi);
+    prise = null;
+    effacerCibles();
+    g.removeAttribute("filter");
+    g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(g);
+    if (!d.bouge) { replacer(d.quoi); cliquer(d.quoi); return; }
+    var cible = cibleLaPlusProche(d.quoi, p);
+    if (!cible) { replacer(d.quoi); signaler(ouPoser(d.quoi)); return; }
+    deposer(d.quoi, cible);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);      /* ne PAS l'oublier */
+}
+/* Un dépôt hors zone n'est pas une faute : c'est une question sans
+   réponse. On remet l'objet en place et l'on DIT où il va. */
+function ouPoser(quoi) {
+  if (quoi === "brique") return ETAT.briquePosee
+    ? "La brique réfractaire est déjà en place."
+    : "La brique réfractaire se pose sur la paillasse, au milieu.";
+  if (quoi === "soufre" || quoi === "fer") {
+    var pese = quoi === "soufre" ? ETAT.peseS : ETAT.peseFe;
+    var verse = quoi === "soufre" ? ETAT.verseS : ETAT.verseFe;
+    if (!pese) return "Poser d'abord la coupelle sur la BALANCE : la fiche " +
+      "demande de peser séparément les deux poudres.";
+    if (!verse) return "Verser la poudre dans le MORTIER.";
+    return "Cette poudre est déjà dans le mortier.";
+  }
+  if (quoi === "allum") return ETAT.becAllume
+    ? "Le bec est déjà allumé."
+    : "Approcher l'allumette du bec Bunsen : on craque l'allumette AVANT " +
+      "d'ouvrir le gaz.";
+  if (quoi === "spatule") {
+    if (!ETAT.amorce) return "Il n'y a encore rien à détacher.";
+    if (!frontFini()) return "L'incandescence traverse encore le tas.";
+    if (!refroidi()) return "Le solide est à " + nb(temperatureTas() - 273.15, 0) +
+      " °C : la fiche demande de le laisser refroidir COMPLÈTEMENT.";
+    return "Détacher le solide de la brique, à la spatule.";
+  }
+  if (quoi === "aimant") {
+    if (!ETAT.melange) return "Mélanger d'abord les deux poudres au mortier.";
+    if (!ETAT.testAvant) return "Approcher l'aimant du MÉLANGE, dans le mortier.";
+    if (!ETAT.detache) return "Approcher l'aimant du SOLIDE OBTENU, une fois " +
+      "qu'il est refroidi et détaché.";
+    return "Le second essai à l'aimant est déjà fait.";
+  }
+  if (quoi === "bec") {
+    if (!ETAT.tasPose) return "Déposer d'abord le tas de mélange sur la brique.";
+    if (ETAT.amorce) return "Ramener le bec à sa place : la flamme doit être " +
+      "retirée AUSSITÔT le tas devenu incandescent.";
+    return "Approcher le bec de la brique, pour chauffer UN SEUL point du tas.";
+  }
+  return "Rien ici.";
+}
+
+/* ==================================================================
+   17. CE QUE FONT LES GESTES
+   ==================================================================
+   La logique d'état vit ICI, sur le chemin COMMUN au glisser et au bouton
+   (§12.13) : le gestionnaire du bouton ne fait qu'appeler ces fonctions. */
+function deposer(quoi, cible) {
+  if (quoi === "brique") { poserBrique(); replacer(quoi); return; }
+  if (quoi === "soufre" || quoi === "fer") {
+    if (cible.id === "balance") { peser(quoi); replacer(quoi); return; }
+    verser(quoi); replacer(quoi); return;
+  }
+  if (quoi === "allum") { craquerAllumette(); replacer(quoi); return; }
+  if (quoi === "aimant") {
+    if (cible.id === "mortier") { aimantAvant(); } else { aimantApres(); }
+    replacer(quoi); return;
+  }
+  if (quoi === "spatule") { detacher(); replacer(quoi); return; }
+  if (quoi === "bec") {
+    if (cible.id === "tas") { approcherBec(); } else { retirerFlamme(); }
+    return;
+  }
+  replacer(quoi);
+}
+/* Un CLIC (moins de 5 px) ne déplace pas : il interroge. §9.3 */
+function cliquer(quoi) {
+  if (quoi === "aimant") {
+    var e = epreuveAimant(ETAT.testAvant);
+    noter("À " + nb(REG.z, 0) + " mm, le champ vaut " + nb(e.fer.B * 1000, 1) +
+      " mT et la force sur un grain de fer " + sci(e.fer.k, 2) +
+      " fois son poids.", false);
+    majTout(); return;
+  }
+  signaler(ouPoser(quoi));
+}
+
+function ventiler() {
+  if (ETAT.ventile) { signaler("La fenêtre est déjà ouverte."); return; }
+  ETAT.ventile = true;                                 /* l'état d'abord */
+  gFenG.setAttribute("transform", "translate(" + (-FEN_W / 2 + 12) + ",0)");
+  gFenD.setAttribute("transform", "translate(" + (FEN_W / 2 - 12) + ",0)");
+  succes("Fenêtre ouverte : la salle est ventilée.");
+  secuDire(S_VAPEURS, "ok");
+  majTout();
+}
+function sePreparer() {
+  if (ETAT.tenue) { signaler("C'est déjà fait."); return; }
+  ETAT.tenue = true;
+  gSilChev.setAttribute("d", "M " + pt(SIL_X - 30, SIL_Y - 8) +
+    " q 6 -30 30 -30 q 24 0 30 30 q -13 -12 -30 -12 q -17 0 -30 12 z");
+  gSilBlouse.setAttribute("fill", "#eef2f6");
+  succes("Blouse mise, cheveux attachés.");
+  secuDire(S_FIN, "ok");
+  majTout();
+}
+function poserBrique() {
+  if (ETAT.briquePosee) return;
+  ETAT.briquePosee = true;
+  gOutil.brique.g.setAttribute("opacity", 0);
+  gBrique.setAttribute("opacity", 1);
+  succes("Brique réfractaire en place : on ne chauffe jamais directement " +
+    "sur la paillasse.");
+  secuDire(S_BRIQUE, "ok");
+  majTout();
+}
+function peser(quoi) {
+  var deja = quoi === "soufre" ? ETAT.peseS : ETAT.peseFe;
+  if (deja) { signaler("Cette poudre est déjà pesée."); return; }
+  var c = checkManquant();
+  if (c) { refus("Le poste n'est pas sûr : il reste à " + c.faire + ".",
+                 c.secu()); return; }
+  if (quoi === "soufre") ETAT.peseS = true; else ETAT.peseFe = true;
+  var m = quoi === "soufre" ? REG.mS : REG.mFe;
+  gBalTxt.textContent = nb(m, 2) + " g";
+  succes("La coupelle de " + (quoi === "soufre" ? "fleur de soufre" :
+    "limaille de fer") + " pèse " + nb(m, 2) + " g. Poudre " +
+    (quoi === "soufre" ? "JAUNE" : "GRISE") + ".");
+  secuDire(S_FAIBLES, "");
+  majTout();
+}
+function verser(quoi) {
+  var pese = quoi === "soufre" ? ETAT.peseS : ETAT.peseFe;
+  var deja = quoi === "soufre" ? ETAT.verseS : ETAT.verseFe;
+  if (deja) { signaler("Cette poudre est déjà dans le mortier."); return; }
+  if (!pese) {
+    refus("La fiche demande de PESER SÉPARÉMENT les deux poudres avant de " +
+      "les réunir.", S_FAIBLES); return;
+  }
+  if (quoi === "soufre") ETAT.verseS = true; else ETAT.verseFe = true;
+  succes((quoi === "soufre" ? "Soufre" : "Fer") + " versé dans le mortier.");
+  animerVerser(quoi);                        /* décor : l'état est déjà posé */
+  majTout();
+}
+function broyer() {
+  if (ETAT.melange) { signaler("Le mélange est déjà homogène."); return; }
+  if (!ETAT.verseS || !ETAT.verseFe) {
+    refus("Il manque une des deux poudres dans le mortier.", S_FAIBLES); return;
+  }
+  ETAT.melange = true;                                 /* l'état d'abord */
+  revelerCellule(R_ASPECT, 1);
+  succes("Mélange broyé au pilon : la poudre est GRISE, mais l'œil y " +
+    "distingue encore des grains jaunes de soufre.");
+  animerBroyer();                            /* décor : l'état est déjà posé */
+  majTout();
+}
+function aimantAvant() {
+  if (ETAT.testAvant) { signaler("Le premier essai à l'aimant est déjà fait."); return; }
+  if (!ETAT.melange) {
+    refus("Mélanger d'abord les deux poudres.", S_FAIBLES); return;
+  }
+  ETAT.testAvant = true;                               /* l'état d'abord */
+  var e = epreuveAimant(false);
+  ETAT.grainsRepris = e.grains;
+  revelerCellule(R_AIMANT, 1);
+  revelerCellule(R_CORPS, 1);
+  verifierAccord(1, e.prend);
+  succes(e.prend
+    ? "Des grains gris montent se coller sous l'aimant : le FER est attiré, " +
+      "et il se sépare du soufre. Force " + sci(e.fer.k, 2) + " fois le poids."
+    : "Rien ne monte — mais le mélange contient bien du fer. Vérifier " +
+      "l'aimant et sa distance.");
+  animerAimant(MORT_X, BANC - 74, e);
+  majTout();
+}
+function poserTas() {
+  if (ETAT.tasPose) { signaler("Le tas est déjà sur la brique."); return; }
+  if (!ETAT.testAvant) {
+    refus("La fiche fait d'abord approcher l'aimant du MÉLANGE : c'est le " +
+      "témoin de l'expérience, et il se perd si l'on chauffe avant.",
+      S_DEMO); return;
+  }
+  if (!ETAT.briquePosee) {
+    refus("Il n'y a pas de brique réfractaire sous le tas.", S_BRIQUE); return;
+  }
+  ETAT.tasPose = true;
+  succes("Le mélange est déposé en un petit tas sur la brique, loin de " +
+    "tout papier. Rayon du tas : " + nb(TAB.rTas * 1000, 1) + " mm.");
+  secuDire(S_BRIQUE, "");
+  animerTransfert();                         /* décor : l'état est déjà posé */
+  majTout();
+}
+function craquerAllumette() {
+  if (ETAT.allumette) { signaler("L'allumette est déjà craquée."); return; }
+  var c = checkManquant();
+  if (c) { refus("Le poste n'est pas sûr : il reste à " + c.faire + ".",
+                 c.secu()); return; }
+  ETAT.allumette = true;
+  succes("Allumette craquée. On peut maintenant ouvrir le robinet de gaz.");
+  majTout();
+}
+function ouvrirGaz() {
+  if (ETAT.becAllume) { signaler("Le bec est déjà allumé."); return; }
+  var c = checkManquant();
+  if (c) { refus("Le poste n'est pas sûr : il reste à " + c.faire + ".",
+                 c.secu()); return; }
+  if (!ETAT.allumette) {
+    refus("Pas le gaz d'abord : l'allumette se craque AVANT.", S_VAPEURS);
+    return;
+  }
+  ETAT.becAllume = true;
+  gRobinet.children[1].setAttribute("transform",
+    "rotate(90 -44 " + (BANC - 42) + ")");
+  majFlamme();
+  succes("Bec allumé. Le cône intérieur est à " +
+    nb(PHYS.T_FLAMME.v - 273.15, 0) + " °C.");
+  majTout();
+}
+function approcherBec() {
+  if (ETAT.becSurTas) { signaler("Le bec est déjà contre le tas."); return; }
+  if (!ETAT.tasPose) { refus("Déposer d'abord le tas sur la brique.", S_BRIQUE); return; }
+  if (!ETAT.becAllume) { signaler("Allumer d'abord le bec Bunsen."); return; }
+  if (ETAT.amorce) { signaler("Le tas est déjà amorcé : retirer la flamme."); return; }
+  ETAT.becSurTas = true;                               /* l'état d'abord */
+  ETAT.tChauffe = 0;
+  replacer("bec");
+  succes("La flamme touche UN SEUL point du tas. Il faut " +
+    nb(TAB.dureeAmorce, 1) + " s pour l'y porter à " +
+    nb(T_IGN - 273.15, 0) + " °C.");
+  secuDire(S_RESPIRE, "");
+  majTout();
+}
+/* L'amorçage n'est pas décrété : il est ATTEINT. L'horloge pousse
+   `tChauffe` jusqu'à la durée que le modèle a tabulée. */
+function amorcer() {
+  if (ETAT.amorce) return;
+  ETAT.amorce = true;
+  ETAT.tFront = 0;
+  noter("Le point chauffé est devenu INCANDESCENT (" +
+    nb(TAB.ad.T - 273.15, 0) + " °C). Retirer aussitôt la flamme.", true);
+  /* décor : la gerbe part du POINT CHAUFFÉ, celui que `peindreTas` fait
+     rougir — même abscisse, relue de la même façon (§12.18) */
+  gerbe(TAS_X - rayonTasEcran() * .75, BANC - BRIQ_H - 10, 16);
+  majTout();
+}
+function retirerFlamme() {
+  if (!ETAT.becSurTas && ETAT.flammeRetiree) {
+    signaler("La flamme est déjà retirée et le bec éteint."); return;
+  }
+  if (!ETAT.amorce) {
+    refus("Le tas n'est pas encore incandescent : retirer la flamme " +
+      "maintenant arrêterait tout.", S_DEMO); return;
+  }
+  ETAT.becSurTas = false;                              /* l'état d'abord */
+  ETAT.flammeRetiree = true;
+  ETAT.becEteint = true;
+  replacer("bec");
+  gRobinet.children[1].removeAttribute("transform");
+  majFlamme();
+  succes("Flamme retirée, bec éteint — et l'incandescence continue toute " +
+    "seule : la marge d'entretien vaut " + nb(TAB.f.marge, 2) + ".");
+  secuDire(S_RESPIRE, "");
+  majTout();
+}
+function detacher() {
+  if (ETAT.detache) { signaler("Le solide est déjà détaché."); return; }
+  if (!frontFini()) {
+    refus("L'incandescence n'a pas fini de traverser le tas.", S_DEMO); return;
+  }
+  if (!refroidi()) {
+    refus("Le solide est encore à " + nb(temperatureTas() - 273.15, 0) +
+      " °C : la fiche demande de le laisser refroidir COMPLÈTEMENT.",
+      S_REFROID); return;
+  }
+  ETAT.detache = true;                                 /* l'état d'abord */
+  revelerCellule(R_ASPECT, 2);
+  succes("Le solide obtenu est " + cel(R_ASPECT, 2) + ". Il se détache " +
+    "d'un seul morceau : " + nb(TAB.f.mFeS, 2) + " g de sulfure de fer.");
+  secuDire(S_REFROID, "ok");
+  majTout();
+}
+function aimantApres() {
+  if (ETAT.testApres) { signaler("Le second essai à l'aimant est déjà fait."); return; }
+  if (!ETAT.detache) {
+    refus("Détacher d'abord le solide à la spatule.", S_REFROID); return;
+  }
+  /* LE REFUS QUI VIENT DE LA PHYSIQUE, et pas seulement de la fiche : le
+     fer chaud n'est plus magnétique (point de Curie, 770 °C). */
+  if (temperatureTas() > TC_FE) {
+    refus("Le solide est à " + nb(temperatureTas() - 273.15, 0) + " °C, " +
+      "au-dessus du point de Curie du fer (" + nb(TC_FE - 273.15, 0) +
+      " °C) : même du fer pur n'y serait pas attiré. L'essai ne prouverait " +
+      "rien.", S_REFROID); return;
+  }
+  ETAT.testApres = true;                               /* l'état d'abord */
+  var e = epreuveAimant(true);
+  ETAT.grainsRepris = e.grains;
+  revelerCellule(R_AIMANT, 2);
+  revelerCellule(R_CORPS, 2);
+  verifierAccord(2, e.prend);
+  $("concl").classList.remove("masque");
+  succes(e.prend
+    ? "L'aimant reprend encore du fer : il en restait " +
+      nb(TAB.f.feRestant, 2) + " g, non réagi. Le mélange n'était pas dans " +
+      "les proportions exactes."
+    : "RIEN ne monte. Le fer a disparu en tant que tel : la force sur le " +
+      "sulfure de fer ne vaut que " + sci(e.sulfure.k, 2) + " fois son poids.");
+  animerAimant(TAS_X, BANC - BRIQ_H - 12, e);
+  majTout();
+}
+/* §11.5 : quand le modèle et la fiche divergent, on le DIT. */
+function verifierAccord(col, prend) {
+  if (ETAT.horsProto) return;
+  var t = cel(R_AIMANT, col);
+  var ditNon = /rien n'est attir|ne s[ée]pare plus|ne retire plus/i.test(t);
+  var attendu = !ditNon;
+  if (attendu !== prend) {
+    noter("⚠ Le modèle et la fiche divergent sur l'essai « " +
+      courtNom(col - 1) + " » — vérifier les constantes.", false);
+  }
+}
+/* ==================================================================
+   17 bis. LE DÉCOR ANIMÉ — il MONTRE le geste, il ne le décide pas
+   ==================================================================
+   CE QUE CETTE SECTION N'A PAS LE DROIT DE FAIRE
+   ----------------------------------------------
+   Aucune ligne d'ici n'écrit dans `ETAT`, ne dévoile une cellule, ni ne
+   tranche un résultat. Les gestes du §17 posent leur état AVANT d'appeler
+   ces fonctions, et la page reste JUSTE si l'animation ne joue pas du tout.
+   C'est la règle §6.2, et le §12.35 en dit le revers : le harnais est
+   synchrone, l'animation ne l'est pas — une assertion posée juste après un
+   clic ne doit donc jamais dépendre de ce qui se joue ici.
+
+   POURQUOI DES MINUTERIES, ET PAS `requestAnimationFrame`
+   --------------------------------------------------------
+   §13.5 bis, payé sur E3AC-13 : Chrome sans tête lancé avec
+   `--virtual-time-budget` n'appelle JAMAIS rAF. Une animation en rAF ne se
+   joue pas sous le pilote, et aucune erreur ne le dit. Tout passe donc par
+   `tard()`, qui inscrit sa minuterie dans `MINUTEURS` — « Recommencer » les
+   purge d'un coup, et aucun grain ne survit à la remise en état.
+
+   POURQUOI LE DÉCOR A SES PROPRES NŒUDS
+   --------------------------------------
+   `peindreMortier()` et `peindreTas()` réécrivent le mortier et le tas à
+   CHAQUE tick, soit toutes les 120 ms. Une animation posée sur ces nœuds
+   serait effacée avant d'être vue — c'est exactement le §12.1. Ce qui vole
+   vit donc dans `gDecor`, que rien ne repeint ; et le seul endroit où le
+   décor emprunte un nœud du modèle (le pilon) passe par une variable
+   d'AFFICHAGE que le peintre relit, jamais par `ETAT`.                     */
+
+/* Accélération puis décélération — la même courbe que les vues à plat de la
+   valise, pour que les deux familles de pages aient le même geste. */
+function doux(u) { return u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; }
+function entre(a, b, u) { return a + (b - a) * u; }
+/* Un désordre REPRODUCTIBLE. Deux captures de la même page doivent se
+   superposer (§13.4) : `Math.random` l'interdirait. La suite de Weyl au
+   nombre d'or donne un éparpillement qui n'a pas l'air réglé, et qui l'est. */
+function alea(k) { var x = (k + 1) * 0.6180339887498949; return x - Math.floor(x); }
+
+/* 18 pas : au-delà l'œil ne gagne plus rien, en deçà le mouvement saute.
+   `appliquer` reçoit DEUX temps — l'adouci pour un déplacement, le brut pour
+   ce qui doit garder sa loi (une chute va en u², pas en `doux(u)`). */
+var PAS_ANIM = 18;
+function animer(duree, appliquer, fini, pas) {
+  var n = pas || PAS_ANIM, k;
+  for (k = 1; k <= n; k++) (function (j) {
+    tard(function () {
+      appliquer(doux(j / n), j / n);
+      if (j === n && fini) fini();
+    }, Math.round(duree * j / n));
+  })(k);
+}
+/* Un enchaînement d'étapes datées. Chaque étape pose ce qu'elle a à poser
+   tout de suite : rien n'attend la fin d'une animation pour exister. */
+function suite(etapes) {
+  var t = 0;
+  etapes.forEach(function (e) { t += e[0]; tard(e[1], t); });
+  return t;
+}
+/* Un grain de décor : il naît, il vole, il meurt. Personne ne le compte. */
+function grainDecor(couleur, r) {
+  return gDecor.appendChild(el("circle", { cx: 0, cy: 0, r: r, fill: couleur,
+    stroke: melange(couleur, "#000000", .45), "stroke-width": .6 }));
+}
+function tuer(n) { if (n && n.parentNode) n.parentNode.removeChild(n); }
+
+/* LE FILET DE POUDRE — ce qui tombe de la coupelle dans le mortier. Les
+   grains partent ÉCHELONNÉS : lâchés ensemble, c'est un bloc qui descend,
+   pas un filet. */
+function filet(x0, y0, x1, y1, couleur, n, duree) {
+  var i;
+  for (i = 0; i < n; i++) (function (k) {
+    tard(function () {
+      var ex = (alea(k) - .5) * 13, g = grainDecor(couleur, 1.5 + alea(k + 7));
+      animer(300, function (e, u) {
+        g.setAttribute("cx", entre(x0, x1 + ex, u).toFixed(1));
+        /* la chute s'accélère : u², jamais la courbe adoucie */
+        g.setAttribute("cy", entre(y0, y1, u * u).toFixed(1));
+        g.setAttribute("opacity", u > .8 ? (1 - u) / .2 : 1);
+      }, function () { tuer(g); }, 9);
+    }, Math.round(k * duree / n));
+  })(i);
+}
+
+/* LA GERBE de l'amorçage. Ce que le modèle a déjà dit — le point chauffé
+   atteint la température d'amorçage et le front part — se VOIT ici, et rien
+   de plus : aucune étincelle ne conditionne quoi que ce soit. */
+function gerbe(x, y, n) {
+  var i;
+  for (i = 0; i < n; i++) (function (k) {
+    tard(function () {
+      var a = -Math.PI / 2 + (alea(k) - .5) * 2.1;
+      var v = 24 + alea(k + 3) * 46, d = 480 + alea(k + 11) * 260;
+      var g = gDecor.appendChild(el("circle", { cx: x, cy: y,
+        r: 1.2 + alea(k + 5) * 1.1, fill: k % 3 ? "#ffd98a" : "#f0842c" }));
+      animer(d, function (e, u) {
+        g.setAttribute("cx", (x + Math.cos(a) * v * u).toFixed(1));
+        /* montée puis retombée : la gravité est dans le u² */
+        g.setAttribute("cy", (y + Math.sin(a) * v * u + 52 * u * u).toFixed(1));
+        g.setAttribute("opacity", (1 - u * u).toFixed(2));
+      }, function () { tuer(g); }, 10);
+    }, k * 24);
+  })(i);
+}
+
+/* ------------------------------------------------------------------
+   LE GESTE DE VERSER — la coupelle monte, se penche, coule, revient
+   ------------------------------------------------------------------
+   Le même trajet quel que soit le chemin d'appel : au glisser comme au
+   bouton, `verser()` est la seule porte (§12.13). Si l'élève REPREND la
+   coupelle en cours de trajet, l'animation lâche prise sur-le-champ —
+   le pointeur commande, jamais la minuterie.                            */
+function animerVerser(quoi) {
+  var g = gOutil[quoi] && gOutil[quoi].g;
+  if (!g) return;
+  var m = maison(quoi), couleur = quoi === "soufre" ? COUL_S : COUL_FE;
+  var xv = MORT_X - 6, yv = BANC - 108, ang = -46;
+  /* la cible dans la cuve : là où `peindreMortier` pose ce tas-là */
+  var xa = quoi === "soufre" ? MORT_X - 26 : MORT_X + 26, ya = BANC - 24;
+  function pris() { return prise && prise.quoi === quoi; }
+  function pose(x, y, a) {
+    g.setAttribute("transform", "translate(" + x.toFixed(1) + "," +
+      y.toFixed(1) + ")" + (a ? " rotate(" + a.toFixed(1) + ")" : ""));
+  }
+  suite([
+    [0, function () {
+      if (pris()) return;
+      animer(300, function (u) {
+        if (pris()) return;
+        pose(entre(m.x, xv, u), entre(m.y, yv, u), entre(0, ang, u));
+      });
+    }],
+    /* le filet part du BEC de la coupelle penchée : le bord gauche, tourné
+       de −46°, tombe en (−36,6 ; +9,1) de l'origine du groupe. */
+    [320, function () {
+      if (pris()) return;
+      filet(xv - 36, yv + 9, xa, ya, couleur, 13, 420);
+    }],
+    [760, function () {
+      if (pris()) return;
+      animer(300, function (u) {
+        if (pris()) return;
+        pose(entre(xv, m.x, u), entre(yv, m.y, u), entre(ang, 0, u));
+      }, function () { if (!pris()) replacer(quoi); });
+    }]
+  ]);
+}
+
+/* ------------------------------------------------------------------
+   LE BROYAGE — le pilon tourne, et le peintre le relit
+   ------------------------------------------------------------------
+   `peindreMortier()` repose le pilon à chaque tick : lui écrire dessus
+   directement serait effacé en 120 ms (§12.1). Le décor pose donc un ANGLE,
+   et c'est le peintre qui l'applique. Rien dans `ETAT`, rien qui décide.  */
+var PILON_ANGLE = null;
+function animerBroyer() {
+  animer(1150, function (e, u) {
+    /* trois allers-retours, amortis : le geste du mortier n'est pas une
+       rotation, c'est un écrasement qui revient sur lui-même */
+    PILON_ANGLE = -16 + Math.sin(u * Math.PI * 6) * 13 * (1 - u * .55);
+    peindreMortier();
+  }, function () { PILON_ANGLE = null; peindreMortier(); }, 22);
+}
+
+/* ------------------------------------------------------------------
+   LE TAS QUI PASSE DU MORTIER À LA BRIQUE
+   ------------------------------------------------------------------
+   L'état est déjà posé : `peindreTas()` a fait apparaître le tas sur la
+   brique. Ce qui vole ici est la POIGNÉE qu'on y porte, et elle s'efface en
+   arrivant. La taille relit le rayon du modèle (§12.18).                  */
+function animerTransfert() {
+  var r = Math.min(16, rayonTasEcran() * .5);
+  var x0 = MORT_X, y0 = BANC - 40, x1 = TAS_X, y1 = BANC - BRIQ_H - 6;
+  var g = gDecor.appendChild(el("path", { d: "", fill: COUL_FE,
+    stroke: "#5f666e", "stroke-width": 1.3, filter: "url(#grain)" }));
+  animer(560, function (u) {
+    var x = entre(x0, x1, u), y = entre(y0, y1, u) - Math.sin(u * Math.PI) * 58;
+    g.setAttribute("d", "M " + pt(x - r, y) + " q " + r.toFixed(1) + " " +
+      (-r * .9).toFixed(1) + " " + (2 * r).toFixed(1) + " 0 z");
+    g.setAttribute("opacity", u > .78 ? ((1 - u) / .22).toFixed(2) : 1);
+  }, function () { tuer(g); });
+}
+
+/* ------------------------------------------------------------------
+   L'AIMANT EN SCÈNE — il descend, ce qui doit monter monte, il remonte
+   ------------------------------------------------------------------
+   Le nombre de grains vient du modèle (`e.grains`, tiré de la masse de fer
+   libre) : s'il vaut zéro, il ne se passe RIEN, et ce rien EST le résultat
+   de l'expérience. La page ne le commente pas ici — c'est le journal et le
+   tableau qui le disent.                                                  */
+function animerAimant(x, y, e) {
+  /* LA HAUTEUR DE SURVOL est MINORÉE à 20 unités. Au protocole l'aimant est à
+     2 mm de la poudre : dessiné à sa cote, le barreau se poserait DANS le tas
+     et les grains repris n'auraient nulle part où pendre — on verrait des
+     grains posés SUR l'aimant, ce qui est le contraire du phénomène. Le
+     plancher ne coûte rien à la lecture : la cote elle-même est écrite en
+     toutes lettres dans le panneau (« champ au ras de la poudre », « distance
+     de décollage »), et au-delà de 22 mm le survol suit de nouveau le
+     curseur — c'est bien lui qui porte l'échelle. */
+  var i, dz = Math.max(REG.z * 0.9, 20), yHaut = y - 74, yBas = y - dz,
+      grains = [], gy;
+  vide(gGrains);
+  gGrains.removeAttribute("transform");
+  gGrains.setAttribute("opacity", 1);
+  gAimantScene.setAttribute("opacity", 1);
+  gAimantScene.setAttribute("transform", "translate(" + x + "," + yHaut + ")");
+  for (i = 0; i < e.grains; i++) {
+    gy = y - 4 - Math.floor(i / 7) * 3;
+    grains.push({
+      n: gGrains.appendChild(el("circle", {
+        cx: x - 30 + (i % 7) * 10, cy: gy, r: 2.6, fill: COUL_FE,
+        stroke: "#4c545f", "stroke-width": .8, opacity: 0 })),
+      y0: gy,
+      /* Les grains viennent se coller SOUS le sachet, jamais dessus : le
+         barreau occupe [yBas−26, yBas+6], et une rangée posée au-dessus de
+         yBas+6 se peindrait PAR-DESSUS l'aimant. C'est ce qui s'est vu à la
+         première capture, et aucune mesure ne le disait. */
+      y1: yBas + 9 + Math.floor(i / 7) * 5.5
+    });
+  }
+  suite([
+    /* 1. l'aimant DESCEND — c'est le geste que fait l'enseignant */
+    [0, function () {
+      animer(360, function (u) {
+        gAimantScene.setAttribute("transform",
+          "translate(" + x + "," + entre(yHaut, yBas, u).toFixed(1) + ")");
+      });
+    }],
+    /* 2. les grains montent se coller sous le barreau, un à un */
+    [380, function () {
+      grains.forEach(function (gr, k) {
+        tard(function () {
+          gr.n.setAttribute("opacity", 1);
+          animer(220, function (u) {
+            gr.n.setAttribute("cy", entre(gr.y0, gr.y1, u).toFixed(1));
+          }, null, 9);
+        }, k * 42);
+      });
+    }],
+    /* 3. l'aimant remonte, et ce qu'il tient le suit */
+    [1450, function () {
+      animer(520, function (u) {
+        var yy = entre(yBas, yHaut, u);
+        gAimantScene.setAttribute("transform",
+          "translate(" + x + "," + yy.toFixed(1) + ")");
+        gGrains.setAttribute("transform",
+          "translate(0," + (yy - yBas).toFixed(1) + ")");
+      });
+    }],
+    /* 4. la scène se retire ; la LECTURE, elle, reste dans le panneau */
+    [560, function () {
+      animer(300, function (u) {
+        gAimantScene.setAttribute("opacity", (1 - u).toFixed(2));
+        gGrains.setAttribute("opacity", (1 - u).toFixed(2));
+      }, function () {
+        gAimantScene.setAttribute("opacity", 0);
+        gGrains.setAttribute("opacity", 0);
+        gGrains.removeAttribute("transform");
+        vide(gGrains);
+      });
+    }]
+  ]);
+}
+/* Tout le décor s'efface d'un coup — appelé par « Recommencer », après
+   `purger()` qui a déjà annulé les minuteries. */
+function effacerDecor() {
+  vide(gDecor);
+  PILON_ANGLE = null;
+}
+
+/* ==================================================================
+   18. LE CALCUL
+   ================================================================== */
+function integrer() {
+  tabuler();
+  peindreMortier();
+  peindreTas();
+}
+
+/* ==================================================================
+   19. LE RENDU — tout RELIT le modèle
+   ================================================================== */
+function majFlamme(xForce) {
+  var x = xForce === undefined ? becX() : xForce;
+  if (!ETAT.becAllume || ETAT.becEteint) {
+    gFlamme.setAttribute("opacity", 0);
+    gHalo.setAttribute("opacity", 0);
+    return;
+  }
+  dessinerFlamme(x);
+  gFlamme.setAttribute("opacity", .92);
+  gHalo.setAttribute("cx", x);
+  gHalo.setAttribute("cy", BANC - BEC_H - 46);
+  gHalo.setAttribute("opacity", .5);
+}
+function peindreMortier() {
+  var d, r;
+  gMortS.setAttribute("opacity", ETAT.verseS && !ETAT.melange ? .95 : 0);
+  gMortFe.setAttribute("opacity", ETAT.verseFe && !ETAT.melange ? .95 : 0);
+  /* les deux tas côte à côte, à l'échelle des masses */
+  r = borne(Math.sqrt(REG.mS) * 15, 12, 44);
+  gMortS.setAttribute("d", "M " + pt(MORT_X - 46, BANC - 14) + " q " +
+    r.toFixed(1) + " " + (-r * 0.9).toFixed(1) + " " + (2 * r).toFixed(1) + " 0 z");
+  r = borne(Math.sqrt(REG.mFe) * 15, 12, 44);
+  gMortFe.setAttribute("d", "M " + pt(MORT_X + 6, BANC - 14) + " q " +
+    r.toFixed(1) + " " + (-r * 0.9).toFixed(1) + " " + (2 * r).toFixed(1) + " 0 z");
+  /* le mélange homogène : gris, AVEC des grains jaunes encore visibles —
+     c'est ce que dit la cellule « poudre grise, dans laquelle on distingue
+     encore des grains jaunes de soufre ». */
+  vide(gMortMix);
+  if (ETAT.melange && !ETAT.tasPose) {
+    var R = borne(Math.sqrt(REG.mFe + REG.mS) * 17, 20, 56), i, a, rr;
+    gMortMix.appendChild(el("path", { d: "M " + pt(MORT_X - R, BANC - 14) +
+      " q " + R.toFixed(1) + " " + (-R * 0.85).toFixed(1) + " " +
+      (2 * R).toFixed(1) + " 0 z", fill: COUL_FE, stroke: "#5f666e",
+      "stroke-width": 1.4, filter: "url(#grain)" }));
+    for (i = 0; i < 16; i++) {
+      a = (i * 2.399) % (2 * Math.PI); rr = R * 0.82 * Math.sqrt((i + 0.5) / 16);
+      gMortMix.appendChild(el("circle", {
+        cx: MORT_X + Math.cos(a) * rr,
+        cy: BANC - 18 - Math.abs(Math.sin(a)) * rr * 0.5,
+        r: 1.9, fill: COUL_S, stroke: melange(COUL_S, "#000000", .45),
+        "stroke-width": .6 }));
+    }
+    gMortMix.setAttribute("opacity", 1);
+  } else {
+    gMortMix.setAttribute("opacity", 0);
+  }
+  /* §12.1 : le pilon est repeint à chaque tick. L'angle du broyage est donc
+     posé par le décor dans `PILON_ANGLE` et RELU ici — écrit directement sur
+     le nœud, il serait effacé 120 ms plus tard. */
+  var ap = PILON_ANGLE === null || PILON_ANGLE === undefined
+    ? (ETAT.melange ? -16 : null) : PILON_ANGLE;
+  gPilon.setAttribute("transform", ap === null ? ""
+    : "rotate(" + ap.toFixed(1) + " " + (MORT_X + 32) + " " + (BANC - 84) + ")");
+}
+function peindreTas() {
+  var R = rayonTasEcran(), yb = BANC - BRIQ_H, T = temperatureTas(), i, a, rr;
+  if (!ETAT.tasPose) {
+    gTas.setAttribute("opacity", 0);
+    gFront.setAttribute("opacity", 0);
+    gLueurTas.setAttribute("opacity", 0);
+    gPores.setAttribute("opacity", 0);
+    return;
+  }
+  gTas.setAttribute("d", "M " + pt(TAS_X - R, yb) + " q " + R.toFixed(1) +
+    " " + (-R * 0.88).toFixed(1) + " " + (2 * R).toFixed(1) + " 0 z");
+  gTas.setAttribute("opacity", 1);
+  if (!ETAT.amorce) {
+    gTas.setAttribute("fill", COUL_FE);
+    gTas.setAttribute("stroke", "#5f666e");
+    gFront.setAttribute("opacity", 0);
+    gPores.setAttribute("opacity", 0);
+    /* le point chauffé rougit AVANT de s'amorcer : la teinte relit la
+       courbe de Goodman */
+    gLueurTas.setAttribute("opacity",
+      T > DRAPER ? borne((T - DRAPER) / 400, 0, .8) : 0);
+    gLueurTas.setAttribute("cx", TAS_X - R * 0.75);
+    return;
+  }
+  gLueurTas.setAttribute("cx", TAS_X);
+  if (!frontFini()) {
+    /* LE FRONT : il balaie le tas de gauche à droite, et sa position relit
+       le temps — ni une animation, ni un compteur. */
+    var f = borne(ETAT.tFront / Math.max(1e-9, TAB.dureeFront), 0, 1);
+    var xf = TAS_X - R + 2 * R * f;
+    gTas.setAttribute("fill", COUL_PRODUIT);
+    gTas.setAttribute("stroke", "#15151a");
+    gFront.setAttribute("d", "M " + pt(xf, yb) + " q 0 " +
+      (-R * 0.8).toFixed(1) + " " + (R * 0.05).toFixed(1) + " " +
+      (-R * 0.86).toFixed(1));
+    gFront.setAttribute("stroke", teinteIncandescence(TAB.ad.T));
+    gFront.setAttribute("opacity", 1);
+    gLueurTas.setAttribute("opacity", .85);
+    gLueurTas.setAttribute("rx", R * 1.2);
+    gLueurTas.setAttribute("ry", R * 0.9);
+    gPores.setAttribute("opacity", 0);
+    return;
+  }
+  /* le bloc : « noir grisâtre, poreux et friable, d'un seul bloc ». Sa
+     teinte suit la température tant qu'il rougeoie. */
+  gFront.setAttribute("opacity", 0);
+  gTas.setAttribute("fill", T > DRAPER
+    ? melange(COUL_PRODUIT, teinteIncandescence(T), borne((T - DRAPER) / 500, 0, 1))
+    : COUL_PRODUIT);
+  gTas.setAttribute("stroke", "#15151a");
+  gLueurTas.setAttribute("opacity", T > DRAPER ? borne((T - DRAPER) / 500, 0, .8) : 0);
+  gLueurTas.setAttribute("rx", R * 1.2);
+  gLueurTas.setAttribute("ry", R * 0.9);
+  if (!gPores.childNodes.length) {
+    for (i = 0; i < 18; i++) {
+      a = (i * 2.399) % (2 * Math.PI); rr = 0.8 * Math.sqrt((i + 0.5) / 18);
+      gPores.appendChild(el("circle", { cx: 0, cy: 0, r: 2.1,
+        fill: "#0b0b0e", opacity: .55,
+        "data-a": a.toFixed(4), "data-r": rr.toFixed(4) }));
+    }
+  }
+  for (i = 0; i < gPores.childNodes.length; i++) {
+    var n = gPores.childNodes[i];
+    a = +n.getAttribute("data-a"); rr = +n.getAttribute("data-r") * R;
+    n.setAttribute("cx", TAS_X + Math.cos(a) * rr);
+    n.setAttribute("cy", yb - 6 - Math.abs(Math.sin(a)) * rr * 0.62);
+  }
+  gPores.setAttribute("opacity", ETAT.detache ? 1 : .8);
+  gTas.setAttribute("transform", ETAT.detache
+    ? "translate(" + (R * 0.18).toFixed(1) + ",-3) rotate(-5 " + TAS_X + " " + yb + ")"
+    : "");
+  gPores.setAttribute("transform", gTas.getAttribute("transform") || "");
+}
+
+/* ==================================================================
+   20. CONSIGNE, JOURNAL, SÉCURITÉ, TABLEAU
+   ================================================================== */
+/* §12.10 : un refus tient tant qu'il n'est pas résolu, et pas une seconde
+   de plus. Toute action qui ABOUTIT lève la retenue. */
+function dire(t, fini) {
+  if (ETAT.retenue && Date.now() < ETAT.retenue) return;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  ETAT.retenue = 0;
+  var n = $("consigne");
+  n.innerHTML = md(t);
+  n.className = "consigne";
+  ETAT.retenue = Date.now() + 4000;
+}
+function succes(t) { ETAT.retenue = 0; noter(t, true); }
+function refus(t, ligne) { signaler(t); noter(t, false); secuDire(ligne, "refus"); }
+function noter(t, positif) {
+  var n = $("obs");
+  n.textContent = t;
+  n.className = "obs" + (positif ? " pos" : "");
+}
+function secuDire(t, cls) {
+  var b = $("secuBande");
+  $("secuTexte").textContent = t || "";
+  $("secuPic").textContent = cls === "ok" ? "✔" : (cls === "refus" ? "⛔" : "⚠");
+  b.className = "secubande" + (cls ? " " + cls : "");
+  var ul = $("securite"), i;
+  if (!ul) return;
+  for (i = 0; i < ul.children.length; i++) {
+    ul.children[i].className = (SECU[i] === t) ? "actif" : "";
+  }
+}
+function secuGeste(quoi) {
+  if (quoi === "brique") secuDire(S_BRIQUE, "");
+  else if (quoi === "allum") secuDire(S_VAPEURS, "");
+  else if (quoi === "aimant") secuDire(S_REFROID, "");
+  else if (quoi === "spatule") secuDire(S_REFROID, "");
+  else if (quoi === "bec") secuDire(S_RESPIRE, "");
+  else secuDire(S_FAIBLES, "");
+}
+/* §6.3 : cellule par cellule, jamais par ligne ni par colonne. Une même
+   ligne porte deux observations faites à deux moments différents. */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;                          /* §11.3 */
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+function consigne() {
+  var c = checkManquant();
+  if (c) return "Sécuriser le poste : " + c.faire + ".";
+  if (!ETAT.peseS || !ETAT.peseFe) return "Peser séparément les deux poudres " +
+    "sur la balance.";
+  if (!ETAT.verseS || !ETAT.verseFe) return "Verser les deux poudres dans le " +
+    "mortier.";
+  if (!ETAT.melange) return "Broyer au pilon jusqu'à une poudre grise homogène.";
+  if (!ETAT.testAvant) return "Approcher l'aimant du mélange : c'est le témoin.";
+  if (!ETAT.tasPose) return "Déposer le mélange en un petit tas sur la brique.";
+  if (!ETAT.becAllume) return ETAT.allumette
+    ? "Ouvrir le robinet de gaz." : "Craquer une allumette au bec Bunsen.";
+  if (!ETAT.amorce) return ETAT.becSurTas
+    ? "Attendre que le point chauffé devienne incandescent."
+    : "Approcher le bec et chauffer UN SEUL point du tas.";
+  if (!ETAT.becEteint) return "Retirer aussitôt la flamme et éteindre le bec.";
+  if (!frontFini()) return "Observer : l'incandescence se propage d'elle-même.";
+  if (!refroidi()) return "Laisser le solide refroidir complètement — " +
+    nb(temperatureTas() - 273.15, 0) + " °C pour l'instant.";
+  if (!ETAT.detache) return "Décrire le solide obtenu et le détacher à la spatule.";
+  if (!ETAT.testApres) return "Approcher de nouveau l'aimant du solide obtenu.";
+  return "Expérience terminée : la conclusion est démasquée.";
+}
+
+/* ==================================================================
+   21. LE PARCOURS D'ÉTAPES
+   ==================================================================
+   L'état se DÉDUIT de `ETAT`, jamais d'un compteur séparé (§11.1).       */
+var ETAPES = [
+  { n: "Sécuriser", f: function () { return secuOK(); } },
+  { n: "Peser", f: function () { return ETAT.peseS && ETAT.peseFe; } },
+  { n: "Mélanger", f: function () { return ETAT.melange; } },
+  { n: "Aimant — avant", f: function () { return ETAT.testAvant; } },
+  { n: "Chauffer un point", f: function () { return ETAT.amorce; } },
+  { n: "Retirer la flamme", f: function () { return ETAT.becEteint && frontFini(); } },
+  { n: "Refroidir", f: function () { return refroidi(); } },
+  { n: "Aimant — après", f: function () { return ETAT.testApres; } }
+];
+function majEtapes() {
+  var d = $("etapes"), i, k = -1;
+  for (i = 0; i < ETAPES.length; i++) if (!ETAPES[i].f()) { k = i; break; }
+  if (!d.children.length) {
+    ETAPES.forEach(function (e, j) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">' + (j + 1) + '</span>' + e.n;
+      d.appendChild(n);
+    });
+  }
+  for (i = 0; i < ETAPES.length; i++) {
+    d.children[i].className = ETAPES[i].f() ? "faite" : (i === k ? "actif" : "");
+  }
+  var c = $("checks");
+  if (!c.children.length) {
+    CHECKS.forEach(function (h) {
+      var n = document.createElement("div");
+      n.innerHTML = '<span class="n">sécurité</span>' + h.n;
+      c.appendChild(n);
+    });
+  }
+  CHECKS.forEach(function (h, j) {
+    c.children[j].className = ETAT[h.k] ? "oui" : "non";
+  });
+}
+
+/* ==================================================================
+   22. LES PANNEAUX HTML ET LES GRAPHES
+   ================================================================== */
+function construireHTML() {
+  $("titre").textContent = "Paillasse virtuelle — " + depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E2AC-09") + " · " + DONNEES.niveau +
+    " · " + DONNEES.unite + " · " + DONNEES.lecon;
+  $("objectif").innerHTML = md(DONNEES.objectif || "");
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation ||
+    DONNEES.observation || "");
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion ||
+    DONNEES.conclusion || "");
+  $("bilan").textContent = "fer + soufre → sulfure de fer";
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation || "");
+  $("seanceM").textContent = nb(DUREE_SEANCE, 0) + " min · " + MODALITE;
+  $("dureeSeance").textContent = nb(DUREE_SEANCE, 0) + " min";
+
+  var t = $("tab"), tr = document.createElement("tr"), i, j, td;
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th");
+    th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < NL; i++) {
+    tr = document.createElement("tr");
+    for (j = 0; j < ENTETES.length; j++) {
+      td = document.createElement("td");
+      if (LIG[i] && LIG[i][j]) { td.innerHTML = md(LIG[i][j]); }
+      else { td.className = "vide"; td.textContent = ""; }
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  var ul = $("materiel");
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  ul = $("securite");
+  SECU.forEach(function (s) {
+    var li = document.createElement("li"); li.textContent = s; ul.appendChild(li);
+  });
+
+  $("legendeSeuils").innerHTML = "Seuils de <b>lecture</b>, pas de mesure : un " +
+    "grain de fer se voit au-delà de " + nb(S_GRAIN * 1000, 0) + " mg (aux " +
+    "masses de la fiche il en reste " + nb(TAB.f.feRestant * 1000, 1) + " mg, " +
+    "soit " + nb(S_GRAIN / Math.max(1e-9, TAB.f.feRestant), 1) + " fois moins) ; " +
+    "un solide rougeoie au-dessus du point de Draper, " + nb(DRAPER, 0) + " K ; " +
+    "on le manipule au-dessous de " + nb(T_MANIP - 273.15, 0) + " °C.";
+
+  /* « Sous le capot » — le tableau des constantes se RÉGÉNÈRE depuis PHYS */
+  var ct = $("capotConst"), k;
+  tr = document.createElement("tr");
+  ["Constante", "Valeur", "Provenance"].forEach(function (h) {
+    var th = document.createElement("th"); th.textContent = h; tr.appendChild(th);
+  });
+  ct.appendChild(tr);
+  for (k in PHYS) {
+    tr = document.createElement("tr");
+    td = document.createElement("td"); td.textContent = PHYS[k].n; tr.appendChild(td);
+    td = document.createElement("td"); td.className = "mes";
+    td.textContent = sci(PHYS[k].v, 3) + (PHYS[k].u ? " " + PHYS[k].u : "");
+    tr.appendChild(td);
+    td = document.createElement("td"); td.className = "src";
+    td.textContent = PHYS[k].s; tr.appendChild(td);
+    ct.appendChild(tr);
+  }
+  $("capotSrc").textContent = "Deux grandeurs ne sont pas dans la fiche et " +
+    "sont des curseurs étiquetés « ajout » : la distance à laquelle on " +
+    "approche l'aimant, et la rémanence du barreau. Une troisième, le rayon " +
+    "du point chauffé par la flamme, ne règle que le DÉLAI d'amorçage et " +
+    "aucun verdict.";
+  $("eqModele").textContent =
+    "entretien    marge = ΔH·n(FeS)/m · (1 − f) / [c_mél·(T_amorç − T₀)]\n" +
+    "             le front avance seul si marge ≥ 1\n" +
+    "amorçage     ρ·c·δ(t)·dT/dt = h·(T_f − T) + ε·σ·(T_f⁴ − T⁴),\n" +
+    "             δ = √(π·a·t)          (méthode intégrale de Goodman)\n" +
+    "front        v = √(a / τ_réac),   a = λ/(ρ·c)\n" +
+    "température  Q = ΔH·n  →  chauffe, puis FOND si Q dépasse c·(T_fus − T₀)\n" +
+    "refroidiss.  m·c·dT/dt = −A·[ε·σ·(T⁴ − T₀⁴) + h·(T − T₀)]\n" +
+    "aimant       B(z) = (Br/2)·[(z+L)/√((z+L)²+R²) − z/√(z²+R²)]\n" +
+    "             M = min(3B/µ₀, M_sat)   (grain sphérique, N = 1/3)\n" +
+    "             F/V = M·dB/dz    contre    P/V = ρ·g\n" +
+    "             le grain décolle si F/V ≥ P/V";
+  $("eqBilan").textContent =
+    "fer + soufre → sulfure de fer\n\n" +
+    "réactifs : le fer et le soufre — ils DISPARAISSENT\n" +
+    "produit  : le sulfure de fer — il APPARAÎT\n\n" +
+    "aucun dioxygène n'intervient : une réaction chimique n'est pas\n" +
+    "forcément une combustion.";
+}
+
+function cadre(g, w, h, xl, yl) {
+  vide(g);
+  g.appendChild(el("rect", { x: 0, y: 0, width: w, height: h, fill: "#fbfcfd",
+    stroke: "#e3e6ea" }));
+  g.appendChild(el("line", { x1: 46, y1: h - 26, x2: w - 8, y2: h - 26,
+    stroke: "#9aa5b2", "stroke-width": 1.4 }));
+  g.appendChild(el("line", { x1: 46, y1: 10, x2: 46, y2: h - 26,
+    stroke: "#9aa5b2", "stroke-width": 1.4 }));
+  g.appendChild(el("text", { x: w - 8, y: h - 10, "text-anchor": "end",
+    "font-size": 10, fill: "#6b7686" }, xl));
+  g.appendChild(el("text", { x: 6, y: 12, "font-size": 10, fill: "#6b7686" }, yl));
+}
+function tracerAimant() {
+  var g = $("gAimant"), w = 360, h = 176, i, z, d1 = "", d2 = "", X, Y;
+  cadre(g, w, h, "distance à la poudre (mm)", "force magnétique / poids");
+  var lo = -6, hi = 4, T = ETAT.testApres ? temperatureTas() : T0;
+  function px(zm) { return 46 + (zm - 1) / 39 * (w - 58); }
+  function py(v) {
+    var l = borne(Math.log(Math.max(v, 1e-9)) / Math.LN10, lo, hi);
+    return (h - 26) - (l - lo) / (hi - lo) * (h - 40);
+  }
+  for (i = 0; i <= 60; i++) {
+    z = 1 + i * 39 / 60;
+    X = px(z);
+    d1 += (i ? " L " : "M ") + pt(X, py(attire(z / 1000, CORPS.fer, T0, REG.Br).k));
+    d2 += (i ? " L " : "M ") + pt(X, py(attire(z / 1000, CORPS.sulfure, T0, REG.Br).k));
+  }
+  g.appendChild(el("path", { d: d1, fill: "none", stroke: "#b4530f",
+    "stroke-width": 2.4 }));
+  g.appendChild(el("path", { d: d2, fill: "none", stroke: "#2f6ea8",
+    "stroke-width": 2.4 }));
+  g.appendChild(el("line", { x1: 46, y1: py(1), x2: w - 8, y2: py(1),
+    stroke: ROUGE, "stroke-width": 1.4, "stroke-dasharray": "5 4" }));
+  g.appendChild(el("text", { x: w - 10, y: py(1) - 4, "text-anchor": "end",
+    "font-size": 9, fill: ROUGE }, "seuil de décollage"));
+  g.appendChild(el("text", { x: 52, y: py(attire(0.002, CORPS.fer, T0, REG.Br).k) - 6,
+    "font-size": 9.5, fill: "#b4530f" }, "fer"));
+  g.appendChild(el("text", { x: 52, y: py(attire(0.002, CORPS.sulfure, T0, REG.Br).k) - 6,
+    "font-size": 9.5, fill: "#2f6ea8" }, "sulfure de fer"));
+  g.appendChild(el("line", { x1: px(REG.z), y1: 10, x2: px(REG.z), y2: h - 26,
+    stroke: GOLD, "stroke-width": 1.6, "stroke-dasharray": "6 4" }));
+  g.appendChild(el("text", { x: px(REG.z) + 4, y: 20, "font-size": 9,
+    fill: GOLD }, nb(REG.z, 0) + " mm"));
+  [1, 10, 20, 30, 40].forEach(function (v) {
+    g.appendChild(el("text", { x: px(v), y: h - 14, "text-anchor": "middle",
+      "font-size": 9, fill: "#6b7686" }, nb(v, 0)));
+  });
+}
+function tracerFront() {
+  var g = $("gFront"), w = 360, h = 176, i, m, d = "", X, mx = 0;
+  cadre(g, w, h, "masse de limaille de fer (g)", "marge d'entretien");
+  var pts = [];
+  for (i = 0; i <= 60; i++) {
+    m = 1 + i * 15 / 60;
+    pts.push([m, front(m, REG.mS).marge]);
+    mx = Math.max(mx, pts[i][1]);
+  }
+  mx = Math.max(mx, 1.4);
+  function px(v) { return 46 + (v - 1) / 15 * (w - 58); }
+  function py(v) { return (h - 26) - borne(v / mx, 0, 1) * (h - 40); }
+  pts.forEach(function (p, i) { d += (i ? " L " : "M ") + pt(px(p[0]), py(p[1])); });
+  g.appendChild(el("path", { d: d, fill: "none", stroke: GOLD, "stroke-width": 2.4 }));
+  g.appendChild(el("line", { x1: 46, y1: py(1), x2: w - 8, y2: py(1),
+    stroke: ROUGE, "stroke-width": 1.4, "stroke-dasharray": "5 4" }));
+  g.appendChild(el("text", { x: w - 10, y: py(1) - 4, "text-anchor": "end",
+    "font-size": 9, fill: ROUGE }, "le front s'arrête en dessous"));
+  g.appendChild(el("circle", { cx: px(REG.mFe), cy: py(TAB.f.marge), r: 4.5,
+    fill: "#b4530f", stroke: "#fff", "stroke-width": 1.6 }));
+  g.appendChild(el("text", { x: px(REG.mFe), y: py(TAB.f.marge) - 9,
+    "text-anchor": "middle", "font-size": 9.5, fill: "#b4530f" },
+    "×" + nb(TAB.f.marge, 2)));
+  [1, 4, 8, 12, 16].forEach(function (v) {
+    g.appendChild(el("text", { x: px(v), y: h - 14, "text-anchor": "middle",
+      "font-size": 9, fill: "#6b7686" }, nb(v, 0)));
+  });
+}
+function tracerRefroid() {
+  var g = $("gRefroid"), w = 360, h = 176, i, d = "", c = TAB.courbeRef;
+  cadre(g, w, h, "temps depuis la fin de la propagation (s)", "température (°C)");
+  var tmax = Math.max(1, TAB.dureeRefroid), vmax = TAB.ad.T - 273.15;
+  function px(t) { return 46 + borne(t / tmax, 0, 1) * (w - 58); }
+  function py(v) { return (h - 26) - borne(v / vmax, 0, 1) * (h - 40); }
+  [[TC_FE, "Curie du fer — 770 °C", "#7a3ba8"],
+   [DRAPER, "Draper — 525 °C", ROUGE],
+   [T_MANIP, "manipulable — 50 °C", VERT]].forEach(function (s) {
+    g.appendChild(el("line", { x1: 46, y1: py(s[0] - 273.15), x2: w - 8,
+      y2: py(s[0] - 273.15), stroke: s[2], "stroke-width": 1.2,
+      "stroke-dasharray": "4 4" }));
+    g.appendChild(el("text", { x: w - 10, y: py(s[0] - 273.15) - 3,
+      "text-anchor": "end", "font-size": 9, fill: s[2] }, s[1]));
+  });
+  var pas = Math.max(1, Math.ceil(c.length / 180));
+  for (i = 0; i < c.length; i += pas) {
+    d += (d ? " L " : "M ") + pt(px(c[i][0]), py(c[i][1] - 273.15));
+  }
+  d += " L " + pt(px(c[c.length - 1][0]), py(c[c.length - 1][1] - 273.15));
+  g.appendChild(el("path", { d: d, fill: "none", stroke: GOLD, "stroke-width": 2.4 }));
+  if (ETAT.amorce && frontFini()) {
+    g.appendChild(el("circle", { cx: px(ETAT.tRefroid),
+      cy: py(temperatureTas() - 273.15), r: 4.5, fill: "#b4530f",
+      stroke: "#fff", "stroke-width": 1.6 }));
+  }
+  [0, tmax / 2, tmax].forEach(function (t) {
+    g.appendChild(el("text", { x: px(t), y: h - 14, "text-anchor": "middle",
+      "font-size": 9, fill: "#6b7686" }, nb(t, 0)));
+  });
+}
+function majLectures() {
+  var apres = ETAT.testApres || (ETAT.amorce && frontFini());
+  var e = epreuveAimant(apres), zd, brn;
+  $("nomSuivi").textContent = apres ? courtNom(1) : courtNom(0);
+  $("lCorps").textContent = e.corps;
+  $("lFeLibre").textContent = nb(e.mLibre, 3) + " g";
+  $("lRatio").textContent = "fer " + sci(e.fer.k, 2) + " · sulfure " +
+    sci(e.sulfure.k, 2);
+  $("lVerdict").textContent = e.prend ? "des grains montent" : "rien n'est attiré";
+  $("lVerdict").className = "v";
+  $("lB").textContent = nb(e.fer.B * 1000, 1) + " mT";
+  zd = distanceDecollage(apres ? CORPS.sulfure : CORPS.fer, e.T, REG.Br);
+  $("lZdec").textContent = zd > 0 ? nb(zd * 1000, 1) + " mm"
+                                  : "jamais, même au contact";
+  $("lCurie").textContent = nb(TC_FE - 273.15, 0) + " °C · tas à " +
+    nb(temperatureTas() - 273.15, 0) + " °C";
+  brn = remanenceNecessaire(e.z, CORPS.sulfure, e.T, REG.Br);
+  $("lBrNec").textContent = isFinite(brn) ? nb(brn, 2) + " T (néodyme : " +
+    nb(PHYS.BR_NEO.v, 2) + " T max)" : "—";
+
+  /* LE CARNET — ce que le modèle a calculé, colonne par colonne */
+  var t = $("carnet"), tr, td, j;
+  vide(t);
+  tr = document.createElement("tr");
+  ["Grandeur calculée"].concat(ETATS).forEach(function (h) {
+    var th = document.createElement("th"); th.innerHTML = md(h); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  var av = epreuveAimant(false), ap = epreuveAimant(true);
+  var L = [
+    ["Corps présents", function (x) { return x.corps; }],
+    ["Masse de fer libre", function (x) { return nb(x.mLibre, 3) + " g"; }],
+    ["Force / poids sur un grain de fer", function (x) { return sci(x.fer.k, 2); }],
+    ["Force / poids sur le sulfure", function (x) { return sci(x.sulfure.k, 2); }],
+    ["Ce que l'aimant reprend", function (x) {
+      return x.prend ? nb(x.mLibre, 3) + " g de fer" : "rien"; }],
+    ["Verdict", function (x) { return x.prend ? "attiré" : "non attiré"; }]
+  ];
+  L.forEach(function (l) {
+    tr = document.createElement("tr");
+    td = document.createElement("td"); td.textContent = l[0]; tr.appendChild(td);
+    [av, ap].forEach(function (x, j) {
+      td = document.createElement("td"); td.className = "mes";
+      var fait = j === 0 ? ETAT.testAvant : ETAT.testApres;
+      td.textContent = fait ? l[1](x) : "—";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  });
+  /* le bloc de la réaction elle-même, sur toute la largeur */
+  [["Marge d'entretien du front", nb(TAB.f.marge, 2) + " → " +
+      (TAB.f.entretient ? "le front avance seul" : "le front s'arrête")],
+   ["Sulfure de fer formé", nb(TAB.f.mFeS, 2) + " g (" +
+      nb(TAB.f.nFeS * 1000, 1) + " mmol)"],
+   ["Reste de fer / de soufre", nb(TAB.f.feRestant, 3) + " g / " +
+      nb(TAB.f.sRestant, 3) + " g"],
+   ["Température atteinte", nb(TAB.ad.T - 273.15, 0) + " °C · " +
+      nb(TAB.ad.fondu * 100, 0) + " % du sulfure fondu (fusion à " +
+      nb(T_FUS_FES - 273.15, 0) + " °C)"],
+   ["Délai d'amorçage à la flamme", nb(TAB.dureeAmorce, 2) + " s"],
+   ["Vitesse et traversée du front", nb(TAB.vFront * 1000, 2) + " mm/s · " +
+      nb(TAB.dureeFront, 1) + " s"],
+   ["Refroidissement complet", nb(TAB.dureeRefroid, 0) + " s = " +
+      nb(TAB.dureeRefroid / 60, 1) + " min"]
+  ].forEach(function (l) {
+    tr = document.createElement("tr"); tr.className = "suivi";
+    td = document.createElement("td"); td.textContent = l[0]; tr.appendChild(td);
+    td = document.createElement("td"); td.className = "mes";
+    td.setAttribute("colspan", NE); td.textContent = l[1];
+    tr.appendChild(td); t.appendChild(tr);
+  });
+  $("dureeRef").textContent = nb(TAB.dureeRefroid / 60, 1) + " min";
+}
+
+/* ==================================================================
+   23. LES COMMANDES HTML
+   ================================================================== */
+var CURSEURS = [
+  { id: "rFe", k: "mFe", o: "oFe", a: "aideFe", min: 1, step: 0.5, dec: 2,
+    f: function (v) { return nb(v, 1) + " g"; },
+    aide: function () {
+      return "La fiche prévoit <b>" + nb(M_FER_FICHE, 1) + " g</b>. La " +
+        "proportion exacte pour " + nb(REG.mS, 1) + " g de soufre serait " +
+        nb(REG.mS * M_FE / M_S, 2) + " g : au-delà, <b>l'aimant reprendra " +
+        "encore du fer après le chauffage</b>."; } },
+  { id: "rS", k: "mS", o: "oS", a: "aideS", min: 0.5, step: 0.5, dec: 2,
+    f: function (v) { return nb(v, 1) + " g"; },
+    aide: function () {
+      return "La fiche prévoit <b>" + nb(M_SOUFRE_FICHE, 1) + " g</b>. Le " +
+        "soufre en excès ne réagit pas : il fond, fume, et ce sont les " +
+        "vapeurs irritantes que la sécurité signale."; } },
+  { id: "rZ", k: "z", o: "oZ", a: "aideZ", min: 1, step: 1, dec: 0,
+    f: function (v) { return nb(v, 0) + " mm"; },
+    aide: function () {
+      var d = distanceDecollage(CORPS.fer, T0, REG.Br);
+      return "<b>Ajout — la fiche ne dit pas à quelle distance</b> on " +
+        "approche l'aimant. Le fer décolle jusqu'à <b>" +
+        (d > 0 ? nb(d * 1000, 1) + " mm" : "aucune distance") + "</b> ; le " +
+        "sulfure de fer, jamais."; } },
+  { id: "rBr", k: "Br", o: "oBr", a: "aideBr", min: 0.05, step: 0.01, dec: 2,
+    f: function (v) { return nb(v, 2) + " T"; },
+    aide: function () {
+      var b = remanenceNecessaire(REG.z / 1000, CORPS.sulfure, T0, REG.Br);
+      return "<b>Ajout</b> — la fiche dit « un aimant droit » sans le " +
+        "qualifier. La ferrite de collège vaut " + nb(PHYS.BR_FERRITE.v, 2) +
+        " T, le néodyme le plus fort " + nb(PHYS.BR_NEO.v, 2) + " T. Il en " +
+        "faudrait <b>" + nb(b, 2) + " T</b> pour soulever le sulfure : " +
+        "aucun aimant permanent n'y arrive."; } }
+];
+function lireReglages() {
+  CURSEURS.forEach(function (c) { REG[c.k] = +$(c.id).value; });
+  ETAT.horsProto = horsProtocole();
+}
+function majAffichageReglages() {
+  CURSEURS.forEach(function (c) {
+    $(c.o).textContent = c.f(REG[c.k]);
+    $(c.a).innerHTML = typeof c.aide === "function" ? c.aide() : c.aide;
+  });
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+function brancherCommandes() {
+  CURSEURS.forEach(function (c) {
+    $(c.id).addEventListener("input", function () {
+      lireReglages();
+      integrer();
+      /* §12.19 : un curseur périme l'enregistrement. Les deux essais à
+         l'aimant sont refaits sous les nouvelles conditions, et le dessin
+         RELIT les cotes (§12.18). */
+      majAffichageReglages();
+      majTout();
+    });
+  });
+  $("bProto").addEventListener("click", function () {
+    CURSEURS.forEach(function (c) { $(c.id).value = PROTO[c.k]; });
+    lireReglages(); integrer(); majAffichageReglages(); majTout();
+    noter("Réglages ramenés à ceux du protocole.", true);
+  });
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  var vb = document.querySelectorAll("#vit button[data-v]"), i;
+  for (i = 0; i < vb.length; i++) {
+    (function (b) {
+      b.addEventListener("click", function () {
+        var j, all = document.querySelectorAll("#vit button[data-v]");
+        for (j = 0; j < all.length; j++) all[j].className = "sec";
+        b.className = "sec on";
+        VITESSE = +b.getAttribute("data-v");
+        majTout();
+      });
+    })(vb[i]);
+  }
+}
+
+/* ==================================================================
+   24. L'HORLOGE
+   ==================================================================
+   `setInterval` + `Date.now()`, jamais `requestAnimationFrame` : aucun état
+   ne doit dépendre du rafraîchissement (SKILL §6.2, §13.5 bis).           */
+var VITESSE = 30, PAS_SIM = 0.05;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 120);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(0.5, (m - DERNIER) / 1000);
+  DERNIER = m;
+  /* Le minuteur de séance court en temps RÉEL. Il mesure ce que la
+     manipulation coûte à l'enseignant, pas ce que le modèle simule. */
+  ETAT.tSeance += dt;
+  majSeance();
+  avancerSimulation(dt * VITESSE);
+  majTout();
+}
+/* ⚠ §12bis.6 : LE TEMPS S'AVANCE PAR TRANCHES FINES, JAMAIS D'UN BLOC.
+   Toutes les durées sont tabulées (voir `tabuler()`), donc le résultat ne
+   peut pas dépendre de la vitesse ; le pas fin garantit en plus que
+   l'affichage passe par tous les états intermédiaires et qu'aucun seuil
+   n'est franchi en aveugle.                                              */
+function avancerSimulation(dtSim) {
+  var reste = dtSim, p;
+  while (reste > 1e-9) {
+    p = Math.min(PAS_SIM, reste);
+    reste -= p;
+    if (amorcageEnCours()) {
+      ETAT.tChauffe += p;
+      if (TAB.dureeAmorce > 0 && ETAT.tChauffe >= TAB.dureeAmorce) {
+        /* §12.43 : on RECALE l'horloge sur l'instant prescrit. */
+        ETAT.tChauffe = TAB.dureeAmorce;
+        amorcer();
+      }
+      continue;
+    }
+    if (ETAT.amorce && !frontFini()) {
+      ETAT.tFront += p;
+      if (ETAT.tFront >= TAB.dureeFront) {
+        ETAT.tFront = TAB.dureeFront;
+        noter("Le front a traversé tout le tas : il ne reste qu'un solide " +
+          "d'un seul bloc, à " + nb(TAB.ad.T - 273.15, 0) + " °C.", true);
+      }
+      continue;
+    }
+    if (ETAT.amorce && frontFini() && !refroidi()) {
+      ETAT.tRefroid += p;
+      continue;
+    }
+    break;                       /* rien à avancer : on ne tourne pas à vide */
+  }
+}
+function majSeance() {
+  var f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceJ").style.width = borne(f, 0, 1) * 100 + "%";
+  $("seanceT").parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function majTout() {
+  majEtapes();
+  majLectures();
+  peindreMortier();
+  peindreTas();
+  majFlamme();
+  tracerAimant(); tracerFront(); tracerRefroid();
+  majBoutons();
+  majProtocole();
+  dire(consigne(), ETAT.testApres);
+}
+function majBoutons() {
+  var a;
+  for (a in BOUTONS) BOUTONS[a].armer(false);
+  if (BOUTONS.peser) BOUTONS.peser.armer(secuOK() && (!ETAT.peseS || !ETAT.peseFe));
+  if (BOUTONS.verser) BOUTONS.verser.armer((ETAT.peseS || ETAT.peseFe) &&
+    (!ETAT.verseS || !ETAT.verseFe));
+  if (BOUTONS.broyer) BOUTONS.broyer.armer(ETAT.verseS && ETAT.verseFe && !ETAT.melange);
+  if (BOUTONS.aimant) BOUTONS.aimant.armer(!!zoneVoulue("aimant"));
+  if (BOUTONS.tas) BOUTONS.tas.armer(ETAT.testAvant && !ETAT.tasPose);
+  if (BOUTONS.gaz) BOUTONS.gaz.armer(ETAT.allumette && !ETAT.becAllume);
+  if (BOUTONS.chauffer) BOUTONS.chauffer.armer(ETAT.becAllume && ETAT.tasPose &&
+    !ETAT.becSurTas && !ETAT.amorce);
+  if (BOUTONS.retirer) BOUTONS.retirer.armer(ETAT.amorce && !ETAT.becEteint);
+  if (BOUTONS.spatule) BOUTONS.spatule.armer(refroidi() && !ETAT.detache);
+  if (ETAT.peseS && ETAT.peseFe && BOUTONS.peser) BOUTONS.peser.fait();
+  if (ETAT.verseS && ETAT.verseFe && BOUTONS.verser) BOUTONS.verser.fait();
+  if (ETAT.melange && BOUTONS.broyer) BOUTONS.broyer.fait();
+  if (ETAT.testApres && BOUTONS.aimant) BOUTONS.aimant.fait();
+  if (ETAT.tasPose && BOUTONS.tas) BOUTONS.tas.fait();
+  if (ETAT.becAllume && !ETAT.becEteint && BOUTONS.gaz) BOUTONS.gaz.fait();
+  if (ETAT.amorce && BOUTONS.chauffer) BOUTONS.chauffer.fait();
+  if (ETAT.becEteint && BOUTONS.retirer) BOUTONS.retirer.fait();
+  if (ETAT.detache && BOUTONS.spatule) BOUTONS.spatule.fait();
+}
+
+/* ==================================================================
+   25. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages : on refait la même
+   manipulation dans les mêmes conditions. Le minuteur de séance, lui, ne
+   se rembobine pas (§5.4) — et la sécurité est à refaire, comme en salle. */
+function recommencer() {
+  purger(); effacerCibles(); prise = null;
+  effacerDecor();          /* les minuteries sont mortes ; les grains, non */
+  effacerGuide();          /* aucun halo ne survit a la remise en etat */
+  arreterDeroule();        /* ni un deroule en cours */
+  var garde = ETAT.tSeance || 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = garde;
+  ETAT.horsProto = horsProtocole();
+
+  gSilChev.setAttribute("d", "M " + pt(SIL_X - 32, SIL_Y - 6) +
+    " q 6 -34 32 -34 q 26 0 32 34 q -14 -14 -32 -14 q -18 0 -32 14 z");
+  gSilBlouse.setAttribute("fill", "#c8d2dd");
+  gFenG.removeAttribute("transform");
+  gFenD.removeAttribute("transform");
+  OUTILS.forEach(function (o) {
+    gOutil[o.id].g.removeAttribute("filter");
+    gOutil[o.id].g.setAttribute("opacity", 1);
+    COUCHES.objets.appendChild(gOutil[o.id].g);
+    replacer(o.id);
+  });
+  gBec.removeAttribute("filter");
+  COUCHES.objets.appendChild(gBec);
+  replacer("bec");
+  gBrique.setAttribute("opacity", 0);
+  gRobinet.children[1].removeAttribute("transform");
+  gBalTxt.textContent = "0,00 g";
+  gAimantScene.setAttribute("opacity", 0);
+  gGrains.setAttribute("opacity", 0);
+  gTas.removeAttribute("transform");
+  gPores.removeAttribute("transform");
+  vide(gPores);
+  Object.keys(BOUTONS).forEach(function (a) { BOUTONS[a].neuf(); });
+
+  /* Le tableau redevient vierge et la conclusion se remasque — sans quoi
+     l'élève suivant trouverait la réponse déjà écrite. */
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  $("concl").classList.add("masque");
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  secuDire(S_DEMO, "");
+  integrer();
+  majAffichageReglages();
+  majTout();
+  noter("Paillasse remise en état : fenêtre fermée, bec éteint, poste à " +
+        "sécuriser de nouveau. En salle non plus, la sécurité ne se garde " +
+        "pas d'un groupe à l'autre.", false);
+}
+
+/* ==================================================================
+   26. LE PROTOCOLE GUIDÉ
+   ==================================================================
+   ⚠ DEUX RÈGLES, ET ELLES SE TIENNENT.
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc TOUT SEUL dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait faire.
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit
+      la consigne, SURLIGNE l'objet à prendre et la zone où le poser — le
+      geste reste à faire.                                                 */
+var guideSurb = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b || b.cx === undefined) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+/* `maison` rend déjà la place de chaque objet, y compris quand elle change
+   avec l'état : on la relit plutôt que de recopier des coordonnées. */
+function surlignerObjet(quoi) {
+  var m = maison(quoi);
+  if (!m) return;
+  if (quoi === "bec") { halo(m.x - 62, m.y - BEC_H - 20, 124, BEC_H + 32, 14); return; }
+  halo(m.x - 54, m.y - 92, 108, 116, 14);
+}
+function surlignerFenetre() { halo(FEN_X - 14, FEN_Y - 14, FEN_W + 28, FEN_H + 28, 10); }
+function surlignerEleve() { halo(SIL_X - 54, SIL_Y - 52, 108, 132, 14); }
+function surlignerMortier() { halo(MORT_X - 74, BANC - 158, 148, 158, 14); }
+function surlignerBalance() { halo(BAL_X - 62, BANC - 62, 124, 62, 12); }
+function surlignerBrique() { halo(BRIQ_X - BRIQ_W / 2 - 12, BANC - BRIQ_H - 74,
+  BRIQ_W + 24, BRIQ_H + 82, 12); }
+function montrerSecurite() {
+  var c = checkManquant();
+  if (!c) return false;
+  if (c.k === "ventile") { surlignerFenetre(); return true; }
+  if (c.k === "tenue") { surlignerEleve(); return true; }
+  surlignerObjet("brique"); montrerCibles("brique"); surlignerBrique();
+  return true;
+}
+
+var GUIDE = [
+  /* 1. « Peser séparément, dans deux coupelles, la poudre de soufre et la
+        poudre de fer ; faire décrire la couleur de chacune. » */
+  { fait: function () { return ETAT.peseS && ETAT.peseFe; },
+    aide: function () {
+      var c = checkManquant();
+      if (c) return "Le poste n'est pas sûr : il reste à <b>" + c.faire +
+        "</b>. Ce geste se fait à la main, rien ne le fait à votre place.";
+      return "Glisser chaque coupelle sur la <b>balance</b> : la fiche " +
+        "demande de peser <b>séparément</b> le soufre (poudre jaune) et le " +
+        "fer (poudre grise).";
+    },
+    montre: function () {
+      if (montrerSecurite()) return;
+      surlignerObjet(ETAT.peseS ? "fer" : "soufre");
+      montrerCibles(ETAT.peseS ? "fer" : "soufre");
+      surlignerBalance(); surlignerBouton("peser");
+    } },
+
+  /* 2. « Verser les deux poudres dans le mortier et les mélanger au pilon
+        jusqu'à obtenir une poudre grise homogène. » */
+  { fait: function () { return ETAT.melange; },
+    aide: function () {
+      if (!ETAT.verseS || !ETAT.verseFe) return "Glisser les coupelles sur " +
+        "le <b>mortier</b> : elles se penchent et versent.";
+      return "Presser <b>« Broyer au pilon »</b> jusqu'à une poudre grise " +
+        "homogène.";
+    },
+    montre: function () {
+      if (!ETAT.verseS || !ETAT.verseFe) {
+        var q = !ETAT.verseS ? "soufre" : "fer";
+        surlignerObjet(q); montrerCibles(q); surlignerMortier();
+        surlignerBouton("verser"); return;
+      }
+      surlignerMortier(); surlignerBouton("broyer");
+    } },
+
+  /* 3. « Approcher l'aimant du mélange : observer ce qui vient s'y
+        accrocher, puis remettre dans le mortier le fer récupéré. » */
+  { fait: function () { return ETAT.testAvant; },
+    aide: "C'est le <b>témoin</b> de l'expérience : approcher l'aimant du " +
+      "mélange, AVANT tout chauffage. Ce qui monte est du fer, et il " +
+      "retombe ensuite dans le mortier.",
+    montre: function () {
+      surlignerObjet("aimant"); montrerCibles("aimant"); surlignerMortier();
+      surlignerBouton("aimant");
+    } },
+
+  /* 4. « Déposer le mélange en un petit tas sur la brique réfractaire. » */
+  { fait: function () { return ETAT.tasPose; },
+    aide: function () {
+      if (!ETAT.briquePosee) return "Il faut d'abord une <b>brique " +
+        "réfractaire</b> sur la paillasse : on ne chauffe jamais le plan de " +
+        "travail directement.";
+      return "Presser <b>« Déposer le tas »</b> : le mélange va sur la " +
+        "brique, loin de tout papier.";
+    },
+    montre: function () {
+      if (!ETAT.briquePosee) {
+        surlignerObjet("brique"); montrerCibles("brique"); surlignerBrique(); return;
+      }
+      surlignerMortier(); surlignerBrique(); surlignerBouton("tas");
+    } },
+
+  /* 5. « Allumer le bec Bunsen et chauffer un seul point du tas jusqu'à
+        ce qu'il devienne incandescent. » */
+  { fait: function () { return ETAT.amorce; },
+    aide: function () {
+      if (!ETAT.allumette) return "Prendre les <b>allumettes</b> et les " +
+        "approcher du bec : la fiche exige que l'allumette soit craquée " +
+        "<b>avant</b> d'ouvrir le gaz.";
+      if (!ETAT.becAllume) return "Ouvrir le <b>robinet de gaz</b> : le bec " +
+        "s'allume.";
+      if (!ETAT.becSurTas) return "Glisser le <b>bec</b> jusqu'à la brique : " +
+        "sa flamme doit toucher <b>un seul point</b> du tas.";
+      return "La flamme chauffe le point d'amorçage — laisser monter jusqu'à " +
+        "l'incandescence.";
+    },
+    montre: function () {
+      if (!ETAT.allumette) { surlignerObjet("allum"); montrerCibles("allum"); return; }
+      if (!ETAT.becAllume) { surlignerObjet("bec"); surlignerBouton("gaz"); return; }
+      surlignerObjet("bec"); montrerCibles("bec"); surlignerBrique();
+      surlignerBouton("chauffer");
+    } },
+
+  /* 6. « Retirer aussitôt la flamme et éteindre le bec ; observer ce que
+        devient le reste du tas, sans y toucher. » */
+  { fait: function () { return ETAT.becEteint && frontFini(); },
+    aide: function () {
+      if (!ETAT.becEteint) return "Ramener le <b>bec</b> à sa place : la " +
+        "fiche dit « retirer <b>aussitôt</b> la flamme ».";
+      return "Ne plus rien toucher : l'incandescence traverse le tas toute " +
+        "seule, c'est là tout le résultat.";
+    },
+    montre: function () {
+      if (!ETAT.becEteint) {
+        surlignerObjet("bec"); montrerCibles("bec"); surlignerBouton("retirer");
+        return;
+      }
+      surlignerBrique();
+    } },
+
+  /* 7. « Laisser le solide refroidir complètement sur la brique. » */
+  { fait: function () { return refroidi(); },
+    aide: "Le solide reste brûlant longtemps. Tant qu'il est au-dessus du " +
+      "<b>point de Curie</b> (770 °C), même du fer pur n'y serait pas attiré : " +
+      "un essai fait trop tôt ne prouverait rien.",
+    montre: function () { surlignerBrique(); } },
+
+  /* 8. « Décrire l'aspect et la couleur du solide obtenu, puis le détacher
+        à la spatule. » */
+  { fait: function () { return ETAT.detache; },
+    aide: function () {
+      if (!refroidi()) return "Attendre le refroidissement : la spatule est " +
+        "refusée tant que le solide brûle.";
+      return "Glisser la <b>spatule</b> sur le solide : il se détache d'un " +
+        "seul morceau.";
+    },
+    montre: function () {
+      surlignerObjet("spatule"); montrerCibles("spatule"); surlignerBrique();
+      surlignerBouton("spatule");
+    } },
+
+  /* 9. « Approcher de nouveau l'aimant du solide obtenu et comparer avec
+        ce qui s'était produit à l'étape 3. » */
+  { fait: function () { return ETAT.testApres; },
+    aide: "Le même geste qu'à l'étape 3, sur le solide obtenu. C'est la " +
+      "<b>comparaison</b> des deux essais qui prouve qu'un corps nouveau est " +
+      "apparu.",
+    montre: function () {
+      surlignerObjet("aimant"); montrerCibles("aimant"); surlignerBrique();
+      surlignerBouton("aimant");
+    } }
+];
+
+/* ==================================================================
+   27. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ETAT = neufEtat();
+  ajouterDefs(); ajouterCouches();
+  construireDecor();
+  construireEtagere();
+  construirePoste();
+  construireBrique();
+
+  var lib = ["Peser une poudre", "Verser au mortier", "Broyer au pilon",
+             "Approcher l'aimant", "Déposer le tas", "Ouvrir le gaz",
+             "Chauffer un point", "Retirer la flamme", "Détacher à la spatule"];
+  var act = ["peser", "verser", "broyer", "aimant", "tas", "gaz", "chauffer",
+             "retirer", "spatule"];
+  var n = lib.length, wB = 112, dxB = (W - 2 * 66) / (n - 1);
+  lib.forEach(function (l, i) {
+    boutonScene(66 + i * dxB, Y_BOUTONS, wB, 44, l, act[i]);
+  });
+
+  brancherPrise(); brancherBoutons(); brancherPlein();   /* le plein ecran : sans cet appel, le bouton du cadre est mort */
+  /* ⚠ §12.12 : les deux masses viennent du YAML — on ÉCRIT la valeur
+     ramenée sur la grille dans le curseur, au lieu de laisser le navigateur
+     la déplacer en silence. Sans cela `horsProtocole()` serait vrai dès le
+     chargement et le tableau de la fiche ne se remplirait jamais. */
+  CURSEURS.forEach(function (c) { $(c.id).value = PROTO[c.k]; });
+  lireReglages();
+  integrer();                 /* TAB doit exister : construireHTML() le lit */
+  construireHTML(); brancherCommandes();
+  majAffichageReglages();
+  construireProtocole();
+  recommencer();
+  demarrerHorloge();
+}
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. « Peser séparément, dans deux coupelles, la poudre de soufre et la
+        poudre de fer. »
+
+     ⚠ Cette page pose en toutes lettres (§15 de son propre code) qu'AUCUN
+     bouton ne fait un geste de sécurité : la fenêtre et la silhouette sont
+     des zones cliquables de la scène, la brique réfractaire est un objet
+     qu'on glisse. Le déroulé les fait donc UN PAR PRESSION, par les mêmes
+     fonctions que la main — `agir("ventiler")`, `agir("preparer")`,
+     `deposer("brique", …)` —, jamais en posant un drapeau.
+     Ensuite seulement les deux pesées, et la fiche dit SÉPARÉMENT : deux
+     glissers vers la balance, jamais un. */
+  function () {
+    var c = checkManquant(), z, q;
+    if (c) {
+      if (c.k === "ventile") { presserBouton("ventiler"); return 360; }
+      if (c.k === "tenue") { presserBouton("preparer"); return 360; }
+      z = zoneDe("brique");
+      if (z) { deposer("brique", z); return 440; }
+      return 0;
+    }
+    q = ETAT.peseS ? "fer" : "soufre";
+    z = zoneDe(q);
+    if (z) { deposer(q, z); return 440; }
+    presserBouton("peser");
+    return 440;
+  },
+
+  /* 2. « Verser les deux poudres dans le mortier et les mélanger au pilon. »
+     Deux glissers (la coupelle se penche d'elle-même au-dessus du mortier),
+     puis le pilon — un geste que le protocole fait d'un seul coup. */
+  function () {
+    var z;
+    if (!ETAT.verseS) {
+      z = zoneDe("soufre");
+      if (z) { deposer("soufre", z); return 440; }
+    }
+    if (!ETAT.verseFe) {
+      z = zoneDe("fer");
+      if (z) { deposer("fer", z); return 440; }
+    }
+    presserBouton("broyer");
+    return 480;
+  },
+
+  /* 3. « Approcher l'aimant du mélange. » LE TÉMOIN de l'expérience.
+     `emplacements("aimant")` ne propose le mortier que tant que le tas n'est
+     pas posé : c'est la page qui garantit que l'essai a lieu AVANT. */
+  function () {
+    var z = zoneDe("aimant");
+    if (z) { deposer("aimant", z); return 760; }
+    return 0;
+  },
+
+  /* 4. « Déposer le mélange en un petit tas sur la brique réfractaire. » */
+  function () {
+    var z;
+    if (!ETAT.briquePosee) {
+      z = zoneDe("brique");
+      if (z) { deposer("brique", z); return 440; }
+    }
+    presserBouton("tas");
+    return 480;
+  },
+
+  /* 5. « Allumer le bec Bunsen et chauffer un seul point du tas jusqu'à ce
+        qu'il devienne incandescent. »
+     Trois gestes dans l'ordre que la fiche impose — l'allumette AVANT le gaz,
+     la page refuse l'inverse —, puis l'attente de l'amorçage.
+     ⚠ Le temps se JOUE, il ne se saute pas : on pousse le sélecteur de
+     vitesse de la page (le geste que l'enseignant ferait) et l'on rend un
+     délai NÉGATIF, calculé sur l'état du modèle (`TAB.dureeAmorce`), jamais
+     écrit en dur. Un délai négatif dit « j'attends » et n'est pas compté
+     comme un blocage. */
+  function () {
+    var z;
+    accelererTemps();
+    if (!ETAT.allumette) {
+      z = zoneDe("allum");
+      if (z) { deposer("allum", z); return 460; }
+      return 0;
+    }
+    if (!ETAT.becAllume) { presserBouton("gaz"); return 460; }
+    if (!ETAT.becSurTas) {
+      z = zoneDe("bec");
+      if (z && z.id === "tas") { deposer("bec", z); return 540; }
+      return 0;
+    }
+    return -Math.max(1500, (TAB.dureeAmorce - ETAT.tChauffe) /
+                     Math.max(1, VITESSE) * 1000 + 2500);
+  },
+
+  /* 6. « Retirer aussitôt la flamme et éteindre le bec ; observer ce que
+        devient le reste du tas, sans y toucher. »
+     Puis l'on ne touche plus à rien : le front d'incandescence traverse le
+     tas tout seul, et c'est là tout le résultat de l'expérience. */
+  function () {
+    if (!ETAT.becEteint) { presserBouton("retirer"); return 580; }
+    return -Math.max(1500, (TAB.dureeFront - ETAT.tFront) /
+                     Math.max(1, VITESSE) * 1000 + 2500);
+  },
+
+  /* 7. « Laisser le solide refroidir complètement sur la brique. »
+     Rien à presser : le bloc perd sa chaleur par rayonnement et convection,
+     et la page interdit la spatule tant qu'il est chaud. Le délai se lit sur
+     `TAB.dureeRefroid`, que le modèle a tabulé depuis les deux masses. */
+  function () {
+    accelererTemps();
+    return -Math.max(2500, (TAB.dureeRefroid - ETAT.tRefroid) /
+                     Math.max(1, VITESSE) * 1000 + 3500);
+  },
+
+  /* 8. « Décrire l'aspect et la couleur du solide obtenu, puis le détacher
+        à la spatule. » */
+  function () {
+    var z = zoneDe("spatule");
+    if (z) { deposer("spatule", z); return 580; }
+    return 0;
+  },
+
+  /* 9. « Approcher de nouveau l'aimant du solide obtenu et comparer avec ce
+        qui s'était produit à l'étape 3. »
+     Le même objet, la même fonction — seule la zone diffère, et c'est
+     `emplacements()` qui la choisit : la brique, puisque le solide y est
+     détaché. C'est ce geste qui démasque la conclusion. */
+  function () {
+    var z = zoneDe("aimant");
+    if (z) { deposer("aimant", z); return 900; }
+    return 0;
+  }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, ce qui est le premier
+   usage de cette page en classe. On agrandit le CADRE, pas la mise en
+   page.                                                                    */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+demarrer();
+})();
+</script>
+</body>
+</html>

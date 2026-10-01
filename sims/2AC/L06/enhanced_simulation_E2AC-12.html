@@ -1,0 +1,4104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E2AC-12 · Que deviennent les atomes ?</title>
+
+<!--
+  ===================================================================
+  E2AC-12 · 2AC · L06 — PAILLASSE VIRTUELLE
+  « Que deviennent les atomes au cours d'une réaction chimique ? »
+  ===================================================================
+
+  CE QUE CETTE PAGE EST
+  ---------------------
+  Une paillasse qu'on MANIPULE, et dont les résultats sont CALCULÉS.
+
+  · On manipule : les sphères se prennent DANS LA BOÎTE, une par une, à la
+    souris, et se posent sur le sous-main « avant ». Puis — et c'est là toute
+    la leçon — ce sont LES MÊMES sphères, les mêmes nœuds SVG, qu'on traîne
+    du sous-main « avant » vers les emplacements du sous-main « après ».
+    Aucune sphère n'est créée ni détruite entre les deux : la boîte se VERROUILLE
+    dès que le compte « avant » est reporté, et elle refuse en citant la fiche.
+    Les boutons de scène ne servent qu'aux gestes que le protocole fait d'un
+    seul coup, et chacun DOUBLE un glisser qui reste possible, en passant par
+    la MÊME fonction.
+
+  · On calcule : aucun nombre du tableau n'est écrit. Le compte d'atomes de
+    chaque ligne SORT de l'inventaire — chaque espèce est décrite par ses
+    atomes, et le compte est la somme des coefficients par les compositions.
+    C'est le MÊME inventaire que la page voisine E2AC-11 : elle en fait une
+    MASSE, celle-ci en fait un COMPTE D'ATOMES.
+
+  · ET CE QUI RELIE LES DEUX. La balance d'E2AC-11 montre QUE la masse se
+    conserve ; elle ne dit pas POURQUOI. Ici on le montre : la page calcule,
+    du même inventaire, la masse molaire des deux membres. Un balayage de
+    750 combinaisons de coefficients ne trouve AUCUN désaccord entre « les
+    atomes se conservent » et « la masse se conserve » — la conservation de la
+    masse n'est pas une seconde loi, c'est la conséquence de la première.
+
+  · LE PIÈGE DE LA LEÇON, ET CE QUI LE DÉSAMORCE. Une équation « équilibrée
+    d'avance » ne prouve rien. Les quatre coefficients de l'équation sont donc
+    RÉGLABLES — au curseur, ou en cliquant le coefficient dans l'équation même.
+    Déséquilibrer est permis, et le compte dit alors OÙ l'atome manque :
+      · un seul dioxygène au lieu de deux → O 2 contre 4 : il manque 2 sphères
+        rouges, et les deux emplacements de la molécule d'eau restent VIDES ;
+      · trois dioxygènes → O 6 contre 4 : il reste 2 sphères rouges sur la
+        table, et aucun emplacement ne les accepte.
+    L'équation ne s'équilibre jamais parce qu'on a écrit le bon coefficient :
+    elle s'équilibre parce que le COMPTE tombe juste, et la page le recompte.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau et conclusion viennent de
+    `valise/curriculum/experiences.yaml`, entrée E2AC-12. Ils ne sont PAS
+    recopiés : le bloc `DONNEES` est régénéré par `_sync_donnees.py`.
+  · La CONVENTION DE COULEURS est lue dans `protocole[0]` — « noir = carbone,
+    rouge = oxygène, blanc = hydrogène » —, avec `materiel` en repli. Les
+    compartiments de la boîte sont CEUX QUE LE YAML DÉCLARE, dans l'ordre où
+    il les déclare.
+  · Les ÉLÉMENTS à compter sont les en-têtes de colonne que la convention
+    reconnaît ; leur SYMBOLE est leur initiale — c'est la règle d'écriture des
+    symboles, pas une donnée inventée, et elle n'est retenue qu'après
+    VÉRIFICATION que les formules ainsi lues redonnent les quatre lignes.
+  · Les FORMULES sont lues dans le protocole, à la suite du nom qu'elles
+    désignent (« dioxygène O₂ », « méthane CH₄ »). Les noms sont cherchés du
+    plus long au plus court et masqués au fur et à mesure, sans quoi
+    « dioxyde de carbone CO₂ » donnerait la formule CO₂ au « carbone ».
+  · Les COEFFICIENTS prescrits ne sont pas écrits non plus : ils sont DÉDUITS
+    des lignes du tableau, en servant d'abord les espèces de formule connue.
+  · Les constantes vivent dans `PHYS`, chacune avec sa provenance, et le
+    tableau du capot se régénère depuis cet objet.
+
+  LE SEUL POINT DÉDUIT, ÉCRIT FRANCHEMENT : LA MOLÉCULE D'EAU
+  ----------------------------------------------------------
+  Le second bilan produit « dioxyde de carbone + eau ». Le protocole donne la
+  formule du premier (CO₂) et AUCUNE pour l'eau : H₂O n'est écrit nulle part
+  dans l'entrée E2AC-12. L'écrire ici serait l'inventer. Elle est donc déduite
+  des seuls nombres du tableau :
+      atomes après ................ 1 C, 4 H, 4 O
+      moins CO₂, formule connue ... 1 C, 2 O
+      reste ....................... 4 H, 2 O
+      pgcd(4, 2) = 2 → deux molécules identiques de 2 H + 1 O
+  Le symbole n'est jamais AFFICHÉ dans la scène : l'eau porte le nom que le
+  protocole lui donne. Le capot, lui, explique la déduction.
+
+  CE QU'ELLE N'EST PAS
+  --------------------
+  · Elle est AUTONOME : ni `generer.py`, ni `moteur.js`, ni `simulation.html.j2`,
+    et elle ne s'ouvre pas depuis `index.html`. Elle DOUBLE
+    `simulation_E2AC-12.html`, elle ne la remplace pas.
+  · Elle n'a pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL : on
+    cherche qu'une sphère se reconnaisse comme une bille qu'on saisit.
+  · IL N'Y A PAS DE TEMPS DANS CE MODÈLE. Une réaction MODÉLISÉE n'a pas de
+    vitesse : rien ne s'intègre, rien ne s'accélère, et la page n'a donc pas
+    de sélecteur de vitesse. Le seul minuteur est celui de la SÉANCE, et il
+    court en temps réel.
+  · Le dessin est un schéma habillé. Sont à l'échelle, et entre eux : les
+    diamètres relatifs des sphères, qui suivent les rayons atomiques, et le
+    recouvrement des sphères accolées. Ne le sont pas : la boîte, les
+    sous-mains, le plan de travail. La géométrie PLIÉE ou DROITE d'une
+    molécule est un seuil d'ASPECT, dit comme tel dans le capot : aucun
+    compte, aucun verdict n'en dépend.
+-->
+
+<script>
+/* L'écouteur d'erreurs est posé AVANT le script de la page, dans le <head> :
+   posé en fin de <body>, il ne voit AUCUNE erreur de démarrage — celles-ci ont
+   déjà eu lieu (SKILL §12.47, corollaire de méthode). Il n'écrit PAS dans la
+   console : un `console.error` serait compté comme une erreur par le pilote. */
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message || e));
+  var n = document.getElementById("errjs");
+  if (n) { n.textContent = "Erreur JS : " + window.__ERR.join(" · "); n.style.display = "block"; }
+});
+</script>
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+#errjs{display:none;background:#b03030;color:#fff;font-family:var(--mono);
+       font-size:12px;padding:6px 20px}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.hp output{color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.ko{color:var(--orange)}
+.lect .v.ok{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E2AC-12 · 2AC · L06</span>
+</div>
+<div id="errjs"></div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 12</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Coefficients hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas celui
+        d'une variante. Le carnet de mesures, lui, continue de compter — et
+        c'est justement là qu'on voit où l'atome manque.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a compté</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">
+        Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ces coefficients-ci</b> donnent. Chaque compte est la <b>somme</b> des
+        coefficients par les compositions — jamais une valeur recopiée.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Le compte <span class="note" id="etatSysteme">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Atomes avant</div><div class="v" id="lAv">—</div></div>
+        <div><div class="k">Atomes après</div><div class="v" id="lAp">—</div></div>
+        <div><div class="k">Entités avant → après</div><div class="v" id="lEnt">—</div></div>
+        <div><div class="k">Molécules avant → après</div><div class="v" id="lMol">—</div></div>
+        <div><div class="k">Masse des réactifs</div><div class="v" id="lMR">—</div></div>
+        <div><div class="k">Masse des produits</div><div class="v" id="lMP">—</div></div>
+        <div><div class="k">Sphères sur la table</div><div class="v off" id="lTable">—</div></div>
+        <div><div class="k">Verdict du compte</div><div class="v" id="lVerdict">—</div></div>
+      </div>
+      <div style="margin-top:11px"><span class="lbl">Atomes de chaque sorte, avant et après</span></div>
+      <svg id="gAtomes" viewBox="0 0 360 196" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src">Deux barres par élément : à gauche ce que portent les
+      réactifs, à droite ce que réclament les produits. Une barre hachurée
+      marque ce qui manque, une barre pleine en trop ce qui reste sur la table.</div>
+      <div style="margin-top:11px"><span class="lbl">La masse molaire des deux membres</span></div>
+      <svg id="gMasse" viewBox="0 0 360 128" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" id="srcMasse">C'est le pont avec la pesée de la leçon
+      précédente : la masse n'est pas comptée à part, elle sort du même
+      inventaire d'atomes.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Les coefficients de l'équation <span class="note">le piège de la leçon</span></h2>
+      <div class="src" style="margin-bottom:8px">Une équation équilibrée d'avance
+      ne prouve rien. <b>Déséquilibrez-la</b> : changez un coefficient, et lisez
+      dans le compte <b>où l'atome manque</b>. Les coefficients se règlent aussi
+      en cliquant le nombre dans l'équation, sur la paillasse.</div>
+      <div id="coefs"></div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle : un inventaire d'atomes, et rien d'autre</h3>
+      <p>Chaque espèce est décrite par ses <b>atomes</b>. Le compte d'un membre
+      est la somme des <b>coefficients par les compositions</b> ; sa masse
+      molaire, la même somme pondérée par les masses atomiques. Il n'y a pas
+      deux modèles : il y en a <b>un</b>, et la page en tire les deux lectures.</p>
+      <div class="eq" id="eqCompte"></div>
+      <h3>2 · Ce que devient la matière</h3>
+      <p>Une réaction chimique ne fait que <b>réarranger</b> les mêmes atomes.
+      La page le prouve d'une façon qu'aucun texte ne remplace : ce sont
+      littéralement <b>les mêmes nœuds SVG</b> qui passent du membre de gauche
+      au membre de droite. Aucune sphère n'est créée, aucune n'est détruite —
+      et le carnet le compte.</p>
+      <div class="eq" id="eqMat"></div>
+      <p>La composition de l'eau n'est écrite nulle part dans la fiche : elle
+      est <b>déduite</b>, et voici la déduction, faite à l'écran sur les seuls
+      nombres du tableau.</p>
+      <div class="eq" id="eqEau"></div>
+      <h3>3 · Pourquoi la masse se conserve</h3>
+      <p>La balance de l'expérience précédente montrait <b>que</b> la masse se
+      conserve ; elle ne disait pas <b>pourquoi</b>. Du même inventaire, la page
+      calcule la masse molaire des deux membres — et le balayage de tous les
+      jeux de coefficients ne trouve aucun désaccord entre « les atomes se
+      conservent » et « la masse se conserve ».</p>
+      <div class="eq" id="eqMasse"></div>
+      <h3>4 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Il ne sait pas si une réaction a lieu.</b> Le modèle compte les
+        atomes des deux côtés d'un bilan que la fiche lui donne ; il ne dit ni
+        pourquoi le méthane brûle, ni à quelle température, ni ce qu'il faut
+        pour l'allumer. Écrire une équation équilibrée n'a jamais fait réagir
+        quoi que ce soit.</li>
+        <li><b>Il n'a pas de temps.</b> Une réaction modélisée n'a pas de
+        vitesse : rien ne s'intègre ici, et il n'y a donc aucun sélecteur de
+        vitesse. Le seul minuteur est celui de la séance.</li>
+        <li><b>Les sphères n'ont ni la taille ni la couleur des atomes.</b> La
+        fiche le dit elle-même. Leurs diamètres relatifs suivent des rayons
+        atomiques mesurés, mais le noir, le rouge et le blanc sont une
+        <i>convention</i> de boîte de modèles — un atome de carbone n'est pas
+        noir, et un atome n'a pas de surface nette.</li>
+        <li><b>La géométrie est un seuil d'aspect.</b> Une molécule est dessinée
+        <i>pliée</i> quand ses satellites sont nettement plus petits que son
+        centre, <i>droite</i> sinon. C'est une lecture des figures de la fiche,
+        pas une règle de chimie : la vraie raison est ailleurs, et elle n'est
+        pas au programme de la 2AC. <b>Aucun compte, aucun verdict n'en
+        dépend</b> — la marge est donnée dans le tableau des constantes.</li>
+        <li><b>Il ne sait pas ce qu'est une liaison.</b> Les connecteurs de la
+        boîte, que la fiche décrit comme « servant seulement à accoler les
+        sphères », sont dessinés parce qu'ils existent dans la boîte. Ils ne
+        portent aucune information : ni longueur, ni ordre, ni énergie.</li>
+        <li><b>Il ne connaît que les espèces du bilan écrit.</b> Si l'on
+        déséquilibre l'équation, le modèle ne va pas chercher une autre
+        molécule qui utiliserait les atomes en trop : il dit qu'ils restent sur
+        la table. En vraie chimie, une combustion incomplète en formerait
+        d'autres.</li>
+        <li><b>Les coefficients sont des nombres d'entités, pas des moles.</b>
+        On modélise une molécule, pas une mole de molécules. Le passage à la
+        mole, et donc à la masse pesée d'E2AC-11, n'est pas fait ici.</li>
+        <li><b>La conservation qu'il montre est celle du modèle.</b> Le modèle
+        ne peut pas ne pas conserver les atomes : c'est la règle du jeu qu'on
+        lui a donnée. Ce que l'activité établit, c'est qu'<i>avec cette règle</i>
+        on retrouve exactement les nombres de la fiche, et que la masse suit.
+        C'est la pesée d'E2AC-11, elle, qui est la preuve expérimentale.</li>
+      </ul>
+      <h3>6 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E2AC-12.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E2AC-12",
+  "niveau": "2AC",
+  "unite": "U1",
+  "lecon": "L06",
+  "titre": "Que deviennent les atomes au cours d'une réaction chimique ?",
+  "axe": "La conservation des atomes en nature et en nombre",
+  "objectif": "Montrer, avec les modèles moléculaires, qu'une réaction chimique ne fait que **réarranger** les mêmes atomes : leur **nature** et leur **nombre** ne changent pas, alors que les **molécules**, elles, ne se conservent pas.",
+  "duree": 20,
+  "modalite": "groupes de 4 — 8 boîtes de modèles moléculaires",
+  "materiel": [
+    "8 boîtes de **modèles moléculaires**, une par poste",
+    "Sphères **noires** (carbone), **rouges** (oxygène), **blanches** (hydrogène)",
+    "Petits connecteurs de la boîte, servant seulement à accoler les sphères",
+    "La fiche de la **convention de couleurs** de la leçon 3, projetée au tableau",
+    "Le tableau de résultats à compléter, et les deux bilans écrits en toutes lettres"
+  ],
+  "securite": [
+    "Les sphères et les connecteurs sont de **petites pièces** : ne jamais les porter à la bouche.",
+    "Ne pas forcer un assemblage : une sphère fendue ne se remplace pas.",
+    "**Règle du jeu, et elle est absolue** : une fois les réactifs construits, on ne prend **aucune** sphère dans la boîte et on n'y remet **aucune** sphère. Tout doit se faire avec celles qui sont sur la table.",
+    "Ne pas mélanger le contenu de deux boîtes : chaque poste range la sienne et la compte avant de la rendre."
+  ],
+  "protocole": [
+    "Rappeler la **convention de couleurs** de la leçon 3 : **noir** = carbone, **rouge** = oxygène, **blanc** = hydrogène.",
+    "**Premier bilan** — *carbone + dioxygène → dioxyde de carbone*. Construire les **réactifs** : une sphère noire **seule** (l'atome de carbone) et deux sphères rouges accolées (la molécule de dioxygène **O₂**).",
+    "Compter les sphères de chaque couleur posées sur la table et les reporter dans la ligne « avant » du tableau.",
+    "**Sans rien ajouter ni retirer**, défaire l'assemblage et **réarranger les mêmes sphères** pour construire le produit : la molécule de **dioxyde de carbone CO₂**.",
+    "Compter de nouveau les sphères de chaque couleur et remplir la ligne « après ».",
+    "Compter aussi le nombre de **molécules** avant, puis après.",
+    "**Deuxième bilan** — *méthane + dioxygène → dioxyde de carbone + eau*. Construire les réactifs dans les proportions données : **une** molécule de méthane **CH₄** et **deux** molécules de dioxygène **O₂**.",
+    "Compter les sphères de chaque couleur et remplir la ligne « avant ».",
+    "**Sans rien ajouter ni retirer**, réarranger ces mêmes sphères pour construire les produits ; vérifier qu'à la fin **aucune sphère ne reste sur la table** et qu'**aucune ne manque**.",
+    "Nommer les molécules obtenues, les compter, puis remplir la ligne « après ».",
+    "Comparer les quatre lignes du tableau : qu'est-ce qui a changé, qu'est-ce qui n'a pas changé ?",
+    "Compter les sphères, les ranger dans la boîte et vérifier qu'il n'en manque aucune avant la restitution."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Réaction modélisée",
+      "Moment",
+      "Carbone",
+      "Hydrogène",
+      "Oxygène"
+    ],
+    "lignes": [
+      [
+        "carbone + dioxygène",
+        "avant",
+        "",
+        "",
+        ""
+      ],
+      [
+        "carbone + dioxygène",
+        "après",
+        "",
+        "",
+        ""
+      ],
+      [
+        "méthane + dioxygène",
+        "avant",
+        "",
+        "",
+        ""
+      ],
+      [
+        "méthane + dioxygène",
+        "après",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "carbone + dioxygène",
+        "avant",
+        "1",
+        "0",
+        "2"
+      ],
+      [
+        "carbone + dioxygène",
+        "après",
+        "1",
+        "0",
+        "2"
+      ],
+      [
+        "méthane + dioxygène",
+        "avant",
+        "1",
+        "4",
+        "4"
+      ],
+      [
+        "méthane + dioxygène",
+        "après",
+        "1",
+        "4",
+        "4"
+      ]
+    ]
+  },
+  "observation": "Les produits se construisent exactement avec les sphères des réactifs : il n'en reste aucune et il n'en manque aucune. Les molécules, elles, ne sont plus les mêmes.",
+  "conclusion": "Une réaction chimique conserve les atomes en nature et en nombre : ils sont seulement réarrangés. Les molécules, elles, ne se conservent pas. C'est la conservation des atomes qui explique la conservation de la masse.",
+  "oheric": {
+    "observation": "La balance vient de nous apprendre que **rien ne se perd** : la masse totale ne change pas. Mais une balance ne dit **que** cela — elle ne dit pas *ce qui* devient *quoi*. Or nous savons depuis la leçon 3 que la matière est faite de **molécules**, elles-mêmes faites d'**atomes**. Le carbone disparaît, le dioxygène disparaît, et le dioxyde de carbone apparaît. Que sont devenus les **atomes** pendant ce temps ? Ont-ils disparu, eux aussi ? En est-il apparu de nouveaux ?",
+    "hypothese": "**Si** la masse se conserve parce que la matière ne fait que se **réarranger**, **alors** les atomes présents avant la réaction doivent se retrouver **tous** après, **de même nature** et **en même nombre** ; seuls les **assemblages** — les molécules — auront changé. En modélisant la réaction avec des sphères, on doit donc pouvoir construire les produits **avec exactement les sphères des réactifs**, sans en prendre une de plus ni en laisser une de côté.",
+    "experience": "Construire, avec une boîte de modèles moléculaires, les **réactifs** de deux bilans connus — *carbone + dioxygène → dioxyde de carbone*, puis *méthane + dioxygène → dioxyde de carbone + eau* —, compter les sphères de chaque couleur, puis **réarranger ces mêmes sphères** pour former les produits, sans rien ajouter ni rien retirer, et compter de nouveau.",
+    "resultats": "Pour le premier bilan, on part d'**une** sphère noire et de **deux** sphères rouges ; après réarrangement, la molécule de dioxyde de carbone contient exactement **une** sphère noire et **deux** sphères rouges. Rien ne reste sur la table. Mais on comptait **deux entités** au départ — un atome de carbone et une molécule de dioxygène — et il n'en reste qu'**une** : la molécule de dioxyde de carbone. Pour le second bilan, on part de **1 carbone, 4 hydrogène et 4 oxygène** ; après réarrangement, on obtient une molécule de **CO₂** et **deux** molécules d'**eau**, soit de nouveau **1 carbone, 4 hydrogène et 4 oxygène** — et là encore, aucune sphère ne reste et aucune ne manque. Les molécules, elles, ne sont plus les mêmes : ni le méthane ni le dioxygène ne subsistent.",
+    "interpretation": "Les deux modélisations disent la même chose : **les atomes ne changent ni de nature ni de nombre**. Une sphère noire reste une sphère noire ; il n'y en a ni une de plus ni une de moins. Ce qui change, c'est la **façon dont elles sont assemblées** — et donc les **molécules**, qui, elles, ne se conservent pas : le dioxygène a disparu, le dioxyde de carbone est apparu. La règle du jeu — ne rien prendre dans la boîte, ne rien y remettre — n'est pas une contrainte de rangement : elle **est** le modèle de la réaction chimique, et le fait que les produits se construisent **exactement** avec les sphères des réactifs est le résultat de l'activité. C'est aussi l'explication de ce que la balance avait mesuré : si les atomes se conservent en nature et en nombre, alors la **masse** ne peut pas changer, puisque ce sont les mêmes atomes qui sont là avant et après. La conservation de la masse n'est donc pas une deuxième loi indépendante : elle est la **conséquence** de la conservation des atomes. ⚠ Ce n'est pas une expérience de découverte mais une expérience **modélisante** : elle ne mesure rien de neuf, elle **rend visible** ce que la pesée avait établi — et, comme tout modèle, elle simplifie : les sphères n'ont ni la taille ni la couleur des atomes.",
+    "conclusion": "**Au cours d'une réaction chimique, les atomes présents dans les réactifs se retrouvent tous dans les produits, identiques en nature et en nombre : il y a conservation des atomes en nature et en nombre.** Ils sont seulement **réarrangés autrement**. En revanche, **les molécules ne se conservent pas** : celles des réactifs disparaissent, celles des produits apparaissent. C'est parce que les atomes se conservent que la **masse** se conserve."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Chaque nombre porte sa provenance, et le tableau du capot se RÉGÉNÈRE
+   depuis cet objet : il n'est jamais retapé dans le HTML.                  */
+var PHYS = {
+  M_H:   { v: 1.008,  u: "g·mol⁻¹", n: "masse molaire de l'hydrogène",
+           s: "IUPAC 2021, poids atomique standard abrégé" },
+  M_C:   { v: 12.011, u: "g·mol⁻¹", n: "masse molaire du carbone",
+           s: "IUPAC 2021, poids atomique standard abrégé" },
+  M_N:   { v: 14.007, u: "g·mol⁻¹", n: "masse molaire de l'azote",
+           s: "IUPAC 2021 — présente au cas où la fiche ajouterait l'azote" },
+  M_O:   { v: 15.999, u: "g·mol⁻¹", n: "masse molaire de l'oxygène",
+           s: "IUPAC 2021, poids atomique standard abrégé" },
+  RC_H:  { v: 31, u: "pm", n: "rayon covalent de l'hydrogène",
+           s: "Cordero et al. 2008, révision des rayons covalents" },
+  RC_C:  { v: 76, u: "pm", n: "rayon covalent du carbone",
+           s: "Cordero et al. 2008 — carbone sp³" },
+  RC_N:  { v: 71, u: "pm", n: "rayon covalent de l'azote", s: "Cordero et al. 2008" },
+  RC_O:  { v: 66, u: "pm", n: "rayon covalent de l'oxygène", s: "Cordero et al. 2008" },
+  RW_H:  { v: 120, u: "pm", n: "rayon de van der Waals de l'hydrogène",
+           s: "Bondi 1964, van der Waals volumes and radii" },
+  RW_C:  { v: 170, u: "pm", n: "rayon de van der Waals du carbone", s: "Bondi 1964" },
+  RW_N:  { v: 155, u: "pm", n: "rayon de van der Waals de l'azote", s: "Bondi 1964" },
+  RW_O:  { v: 152, u: "pm", n: "rayon de van der Waals de l'oxygène", s: "Bondi 1964" },
+  COMPACT: { v: 0.86, u: "—", n: "recouvrement du modèle compact",
+             s: "lu sur les photos de la fiche : les sphères d'un modèle " +
+                "compact sont ACCOLÉES, donc interpénétrées — c'est une cote " +
+                "de dessin, pas une longueur de liaison" },
+  SEUIL_PLIE: { v: 0.75, u: "—", n: "seuil d'aspect : molécule pliée ou droite",
+                s: "seuil d'ASPECT, pas une règle de chimie. Des satellites " +
+                   "plus petits que 0,75 fois le centre donnent une molécule " +
+                   "pliée. Marges : +18 % pour le dioxyde de carbone (0,881), " +
+                   "−16 % pour l'eau (0,632). AUCUN compte n'en dépend" }
+};
+/* Les masses et les rayons sont rangés par SYMBOLE : le symbole d'un élément
+   est son initiale, et c'est la seule chose que la page en déduise. Si le YAML
+   citait un élément absent de ces tables, la page le DIRAIT au lieu d'inventer
+   une masse. */
+var M_AT  = { H: PHYS.M_H.v, C: PHYS.M_C.v, N: PHYS.M_N.v, O: PHYS.M_O.v };
+var R_COV = { H: PHYS.RC_H.v, C: PHYS.RC_C.v, N: PHYS.RC_N.v, O: PHYS.RC_O.v };
+var R_VDW = { H: PHYS.RW_H.v, C: PHYS.RW_C.v, N: PHYS.RW_N.v, O: PHYS.RW_O.v };
+var COMPACT = PHYS.COMPACT.v, SEUIL_PLIE = PHYS.SEUIL_PLIE.v;
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+var IND = "₀₁₂₃₄₅₆₇₈₉";
+function ind(n) {
+  return String(n).split("").map(function (c) {
+    return /[0-9]/.test(c) ? IND.charAt(+c) : c;
+  }).join("");
+}
+/* Le YAML écrit déjà les indices en Unicode (« CH₄ ») ; on ne parie pas sur la
+   fonte du poste, on les ramène en chiffres pour le calcul. */
+function chiffres(s) {
+  return String(s == null ? "" : s).replace(/[₀-₉]/g, function (c) {
+    return String(IND.indexOf(c));
+  });
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline.
+   Et l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function sansAccent(s) {
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i")
+    .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+    .replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+}
+/* « de » ou « d'» selon l'initiale. Les messages nomment l'ÉLÉMENT (« sphère
+   d'hydrogène »), jamais la couleur accordée : le YAML écrit la convention au
+   masculin singulier (« blanc = hydrogène ») et le matériel au féminin pluriel
+   (« sphères blanches ») — accorder l'un ou l'autre à la volée donnait « Les 2
+   sphères blancs sont déjà posées », vu à l'écran sur la vue voisine. */
+function du(nom) {
+  return (/^[haeiouyàâäéèêëîïôöùûü]/i.test(nom) ? "d'" : "de ") + nom;
+}
+function pgcd(a, b) { var t; while (b) { t = a % b; a = b; b = t; } return a; }
+function echappe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var TEXTE_PROTO = PROTOCOLE.join("\n");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var i;
+  for (i = 0; i < PROTOCOLE.length; i++) if (motif.test(PROTOCOLE[i])) return PROTOCOLE[i];
+  return "";
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+function citerSecu(motif) {
+  var t = secu(motif);
+  return t ? " « " + t + " »" : "";
+}
+/* Un bout de phrase du protocole, pour intituler un geste avec SES mots. */
+function motProto(motif, repli) {
+  var r = new RegExp(motif, "i"), m = null, i;
+  for (i = 0; i < PROTOCOLE.length; i++) { m = r.exec(PROTOCOLE[i]); if (m) break; }
+  return m ? m[0] : repli;
+}
+function court(t, n) {
+  if (!t) return "";
+  var s = depouille(t).split(/,| et | pour | ou | \(/)[0].trim();
+  s = s.replace(/^(une?|des|du|de\s+l['’]|de\s+la|de|les?|la|l['’])\s*/i, "").trim();
+  n = n || 24;
+  if (s.length > n) s = s.slice(0, n + 1).replace(/\S*$/, "").trim();
+  return s.replace(/\s+(de|du|d['’]|à|en|une|un)$/i, "").trim();
+}
+
+/* --- la CONVENTION DE COULEURS, telle que le YAML la déclare -------------
+   « noir = carbone, rouge = oxygène, blanc = hydrogène » se lit dans le
+   protocole ; `materiel` sert de repli (« Sphères noires (carbone)… »). Les
+   compartiments de la boîte sont CEUX QUE LE YAML DÉCLARE, dans l'ordre où il
+   les déclare : si le YAML ajoutait l'azote, un quatrième compartiment
+   apparaîtrait sans toucher à ce fichier.                                   */
+var CONVENTION = [];
+(function () {
+  var vus = {};
+  function ajouter(mot, nom) {
+    var e = sansAccent(nom);
+    if (!mot || !nom || vus[e]) return;
+    vus[e] = 1;
+    CONVENTION.push({ mot: sansAccent(mot), elem: e, nom: depouille(nom) });
+  }
+  var re, m, i;
+  for (i = 0; i < PROTOCOLE.length; i++) {
+    if (!/convention/i.test(PROTOCOLE[i])) continue;
+    re = /([A-Za-zÀ-ÿ]+)\s*=\s*([A-Za-zÀ-ÿ]+)/g;
+    while ((m = re.exec(PROTOCOLE[i]))) ajouter(m[1], m[2]);
+  }
+  if (!CONVENTION.length) (DONNEES.materiel || []).forEach(function (x) {
+    var t = depouille(x), r2, m2;
+    if (!/sph[eè]re/i.test(t)) return;
+    r2 = /([A-Za-zÀ-ÿ]+)\s*\(\s*([A-Za-zÀ-ÿ]+)\s*\)/g;
+    while ((m2 = r2.exec(t))) ajouter(m2[1], m2[2]);
+  });
+})();
+/* Le mot de couleur du YAML → la teinte de la fiche. Ce sont les MÊMES teintes
+   qu'en L03 : l'élève doit retrouver les atomes de la leçon 3, pas en
+   découvrir d'autres. Le blanc serait invisible sur fond clair (SKILL §6.3) :
+   il est rendu en #f4f4f2 avec un contour franc. */
+var TEINTES = [
+  [/blanc/, { fond: "#f4f4f2", bord: INK,       clair: true }],
+  [/noir/,  { fond: "#1b1b1b", bord: "#000000", clair: false }],
+  [/bleu/,  { fond: "#1f6fd0", bord: "#123f78", clair: false }],
+  [/rouge/, { fond: "#e02b1c", bord: "#8d1a10", clair: false }],
+  [/vert/,  { fond: "#2a9d4f", bord: "#17602f", clair: false }],
+  [/jaune/, { fond: "#e8c020", bord: "#8a7010", clair: false }]
+];
+CONVENTION.forEach(function (c) {
+  var t = { fond: "#b9c2cd", bord: "#41506a", clair: false }, i;
+  for (i = 0; i < TEINTES.length; i++)
+    if (TEINTES[i][0].test(c.mot)) { t = TEINTES[i][1]; break; }
+  c.fond = t.fond; c.bord = t.bord; c.clair = t.clair;
+});
+function convDe(elem) {
+  var i;
+  for (i = 0; i < CONVENTION.length; i++)
+    if (CONVENTION[i].elem === elem) return CONVENTION[i];
+  return null;
+}
+
+/* --- les ÉLÉMENTS à compter, et leur colonne dans `valeurs` --------------
+   Les en-têtes mêlent une colonne de situation (« Moment ») et des colonnes
+   d'élément (« Carbone »…). Est un élément ce que la convention déclare comme
+   tel — rien d'autre.                                                       */
+var ELEMS = [];
+ENTETES.forEach(function (nom, i) {
+  var e = sansAccent(depouille(nom));
+  if (convDe(e)) ELEMS.push({ elem: e, nom: depouille(nom), col: i });
+});
+/* Le SYMBOLE d'un élément est son INITIALE — règle d'écriture des symboles,
+   pas une donnée inventée. Elle n'est retenue qu'après VÉRIFICATION que les
+   formules ainsi lues redonnent les quatre lignes du tableau ; si deux
+   éléments partageaient une initiale, la page s'arrêterait. */
+var SYMBOLE = {}, AMBIGU = false;
+(function () {
+  var pris = {};
+  ELEMS.forEach(function (e) {
+    var s = majuscule(sansAccent(e.nom).charAt(0));
+    if (pris[s]) AMBIGU = true;
+    pris[s] = 1;
+    SYMBOLE[e.elem] = s;
+  });
+})();
+function elemDuSymbole(s) {
+  var k;
+  for (k in SYMBOLE) if (SYMBOLE[k] === s) return k;
+  return null;
+}
+function masseDe(elem) {
+  var m = M_AT[SYMBOLE[elem]];
+  return typeof m === "number" ? m : NaN;
+}
+var MASSES_CONNUES = ELEMS.every(function (e) { return isFinite(masseDe(e.elem)); });
+function grosseurDe(elem) {
+  var s = SYMBOLE[elem];
+  if (!R_COV[s] || !R_VDW[s] || !R_COV.C || !R_VDW.C) return 0.9;
+  return 0.5 * (R_COV[s] / R_COV.C + R_VDW[s] / R_VDW.C);
+}
+
+/* ==================================================================
+   3 bis. LES DURÉES — lues dans la fiche, jamais fixées ici
+   ==================================================================
+   La fiche ne fixe AUCUN instant de relevé : c'est une activité de
+   modélisation, et rien n'y attend. `minutesReleve()` est écrite quand même —
+   si la fiche venait à porter une durée, la page la lirait (SKILL §5).      */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, quinze: 15, vingt: 20,
+                trente: 30 };
+function minutesReleve() {
+  var p = PROTOCOLE.join(" · "), m;
+  m = p.match(/(\d+(?:,\d+)?)\s*min(?![A-Za-zÀ-ÿ])/);
+  if (m) return parseFloat(m[1].replace(",", "."));
+  m = p.match(/\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze)\s+minutes?\b/i);
+  if (m) return MOTS_NB[m[1].toLowerCase()];
+  return null;
+}
+var MIN_RELEVE = minutesReleve();
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   4. LE SOLVEUR — UN SEUL INVENTAIRE D'ATOMES
+   ==================================================================
+   C'est le MÊME modèle que la page voisine E2AC-11 : un inventaire d'espèces,
+   chacune décrite par ses ATOMES. Là-bas il devient une MASSE ; ici, un
+   COMPTE D'ATOMES. Rien d'autre n'est nécessaire pour tenir toute la leçon.  */
+
+/* --- les BILANS, écrits en toutes lettres dans le protocole ------------- */
+function membres(txt) {
+  return txt.split("+").map(function (s) {
+    return s.replace(/[.;,:]\s*$/, "").trim();
+  }).filter(function (s) { return !!s; });
+}
+var BILANS = [];
+PROTOCOLE.forEach(function (p) {
+  var i = p.indexOf("→"), g, t, d, r, q;
+  if (i < 0) return;
+  g = p.slice(0, i);
+  t = g.split(/\s[—–]\s/);
+  g = t[t.length - 1];
+  d = p.slice(i + 1).split(/\.\s|\.$/)[0];
+  r = membres(g); q = membres(d);
+  if (r.length && q.length)
+    BILANS.push({ reactifs: r, produits: q, gauche: g.trim(),
+                  bilan: g.trim() + " → " + d.trim() });
+});
+/* Appariement bilan ↔ lignes du tableau PAR LE TEXTE, jamais par un rang
+   supposé : `valeurs[k][0]` est le membre de gauche, `valeurs[k][1]` le
+   moment. */
+BILANS.forEach(function (b) {
+  b.avant = -1; b.apres = -1;
+  var cle = sansAccent(b.gauche);
+  VAL.forEach(function (v, k) {
+    if (sansAccent(depouille(v[0])) !== cle) return;
+    if (/avant/i.test(depouille(v[1]))) b.avant = k;
+    else if (/apr/i.test(depouille(v[1]))) b.apres = k;
+  });
+  b.motAvant = b.avant >= 0 ? depouille(VAL[b.avant][1]) : "avant";
+  b.motApres = b.apres >= 0 ? depouille(VAL[b.apres][1]) : "après";
+});
+BILANS = BILANS.filter(function (b) { return b.avant >= 0 && b.apres >= 0; });
+
+function totaux(k) {
+  var t = {};
+  ELEMS.forEach(function (e) {
+    var v = parseInt(depouille((VAL[k] || [])[e.col]), 10);
+    t[e.elem] = isNaN(v) ? 0 : v;
+  });
+  return t;
+}
+
+/* --- les FORMULES, lues dans le protocole ------------------------------
+   Les noms sont cherchés du PLUS LONG au plus court, et chaque occurrence
+   trouvée est masquée : sans cela « dioxyde de carbone CO₂ » donnerait la
+   formule CO₂ au « carbone » cherché ensuite.
+   ⚠ Deux pièges payés au brouillon Python :
+     · le nom ne doit pas être la FIN d'un autre mot — « eau » est dans
+       « tableau » —, d'où le groupe de tête qui exige un non-lettre ;
+     · la classe de la formule n'accepte PAS l'espace, sinon « CH₄ et deux
+       mol » passerait pour une formule (même famille que le §12.29).       */
+var NOMS = [];
+BILANS.forEach(function (b) {
+  b.reactifs.concat(b.produits).forEach(function (n) {
+    if (NOMS.indexOf(n) < 0) NOMS.push(n);
+  });
+});
+var FORMULE = {};
+(function () {
+  var reste = TEXTE_PROTO;
+  NOMS.slice().sort(function (a, b) { return b.length - a.length; })
+      .forEach(function (nom) {
+    if (convDe(sansAccent(nom))) { FORMULE[nom] = ""; return; }   // un élément seul
+    var re = new RegExp("(^|[^A-Za-zÀ-ÿ])" + echappe(nom) +
+                        "\\s+([A-Z][a-z]?[₀-₉0-9]*(?:[A-Z][a-z]?[₀-₉0-9]*)*)", "i");
+    var m = re.exec(reste);
+    FORMULE[nom] = m ? m[2] : "";
+    reste = reste.split(new RegExp(echappe(nom), "gi")).join(" ~~ ");
+  });
+})();
+/* nom → { elem: n }, ou null si la formule est inconnue (l'eau). */
+function compoDe(nom) {
+  var e = sansAccent(nom), out, m, re, f, k, n = 0;
+  if (convDe(e)) { out = {}; out[e] = 1; return out; }            // un atome seul
+  f = chiffres(FORMULE[nom] || "");
+  if (!f) return null;
+  out = {};
+  re = /([A-Z][a-z]?)(\d*)/g;
+  while ((m = re.exec(f))) {
+    if (!m[1]) continue;
+    k = elemDuSymbole(m[1]);
+    if (!k) return null;                                          // symbole inconnu
+    out[k] = (out[k] || 0) + (m[2] ? parseInt(m[2], 10) : 1);
+    n++;
+  }
+  return n ? out : null;
+}
+
+/* --- les COEFFICIENTS PRESCRITS, DÉDUITS des lignes du tableau ----------
+   Les espèces de formule CONNUE sont servies d'abord, celles qui ne portent
+   qu'un élément avant les autres. Ce qui reste va à l'espèce sans formule :
+   elle forme le plus grand nombre possible de molécules IDENTIQUES, soit le
+   pgcd des atomes restants — c'est la déduction de l'eau, expliquée en tête
+   de fichier et refaite à l'écran dans le capot.                           */
+function assembler(noms, tot) {
+  var reste = {}, k, connus = [], inconnus = [], out = [], g, c2;
+  for (k in tot) reste[k] = tot[k];
+  noms.forEach(function (n) {
+    var c = compoDe(n);
+    if (c) connus.push({ nom: n, compo: c });
+    else inconnus.push({ nom: n });
+  });
+  connus.sort(function (a, b) {
+    return Object.keys(a.compo).length - Object.keys(b.compo).length;
+  });
+  connus.forEach(function (s) {
+    var n = Infinity, kk;
+    for (kk in s.compo) n = Math.min(n, Math.floor((reste[kk] || 0) / s.compo[kk]));
+    if (!isFinite(n) || n < 1) n = 0;
+    for (kk in s.compo) reste[kk] -= n * s.compo[kk];
+    out.push({ nom: s.nom, compo: s.compo, n: n,
+               formule: FORMULE[s.nom] || "", deduite: false });
+  });
+  if (inconnus.length === 1) {
+    g = 0;
+    for (k in reste) if (reste[k] > 0) g = g ? pgcd(g, reste[k]) : reste[k];
+    if (g > 0) {
+      c2 = {};
+      ELEMS.forEach(function (e) {
+        if (reste[e.elem] > 0) c2[e.elem] = reste[e.elem] / g;
+      });
+      for (k in c2) reste[k] -= g * c2[k];
+      out.push({ nom: inconnus[0].nom, compo: c2, n: g, formule: "", deduite: true });
+    }
+  } else if (inconnus.length > 1) {
+    return null;                                   // deux inconnues : indécidable
+  }
+  for (k in reste) if (reste[k] !== 0) return null;               // VÉRIFICATION
+  out.sort(function (a, b) { return noms.indexOf(a.nom) - noms.indexOf(b.nom); });
+  return out.filter(function (s) { return s.n > 0; });
+}
+
+/* La page ne montre RIEN plutôt que de montrer un modèle faux. */
+var PRET = !!(BILANS.length && ELEMS.length && CONVENTION.length && !AMBIGU);
+if (PRET) {
+  BILANS.forEach(function (b) {
+    b.totAvant = totaux(b.avant);
+    b.totApres = totaux(b.apres);
+    b.espAvant = assembler(b.reactifs, b.totAvant);
+    b.espApres = assembler(b.produits, b.totApres);
+    if (!b.espAvant || !b.espApres) PRET = false;
+  });
+}
+
+/* ==================================================================
+   5. RÉGLAGES — PROTO : les coefficients prescrits. REG : les courants.
+   ==================================================================
+   ⚠️ SKILL §12.12 : toute valeur initiale tombe sur la grille des pas. Ici
+   tous les coefficients sont ENTIERS, `min="0"` et `step="1"` : la grille est
+   celle des entiers, et une valeur déduite est toujours dessus. C'est le
+   défaut le plus silencieux de la série — une page dont tous les gestes
+   marchent et dont le tableau ne se remplit jamais.                        */
+var COEF_PROTO = [], COEF = [];
+if (PRET) BILANS.forEach(function (b, i) {
+  COEF_PROTO[i] = { g: b.espAvant.map(function (s) { return s.n; }),
+                    d: b.espApres.map(function (s) { return s.n; }) };
+  COEF[i] = { g: COEF_PROTO[i].g.slice(), d: COEF_PROTO[i].d.slice() };
+});
+var COEF_MAX = 4;
+function horsProtocole() {
+  var i, j, ok = true;
+  for (i = 0; i < COEF.length; i++) {
+    for (j = 0; j < COEF[i].g.length; j++) if (COEF[i].g[j] !== COEF_PROTO[i].g[j]) ok = false;
+    for (j = 0; j < COEF[i].d.length; j++) if (COEF[i].d[j] !== COEF_PROTO[i].d[j]) ok = false;
+  }
+  return !ok;
+}
+function revenirAuProtocole() {
+  COEF.forEach(function (c, i) {
+    c.g = COEF_PROTO[i].g.slice();
+    c.d = COEF_PROTO[i].d.slice();
+  });
+}
+/* Les espèces d'un membre AVEC leur coefficient courant. Une espèce à zéro
+   disparaît de la scène — c'est un réglage légitime, et le compte le dit. */
+function especes(b, cote) {
+  var src = cote === "g" ? BILANS[b].espAvant : BILANS[b].espApres;
+  var c = COEF[b][cote];
+  return src.map(function (s, i) {
+    return { nom: s.nom, compo: s.compo, formule: s.formule, deduite: s.deduite,
+             n: c[i], i: i };
+  });
+}
+/* LE COMPTE — la somme des coefficients par les compositions. Tout part d'ici :
+   les nombres du tableau, les entités, les molécules, et la masse molaire. */
+function compter(esp) {
+  var at = {}, ent = 0, mol = 0, m = 0, ok = true;
+  esp.forEach(function (s) {
+    var k, nAt = 0;
+    for (k in s.compo) {
+      at[k] = (at[k] || 0) + s.compo[k] * s.n;
+      nAt += s.compo[k];
+      if (!isFinite(masseDe(k))) ok = false;
+      m += s.n * s.compo[k] * masseDe(k);
+    }
+    ent += s.n;
+    if (nAt > 1) mol += s.n;
+  });
+  ELEMS.forEach(function (e) { if (!(e.elem in at)) at[e.elem] = 0; });
+  return { at: at, ent: ent, mol: mol, m: ok ? m : NaN };
+}
+/* L'ÉCART, élément par élément : positif = il RESTE des sphères sur la table,
+   négatif = il MANQUE des sphères pour compléter un produit. C'est la seule
+   chose que la page ait besoin de savoir pour dire OÙ l'atome manque.       */
+function ecarts(b) {
+  var a = compter(especes(b, "g")).at, p = compter(especes(b, "d")).at, e = {};
+  ELEMS.forEach(function (x) { e[x.elem] = (a[x.elem] || 0) - (p[x.elem] || 0); });
+  return e;
+}
+function equilibree(b) {
+  var e = ecarts(b), k;
+  for (k in e) if (e[k] !== 0) return false;
+  return true;
+}
+/* La phrase que la page écrit quand le compte ne tombe pas juste. Elle NOMME
+   l'élément et le nombre : c'est elle qui fait la leçon quand on déséquilibre. */
+function phraseEcart(b) {
+  var e = ecarts(b), reste = [], manque = [];
+  ELEMS.forEach(function (x) {
+    var v = e[x.elem], c = convDe(x.elem), nom = c ? c.nom : x.nom;
+    if (v > 0) reste.push(v + " sphère" + (v > 1 ? "s " : " ") + du(nom));
+    else if (v < 0) manque.push((-v) + " sphère" + (v < -1 ? "s " : " ") + du(nom));
+  });
+  if (!reste.length && !manque.length)
+    return "Le compte tombe juste : aucune sphère ne reste, aucune ne manque.";
+  var t = [];
+  if (reste.length) t.push("il reste " + reste.join(" et ") + " sur la table");
+  if (manque.length) t.push("il manque " + manque.join(" et "));
+  return majuscule(t.join(", et ")) + ".";
+}
+
+/* ==================================================================
+   6. GÉOMÉTRIE DES MODÈLES COMPACTS
+   ==================================================================
+   Déduite de la COMPOSITION, jamais écrite molécule par molécule : `plan()`
+   ne connaît que « n atomes de X, m atomes de Y ».
+     · un seul atome     → un disque ;
+     · deux atomes       → côte à côte, accolés ;
+     · sinon l'élément le MOINS nombreux fait le squelette, l'autre se dispose
+       autour ; à DEUX satellites, le critère est la TAILLE — des satellites
+       nettement plus petits que le centre donnent une molécule PLIÉE, des
+       satellites de la taille du centre une molécule DROITE.
+   Ce dernier point est un SEUIL D'ASPECT et rien d'autre (voir PHYS) : il
+   décide du dessin, jamais d'un compte.                                     */
+var RAD = Math.PI / 180;
+var R_UNIT = 34;
+function rayonDe(elem) { return R_UNIT * grosseurDe(elem); }
+
+function centrer(sites) {
+  var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, cx, cy;
+  sites.forEach(function (s) {
+    x0 = Math.min(x0, s.x - s.r); x1 = Math.max(x1, s.x + s.r);
+    y0 = Math.min(y0, s.y - s.r); y1 = Math.max(y1, s.y + s.r);
+  });
+  cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+  sites.forEach(function (s) { s.x -= cx; s.y -= cy; });
+  sites.larg = x1 - x0; sites.haut = y1 - y0;
+  return sites;
+}
+function plan(compo) {
+  var sites = [], liste = [], total = 0, k, i, sq, sat, rs, kk, angles, q, r0, r1, d;
+  for (k in compo) { total += compo[k]; for (i = 0; i < compo[k]; i++) liste.push(k); }
+  if (!total) return centrer([{ elem: ELEMS[0].elem, x: 0, y: 0, r: 1 }]);
+  if (total === 1) {
+    sites.push({ elem: liste[0], x: 0, y: 0, r: rayonDe(liste[0]) });
+    return centrer(sites);
+  }
+  if (total === 2) {                                  // O₂ : côte à côte, accolés
+    r0 = rayonDe(liste[0]); r1 = rayonDe(liste[1]); d = (r0 + r1) * COMPACT;
+    sites.push({ elem: liste[0], x: -d / 2, y: 0, r: r0 });
+    sites.push({ elem: liste[1], x:  d / 2, y: 0, r: r1 });
+    return centrer(sites);
+  }
+  sq = null;
+  for (k in compo) if (!sq || compo[k] < compo[sq]) sq = k;      // le moins nombreux
+  sat = [];
+  for (k in compo) if (k !== sq) for (i = 0; i < compo[k]; i++) sat.push(k);
+  rs = rayonDe(sq);
+  if (compo[sq] !== 1) {
+    /* Squelette à plusieurs atomes : aucun bilan du YAML n'en produit. Plutôt
+       que d'inventer une chaîne, on aligne — et le fait est écrit ici pour que
+       personne ne croie à une géométrie étudiée. */
+    liste.forEach(function (e, j) {
+      var r = rayonDe(e);
+      sites.push({ elem: e, x: j * 2 * r * COMPACT, y: 0, r: r });
+    });
+    return centrer(sites);
+  }
+  sites.push({ elem: sq, x: 0, y: 0, r: rs });
+  kk = sat.length; angles = [];
+  if (kk === 2) {
+    angles = (rayonDe(sat[0]) < rs * SEUIL_PLIE) ? [38, 142] : [0, 180];
+  } else {
+    for (q = 0; q < kk; q++) angles.push(-90 + 180 / kk + q * 360 / kk);
+  }
+  for (q = 0; q < kk; q++) {
+    var rp = rayonDe(sat[q]), dd = (rs + rp) * COMPACT, a = angles[q] * RAD;
+    sites.push({ elem: sat[q], x: Math.cos(a) * dd, y: Math.sin(a) * dd, r: rp });
+  }
+  return centrer(sites);
+}
+function plie(compo) {
+  var n = 0, k, sq = null, sat = null;
+  for (k in compo) { n += compo[k]; }
+  if (n <= 2) return false;
+  for (k in compo) if (!sq || compo[k] < compo[sq]) sq = k;
+  for (k in compo) if (k !== sq) sat = k;
+  if (compo[sq] !== 1 || !sat || compo[sat] !== 2) return false;
+  return rayonDe(sat) < rayonDe(sq) * SEUIL_PLIE;
+}
+/* Un « état » = la liste des assemblages d'un côté d'un bilan, un par
+   exemplaire. Ce sont eux qui portent les emplacements de sphère. */
+function etats(esp) {
+  var out = [];
+  esp.forEach(function (s) {
+    var p = plan(s.compo), i;
+    for (i = 0; i < s.n; i++)
+      out.push({ nom: s.nom, formule: s.formule, deduite: s.deduite,
+                 compo: s.compo, plan: p });
+  });
+  return out;
+}
+
+/* ==================================================================
+   7. GÉOMÉTRIE DE LA PAILLASSE
+   ==================================================================
+   viewBox 1120 × 760 — volontairement ÉTROIT : le SVG est ajusté sur la
+   largeur de sa colonne, et chaque unité gagnée en largeur est une unité
+   perdue sur la taille apparente des objets.
+
+   TROIS ZONES INTERDITES, REMESURÉES SUR CETTE PAGE (SKILL §12.42, §12.9) :
+     · la consigne — max-width 60 %, soit 672 unités centrées : x 224..896,
+                     et jusqu'à y ≈ 92 sur trois lignes ;
+     · le journal  — 24 % de large : x 14..292, et jusqu'à y ≈ 340 sur sa
+                     phrase la plus longue (les notes sont tenues courtes) ;
+     · « Recommencer » et le plein écran — x 950..1105, y ≤ 60.
+   Les deux sous-mains commencent donc à x = 306 et ne montent pas au-dessus
+   de y = 98 ; la colonne de gauche ne porte rien au-dessus de y = 352.     */
+var W = 1120, H = 760, BANC = 616, Y_BOUTONS = 692;
+
+var ZAV = { x0: 306, y0: 98, x1: 668, y1: 394 };
+var ZAP = { x0: 744, y0: 98, x1: 1106, y1: 394 };
+var FLX = (ZAV.x1 + ZAP.x0) / 2;              // l'axe de la flèche
+var MY  = (ZAV.y0 + ZAV.y1) / 2 + 6;          // centre vertical des modèles
+var MW  = (ZAV.x1 - ZAV.x0) - 30;
+var MH  = (ZAV.y1 - ZAV.y0) - 62;
+var LABEL_H = 32, GAPH = 40, GAPV = 12;
+var Y_BAND = 400, H_BAND = 40;                // les deux bandeaux de comptage
+var Y_EQ = 448, H_EQ = 64;                    // l'équation, son titre, son verdict
+var BOITE = { x0: 306, y0: 518, x1: 1090, y1: 610 };
+var CARTE_X0 = 14, CARTE_X1 = 292;
+var CONV = { x0: CARTE_X0, y0: 352, x1: CARTE_X1, y1: 468 };
+var REGLE = { x0: CARTE_X0, y0: 478, x1: CARTE_X1, y1: 604 };
+
+/* Toutes les hauteurs d'étiquette DANS UN SEUL OBJET (SKILL §12.7) :
+   dispersées dans le code, elles ne se comparent pas — et c'est la
+   comparaison, pas le calcul, qui montre la collision. AUCUNE n'est posée sur
+   le meuble sombre ; seule la bande claire du plateau en accepte. */
+var Y_ETIQ = {
+  titreZone: ZAV.y0 + 22, bandeau: Y_BAND + 25,
+  titreBilan: Y_EQ + 15, equation: Y_EQ + 38, verdict: Y_EQ + H_EQ - 6,
+  boite: BOITE.y0 - 9, conv: CONV.y0 + 20,
+  regle: REGLE.y0 + 20, legende: 748
+};
+
+/* ==================================================================
+   8. L'ÉTAT
+   ================================================================== */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null;
+var svg = null, DEFS = null, COUCHES = {};
+var ECH = 1, SITES = { g: [], d: [] }, GROUPES = { g: [], d: [] };
+
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+/* ⚠️ SKILL §12.17 — TOUTE clé lue dans le code figure ici. Une clé oubliée
+   rend une branche entière morte, sans une seule erreur JS. */
+function neufEtat() {
+  return {
+    bilan: 0, phase: "reactifs",       // reactifs · produits
+    convention: false,
+    spheres: [],                       // { id, elem, g, x, y, ou, site }
+    idSuivant: 1,
+    prises: {}, rendues: {},           // par élément, cumulés sur la séance
+    cree: 0, detruit: 0,               // depuis le report de la ligne « avant »
+    reporte: [false, false, false, false],
+    molAv: [false, false], molAp: [false, false],
+    compare: false, range: false,
+    tSeance: 0,
+    horsProto: false, nCell: 0, diverge: ""
+  };
+}
+/* Le nombre de cellules à dévoiler : lignes × colonnes vides du tableau. Il se
+   COMPTE, il ne s'écrit pas (SKILL §13.6.9). */
+var N_CELL = (function () {
+  var k, c, n = 0;
+  for (k = 0; k < N_LIG; k++) {
+    for (c = 0; c < (VAL[k] || []).length; c++) if (!intitule(k, c) && cel(k, c)) n++;
+  }
+  return n;
+})();
+function bilanCourant() { return BILANS[ETAT.bilan]; }
+function ligneDe(b, cote) {
+  return cote === "g" ? BILANS[b].avant : BILANS[b].apres;
+}
+
+/* ==================================================================
+   9. LES DÉGRADÉS ET FILTRES
+   ==================================================================
+   Une sphère de modèle moléculaire est une BILLE : dégradé radial décentré,
+   reflet spéculaire net, arête sombre, ombre portée. Sans le reflet, ce n'est
+   qu'un disque de couleur — et l'on retombe sur le schéma plat que le §1.1
+   refuse.                                                                   */
+function ajouterDefs() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* le sous-main de feutre sur lequel on pose les modèles */
+  g = el("linearGradient", { id: "feutre", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fbfcfd" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#eef2f6" }));
+  DEFS.appendChild(g);
+
+  /* le plastique moulé de la boîte de modèles */
+  g = el("linearGradient", { id: "boite", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e9edf2" }));
+  g.appendChild(el("stop", { offset: .5, "stop-color": "#cfd7e0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#aab5c2" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "alveole", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#8e9aa8" }));
+  g.appendChild(el("stop", { offset: .35, "stop-color": "#dfe5ec" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#f5f8fa" }));
+  DEFS.appendChild(g);
+
+  /* UNE BILLE PAR ÉLÉMENT — la teinte vient de la convention du YAML, et le
+     modelé est le même pour toutes : lumière en haut à gauche, cœur saturé,
+     arête sombre. */
+  CONVENTION.forEach(function (c) {
+    var r = el("radialGradient", { id: "bille-" + sansAccent(c.elem),
+      cx: "0.34", cy: "0.28", r: "0.78" });
+    r.appendChild(el("stop", { offset: 0, "stop-color":
+      c.clair ? "#ffffff" : melange(c.fond, "#ffffff", .62) }));
+    r.appendChild(el("stop", { offset: .42, "stop-color":
+      c.clair ? c.fond : melange(c.fond, "#ffffff", .12) }));
+    r.appendChild(el("stop", { offset: .84, "stop-color": c.fond }));
+    r.appendChild(el("stop", { offset: 1, "stop-color":
+      melange(c.fond, c.bord, .85) }));
+    DEFS.appendChild(r);
+  });
+
+  /* le connecteur de la boîte — « servant seulement à accoler les sphères »
+     ⚠️ CE DÉGRADÉ N'EST PLUS APPLIQUÉ AUX LIAISONS, et il ne doit pas l'être
+     de nouveau : en `objectBoundingBox`, sur le contour d'un trait
+     horizontal ou vertical, sa boîte est plate et il ne peint RIEN. Les
+     liaisons sont peintes en gris plein (#8d99a8, sa teinte médiane). */
+  g = el("linearGradient", { id: "connecteur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c3ccd7" }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#8d99a8" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5f6b7a" }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+
+  f = el("filter", { id: "ombreBille", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 1, dy: 3, stdDeviation: 2.6,
+                                     "flood-color": "#12203a", "flood-opacity": .32 }));
+  DEFS.appendChild(f);
+
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+  DEFS.appendChild(f);
+
+  var h = el("pattern", { id: "hachure", width: 8, height: 8,
+                          patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  h.appendChild(el("rect", { width: 8, height: 8, fill: "#fdf1e7" }));
+  h.appendChild(el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: ORANGE,
+                             "stroke-width": 3 }));
+  DEFS.appendChild(h);
+}
+
+/* ==================================================================
+   10. LES COUCHES — l'ordre est la moitié du dessin
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE tout le reste
+     poste   le mobilier fixe : sous-mains, boîte, cartes, bandeaux
+     arriere les EMPLACEMENTS vides et les zones de dépôt surlignées
+     objets  les sphères — ce qui se manipule
+     avant   les connecteurs, les noms d'assemblage, les étiquettes
+     ui      les boutons de scène
+     drag    la sphère en cours de déplacement, au-dessus de tout           */
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+/* Une formule chimique avec ses indices en petit, redessinés en tspan : on ne
+   parie pas sur la fonte du poste. */
+function formuleSVG(x, y, t, taille, couleur, ancre) {
+  var g = el("text", { x: x, y: y, "text-anchor": ancre || "middle",
+    "font-size": taille, "font-weight": "bold", fill: couleur || INK,
+    "pointer-events": "none" });
+  var s = chiffres(t), i = 0, j, ch;
+  while (i < s.length) {
+    j = i; ch = /\d/.test(s.charAt(i));
+    while (j < s.length && /\d/.test(s.charAt(j)) === ch) j++;
+    g.appendChild(el("tspan", ch
+      ? { "font-size": Math.round(taille * 0.66), dy: Math.round(taille * 0.20) }
+      : { dy: i ? -Math.round(taille * 0.20) : 0 }, s.slice(i, j)));
+    i = j;
+  }
+  return g;
+}
+function ombreAuSol(cx, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: BANC + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+
+/* ==================================================================
+   10 bis. LES MOTS DE LA FICHE — jamais retapés
+   ==================================================================
+   Chaque intitulé de geste emprunte ses mots au protocole ou au matériel :
+   « Construire les réactifs », « réarranger », « Sans rien ajouter ni
+   retirer ». Si la fiche changeait de vocabulaire, la scène suivrait.      */
+var MOT_REACTIFS = motProto("réactifs", "réactifs");
+var MOT_PRODUITS = motProto("produits", "produits");
+var MOT_REARR    = motProto("réarranger", "réarranger");
+var MOT_CONV     = motProto("convention de couleurs", "convention de couleurs");
+/* La règle du jeu vient de `securite` : c'est là que la fiche l'écrit, et
+   elle la dit « absolue ». Le repli sur le protocole couvre le cas où elle
+   n'y serait pas. */
+var REGLE_JEU = (function () {
+  var t = secu(/ne (prend|remet)|aucune sph|ni rien retirer|ajouter ni/i);
+  if (t) {
+    var m = /(une fois[^.]*\.)/i.exec(t);
+    if (m) return m[1].trim();
+    var p = t.split(/\s[:—–]\s/);
+    return (p.length > 1 ? p.slice(1).join(" — ") : t).trim();
+  }
+  return motProto("Sans rien ajouter ni retirer", "Sans rien ajouter ni retirer");
+})();
+var REGLE_COURTE = motProto("Sans rien ajouter ni retirer",
+                            "Sans rien ajouter ni retirer");
+/* « 8 boîtes de modèles moléculaires, une par poste » : la paillasse montre UN
+   poste, donc UNE boîte. Le compte et le complément sont retirés, le pluriel
+   ramené au singulier — le YAML précise lui-même « une par poste ». */
+var TXT_BOITE = (function () {
+  var out = "";
+  (DONNEES.materiel || []).forEach(function (m) {
+    var t = depouille(m);
+    if (!out && /bo[iî]te/i.test(t))
+      out = t.replace(/^\d+\s+/, "").split(/\s*,\s*/)[0]
+             .replace(/^bo([iî])tes\b/i, "bo$1te");
+  });
+  return out || "Boîte de modèles moléculaires";
+})();
+
+/* ==================================================================
+   11. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: 7, fill: "#8f9aa8" }));
+  ajout("fond", el("rect", { x: 0, y: BANC + 7, width: W, height: H - BANC - 7,
+                             fill: "url(#banc)" }));
+  txt("fond", W - 14, Y_ETIQ.legende,
+      "schéma habillé — les diamètres des sphères suivent les rayons atomiques " +
+      "et sont à l'échelle entre eux ; la boîte et les sous-mains ne le sont pas",
+      { ancre: "end", taille: 10.5, couleur: "#7d8896" });
+}
+
+/* ==================================================================
+   12. LES DEUX SOUS-MAINS, LA FLÈCHE ET LES BANDEAUX DE COMPTAGE
+   ==================================================================
+   Deux panneaux côte à côte, « avant » et « après » : c'est la mise en page de
+   la figure `atomes-rearrangement-methane-modeles.png` de la fiche, et c'est
+   d'elle que vient le parti pris de DEUX zones plutôt qu'une seule zone qu'on
+   remanierait sur place. Les mots « avant » et « après » ne sont pas écrits
+   ici : ils sont lus dans la colonne « Moment » du tableau.                 */
+var titreAv, titreAp, traitFleche, motFleche, gFleche;
+var champsAv = [], champsAp = [], badgeAv, badgeAp;
+
+function sousMain(zone, acte) {
+  var g = ajout("poste", el("g", { "data-act": acte, cursor: "pointer" }));
+  g.appendChild(el("rect", { x: zone.x0 + 4, y: zone.y0 + 6,
+    width: zone.x1 - zone.x0, height: zone.y1 - zone.y0, rx: 12,
+    fill: "#12203a", opacity: .1, filter: "url(#flou)" }));
+  g.appendChild(el("rect", { x: zone.x0, y: zone.y0, width: zone.x1 - zone.x0,
+    height: zone.y1 - zone.y0, rx: 12, fill: "url(#feutre)",
+    stroke: "#c3ccd7", "stroke-width": 2 }));
+  g.appendChild(el("rect", { x: zone.x0 + 7, y: zone.y0 + 7,
+    width: zone.x1 - zone.x0 - 14, height: zone.y1 - zone.y0 - 14, rx: 8,
+    fill: "none", stroke: "#dbe2ea", "stroke-width": 1.4,
+    "stroke-dasharray": "4 4", "pointer-events": "none" }));
+  return g;
+}
+function bandeau(zone, acte, champs) {
+  var g = ajout("poste", el("g", { "data-act": acte, cursor: "pointer" })), badge;
+  g.appendChild(el("rect", { x: zone.x0, y: Y_BAND, width: zone.x1 - zone.x0,
+    height: H_BAND, rx: 8, fill: "#f5f7fa", stroke: LIGNE, "stroke-width": 1.6 }));
+  /* ⚠ Mesuré à l'écran : l'intitulé de droite mordait sur le compte du dernier
+     élément. Les champs occupent la moitié gauche du bandeau, l'intitulé la
+     moitié droite, et les deux ne se rencontrent plus (SKILL §12.7). */
+  var n = Math.max(1, ELEMS.length), pas = (zone.x1 - zone.x0 - 168) / n, i;
+  ELEMS.forEach(function (e, i) {
+    var conv = convDe(e.elem), x = zone.x0 + 12 + i * pas;
+    g.appendChild(el("circle", { cx: x + 12, cy: Y_BAND + 21, r: 12,
+      fill: "url(#bille-" + sansAccent(e.elem) + ")",
+      stroke: conv ? conv.bord : "#41506a", "stroke-width": conv && conv.clair ? 2 : 1.4,
+      "pointer-events": "none" }));
+    g.appendChild(el("text", { x: x + 12, y: Y_BAND + 25.5, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", "pointer-events": "none",
+      fill: conv && conv.clair ? INK : "#ffffff" }, SYMBOLE[e.elem] || ""));
+    champs.push(g.appendChild(el("text", { x: x + 29, y: Y_ETIQ.bandeau,
+      "font-size": 17, "font-weight": "bold", fill: "#a7b3c1",
+      "pointer-events": "none" }, "0")));
+  });
+  badge = g.appendChild(el("text", { x: zone.x1 - 12, y: Y_ETIQ.bandeau,
+    "text-anchor": "end", "font-size": 11, fill: GRIS, "pointer-events": "none" },
+    "compter les molécules"));
+  return badge;
+}
+function construireZones() {
+  sousMain(ZAV, "zone-avant");
+  sousMain(ZAP, "zone-apres");
+  titreAv = txt("avant", (ZAV.x0 + ZAV.x1) / 2, Y_ETIQ.titreZone, "",
+                { taille: 13, gras: true, couleur: GRIS, halo: true });
+  titreAp = txt("avant", (ZAP.x0 + ZAP.x1) / 2, Y_ETIQ.titreZone, "",
+                { taille: 13, gras: true, couleur: GRIS, halo: true });
+  /* ⚠ PAS DE TITRE AU-DESSUS DES SOUS-MAINS. La consigne y descend jusqu'à
+     y ≈ 92 sur trois lignes, et sa hauteur suit son texte (SKILL §12.42) : le
+     bilan en toutes lettres est donc écrit AVEC l'équation, en bas — où il
+     est d'ailleurs à sa place, juste au-dessus des coefficients. */
+
+  /* La flèche du bilan : elle DOUBLE le glisser des sphères d'un sous-main à
+     l'autre, en passant par la MÊME fonction (SKILL §12.13). */
+  gFleche = ajout("ui", el("g", { cursor: "pointer", "data-act": "rearranger" }));
+  gFleche.appendChild(el("rect", { x: ZAV.x1 + 2, y: MY - 62,
+    width: ZAP.x0 - ZAV.x1 - 4, height: 124, fill: "#fff", opacity: .001 }));
+  traitFleche = gFleche.appendChild(el("path", {
+    d: "M " + (FLX - 26) + " " + MY + " L " + (FLX + 14) + " " + MY +
+       " M " + (FLX + 2) + " " + (MY - 12) + " L " + (FLX + 16) + " " + MY +
+       " L " + (FLX + 2) + " " + (MY + 12),
+    fill: "none", stroke: LIGNE, "stroke-width": 5,
+    "stroke-linecap": "round", "stroke-linejoin": "round", "pointer-events": "none" }));
+  motFleche = gFleche.appendChild(el("text", { x: FLX, y: MY + 36,
+    "text-anchor": "middle", "font-size": 11, "font-weight": "bold", fill: LIGNE,
+    "pointer-events": "none" }, majuscule(MOT_REARR)));
+
+  badgeAv = bandeau(ZAV, "mol-avant", champsAv);
+  badgeAp = bandeau(ZAP, "mol-apres", champsAp);
+}
+
+/* ==================================================================
+   13. LA BOÎTE DE MODÈLES MOLÉCULAIRES — la source, et le verrou
+   ================================================================== */
+var cases = [], cadreBoite, cadenas, gBoite;
+function construireBoite() {
+  ombreAuSol((BOITE.x0 + BOITE.x1) / 2, (BOITE.x1 - BOITE.x0) / 2 - 10, .3);
+  gBoite = ajout("poste", el("g", {}));
+  cadreBoite = gBoite.appendChild(el("rect", { x: BOITE.x0, y: BOITE.y0,
+    width: BOITE.x1 - BOITE.x0, height: BOITE.y1 - BOITE.y0, rx: 10,
+    fill: "url(#boite)", stroke: "#7d8896", "stroke-width": 2.4,
+    filter: "url(#ombreDouce)" }));
+  gBoite.appendChild(el("line", { x1: BOITE.x0 + 6, y1: BOITE.y0 + 7,
+    x2: BOITE.x1 - 6, y2: BOITE.y0 + 7, stroke: "#ffffff", "stroke-width": 2,
+    opacity: .7, "pointer-events": "none" }));
+  txt("avant", BOITE.x0 + 4, Y_ETIQ.boite, majuscule(TXT_BOITE),
+      { ancre: "start", taille: 11.5, gras: true, couleur: GOLD, halo: true });
+  cadenas = txt("avant", BOITE.x1 - 4, Y_ETIQ.boite, "",
+                { ancre: "end", taille: 11.5, gras: true, couleur: ORANGE, halo: true });
+
+  var nc = Math.max(1, CONVENTION.length);
+  var largeur = (BOITE.x1 - BOITE.x0 - 20 - 8 * (nc - 1)) / nc;
+  var y0 = BOITE.y0 + 10, ht = (BOITE.y1 - BOITE.y0) - 20;
+  cases = CONVENTION.map(function (conv, i) {
+    var x = BOITE.x0 + 10 + i * (largeur + 8);
+    var g = ajout("poste", el("g", { cursor: "grab",
+      "data-act": "prendre-" + sansAccent(conv.elem) }));
+    var fond = g.appendChild(el("rect", { x: x, y: y0, width: largeur, height: ht,
+      rx: 7, fill: "url(#alveole)", stroke: "#9aa5b2", "stroke-width": 1.4 }));
+    /* Trois billes en réserve : ce sont ELLES que l'on saisit. La boîte est un
+       stock, pas un compte — la fiche ne dit pas combien elle contient.
+       ⚠ Mesuré à l'écran : empilées au centre avec les intitulés en dessous,
+       les billes et le symbole se recouvraient. Billes à GAUCHE, intitulés à
+       DROITE : le compartiment est deux fois plus large que haut. */
+    var cy = y0 + ht / 2, r = Math.min(17, ht / 4.4);
+    var cx = x + 14 + r * 2.1;
+    [[cx - r * 1.05, cy - r * 0.7], [cx + r * 1.05, cy - r * 0.7],
+     [cx, cy + r * 0.85]].forEach(function (p) {
+      g.appendChild(el("circle", { cx: p[0], cy: p[1], r: r,
+        fill: "url(#bille-" + sansAccent(conv.elem) + ")",
+        stroke: conv.bord, "stroke-width": conv.clair ? 2.2 : 1.4,
+        filter: "url(#ombreBille)" }));
+    });
+    var xt = cx + r * 2.4;
+    g.appendChild(el("text", { x: xt, y: cy - 3, "font-size": 16,
+      "font-weight": "bold", fill: INK, "pointer-events": "none" },
+      SYMBOLE[conv.elem] || ""));
+    var nomC = g.appendChild(el("text", { x: xt, y: cy + 15, "font-size": 12,
+      fill: GRIS, "pointer-events": "none" }, "?"));
+    var badge = g.appendChild(el("text", { x: x + largeur - 8, y: y0 + 18,
+      "text-anchor": "end", "font-size": 12.5, "font-weight": "bold", fill: ORANGE,
+      "pointer-events": "none" }, ""));
+    return { g: g, fond: fond, conv: conv, badge: badge, nomC: nomC,
+             x: cx, y: cy, r: r };
+  });
+}
+function boiteOuverte(ouverte) {
+  cases.forEach(function (c) {
+    c.g.setAttribute("opacity", ouverte ? 1 : .5);
+    c.g.setAttribute("cursor", ouverte ? "grab" : "not-allowed");
+  });
+  cadreBoite.setAttribute("stroke", ouverte ? "#7d8896" : ORANGE);
+  cadenas.textContent = ouverte ? "" : "🔒 " + court(REGLE_JEU, 44);
+}
+
+/* ==================================================================
+   14. LA CONVENTION DE COULEURS, ET LA RÈGLE DU JEU
+   ==================================================================
+   Deux cartes dans la colonne de gauche, sous le journal. La première est
+   l'étape 1 du protocole : tant qu'on ne l'a pas rappelée, les compartiments
+   de la boîte ne portent qu'un « ? » — l'élève doit IDENTIFIER la sphère
+   d'après la convention, ce que le savoir-faire n°1 de la fiche demande.   */
+var lignesConv = [];
+function construireConvention() {
+  var g = ajout("poste", el("g", { cursor: "pointer", "data-act": "convention" }));
+  g.appendChild(el("rect", { x: CONV.x0, y: CONV.y0, width: CONV.x1 - CONV.x0,
+    height: CONV.y1 - CONV.y0, rx: 9, fill: "#ffffff", stroke: LIGNE,
+    "stroke-width": 1.6, filter: "url(#ombreDouce)" }));
+  g.appendChild(el("text", { x: CONV.x0 + 12, y: Y_ETIQ.conv, "font-size": 11,
+    "font-weight": "bold", fill: GOLD, "letter-spacing": ".08em",
+    "pointer-events": "none" }, "CONVENTION DE COULEURS"));
+  var y = CONV.y0 + 42, dy = (CONV.y1 - CONV.y0 - 52) / Math.max(1, CONVENTION.length);
+  lignesConv = CONVENTION.map(function (c, i) {
+    var yy = y + i * dy;
+    g.appendChild(el("circle", { cx: CONV.x0 + 26, cy: yy - 5, r: 12,
+      fill: "url(#bille-" + sansAccent(c.elem) + ")", stroke: c.bord,
+      "stroke-width": c.clair ? 2.2 : 1.4, "pointer-events": "none" }));
+    return g.appendChild(el("text", { x: CONV.x0 + 46, y: yy, "font-size": 12.5,
+      fill: GRIS, "pointer-events": "none" }, "?"));
+  });
+}
+function majConvention() {
+  lignesConv.forEach(function (t, i) {
+    var c = CONVENTION[i];
+    t.textContent = ETAT.convention ? c.mot + " = " + c.nom : "?";
+    t.setAttribute("fill", ETAT.convention ? INK : GRIS);
+  });
+  cases.forEach(function (c) {
+    c.nomC.textContent = ETAT.convention ? c.conv.nom : "?";
+  });
+}
+function construireRegle() {
+  ajout("poste", el("rect", { x: REGLE.x0, y: REGLE.y0, width: REGLE.x1 - REGLE.x0,
+    height: REGLE.y1 - REGLE.y0, rx: 9, fill: "#fdf1e7", stroke: "#e8c9ab",
+    "stroke-width": 1.6 }));
+  ajout("poste", el("rect", { x: REGLE.x0, y: REGLE.y0, width: 3.5,
+    height: REGLE.y1 - REGLE.y0, rx: 2, fill: ORANGE }));
+  txt("avant", REGLE.x0 + 12, Y_ETIQ.regle, "RÈGLE DU JEU",
+      { ancre: "start", taille: 11, gras: true, couleur: ORANGE });
+  /* La règle est citée MOT POUR MOT : elle n'est pas une consigne de
+     rangement, elle EST le modèle de la réaction chimique. */
+  var mots = REGLE_JEU.split(/\s+/), ligne = "", lignes = [], i;
+  mots.forEach(function (m) {
+    if (!ligne) ligne = m;
+    else if ((ligne + " " + m).length <= 32) ligne += " " + m;
+    else { lignes.push(ligne); ligne = m; }
+  });
+  if (ligne) lignes.push(ligne);
+  for (i = 0; i < Math.min(lignes.length, 6); i++) {
+    txt("avant", REGLE.x0 + 12, REGLE.y0 + 40 + i * 15, lignes[i],
+        { ancre: "start", taille: 11.5, couleur: INK });
+  }
+}
+
+/* ==================================================================
+   15. L'ÉQUATION ET SES COEFFICIENTS — le piège de la leçon
+   ==================================================================
+   Une équation équilibrée d'avance ne prouve rien. Les coefficients sont donc
+   RÉGLABLES, ici en cliquant le nombre lui-même (0 → 1 → … → 4 → 0). Le clic
+   et le curseur de la colonne passent par la MÊME fonction : deux chemins, un
+   seul état (SKILL §12.13).                                                 */
+var gEq = null, txtEq = null;
+/* ⚠ LES LARGEURS SE MESURENT, ELLES NE S'ESTIMENT PAS. Une première version
+   comptait « tant d'unités par caractère » : la flèche tombait sur le « O₂ »
+   du dioxygène, et l'erreur changeait avec chaque nom. On construit donc
+   chaque terme, on le MESURE avec `getComputedTextLength()`, puis on le
+   translate à sa place. C'est un aller-retour de plus, et c'est exact.      */
+function largeurTexte(n) {
+  try { return n.getComputedTextLength(); } catch (e) { return 0; }
+}
+function construireEquation() {
+  if (gEq && gEq.parentNode) gEq.parentNode.removeChild(gEq);
+  gEq = ajout("ui", el("g", {}));
+  var b = ETAT.bilan, eg = especes(b, "g"), ed = especes(b, "d");
+  var cy = Y_ETIQ.equation;
+  var termes = [], i;
+  eg.forEach(function (s, i) { termes.push({ s: s, cote: "g", i: i }); });
+  termes.push({ fleche: true });
+  ed.forEach(function (s, i) { termes.push({ s: s, cote: "d", i: i }); });
+
+  gEq.appendChild(el("rect", { x: ZAV.x0, y: Y_EQ, width: ZAP.x1 - ZAV.x0,
+    height: H_EQ, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.6 }));
+  txtEq = gEq.appendChild(el("text", { x: ZAV.x0 + 12, y: Y_ETIQ.titreBilan,
+    "font-size": 11, "font-weight": "bold", fill: GOLD, "letter-spacing": ".06em",
+    "pointer-events": "none" }, ""));
+  txtEq.textContent = "ÉQUATION-BILAN " + (b + 1) + " SUR " + BILANS.length +
+    " — " + BILANS[b].bilan.toUpperCase();
+
+  /* première passe : on construit, on mesure */
+  var pose = [], total = 0;
+  termes.forEach(function (t, k) {
+    var g, w = 0, nom, f;
+    if (t.fleche) {
+      g = el("g", { "pointer-events": "none" });
+      g.appendChild(el("path", { d: "M 8 0 L 34 0 M 26 -7 L 35 0 L 26 7",
+        fill: "none", stroke: INK, "stroke-width": 2.6, "stroke-linecap": "round" }));
+      w = 48;
+    } else {
+      g = el("g", { cursor: "pointer", "data-act": "coef-" + t.cote + t.i });
+      var hp = t.s.n !== COEF_PROTO[b][t.cote][t.i];
+      g.appendChild(el("rect", { x: 0, y: -15, width: 30, height: 30, rx: 7,
+        fill: hp ? "#fdf1e7" : "#eef3fa", stroke: hp ? ORANGE : "#b7c4d4",
+        "stroke-width": 1.8 }));
+      g.appendChild(el("text", { x: 15, y: 6, "text-anchor": "middle",
+        "font-size": 17, "font-weight": "bold", fill: hp ? ORANGE : INK,
+        "pointer-events": "none" }, String(t.s.n)));
+      nom = g.appendChild(el("text", { x: 38, y: 5, "font-size": 13.5,
+        fill: t.s.n ? INK : "#b7bfca", "pointer-events": "none" },
+        depouille(t.s.nom)));
+      w = 38;
+      gEq.appendChild(g);                       /* attaché pour être mesurable */
+      w += largeurTexte(nom);
+      if (t.s.formule) {
+        f = formuleSVG(w + 7, 5, t.s.formule, 13, t.s.n ? GRIS : "#c8cfd8", "start");
+        g.appendChild(f);
+        w += 7 + largeurTexte(f);
+      }
+      w += 16;
+      if (k < termes.length - 1 && !termes[k + 1].fleche) {
+        g.appendChild(el("text", { x: w + 6, y: 6, "text-anchor": "middle",
+          "font-size": 17, "font-weight": "bold", fill: GRIS,
+          "pointer-events": "none" }, "+"));
+        w += 20;
+      }
+    }
+    if (!g.parentNode) gEq.appendChild(g);
+    pose.push({ g: g, w: w });
+    total += w;
+  });
+  /* seconde passe : on translate chaque terme à sa place */
+  var x = (ZAV.x0 + ZAP.x1) / 2 - total / 2;
+  pose.forEach(function (p) {
+    p.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + cy + ")");
+    x += p.w;
+  });
+  /* Le verdict, DANS la bande : il n'est jamais écrit, il est RECOMPTÉ. */
+  var eq = equilibree(b);
+  gEq.appendChild(el("text", { x: (ZAV.x0 + ZAP.x1) / 2, y: Y_ETIQ.verdict,
+    "text-anchor": "middle", "font-size": 12, "font-weight": "bold",
+    fill: eq ? VERT : ORANGE, "pointer-events": "none" },
+    eq ? "le compte tombe juste des deux côtés" : phraseEcart(b)));
+}
+
+/* ==================================================================
+   16. LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13) :
+
+     « Construire les réactifs »  étape 2 et 7, une seule instruction. Double
+                                  le glisser des sphères depuis la boîte.
+     « Compter et reporter »      étapes 3, 5, 8 et 10 : « compter … et les
+                                  reporter dans la ligne ».
+     « Réarranger les sphères »   étapes 4 et 9. Double le glisser d'un
+                                  sous-main à l'autre, et la flèche du bilan.
+     « Passer au bilan suivant »  étape 7, premier temps.
+     « Comparer les 4 lignes »    étape 11, qui est une comparaison, pas un
+                                  geste.
+     « Ranger et compter »        étape 12, la restitution du matériel.      */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+var ACTES = ["construire", "compter", "rearranger", "suivant", "comparer", "ranger"];
+function construireBoutons() {
+  var n = ACTES.length, marge = 22, gap = 10;
+  var w = (W - 2 * marge - gap * (n - 1)) / n, i;
+  var lib = [["Construire", "les " + MOT_REACTIFS],
+             ["Compter et", "reporter"],
+             [majuscule(MOT_REARR), "les sphères"],
+             ["Passer au", "bilan suivant"],
+             ["Comparer", "les " + N_LIG + " lignes"],
+             ["Ranger la boîte", "et la compter"]];
+  for (i = 0; i < n; i++) {
+    boutonScene(marge + w / 2 + i * (w + gap), Y_BOUTONS, w, 42,
+                lib[i][0], lib[i][1], ACTES[i]);
+  }
+}
+
+/* ==================================================================
+   17. LA MISE EN PLACE DES MODÈLES — une seule échelle pour les deux membres
+   ==================================================================
+   ⚠ UNE SEULE ÉCHELLE, et c'est l'interprétation même du YAML : « une sphère
+   noire reste une sphère noire ». Une sphère qui change de taille en passant
+   du membre de gauche au membre de droite ruinerait exactement ce que la
+   leçon veut établir — d'autant qu'ici c'est le MÊME nœud SVG qui traverse.
+   L'échelle est donc commune aux quatre états des deux bilans, calculée sur
+   le plus encombrant.                                                       */
+function agencement(etat, r) {
+  var n = etat.length, parRang = Math.ceil(n / r), rangs = [], i, larg = 0, haut = 0;
+  for (i = 0; i < n; i += parRang) rangs.push(etat.slice(i, i + parRang));
+  rangs.forEach(function (rg) {
+    var w = 0, h = 0;
+    rg.forEach(function (m, j) {
+      w += m.plan.larg + (j ? GAPH : 0); h = Math.max(h, m.plan.haut);
+    });
+    larg = Math.max(larg, w); haut += h + (haut ? GAPV : 0);
+  });
+  var dispo = MH - rangs.length * LABEL_H;
+  return { rangs: rangs, larg: larg || 1, haut: haut || 1,
+           ech: Math.min(MW / (larg || 1), Math.max(10, dispo) / (haut || 1)) };
+}
+function optionsDe(etat) {
+  var o = [agencement(etat, 1)];
+  if (etat.length > 2) o.push(agencement(etat, 2));
+  if (etat.length > 4) o.push(agencement(etat, 3));
+  return o;
+}
+/* L'état des quatre membres, le bilan courant à SES coefficients et l'autre
+   aux coefficients du protocole : l'échelle ne saute donc pas d'un bilan à
+   l'autre tant qu'on suit la fiche. */
+function tousLesEtats() {
+  var out = [], i;
+  for (i = 0; i < BILANS.length; i++) {
+    if (i === ETAT.bilan) {
+      out.push(etats(especes(i, "g")));
+      out.push(etats(especes(i, "d")));
+    } else {
+      out.push(etats(BILANS[i].espAvant));
+      out.push(etats(BILANS[i].espApres));
+    }
+  }
+  return out;
+}
+function calculerEchelle() {
+  var e = 1.15, i;                            // plafond : pas de sphère géante
+  tousLesEtats().forEach(function (etat) {
+    if (!etat.length) return;
+    var best = 0;
+    optionsDe(etat).forEach(function (o) { best = Math.max(best, o.ech); });
+    e = Math.min(e, best);
+  });
+  return e > 0 && isFinite(e) ? e : 1;
+}
+/* Les emplacements d'un membre, en coordonnées de viewBox, à l'échelle
+   commune. Chaque emplacement porte SON élément : c'est lui qui décide quelle
+   sphère il accepte, et c'est de là que sort le refus le plus instructif de
+   la page.                                                                  */
+function sitesDe(etat, zone) {
+  var out = [], hRangs = [], hTot = 0, y, ag;
+  if (!etat.length) return { mols: [], sites: [] };
+  ag = { ech: -1 };
+  optionsDe(etat).forEach(function (o) {
+    if (o.ech >= ECH - 1e-6 && (ag.ech < 0)) ag = o;       // le plus PLAT qui tienne
+  });
+  if (ag.ech < 0) ag = optionsDe(etat)[optionsDe(etat).length - 1];
+  ag.rangs.forEach(function (rg) {
+    var h = 0;
+    rg.forEach(function (m) { h = Math.max(h, m.plan.haut); });
+    hRangs.push(h); hTot += h * ECH + LABEL_H;
+  });
+  hTot += GAPV * ECH * (ag.rangs.length - 1);
+  y = MY - hTot / 2;
+  var mols = [], sites = [], cx = (zone.x0 + zone.x1) / 2;
+  ag.rangs.forEach(function (rg, ri) {
+    var w = 0, x, hr = hRangs[ri] * ECH;
+    rg.forEach(function (m, j) { w += m.plan.larg + (j ? GAPH : 0); });
+    x = cx - w * ECH / 2;
+    rg.forEach(function (m, j) {
+      if (j) x += GAPH * ECH;
+      var mx = x + m.plan.larg * ECH / 2, my = y + hr / 2, im = mols.length;
+      var mol = { nom: m.nom, formule: m.formule, deduite: m.deduite,
+                  x: mx, y: my, bas: my + m.plan.haut * ECH / 2,
+                  plus: j < rg.length - 1,
+                  xPlus: x + m.plan.larg * ECH + GAPH * ECH / 2, yPlus: my,
+                  sites: [] };
+      m.plan.forEach(function (s) {
+        var site = { elem: s.elem, x: mx + s.x * ECH, y: my + s.y * ECH,
+                     r: s.r * ECH, mol: im, occ: null, i: sites.length };
+        sites.push(site); mol.sites.push(site);
+      });
+      mols.push(mol);
+      x += m.plan.larg * ECH;
+    });
+    y += hr + LABEL_H + GAPV * ECH;
+  });
+  return { mols: mols, sites: sites };
+}
+
+/* ==================================================================
+   18. POSER LA SCÈNE — recalculée à chaque changement de bilan ou de
+       coefficient. Le DESSIN RELIT le modèle, il ne le recopie pas.
+   ================================================================== */
+var gSites = null, gNoms = null, gLiens = null;
+function poserScene() {
+  var b = ETAT.bilan, bl = BILANS[b];
+  /* ⚠ LES SPHÈRES SURVIVENT À LA REMISE EN PLACE. Les emplacements sont des
+     objets neufs à chaque appel ; sans ce ré-appariement, une sphère resterait
+     accrochée à un emplacement qui n'existe plus — l'emplacement se rouvrirait,
+     la sphère flotterait, et le compte de la page cesserait de correspondre à
+     ce qu'on voit. On note donc où chacune était, et on l'y remet. */
+  var avant = ETAT.spheres.map(function (s) {
+    return { s: s, cote: s.ou, i: s.site ? SITES[s.ou].sites.indexOf(s.site) : -1 };
+  });
+  ECH = calculerEchelle();
+  SITES.g = sitesDe(etats(especes(b, "g")), ZAV);
+  SITES.d = sitesDe(etats(especes(b, "d")), ZAP);
+  GROUPES.g = SITES.g.mols; GROUPES.d = SITES.d.mols;
+  avant.forEach(function (a) {
+    a.s.site = null;
+    var lst = SITES[a.cote] ? SITES[a.cote].sites : null;
+    if (lst && a.i >= 0 && lst[a.i] && lst[a.i].elem === a.s.elem)
+      placerSurSite(a.s, lst[a.i]);
+    else replacerSphere(a.s);
+  });
+
+  titreAv.textContent = majuscule(bl.motAvant) + " · les " + MOT_REACTIFS;
+  titreAp.textContent = majuscule(bl.motApres) + " · les " + MOT_PRODUITS;
+
+  if (gSites && gSites.parentNode) gSites.parentNode.removeChild(gSites);
+  if (gNoms && gNoms.parentNode) gNoms.parentNode.removeChild(gNoms);
+  if (gLiens && gLiens.parentNode) gLiens.parentNode.removeChild(gLiens);
+  gSites = ajout("arriere", el("g", { "pointer-events": "none" }));
+  gLiens = ajout("arriere", el("g", { "pointer-events": "none" }));
+  gNoms = ajout("avant", el("g", { "pointer-events": "none" }));
+
+  ["g", "d"].forEach(function (cote) {
+    var s = SITES[cote], grise = cote === "g" && ETAT.phase === "produits";
+    /* Les connecteurs de la boîte : ils n'accolent que ce qui est monté.
+
+       ⚠️ GRIS PLEIN, PAS LE DÉGRADÉ, ET LE PIÈGE NE LÈVE AUCUNE ERREUR. Un
+       dégradé en `objectBoundingBox` — le défaut — posé sur le CONTOUR d'un
+       trait horizontal a une boîte de hauteur nulle, et sur un trait
+       vertical une boîte de largeur nulle : il est dégénéré et le
+       navigateur ne peint RIEN. Or une molécule s'aligne, donc ses liaisons
+       sont justement horizontales ou verticales. Trois connecteurs sur
+       cette page ne se dessinaient pas : les sphères flottaient côte à côte
+       sans rien entre elles. Aucune erreur JS, et le pilotage ne pouvait
+       pas le voir puisque les nœuds étaient bien là, aux bonnes
+       coordonnées. Sur cinq unités d'épaisseur un dégradé ne se verrait de
+       toute façon pas : on peint la teinte médiane. Même piège que sur
+       E3AC-18, trouvé là-bas à la capture par l'enseignant, puis cherché
+       partout ailleurs. */
+    s.mols.forEach(function (m) {
+      var c = m.sites[0];
+      m.sites.forEach(function (x) {
+        if (x === c) return;
+        gLiens.appendChild(el("line", { x1: c.x, y1: c.y, x2: x.x, y2: x.y,
+          stroke: "#8d99a8", "stroke-width": Math.max(5, 9 * ECH),
+          "stroke-linecap": "round", opacity: .9 }));
+      });
+    });
+    /* L'emplacement vide : un cercle pointillé de la couleur de l'élément
+       qu'il attend, avec son symbole en filigrane. Il ne reçoit AUCUN clic
+       (SKILL §12.15) : c'est la géométrie qui décide du dépôt. */
+    s.sites.forEach(function (x) {
+      var conv = convDe(x.elem);
+      gSites.appendChild(el("circle", { cx: x.x, cy: x.y, r: x.r,
+        fill: "#ffffff", "fill-opacity": .55,
+        stroke: conv ? conv.fond : GRIS, "stroke-width": 2,
+        "stroke-dasharray": "6 5", opacity: .9 }));
+      gSites.appendChild(el("text", { x: x.x, y: x.y + x.r * 0.35,
+        "text-anchor": "middle", "font-size": Math.max(10, x.r * 0.9),
+        "font-weight": "bold", fill: conv ? conv.fond : GRIS, opacity: .45 },
+        SYMBOLE[x.elem] || ""));
+    });
+    /* Le NOM de l'assemblage, juste en dessous, à taille fixe : cette hauteur
+       ne suit pas l'échelle des sphères et doit être réservée rang par rang,
+       sans quoi le nom du premier rang tombe sur le modèle du second. */
+    s.mols.forEach(function (m) {
+      var y = m.bas + 20;
+      gNoms.appendChild(el("text", { x: m.x, y: y, "text-anchor": "middle",
+        "font-size": 12.5, fill: grise ? "#a7b3c1" : INK,
+        opacity: grise ? .6 : 1 }, depouille(m.nom)));
+      if (m.formule)
+        gNoms.appendChild(formuleSVG(m.x, y + 14, m.formule, 12,
+                                     grise ? "#c3cad3" : GRIS));
+      if (m.plus)
+        gNoms.appendChild(el("text", { x: m.xPlus, y: m.yPlus + 7,
+          "text-anchor": "middle", "font-size": 21, "font-weight": "bold",
+          fill: grise ? "#cfd6de" : GRIS }, "+"));
+    });
+  });
+  construireEquation();
+  construireCoefs();
+  dessiner();
+}
+
+/* ==================================================================
+   19. LES SPHÈRES — les MÊMES nœuds d'un bout à l'autre du bilan
+   ==================================================================
+   C'est le cœur de la démonstration, et il tient dans une phrase : une sphère
+   sortie de la boîte n'est JAMAIS détruite avant le rangement, et le
+   réarrangement ne fait que changer son emplacement. Le carnet compte les
+   créations et les destructions depuis le report de la ligne « avant » — s'il
+   affichait autre chose que zéro, la page mentirait.                        */
+function creerSphere(elem) {
+  var conv = convDe(elem), r = rayonDe(elem) * ECH;
+  var g = ajout("objets", el("g", { cursor: "grab" }));
+  /* ⚠ SKILL §12.38 — une sphère d'hydrogène ne fait que quelques unités de
+     rayon : on lui donne une PLAQUE DE PRÉHENSION transparente, insérée en
+     premier, aux cotes minimales d'un objet saisissable. */
+  g.appendChild(el("rect", { x: -Math.max(r, 21), y: -Math.max(r, 21),
+    width: 2 * Math.max(r, 21), height: 2 * Math.max(r, 21), rx: 6,
+    fill: "#ffffff", "fill-opacity": .001 }));
+  g.appendChild(el("circle", { cx: 0, cy: 0, r: r,
+    fill: "url(#bille-" + sansAccent(elem) + ")",
+    stroke: conv ? conv.bord : "#41506a",
+    "stroke-width": conv && conv.clair ? 2.4 : 1.6, filter: "url(#ombreBille)" }));
+  g.appendChild(el("ellipse", { cx: -r * 0.3, cy: -r * 0.36, rx: r * 0.3,
+    ry: r * 0.2, fill: "#ffffff", opacity: .6,
+    transform: "rotate(-24 " + (-r * 0.3).toFixed(1) + " " + (-r * 0.36).toFixed(1) + ")",
+    "pointer-events": "none" }));
+  g.appendChild(el("text", { x: 0, y: r * 0.34, "text-anchor": "middle",
+    "font-size": Math.max(9, r * 0.85), "font-weight": "bold",
+    fill: conv && conv.clair ? INK : "#ffffff", opacity: .82,
+    "pointer-events": "none" }, SYMBOLE[elem] || ""));
+  var s = { id: ETAT.idSuivant++, elem: elem, g: g, x: 0, y: 0, r: r,
+            ou: "boite", site: null };
+  ETAT.spheres.push(s);
+  ETAT.cree++;
+  ETAT.prises[elem] = (ETAT.prises[elem] || 0) + 1;
+  brancherSphere(s);
+  return s;
+}
+function detruireSphere(s) {
+  var i = ETAT.spheres.indexOf(s);
+  if (i >= 0) ETAT.spheres.splice(i, 1);
+  if (s.site) { s.site.occ = null; s.site = null; }
+  if (s.g.parentNode) s.g.parentNode.removeChild(s.g);
+  ETAT.detruit++;
+  ETAT.rendues[s.elem] = (ETAT.rendues[s.elem] || 0) + 1;
+}
+function sphereEn(cote) {
+  return ETAT.spheres.filter(function (s) { return s.ou === cote; });
+}
+function siteLibre(cote, elem, sauf) {
+  var s = SITES[cote].sites, i;
+  for (i = 0; i < s.length; i++)
+    if (s[i].elem === elem && (!s[i].occ || s[i].occ === sauf)) return s[i];
+  return null;
+}
+function membreComplet(cote) {
+  var s = SITES[cote].sites, i;
+  for (i = 0; i < s.length; i++) if (!s[i].occ) return false;
+  return true;
+}
+/* Reste-t-il un geste de réarrangement possible ? C'est ce qui décide qu'une
+   étape est finie — pas un compteur, et pas la seule complétude : quand on a
+   déséquilibré, le réarrangement s'arrête faute de sphères ou faute de place,
+   et l'étape est faite quand même. */
+function peutRearranger() {
+  var i, s = sphereEn("g");
+  for (i = 0; i < s.length; i++) if (siteLibre("d", s[i].elem)) return true;
+  return false;
+}
+function placerSurSite(s, site) {
+  if (s.site && s.site !== site) s.site.occ = null;
+  s.site = site; site.occ = s;
+  s.x = site.x; s.y = site.y;
+  s.ou = SITES.g.sites.indexOf(site) >= 0 ? "g" : "d";
+  poserSphere(s, site.x, site.y);
+}
+function poserSphere(s, x, y) {
+  s.x = x; s.y = y;
+  s.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ")");
+}
+/* Déplacement interpolé par une échelle de MINUTERIES, jamais par une
+   transition CSS sur un groupe SVG : posée sur un `<g>`, une transition peut
+   ne jamais démarrer, sans la moindre erreur — et c'est ici le geste central.
+   ⚠ AUCUN ÉTAT NE DÉPEND DE L'ANIMATION : l'état est posé AVANT (SKILL §6.2). */
+function volerVers(s, x1, y1, ms) {
+  var x0 = s.x, y0 = s.y, PAS = 10, i;
+  for (i = 1; i <= PAS; i++) (function (i) {
+    tard(function () {
+      var t = i / PAS, e = t * t * (3 - 2 * t);
+      s.g.setAttribute("transform", "translate(" +
+        (x0 + (x1 - x0) * e).toFixed(1) + "," + (y0 + (y1 - y0) * e).toFixed(1) + ")");
+    }, ms * i / PAS);
+  })(i);
+  s.x = x1; s.y = y1;
+}
+function caseDe(elem) {
+  var i;
+  for (i = 0; i < cases.length; i++) if (cases[i].conv.elem === elem) return cases[i];
+  return null;
+}
+function dessiner() {
+  ETAT.spheres.forEach(function (s) {
+    if (!prise || prise.s !== s) poserSphere(s, s.x, s.y);
+  });
+  /* Un emplacement occupé n'a plus à s'annoncer. */
+  if (!gSites) return;
+  var k = 0;
+  ["g", "d"].forEach(function (cote) {
+    SITES[cote].sites.forEach(function (x) {
+      var c = gSites.children[2 * k], t = gSites.children[2 * k + 1];
+      k++;
+      if (!c) return;
+      c.setAttribute("opacity", x.occ ? 0 : .9);
+      if (t) t.setAttribute("opacity", x.occ ? 0 : .45);
+    });
+  });
+  majBadges();
+}
+function majBadges() {
+  cases.forEach(function (c) {
+    var n = ETAT.prises[c.conv.elem] || 0, r = ETAT.rendues[c.conv.elem] || 0;
+    c.badge.textContent = (n - r) ? "×" + (n - r) : "";
+  });
+}
+
+/* ==================================================================
+   20. PRENDRE ET DÉPOSER
+   ==================================================================
+   Le pointeur est capturé sur le SVG lui-même, pas sur la sphère : sans cela,
+   un mouvement rapide sort de la bille et le glissement s'arrête net au
+   milieu du geste, sans erreur.                                             */
+var prise = null, ptSVG = null;
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+/* Les emplacements possibles DANS L'ÉTAT COURANT, rendus de la plus PETITE à
+   la plus GRANDE (SKILL §12.16) : c'est `deposerSphere` qui dit lequel est le
+   bon, jamais l'ordre du tableau. Le compartiment de la boîte est une zone
+   très large qui contient tout le bas de la scène : sans ce tri, aucun
+   emplacement de sous-main ne serait jamais atteint.                        */
+function emplacements(s) {
+  var z = [], c;
+  if (ETAT.phase === "reactifs") {
+    SITES.g.sites.forEach(function (x) {
+      if (x.elem !== s.elem || (x.occ && x.occ !== s)) return;
+      z.push({ type: "site", cote: "g", site: x, x: x.x, y: x.y,
+               r: Math.max(46, x.r + 26), hw: x.r + 9, hh: x.r + 9,
+               quoi: "la sphère sur un emplacement libre du " +
+                     bilanCourant().motAvant });
+    });
+    if (!verrouille()) {
+      c = caseDe(s.elem);
+      if (c) z.push({ type: "boite", x: c.x, y: c.y, r: 150, hw: 44, hh: 40,
+                      quoi: "la sphère dans son compartiment" });
+    }
+  } else {
+    SITES.d.sites.forEach(function (x) {
+      if (x.elem !== s.elem || (x.occ && x.occ !== s)) return;
+      z.push({ type: "site", cote: "d", site: x, x: x.x, y: x.y,
+               r: Math.max(46, x.r + 26), hw: x.r + 9, hh: x.r + 9,
+               quoi: "la sphère sur un emplacement libre du " +
+                     bilanCourant().motApres });
+    });
+  }
+  z.sort(function (a, b) { return a.r - b.r; });
+  return z;
+}
+/* La zone que `deposerSphere` accepterait — un bouton ne vise jamais
+   `emplacements(s)[0]`, sinon bouton et glisser divergent (SKILL §12.16). */
+function zoneDeSphere(s, type) {
+  var z = emplacements(s), i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+var surbrillance = [];
+function montrerCibles(s) {
+  effacerCibles();
+  if (!s) return;
+  emplacements(s).forEach(function (z) {
+    if (z.type === "boite") return;                       // sa propre place
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 10,
+      fill: GOLD, opacity: .18, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* LE VERROU DE TOUTE L'EXPÉRIENCE. « Une fois les réactifs construits, on ne
+   prend AUCUNE sphère dans la boîte et on n'y remet AUCUNE sphère. » Ce n'est
+   pas une contrainte de rangement : c'est ELLE qui modélise la réaction, et
+   c'est le refus le plus instructif de la page. */
+function verrouille() { return ETAT.reporte[ligneDe(ETAT.bilan, "g")]; }
+
+function brancherSphere(s) {
+  s.g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                                    // verrou en 1re ligne
+    e.preventDefault();
+    var p = versSVG(e);
+    prise = { s: s, pid: e.pointerId, dx: s.x - p.x, dy: s.y - p.y,
+              x0: p.x, y0: p.y, bouge: false, siteDepart: s.site };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    s.g.setAttribute("filter", "url(#ombrePrise)");
+    s.g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(s.g);
+    montrerCibles(s);
+  });
+}
+function brancherPrise() {
+  /* La boîte : saisir une bille de réserve CRÉE la sphère et la met aussitôt
+     sous le pointeur. C'est le même `prendreSphere` que le bouton appelle. */
+  cases.forEach(function (c) {
+    c.g.addEventListener("pointerdown", function (e) {
+      if (prise) return;
+      e.preventDefault();
+      var s = prendreSphere(c.conv.elem, null, true);
+      if (!s) return;
+      var p = versSVG(e);
+      prise = { s: s, pid: e.pointerId, dx: 0, dy: 0, x0: p.x, y0: p.y,
+                bouge: false, siteDepart: null, neuve: true };
+      poserSphere(s, p.x, p.y);
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      s.g.setAttribute("filter", "url(#ombrePrise)");
+      COUCHES.drag.appendChild(s.g);
+      montrerCibles(s);
+    });
+  });
+
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    poserSphere(prise.s, p.x + prise.dx, p.y + prise.dy);
+  });
+
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var s = prise.s, bouge = prise.bouge, dep = prise.siteDepart, neuve = prise.neuve;
+    s.g.removeAttribute("filter");
+    s.g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(s.g);
+    effacerCibles();
+    prise = null;
+    if (!bouge && !neuve) {
+      /* un CLIC, pas un glissement : le seuil de 5 px sépare les deux
+         (SKILL §9.3). Cliquer une sphère, c'est l'IDENTIFIER. */
+      if (dep) placerSurSite(s, dep); else replacerSphere(s);
+      identifierSphere(s);
+      dessiner();
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(s).forEach(function (z) {
+      var d = Math.hypot(s.x - z.x, s.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposerSphere(s, best, dep, neuve);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);       // ne PAS l'oublier
+}
+/* La sphère retourne d'où elle vient : on ne laisse JAMAIS un objet flotter. */
+function replacerSphere(s) {
+  if (s.site) { poserSphere(s, s.site.x, s.site.y); return; }
+  var c = caseDe(s.elem);
+  poserSphere(s, c ? c.x : 0, c ? c.y : 0);
+}
+/* L'emplacement le plus proche, TOUS éléments confondus : c'est lui qui
+   permet de refuser en NOMMANT ce que l'emplacement attend, au lieu de dire
+   « rien ici ». */
+function siteProche(x, y, cote) {
+  var best = null, bd = 1e9;
+  (cote ? [cote] : ["g", "d"]).forEach(function (c) {
+    SITES[c].sites.forEach(function (z) {
+      var d = Math.hypot(x - z.x, y - z.y);
+      if (d < Math.max(52, z.r + 30) && d < bd) { bd = d; best = { s: z, cote: c }; }
+    });
+  });
+  return best;
+}
+
+/* ==================================================================
+   21. CE QUI SE PASSE QUAND ON DÉPOSE
+   ==================================================================
+   Un refus n'est jamais muet : il dit la raison, et il CITE la fiche.       */
+function deposerSphere(s, z, dep, neuve) {
+  var pr, conv = convDe(s.elem), nomE = conv ? conv.nom : s.elem;
+  if (!z) {
+    pr = siteProche(s.x, s.y);
+    /* ⚠ L'ORDRE DES REFUS COMPTE : le plus instructif d'abord. Viser le membre
+       de droite avec une sphère de la boîte n'est pas une erreur de couleur,
+       c'est la règle du jeu qu'on enfreint — et c'est cela qu'il faut dire. */
+    if (pr && pr.cote === "d" && ETAT.phase === "reactifs") {
+      rendre(s, dep, neuve);
+      signaler("Les " + MOT_PRODUITS + " se construisent avec les sphères des " +
+               MOT_REACTIFS + ", pas avec celles de la boîte :" +
+               citerSecu(/aucune sph|ne prend|ne remet/i));
+      return;
+    }
+    /* ⚠ ON NOMME L'ATOME, JAMAIS LA COULEUR ACCORDÉE. Le YAML écrit la
+       convention au masculin singulier (« noir = carbone ») ; l'accorder à la
+       volée donnait « une sphère noir, de carbone », lu à l'écran. */
+    if (pr && pr.s.elem !== s.elem) {
+      var cv = convDe(pr.s.elem);
+      rendre(s, dep, neuve);
+      signaler("Cet emplacement attend un atome " +
+               du(cv ? cv.nom : pr.s.elem) + " (" + (SYMBOLE[pr.s.elem] || "?") +
+               ") — cette sphère est un atome " + du(nomE) + " (" +
+               (SYMBOLE[s.elem] || "?") + ").");
+      return;
+    }
+    if (pr && pr.s.occ) {
+      rendre(s, dep, neuve);
+      signaler("Cet emplacement porte déjà sa sphère.");
+      return;
+    }
+    if (pr && pr.cote === "g" && ETAT.phase === "produits") {
+      rendre(s, dep, neuve);
+      signaler("Les " + MOT_REACTIFS + " sont comptés et reportés : on ne les " +
+               "reconstruit pas. C'est vers le " + bilanCourant().motApres +
+               " que les sphères doivent aller.");
+      return;
+    }
+    rendre(s, dep, neuve);
+    signaler("Rien ici. Poser " + (emplacements(s)[0] ? emplacements(s)[0].quoi
+             : "la sphère à sa place") + ".");
+    return;
+  }
+  if (z.type === "boite") { rangerDansBoite(s); return; }
+  var premier = ETAT.phase === "produits" && !SITES.d.sites.some(function (x) {
+    return !!x.occ;
+  });
+  placerSurSite(s, z.site);
+  volerVers(s, z.site.x, z.site.y, 150);
+  if (ETAT.phase === "reactifs") {
+    var reste = SITES.g.sites.filter(function (x) { return !x.occ; }).length;
+    noter(reste
+      ? "Sphère " + du(nomE) + " posée — encore " + reste + " à placer."
+      : "Les " + MOT_REACTIFS + " sont montés : " + resumeCompte("g") + ".",
+      !reste);
+  } else {
+    var libres = SITES.d.sites.filter(function (x) { return !x.occ; }).length;
+    var enAv = sphereEn("g").length;
+    noter((premier ? "La même sphère " + du(nomE) + ", autrement assemblée. "
+                   : "Sphère " + du(nomE) + " réarrangée. ") +
+          (libres ? libres + " emplacement" + (libres > 1 ? "s" : "") +
+                    " encore vide" + (libres > 1 ? "s" : "") +
+                    (enAv ? ", " + enAv + " sphère" + (enAv > 1 ? "s" : "") +
+                            " encore sur la table." : ".")
+                  : (enAv ? enAv + " sphère" + (enAv > 1 ? "s" : "") +
+                            " reste" + (enAv > 1 ? "nt" : "") + " sur la table."
+                          : "Aucune sphère ne reste, aucune ne manque.")),
+          !libres && !enAv);
+  }
+  succes(); armer(); avancer();
+}
+function rendre(s, dep, neuve) {
+  if (neuve) { detruireSphere(s); majBadges(); dessiner(); return; }
+  if (dep) placerSurSite(s, dep); else replacerSphere(s);
+  dessiner();
+}
+/* Remettre une sphère dans la boîte. Avant le report, c'est permis : on
+   corrige son montage. Après, la règle du jeu l'interdit. */
+function rangerDansBoite(s) {
+  if (verrouille()) {
+    replacerSphere(s);
+    signaler(majuscule(REGLE_COURTE) + " :" + citerSecu(/aucune sph|ne prend|ne remet/i));
+    dessiner(); return;
+  }
+  var conv = convDe(s.elem);
+  detruireSphere(s);
+  noter("Sphère " + du(conv ? conv.nom : s.elem) + " remise dans la boîte. " +
+        "Tant que le compte n'est pas reporté, on peut encore corriger.", null);
+  succes(); armer(); avancer();
+}
+/* PRENDRE une sphère dans la boîte — le chemin COMMUN au glisser et au
+   bouton (SKILL §12.13). `site` non nul : elle se pose directement. */
+function prendreSphere(elem, site, aLaMain) {
+  if (!ETAT.convention) {
+    signaler("Rappeler d'abord la " + MOT_CONV + " : sans elle, on ne sait pas " +
+             "quelle sphère on prend. Cliquer la carte, à gauche.");
+    return null;
+  }
+  if (ETAT.phase !== "reactifs" || verrouille()) {
+    signaler(majuscule(REGLE_COURTE) + " : la boîte est fermée." +
+             citerSecu(/aucune sph|ne prend|ne remet/i));
+    return null;
+  }
+  if (!site) {
+    site = siteLibre("g", elem);
+    if (!site && !aLaMain) {
+      var conv = convDe(elem);
+      signaler("Ce bilan ne demande plus de sphère " +
+               du(conv ? conv.nom : elem) + ".");
+      return null;
+    }
+  }
+  var s = creerSphere(elem), c = caseDe(elem);
+  poserSphere(s, c ? c.x : 0, c ? c.y : 0);
+  if (site) {
+    placerSurSite(s, site);
+    volerVers(s, site.x, site.y, 220);
+  }
+  return s;
+}
+/* Cliquer une sphère : l'IDENTIFIER d'après la convention — le savoir-faire
+   n°1 de la fiche. Ce que le journal écrit sort du modèle, jamais de la fiche. */
+function identifierSphere(s) {
+  var conv = convDe(s.elem), m = masseDe(s.elem);
+  noter("Sphère " + (conv ? conv.mot : "") + " : " +
+        (conv ? conv.nom : s.elem) + ", symbole " + (SYMBOLE[s.elem] || "?") +
+        (isFinite(m) ? ", masse molaire " + nb(m, 3) + " g/mol" : "") + ".", null);
+  succes(); avancer();
+}
+function resumeCompte(cote) {
+  var c = compter(especes(ETAT.bilan, cote));
+  return ELEMS.map(function (e) {
+    return (SYMBOLE[e.elem] || "?") + " " + (c.at[e.elem] || 0);
+  }).join(", ");
+}
+
+/* ==================================================================
+   22. LES GESTES COLLECTIFS — chacun DOUBLE un glisser
+   ==================================================================
+   Aucun de ces boutons n'écrit un résultat : ils appellent les fonctions du
+   geste lui-même, celles qu'appelle le glisser-déposer. Deux chemins, un seul
+   état (SKILL §12.13).                                                      */
+function rappelerConvention() {
+  if (ETAT.convention) {
+    signaler("La " + MOT_CONV + " est déjà au tableau.");
+    return;
+  }
+  ETAT.convention = true;
+  majConvention();
+  noter(majuscule(MOT_CONV) + " : " + CONVENTION.map(function (c) {
+    return c.mot + " = " + c.nom + " (" + SYMBOLE[c.elem] + ")";
+  }).join(", ") + ".", true);
+  succes(); armer(); avancer();
+}
+function construireReactifs() {
+  if (ETAT.phase !== "reactifs") {
+    signaler("Les " + MOT_REACTIFS + " sont déjà construits et comptés.");
+    return;
+  }
+  var n = 0, site;
+  while ((site = SITES.g.sites.filter(function (x) { return !x.occ; })[0])) {
+    if (!prendreSphere(site.elem, site)) return;
+    n++;
+    if (n > 64) break;                                   // garde-fou
+  }
+  if (!n) { signaler("Tous les emplacements sont déjà occupés."); return; }
+  noter("Les " + MOT_REACTIFS + " sont montés avec " + n + " sphères prises " +
+        "dans la boîte : " + resumeCompte("g") + ".", true);
+  succes(); armer(); avancer();
+}
+function rearranger() {
+  if (ETAT.phase !== "produits") {
+    signaler("Compter et reporter d'abord la ligne « " +
+             bilanCourant().motAvant + " » : une fois les sphères " +
+             "réarrangées, on ne pourrait plus la remplir.");
+    return;
+  }
+  if (!peutRearranger()) {
+    signaler(phraseEcart(ETAT.bilan) + " Plus aucune sphère ne peut changer " +
+             "de place.");
+    return;
+  }
+  var n = 0, s, site, i;
+  while (peutRearranger() && n < 64) {
+    s = null;
+    var enAv = sphereEn("g");
+    for (i = 0; i < enAv.length; i++) {
+      site = siteLibre("d", enAv[i].elem);
+      if (site) { s = enAv[i]; break; }
+    }
+    if (!s) break;
+    placerSurSite(s, site);
+    volerVers(s, site.x, site.y, 260);
+    n++;
+  }
+  var libres = SITES.d.sites.filter(function (x) { return !x.occ; }).length;
+  var reste = sphereEn("g").length;
+  noter(n + " sphère" + (n > 1 ? "s ont" : " a") + " changé de place — " +
+        "ce sont LES MÊMES, aucune n'a été prise dans la boîte. " +
+        (libres || reste ? phraseEcart(ETAT.bilan)
+                         : "Aucune ne reste, aucune ne manque."),
+        !libres && !reste);
+  gFleche.setAttribute("opacity", 1);
+  succes(); armer(); avancer();
+}
+/* COMPTER ET REPORTER — le geste des étapes 3, 5, 8 et 10. Il ne fabrique
+   aucun nombre : il inscrit dans la ligne du tableau ce que le MODÈLE a
+   compté, et il refuse de compter un montage qui n'est pas fait.            */
+function coteACompter() {
+  var b = ETAT.bilan;
+  if (!ETAT.reporte[ligneDe(b, "g")]) return "g";
+  if (!ETAT.reporte[ligneDe(b, "d")]) return "d";
+  return null;
+}
+function reporterCompte() {
+  var b = ETAT.bilan, cote = coteACompter(), k, c;
+  if (!cote) { signaler("Les deux lignes de ce bilan sont déjà remplies."); return; }
+  if (cote === "g" && !membreComplet("g")) {
+    var manque = SITES.g.sites.filter(function (x) { return !x.occ; }).length;
+    signaler("Les " + MOT_REACTIFS + " ne sont pas montés : " + manque +
+             " emplacement" + (manque > 1 ? "s sont vides" : " est vide") +
+             ". Compter ce qui n'est pas construit n'aurait pas de sens.");
+    return;
+  }
+  if (cote === "d" && peutRearranger()) {
+    signaler("Le réarrangement n'est pas fini : " + sphereEn("g").length +
+             " sphère(s) attendent encore sur la table." + citerProto(/aucune sphère ne reste/i));
+    return;
+  }
+  k = ligneDe(b, cote);
+  c = compter(especes(b, cote));
+  ETAT.reporte[k] = true;
+  if (cote === "g") {
+    ETAT.phase = "produits";
+    ETAT.cree = 0; ETAT.detruit = 0;      /* le compteur d'honnêteté repart ici */
+    boiteOuverte(false);
+    figerCompte(champsAv, c.at);
+    poserScene();
+  } else {
+    figerCompte(champsAp, c.at);
+  }
+  ELEMS.forEach(function (e) { revelerCellule(k, e.col); });
+  verifierContreFiche(k, c.at);
+  noter("Ligne « " + depouille(VAL[k][1]) + " » du " + depouille(VAL[k][0]) +
+        " : " + ELEMS.map(function (e) {
+          return depouille(e.nom).toLowerCase() + " " + (c.at[e.elem] || 0);
+        }).join(", ") + ".", true);
+  if (cote === "g") {
+    noter("Compte reporté, et la boîte se ferme : " + majuscule(REGLE_COURTE) +
+          ". Tout doit se faire avec les sphères qui sont sur la table.", true);
+  }
+  demasquerSiFini();
+  succes(); armer(); avancer();
+}
+/* Compter les MOLÉCULES — l'étape 6 de la fiche, et elle mérite un geste à
+   elle. La fiche compte des « entités » dans ses résultats : le carbone du
+   premier bilan est un ATOME SEUL, pas une molécule, et confondre les deux
+   ferait dire au tableau le contraire de la leçon.                          */
+function compterMolecules(cote) {
+  var b = ETAT.bilan, c = compter(especes(b, cote)), tab, mot;
+  tab = cote === "g" ? ETAT.molAv : ETAT.molAp;
+  mot = cote === "g" ? bilanCourant().motAvant : bilanCourant().motApres;
+  if (cote === "g" && !ETAT.reporte[ligneDe(b, "g")]) {
+    signaler("Compter et reporter d'abord les sphères de la ligne « " + mot + " ».");
+    return;
+  }
+  if (cote === "d" && !ETAT.reporte[ligneDe(b, "d")]) {
+    signaler("Compter et reporter d'abord les sphères de la ligne « " + mot + " ».");
+    return;
+  }
+  tab[b] = true;
+  majBandeaux();
+  noter("« " + majuscule(mot) + " » : " + c.ent + " entité" + (c.ent > 1 ? "s" : "") +
+        ", dont " + c.mol + " molécule" + (c.mol > 1 ? "s" : "") +
+        (c.ent > c.mol ? " — " + (c.ent - c.mol) + " atome" +
+          (c.ent - c.mol > 1 ? "s isolés ne sont" : " isolé n'est") +
+          " pas une molécule." : "."), true);
+  succes(); armer(); avancer();
+}
+function bilanSuivant() {
+  var b = ETAT.bilan;
+  if (b + 1 >= BILANS.length) {
+    signaler("C'est le dernier bilan de la fiche.");
+    return;
+  }
+  if (!ETAT.reporte[ligneDe(b, "g")] || !ETAT.reporte[ligneDe(b, "d")]) {
+    signaler("Terminer d'abord le bilan « " + BILANS[b].gauche + " » : ses deux " +
+             "lignes doivent être remplies.");
+    return;
+  }
+  /* On rend les sphères du premier bilan à la boîte et on la rouvre : la règle
+     du jeu vaut À L'INTÉRIEUR d'un bilan — c'est elle qui modélise LA
+     RÉACTION —, pas entre deux modélisations différentes. */
+  var n = ETAT.spheres.length;
+  ETAT.spheres.slice().forEach(detruireSphere);
+  ETAT.bilan = b + 1;
+  ETAT.phase = "reactifs";
+  ETAT.cree = 0; ETAT.detruit = 0;
+  boiteOuverte(true);
+  poserScene();
+  compter0(champsAv); compter0(champsAp);
+  majBandeaux();
+  noter("Les " + n + " sphères du premier bilan retournent dans la boîte, qui " +
+        "se rouvre : la règle du jeu vaut à l'intérieur d'un bilan. Second " +
+        "bilan : " + BILANS[ETAT.bilan].bilan + ".", true);
+  succes(); armer(); avancer();
+}
+/* COMPARER LES QUATRE LIGNES — l'étape 11, « qu'est-ce qui a changé, qu'est-ce
+   qui n'a pas changé ? ». La réponse n'est pas écrite : elle est RELUE dans le
+   tableau que la manipulation vient de remplir.                              */
+function comparerLignes() {
+  var i, tousFaits = ETAT.reporte.slice(0, N_LIG).every(function (x) { return x; });
+  if (!tousFaits) {
+    signaler("Les " + N_LIG + " lignes du tableau ne sont pas remplies : il en " +
+             "manque " + ETAT.reporte.slice(0, N_LIG).filter(function (x) {
+               return !x; }).length + ".");
+    return;
+  }
+  ETAT.compare = true;
+  var conserve = [], change = [];
+  BILANS.forEach(function (b, i) {
+    var a = compter(especes(i, "g")), p = compter(especes(i, "d"));
+    ELEMS.forEach(function (e) {
+      if ((a.at[e.elem] || 0) !== (p.at[e.elem] || 0)) conserve.push(e.nom);
+    });
+    if (a.ent !== p.ent) change.push("entités " + a.ent + " → " + p.ent);
+    if (a.mol !== p.mol) change.push("molécules " + a.mol + " → " + p.mol);
+  });
+  var mR = 0, mP = 0;
+  BILANS.forEach(function (b, i) {
+    mR += compter(especes(i, "g")).m; mP += compter(especes(i, "d")).m;
+  });
+  noter(conserve.length
+    ? "Le compte ne tombe pas juste sur " + conserve.join(", ") +
+      " : avec ces coefficients, les atomes ne se conservent pas — et la masse " +
+      "non plus (" + nb(Math.abs(mR - mP), 3) + " g/mol d'écart)."
+    : "Sur les " + N_LIG + " lignes, aucun nombre d'atomes n'a changé. Ce qui a " +
+      "changé, ce sont les assemblages" + (change.length ? " (" +
+      change.join(" ; ") + ")" : "") + " : les molécules ne se conservent pas, " +
+      "les atomes si. Et la masse suit — " + nb(mR, 3) + " g/mol des deux côtés.",
+    !conserve.length);
+  demasquerSiFini();
+  succes(); armer(); avancer();
+}
+/* RANGER ET COMPTER LA BOÎTE — l'étape 12. C'est un vrai inventaire : la page
+   compare ce qui est sorti de la boîte à ce qui y rentre, couleur par couleur. */
+function rangerBoite() {
+  if (!ETAT.compare) {
+    signaler("Le matériel se range à la fin : la fiche demande d'abord de " +
+             "comparer les " + N_LIG + " lignes du tableau.");
+    return;
+  }
+  if (ETAT.range) { signaler("La boîte est déjà rangée et comptée."); return; }
+  var n = ETAT.spheres.length;
+  ETAT.spheres.slice().forEach(detruireSphere);
+  ETAT.range = true;
+  boiteOuverte(true);
+  var detail = CONVENTION.map(function (c) {
+    return (ETAT.prises[c.elem] || 0) + " " + c.mot;
+  }).join(", ");
+  var manquantes = CONVENTION.filter(function (c) {
+    return (ETAT.prises[c.elem] || 0) !== (ETAT.rendues[c.elem] || 0);
+  });
+  noter(n + " sphères remises dans la boîte. Sur toute la séance : " + detail +
+        " sorties, autant rentrées — " + (manquantes.length
+          ? "il en manque." : "il n'en manque aucune."), !manquantes.length);
+  demasquerSiFini();
+  succes(); armer(); avancer();
+}
+function demasquerSiFini() {
+  if (ETAT.compare && ETAT.reporte.slice(0, N_LIG).every(function (x) { return x; }))
+    $("concl").classList.remove("masque");
+}
+function brancherBoutons() {
+  /* ⚠ DEUX NŒUDS PEUVENT PORTER LE MÊME ACTE — la flèche du bilan et le bouton
+     « Réarranger » en sont un cas. Un `querySelector` n'en brancherait qu'un,
+     et l'autre resterait muet sans la moindre erreur : on branche TOUS les
+     nœuds de l'acte. */
+  function ec(act, fn) {
+    var ns = svg.querySelectorAll('[data-act="' + act + '"]'), i;
+    for (i = 0; i < ns.length; i++) ns[i].addEventListener("click", fn);
+  }
+  ec("construire", construireReactifs);
+  ec("compter", reporterCompte);
+  ec("rearranger", rearranger);
+  ec("suivant", bilanSuivant);
+  ec("comparer", comparerLignes);
+  ec("ranger", rangerBoite);
+  ec("convention", rappelerConvention);
+  ec("mol-avant", function () { compterMolecules("g"); });
+  ec("mol-apres", function () { compterMolecules("d"); });
+  ec("zone-avant", function () {
+    if (ETAT.phase === "reactifs")
+      dire("Prendre les sphères dans la boîte, en bas, et les poser sur les " +
+           "emplacements.", false);
+    else dire(majuscule(REGLE_COURTE) + " : les sphères passent à droite.", false);
+  });
+  ec("zone-apres", rearranger);
+  var i;
+  for (i = 0; i < 8; i++) {
+    (function (i) {
+      ec("coef-g" + i, function () { cyclerCoef("g", i); });
+      ec("coef-d" + i, function () { cyclerCoef("d", i); });
+    })(i);
+  }
+}
+
+/* ==================================================================
+   23. CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle du modèle qu'on vient de faire
+   tourner. Les confondre serait réécrire la fiche.                          */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "mes";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function majCompteurCellules() {
+  $("nbCell").textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre EN ATOMES : c'est la seule unité dans
+   laquelle il veut dire quelque chose ici.                                  */
+function verifierContreFiche(k, at) {
+  if (ETAT.horsProto) return;
+  var msg = [], f = totaux(k);
+  ELEMS.forEach(function (e) {
+    var c = at[e.elem] || 0;
+    if (c !== f[e.elem])
+      msg.push(depouille(e.nom).toLowerCase() + " : le modèle compte " + c +
+               ", la fiche écrit " + f[e.elem]);
+  });
+  if (!msg.length) return;
+  var t = "<b>Le modèle et la fiche divergent sur la ligne " + (k + 1) +
+          ".</b> " + msg.join(" ; ") + ".";
+  if (ETAT.diverge.indexOf("ligne " + (k + 1)) < 0) {
+    ETAT.diverge += (ETAT.diverge ? "<br>" : "") + t;
+    $("diverge").innerHTML = ETAT.diverge;
+    $("diverge").style.display = "block";
+  }
+}
+/* Les deux bandeaux de comptage. Celui de gauche est FIGÉ au report : il porte
+   le compte qu'on a inscrit au tableau, celui qu'on compare à droite. Une
+   première version le recomptait sur les sphères restées à gauche — les deux
+   bandeaux affichaient alors 0 contre 1, 0, 2 et la comparaison, qui est tout
+   l'objet de l'expérience, disparaissait de l'écran.                        */
+function compter0(champs) {
+  champs.forEach(function (t) { t.textContent = "0"; t.setAttribute("fill", "#a7b3c1"); });
+}
+function figerCompte(champs, at) {
+  ELEMS.forEach(function (e, i) {
+    if (!champs[i]) return;
+    champs[i].textContent = String(at[e.elem] || 0);
+    champs[i].setAttribute("fill", INK);
+  });
+}
+function comptePose(cote) {
+  /* ce que portent RÉELLEMENT les emplacements de ce côté, sphère par sphère */
+  var at = {};
+  ELEMS.forEach(function (e) { at[e.elem] = 0; });
+  sphereEn(cote).forEach(function (s) { at[s.elem] = (at[s.elem] || 0) + 1; });
+  return at;
+}
+function majBandeaux() {
+  var b = ETAT.bilan;
+  if (ETAT.reporte[ligneDe(b, "g")]) figerCompte(champsAv, compter(especes(b, "g")).at);
+  else figerCompte(champsAv, comptePose("g"));
+  if (ETAT.reporte[ligneDe(b, "d")]) figerCompte(champsAp, compter(especes(b, "d")).at);
+  else figerCompte(champsAp, comptePose("d"));
+  [["g", ETAT.molAv, badgeAv], ["d", ETAT.molAp, badgeAp]].forEach(function (x) {
+    var c = compter(especes(b, x[0]));
+    x[2].textContent = x[1][b]
+      ? c.ent + " entité" + (c.ent > 1 ? "s" : "") + " · " + c.mol +
+        " molécule" + (c.mol > 1 ? "s" : "")
+      : "compter les molécules";
+    x[2].setAttribute("fill", x[1][b] ? INK : GRIS);
+  });
+}
+
+/* La consigne : une cascade de `if` sur ETAT — une SEULE vérité. Elle décrit
+   toujours un geste que la page accepte (SKILL §11.2).                      */
+function consigne() {
+  var b = ETAT.bilan, bl = BILANS[b];
+  if (!ETAT.convention) return "Cliquer la carte « " + majuscule(MOT_CONV) +
+    " », à gauche : sans elle, on ne sait pas quelle sphère on prend.";
+  if (ETAT.phase === "reactifs") {
+    if (!membreComplet("g")) return "Construire les " + MOT_REACTIFS + " de « " +
+      bl.gauche + " » : prendre les sphères dans la boîte et les poser sur les " +
+      "emplacements du « " + bl.motAvant + " ».";
+    return "Compter les sphères et reporter la ligne « " + bl.motAvant + " ».";
+  }
+  if (peutRearranger()) return majuscule(MOT_REARR) + " : faire glisser les " +
+    "mêmes sphères vers les emplacements du « " + bl.motApres + " ».";
+  if (!ETAT.reporte[ligneDe(b, "d")]) return "Compter de nouveau et reporter la " +
+    "ligne « " + bl.motApres + " ».";
+  if (!ETAT.molAv[b] || !ETAT.molAp[b]) return "Compter les molécules : cliquer " +
+    "les deux bandeaux, sous les sous-mains.";
+  if (b + 1 < BILANS.length) return "Passer au bilan suivant : " +
+    BILANS[b + 1].gauche + ".";
+  if (!ETAT.compare) return "Comparer les " + N_LIG + " lignes du tableau : " +
+    "qu'est-ce qui a changé, qu'est-ce qui n'a pas changé ?";
+  if (!ETAT.range) return "Compter les sphères, les ranger dans la boîte et " +
+    "vérifier qu'il n'en manque aucune.";
+  return "Les atomes se conservent en nature et en nombre ; les molécules, non.";
+}
+var ETAPES = ["Convention de couleurs", "Réactifs du 1ᵉʳ bilan",
+              "Compter « avant »", "Réarranger les sphères",
+              "Compter « après » et les molécules", "Réactifs du 2ᵉ bilan",
+              "Réarranger et compter", "Comparer et ranger"];
+function faits() {
+  var r = ETAT.reporte;
+  return [ETAT.convention,
+          r[0] || (ETAT.bilan === 0 && membreComplet("g")),
+          r[0], r[1] || (ETAT.bilan === 0 && !peutRearranger() && ETAT.phase === "produits"),
+          r[1] && ETAT.molAv[0] && ETAT.molAp[0],
+          r[2] || (ETAT.bilan === 1 && membreComplet("g")),
+          r[3] && ETAT.molAv[1] && ETAT.molAp[1],
+          ETAT.compare && ETAT.range];
+}
+function construireEtapes() {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < ETAPES.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + ETAPES[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majBandeaux();
+  majProtocole();
+  majPanneaux();
+  dessiner();
+}
+function armer() {
+  var b = ETAT.bilan;
+  BOUTONS.construire.armer(ETAT.convention && ETAT.phase === "reactifs" &&
+                           !membreComplet("g"));
+  BOUTONS.compter.armer(!!coteACompter() &&
+    (coteACompter() === "g" ? membreComplet("g") : !peutRearranger()));
+  BOUTONS.rearranger.armer(ETAT.phase === "produits" && peutRearranger());
+  BOUTONS.suivant.armer(b + 1 < BILANS.length &&
+    ETAT.reporte[ligneDe(b, "g")] && ETAT.reporte[ligneDe(b, "d")] &&
+    ETAT.molAv[b] && ETAT.molAp[b]);
+  BOUTONS.comparer.armer(!ETAT.compare &&
+    ETAT.reporte.slice(0, N_LIG).every(function (x) { return x; }));
+  BOUTONS.ranger.armer(ETAT.compare && !ETAT.range);
+  gFleche.setAttribute("opacity", ETAT.phase === "produits" ? 1 : .35);
+  traitFleche.setAttribute("stroke",
+    ETAT.phase === "produits" && peutRearranger() ? GOLD : LIGNE);
+  motFleche.setAttribute("fill",
+    ETAT.phase === "produits" && peutRearranger() ? GOLD : LIGNE);
+}
+
+/* ==================================================================
+   24. LES PANNEAUX HTML
+   ================================================================== */
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.textContent = cells[i];
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function texteCompo(compo) {
+  var out = [], k;
+  for (k in compo) out.push(compo[k] + " " + (SYMBOLE[k] || "?"));
+  return out.join(" + ");
+}
+function construireHTML() {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E2AC-12") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · comptes calculés";
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+
+  $("eqCompte").textContent =
+    "compte(membre)  = Σ  coefficient(espèce) × composition(espèce)\n" +
+    "masse (membre)  = Σ  coefficient × composition × masse atomique\n" +
+    "écart(élément)  = compte(gauche) − compte(droite)\n" +
+    "                  > 0 : il RESTE des sphères · < 0 : il en MANQUE\n" +
+    "éléments comptés : " + ELEMS.map(function (e) {
+      return depouille(e.nom) + " (" + SYMBOLE[e.elem] + ")"; }).join(", ");
+  $("eqMat").textContent = BILANS.map(function (b, k) {
+    var g = b.espAvant.map(function (s) {
+      return s.n + " " + depouille(s.nom) + (s.formule ? " " + s.formule : "");
+    }).join("  +  ");
+    var d = b.espApres.map(function (s) {
+      return s.n + " " + depouille(s.nom) + (s.formule ? " " + s.formule : "");
+    }).join("  +  ");
+    return "bilan " + (k + 1) + " : " + g + "   →   " + d;
+  }).join("\n") + "\n" +
+    "les coefficients ci-dessus ne sont pas écrits : ils sont DÉDUITS des\n" +
+    "lignes du tableau de la fiche, espèces de formule connue servies d'abord.";
+  var inc = null;
+  BILANS.forEach(function (b) {
+    b.espApres.forEach(function (s) { if (s.deduite) inc = { b: b, s: s }; });
+  });
+  $("eqEau").textContent = inc
+    ? "atomes après (ligne " + (inc.b.apres + 1) + ") ....... " +
+      ELEMS.map(function (e) {
+        return inc.b.totApres[e.elem] + " " + SYMBOLE[e.elem]; }).join(", ") + "\n" +
+      "moins les espèces de formule connue ... " +
+      inc.b.espApres.filter(function (s) { return !s.deduite; })
+        .map(function (s) { return s.n + " × " + s.formule; }).join(", ") + "\n" +
+      "reste ................................. " +
+      texteCompo((function () {
+        var r = {}, k;
+        for (k in inc.s.compo) r[k] = inc.s.compo[k] * inc.s.n;
+        return r;
+      })()) + "\n" +
+      "pgcd → " + inc.s.n + " molécules identiques de " + texteCompo(inc.s.compo) +
+      "  = « " + depouille(inc.s.nom) + " »\n" +
+      "la fiche n'en donne AUCUNE formule : la page ne l'écrit donc pas."
+    : "Aucune espèce déduite : la fiche donne toutes les formules.";
+  $("eqMasse").textContent = BILANS.map(function (b, k) {
+    var a = compter(b.espAvant), p = compter(b.espApres);
+    return "bilan " + (k + 1) + " :  réactifs " + nb(a.m, 3) + " g/mol   " +
+           "produits " + nb(p.m, 3) + " g/mol   écart " +
+           (Math.abs(a.m - p.m) < 1e-9 ? "0" : sci(Math.abs(a.m - p.m), 2)) + " g/mol";
+  }).join("\n") + "\n" +
+    "ce n'est pas une coïncidence : les deux sommes portent LES MÊMES atomes.\n" +
+    "balayage de tous les jeux de coefficients de 0 à " + COEF_MAX + " : la masse\n" +
+    "se conserve EXACTEMENT quand les atomes se conservent, sans exception.";
+
+  var ct = $("capotConst");
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  Object.keys(PHYS).forEach(function (c) {
+    var p = PHYS[c];
+    ct.appendChild(ligneTab([p.n, nb(p.v, p.v < 10 ? 3 : 0) + " " + p.u, p.s]));
+  });
+  ELEMS.forEach(function (e) {
+    ct.appendChild(ligneTab(["grosseur relative de la sphère " + du(e.nom) +
+      ", DÉDUITE", nb(grosseurDe(e.elem), 3) + " ×",
+      "moyenne du rapport des rayons covalents et de van der Waals à ceux du " +
+      "carbone ; sert au DESSIN seulement"]));
+  });
+  $("capotSrc").innerHTML =
+    "Aucune de ces valeurs n'a été retouchée pour faire tomber le résultat de " +
+    "la fiche — et il n'y avait rien à retoucher : un compte d'atomes est un " +
+    "compte d'entiers. Les rayons et le seuil de forme ne servent qu'au " +
+    "<b>dessin</b> ; l'écart entre le modèle et les douze cellules du tableau " +
+    "est de <b>0 atome</b>.";
+
+  construireEtapes();
+  construireProtocole();
+  construireSeance();
+  construireGrapheAtomes();
+  construireGrapheMasse();
+  majCompteurCellules();
+}
+/* Les curseurs de coefficient, RECONSTRUITS à chaque bilan : il y en a
+   exactement autant que d'espèces sur la scène, et chacun agit. Un curseur
+   qui ne ferait rien serait pire qu'un curseur absent (SKILL §12.5).
+   ⚠ SKILL §12.12 : `min="0"`, `step="1"`, valeur ENTIÈRE — toujours sur la
+   grille des pas. */
+function construireCoefs() {
+  var d = $("coefs"), b = ETAT.bilan;
+  if (!d) return;
+  vide(d);
+  [["g", BILANS[b].espAvant], ["d", BILANS[b].espApres]].forEach(function (x) {
+    x[1].forEach(function (s, i) {
+      var hp = COEF[b][x[0]][i] !== COEF_PROTO[b][x[0]][i];
+      var w = document.createElement("div");
+      w.className = "reg" + (hp ? " hp" : "");
+      w.innerHTML =
+        '<label for="rc-' + x[0] + i + '">' +
+        (x[0] === "g" ? "réactif" : "produit") + " · " + md(s.nom) +
+        (s.formule ? " " + md(s.formule) : "") + '</label>' +
+        '<output id="oc-' + x[0] + i + '">' + COEF[b][x[0]][i] + " × </output>" +
+        '<input type="range" id="rc-' + x[0] + i + '" min="0" max="' + COEF_MAX +
+        '" step="1" value="' + COEF[b][x[0]][i] + '">';
+      d.appendChild(w);
+      w.querySelector("input").addEventListener("input", function (e) {
+        reglerCoef(x[0], i, +e.target.value);
+      });
+    });
+  });
+  var p = document.createElement("div");
+  p.className = "src";
+  p.innerHTML = "Prescrits par la fiche : " +
+    BILANS[b].espAvant.map(function (s, i) {
+      return COEF_PROTO[b].g[i] + " " + md(s.nom); }).join(" + ") + " → " +
+    BILANS[b].espApres.map(function (s, i) {
+      return COEF_PROTO[b].d[i] + " " + md(s.nom); }).join(" + ") +
+    " — <b>déduits</b> des lignes du tableau, jamais écrits.";
+  d.appendChild(p);
+}
+/* Un coefficient PÉRIME le montage : les emplacements changent, et laisser les
+   sphères où elles sont afficherait un montage qui ne correspond plus à
+   l'équation dessinée (SKILL §12.19). */
+function reglerCoef(cote, i, v) {
+  var b = ETAT.bilan;
+  v = Math.round(borne(v, 0, COEF_MAX));
+  if (COEF[b][cote][i] === v) return;
+  COEF[b][cote][i] = v;
+  perimer();
+}
+function cyclerCoef(cote, i) {
+  var b = ETAT.bilan;
+  if (!COEF[b] || COEF[b][cote][i] === undefined) return;
+  reglerCoef(cote, i, (COEF[b][cote][i] + 1) % (COEF_MAX + 1));
+}
+function majCarnet() {
+  var b = ETAT.bilan, t = $("carnet");
+  var a = compter(especes(b, "g")), p = compter(especes(b, "d")), e = ecarts(b);
+  vide(t);
+  t.appendChild(ligneTab(["Grandeur", "Valeur", "D'où elle sort"], true));
+  ELEMS.forEach(function (x) {
+    var v = e[x.elem];
+    t.appendChild(ligneTab([
+      "Atomes " + du(depouille(x.nom).toLowerCase()) + " (" + SYMBOLE[x.elem] + ")",
+      (a.at[x.elem] || 0) + " avant · " + (p.at[x.elem] || 0) + " après" +
+        (v ? "  (" + (v > 0 ? "+" : "") + v + ")" : ""),
+      v === 0 ? "les deux membres portent le même nombre"
+              : (v > 0 ? v + " sphère(s) restent sur la table"
+                       : (-v) + " sphère(s) manquent aux produits")]));
+  });
+  t.appendChild(ligneTab(["Entités", a.ent + " → " + p.ent,
+    "un atome seul est une entité, pas une molécule"]));
+  t.appendChild(ligneTab(["Molécules", a.mol + " → " + p.mol,
+    a.mol === p.mol ? "autant de part et d'autre, mais ce ne sont pas les mêmes"
+                    : "les molécules, elles, ne se conservent pas"]));
+  t.appendChild(ligneTab(["Masse des réactifs", nb(a.m, 3) + " g/mol",
+    "Σ atomes × masse atomique (IUPAC 2021)"]));
+  t.appendChild(ligneTab(["Masse des produits", nb(p.m, 3) + " g/mol",
+    "la même somme, sur les mêmes atomes"]));
+  t.appendChild(ligneTab(["Écart de masse",
+    (Math.abs(a.m - p.m) < 1e-9 ? "0" : nb(Math.abs(a.m - p.m), 3)) + " g/mol",
+    equilibree(b) ? "nul parce que les atomes se conservent"
+                  : "non nul parce que les atomes ne se conservent pas"]));
+  t.appendChild(ligneTab(["Verdict du compte", equilibree(b) ? "équilibrée"
+    : "déséquilibrée", phraseEcart(b)]));
+  t.appendChild(ligneTab(["Sphères sorties de la boîte",
+    CONVENTION.map(function (c) { return (ETAT.prises[c.elem] || 0) + " " + c.mot; })
+      .join(", "), "cumul de la séance, couleur par couleur"]));
+  t.appendChild(ligneTab(["Sphères remises dans la boîte",
+    CONVENTION.map(function (c) { return (ETAT.rendues[c.elem] || 0) + " " + c.mot; })
+      .join(", "), "l'inventaire de la restitution"]));
+  t.appendChild(ligneTab(["Créées / détruites depuis le report",
+    ETAT.cree + " / " + ETAT.detruit,
+    ETAT.cree || ETAT.detruit
+      ? "la règle du jeu n'a pas été tenue"
+      : "aucune : ce sont les mêmes sphères qui ont été réarrangées"]));
+  t.appendChild(ligneTab(["Sur la table / sur les produits",
+    sphereEn("g").length + " / " + sphereEn("d").length,
+    "ce que les emplacements portent réellement"]));
+}
+function majLectures() {
+  function set(id, v, cl) {
+    var n = $(id); if (!n) return;
+    n.textContent = v; n.className = "v" + (cl ? " " + cl : "");
+  }
+  var b = ETAT.bilan, a = compter(especes(b, "g")), p = compter(especes(b, "d"));
+  var eq = equilibree(b);
+  function ligne(c) {
+    return ELEMS.map(function (e) {
+      return (SYMBOLE[e.elem] || "?") + " " + (c.at[e.elem] || 0); }).join(" · ");
+  }
+  set("lAv", ligne(a));
+  set("lAp", ligne(p), eq ? "" : "ko");
+  set("lEnt", a.ent + " → " + p.ent);
+  set("lMol", a.mol + " → " + p.mol);
+  set("lMR", isFinite(a.m) ? nb(a.m, 3) + " g/mol" : "—", isFinite(a.m) ? "" : "off");
+  set("lMP", isFinite(p.m) ? nb(p.m, 3) + " g/mol" : "—", eq ? "" : "ko");
+  set("lTable", sphereEn("g").length + " · " + sphereEn("d").length,
+      sphereEn("g").length + sphereEn("d").length ? "" : "off");
+  set("lVerdict", eq ? "équilibrée" : "déséquilibrée", eq ? "ok" : "ko");
+  $("etatSysteme").textContent = BILANS[b].gauche + " · " +
+    (ETAT.phase === "reactifs" ? "on monte les " + MOT_REACTIFS
+                               : "boîte fermée");
+}
+function majPanneaux() { majCarnet(); majLectures(); majGrapheAtomes(); majGrapheMasse(); }
+
+/* ---- graphe : les atomes de chaque sorte, avant et après ---- */
+var gA = {};
+function construireGrapheAtomes() {
+  var g = $("gAtomes"), X0 = 34, X1 = 350, Y0 = 12, Y1 = 150;
+  vide(g);
+  g.appendChild(el("line", { x1: X0, y1: Y1, x2: X1, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  gA.corps = g.appendChild(el("g", {}));
+  gA.lab = g.appendChild(el("text", { x: X0 - 20, y: 176, "font-size": 9.5,
+    fill: GRIS }, ""));
+  gA.b = { X0: X0, X1: X1, Y0: Y0, Y1: Y1 };
+}
+function majGrapheAtomes() {
+  var b = gA.b, bi = ETAT.bilan, g = gA.corps, i;
+  var a = compter(especes(bi, "g")).at, p = compter(especes(bi, "d")).at;
+  var hi = 1;
+  ELEMS.forEach(function (e) {
+    hi = Math.max(hi, a[e.elem] || 0, p[e.elem] || 0);
+  });
+  vide(g);
+  var n = Math.max(1, ELEMS.length), pas = (b.X1 - b.X0) / n, lb = Math.min(26, pas / 3);
+  ELEMS.forEach(function (e, i) {
+    var x = b.X0 + i * pas + pas / 2, va = a[e.elem] || 0, vp = p[e.elem] || 0;
+    var conv = convDe(e.elem);
+    function barre(cx, v, hach) {
+      var h = (b.Y1 - b.Y0) * v / hi;
+      g.appendChild(el("rect", { x: cx - lb / 2, y: b.Y1 - h, width: lb, height: h,
+        rx: 2, fill: hach ? "url(#hachure)" : (conv ? conv.fond : GRIS),
+        stroke: conv ? conv.bord : GRIS, "stroke-width": 1.2 }));
+      g.appendChild(el("text", { x: cx, y: b.Y1 - h - 4, "text-anchor": "middle",
+        "font-size": 10.5, "font-weight": "bold", fill: INK }, String(v)));
+    }
+    barre(x - lb * 0.62, va, false);
+    barre(x + lb * 0.62, vp, vp > va);
+    if (va !== vp) {
+      var hv = (b.Y1 - b.Y0) * Math.max(va, vp) / hi;
+      g.appendChild(el("text", { x: x, y: b.Y1 - hv - 17, "text-anchor": "middle",
+        "font-size": 10.5, "font-weight": "bold", fill: ORANGE },
+        (va > vp ? "+" : "") + (va - vp)));
+    }
+    g.appendChild(el("text", { x: x, y: b.Y1 + 13, "text-anchor": "middle",
+      "font-size": 10, fill: GRIS }, depouille(e.nom)));
+    g.appendChild(el("text", { x: x - lb * 0.62, y: b.Y1 + 24, "text-anchor": "middle",
+      "font-size": 8.5, fill: "#a7b3c1" }, "av"));
+    g.appendChild(el("text", { x: x + lb * 0.62, y: b.Y1 + 24, "text-anchor": "middle",
+      "font-size": 8.5, fill: "#a7b3c1" }, "ap"));
+  });
+  gA.lab.textContent = equilibree(ETAT.bilan)
+    ? "les deux barres sont égales sur chaque élément : les atomes se conservent"
+    : depouille(phraseEcart(ETAT.bilan));
+  gA.lab.setAttribute("fill", equilibree(ETAT.bilan) ? VERT : ORANGE);
+}
+/* ---- graphe : la masse molaire des deux membres — le pont avec E2AC-11 ---- */
+var gM = {};
+function construireGrapheMasse() {
+  var g = $("gMasse"), X0 = 34, X1 = 350, Y0 = 10, Y1 = 88;
+  vide(g);
+  g.appendChild(el("line", { x1: X0, y1: Y1, x2: X1, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  gM.corps = g.appendChild(el("g", {}));
+  gM.lab = g.appendChild(el("text", { x: X0 - 20, y: 116, "font-size": 9.5,
+    fill: GRIS }, ""));
+  gM.b = { X0: X0, X1: X1, Y0: Y0, Y1: Y1 };
+}
+function majGrapheMasse() {
+  var b = gM.b, bi = ETAT.bilan, g = gM.corps;
+  var mr = compter(especes(bi, "g")).m, mp = compter(especes(bi, "d")).m;
+  var hi = Math.max(1e-6, mr, mp), eq = Math.abs(mr - mp) < 1e-9;
+  vide(g);
+  [["réactifs", mr, INK], ["produits", mp, eq ? INK : ORANGE]].forEach(function (x, i) {
+    var w = (b.X1 - b.X0) * 0.32, cx = b.X0 + (b.X1 - b.X0) * (i ? 0.68 : 0.28);
+    var h = (b.Y1 - b.Y0) * (isFinite(x[1]) ? x[1] / hi : 0);
+    g.appendChild(el("rect", { x: cx - w / 2, y: b.Y1 - h, width: w, height: h,
+      rx: 3, fill: x[2], opacity: .82 }));
+    g.appendChild(el("text", { x: cx, y: b.Y1 - h - 4, "text-anchor": "middle",
+      "font-size": 11, "font-weight": "bold", fill: x[2] },
+      isFinite(x[1]) ? nb(x[1], 3) + " g/mol" : "—"));
+    g.appendChild(el("text", { x: cx, y: b.Y1 + 13, "text-anchor": "middle",
+      "font-size": 10, fill: GRIS }, x[0]));
+  });
+  gM.lab.textContent = !MASSES_CONNUES
+    ? "un élément de la fiche n'a pas de masse molaire dans PHYS : la page ne l'invente pas"
+    : (eq ? "même masse des deux côtés — parce que ce sont les mêmes atomes"
+          : "écart de " + nb(Math.abs(mr - mp), 3) +
+            " g/mol : les atomes ne se conservent pas, la masse non plus");
+  gM.lab.setAttribute("fill", eq && MASSES_CONNUES ? VERT : ORANGE);
+}
+
+/* ==================================================================
+   25. L'HORLOGE — celle de la SÉANCE, et elle seule
+   ==================================================================
+   Il n'y a pas de temps dans ce modèle : une réaction MODÉLISÉE n'a pas de
+   vitesse, rien ne s'intègre, et la page n'a donc pas de sélecteur de
+   vitesse. Le minuteur de séance, lui, court en temps RÉEL : il mesure ce que
+   la manipulation coûte à l'enseignant. Il SURVIT à « Recommencer » — la
+   séance ne se rembobine pas (SKILL §5.4, §11.6).                           */
+var DERNIER = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 250);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance() {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    " · " + (MIN_RELEVE === null
+      ? "aucun instant de relevé dans la fiche : une modélisation n'attend rien"
+      : "relevé à " + MIN_RELEVE + " min");
+  majSeance();
+}
+
+/* ==================================================================
+   26. LES COMMANDES HTML ET LA REMISE À ZÉRO
+   ================================================================== */
+/* Un coefficient périme le montage : les emplacements changent, et laisser
+   les sphères où elles sont afficherait un montage qui ne correspond plus à
+   l'équation dessinée. Le minuteur de séance, lui, survit.                  */
+function perimer() {
+  var avait = ETAT.nCell > 0 || ETAT.spheres.length > 0 || ETAT.convention;
+  var seance = ETAT.tSeance;
+  purger();
+  effacerCibles();
+  effacerGuide();
+  prise = null;
+  ETAT.spheres.slice().forEach(function (s) {
+    if (s.g.parentNode) s.g.parentNode.removeChild(s.g);
+  });
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  ETAT.horsProto = horsProtocole();
+  boiteOuverte(true);
+  majConvention();
+  poserScene();
+  compter0(champsAv); compter0(champsAp);
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  ACTES.forEach(function (a) { BOUTONS[a].neuf(); });
+  if (avait) {
+    noter("Un coefficient a changé : le montage est défait et le tableau " +
+          "redevient vierge. Le compte, lui, continue — c'est là qu'on voit " +
+          "où l'atome manque.", false);
+  }
+  armer(); avancer();
+}
+function brancherCommandes() {
+  /* Le guide MONTRE, il n'exécute pas : il n'a rien à défaire. */
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("bProto").addEventListener("click", function () {
+    revenirAuProtocole();
+    perimer();
+    noter("Coefficients du protocole rétablis : " + BILANS.map(function (b, i) {
+      return b.espAvant.map(function (s, j) { return COEF_PROTO[i].g[j]; }).join("+") +
+             "→" + b.espApres.map(function (s, j) { return COEF_PROTO[i].d[j]; }).join("+");
+    }).join(" · ") + ".", true);
+  });
+  $("rezero").addEventListener("click", recommencer);
+}
+
+/* ==================================================================
+   27. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux coefficients : on refait la même
+   modélisation dans les mêmes conditions. Le minuteur de séance SURVIT.     */
+function recommencer() {
+  var seance = ETAT.tSeance || 0;
+  succes();                    /* un refus ne survit pas a la remise en etat */
+  purger();
+  effacerCibles();
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  prise = null;
+  ETAT.spheres.slice().forEach(function (s) {
+    if (s.g.parentNode) s.g.parentNode.removeChild(s.g);
+  });
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  ETAT.horsProto = horsProtocole();
+  boiteOuverte(true);
+  majConvention();
+  poserScene();
+  compter0(champsAv); compter0(champsAp);
+  ACTES.forEach(function (a) { BOUTONS[a].neuf(); });
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  majSeance();
+  noter("Paillasse remise en état. La boîte est pleine, les deux sous-mains " +
+        "sont vides, et la convention reste à rappeler.", false);
+  armer(); avancer();
+}
+
+/* ==================================================================
+   28. LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste : retirer une sphère d'un
+      emplacement ramène de l'étape 3 à l'étape 2.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire.                                                          */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+/* ⚠ On vise par `data-act`, jamais par un `id` : un `id` de `<defs>` volerait
+   le sélecteur et rendrait un dégradé, qui n'a pas de boîte (SKILL §12bis.3-4). */
+function surlignerActe(act, marge) {
+  var n = svg.querySelector('[data-act="' + act + '"]'), b = boiteSVG(n), m = marge || 8;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+function surlignerZone(z) {
+  halo(z.x0 - 6, z.y0 - 6, z.x1 - z.x0 + 12, z.y1 - z.y0 + 12, 16);
+}
+/* Surligner les emplacements qui attendent encore une sphère : c'est ce que
+   le guide a de plus utile à montrer, et c'est calculé, pas dessiné d'avance. */
+function surlignerSitesLibres(cote) {
+  var n = 0;
+  SITES[cote].sites.forEach(function (x) {
+    if (x.occ || n >= 6) return;
+    n++;
+    halo(x.x - x.r - 7, x.y - x.r - 7, 2 * (x.r + 7), 2 * (x.r + 7), x.r + 7);
+  });
+  return n;
+}
+function surlignerCompartiments() {
+  var n = 0;
+  SITES.g.sites.forEach(function (x) {
+    if (x.occ) return;
+    var c = caseDe(x.elem);
+    if (c && n < 4) { n++; halo(c.x - 34, c.y - 30, 68, 60, 10); }
+  });
+  return n;
+}
+
+/* Les étapes de la fiche, chacune avec son prédicat « faite » et ce que le
+   guide montre. L'ordre suit le protocole ; les prédicats, eux, LISENT
+   l'état — les deux ne se recopient pas.
+   ⚠ Une étape NON FAITE doit toujours montrer quelque chose (SKILL §12bis.4). */
+var GUIDE = [
+  /* 1 — rappeler la convention de couleurs */
+  { fait: function () { return ETAT.convention; },
+    aide: "Cliquer la carte <b>« " + majuscule(MOT_CONV) + " »</b>, dans la " +
+          "colonne de gauche : elle nomme les trois sphères.",
+    montre: function () { surlignerActe("convention", 6); } },
+  /* 2 — construire les réactifs du premier bilan */
+  { fait: function () {
+      return ETAT.reporte[BILANS[0].avant] ||
+             (ETAT.bilan === 0 && ETAT.phase === "reactifs" && membreComplet("g"));
+    },
+    aide: function () {
+      if (ETAT.bilan !== 0) return "Le premier bilan est fait.";
+      var n = SITES.g.sites.filter(function (x) { return !x.occ; }).length;
+      return n ? "Prendre les sphères dans la <b>boîte</b> et les poser sur les " +
+                 n + " emplacement" + (n > 1 ? "s libres" : " libre") +
+                 " du « " + BILANS[0].motAvant + " »."
+               : "Les " + MOT_REACTIFS + " sont montés.";
+    },
+    montre: function () {
+      surlignerCompartiments(); surlignerSitesLibres("g");
+      surlignerBouton("construire");
+    } },
+  /* 3 — compter les sphères et reporter la ligne « avant » */
+  { fait: function () { return ETAT.reporte[BILANS[0].avant]; },
+    aide: "Presser <b>« Compter et reporter »</b> : la ligne « " +
+          BILANS[0].motAvant + " » du tableau. La boîte se fermera aussitôt.",
+    montre: function () { surlignerBouton("compter"); surlignerZone(ZAV); } },
+  /* 4 — réarranger les mêmes sphères */
+  { fait: function () {
+      return ETAT.reporte[BILANS[0].apres] ||
+             (ETAT.bilan === 0 && ETAT.phase === "produits" && !peutRearranger());
+    },
+    aide: function () {
+      if (ETAT.bilan !== 0) return "Le premier bilan est fait.";
+      var n = sphereEn("g").length;
+      return n ? "Faire glisser les <b>mêmes " + n + " sphères</b> vers les " +
+                 "emplacements du « " + BILANS[0].motApres + " » — la flèche " +
+                 "les y porte toutes d'un coup."
+               : "Le réarrangement est fait.";
+    },
+    montre: function () {
+      surlignerActe("rearranger", 4); surlignerSitesLibres("d");
+      surlignerBouton("rearranger");
+    } },
+  /* 5 — compter de nouveau et remplir la ligne « après » */
+  { fait: function () { return ETAT.reporte[BILANS[0].apres]; },
+    aide: "Presser <b>« Compter et reporter »</b> : la ligne « " +
+          BILANS[0].motApres + " ». Les mêmes sphères, autrement assemblées.",
+    montre: function () { surlignerBouton("compter"); surlignerZone(ZAP); } },
+  /* 6 — compter le nombre de molécules avant, puis après */
+  { fait: function () { return ETAT.molAv[0] && ETAT.molAp[0]; },
+    aide: function () {
+      return !ETAT.molAv[0]
+        ? "Cliquer le <b>bandeau de gauche</b> pour compter les entités et les " +
+          "molécules du « " + BILANS[0].motAvant + " »."
+        : "Cliquer le <b>bandeau de droite</b> : les molécules du « " +
+          BILANS[0].motApres + " ».";
+    },
+    montre: function () {
+      surlignerActe(ETAT.molAv[0] ? "mol-apres" : "mol-avant", 5);
+    } },
+  /* 7 — deuxième bilan : passer au bilan, puis construire les réactifs */
+  { fait: function () {
+      return (BILANS.length < 2) ||
+             ETAT.reporte[BILANS[1].avant] ||
+             (ETAT.bilan === 1 && ETAT.phase === "reactifs" && membreComplet("g"));
+    },
+    aide: function () {
+      if (ETAT.bilan === 0) return "Presser <b>« Passer au bilan suivant »</b> : " +
+        BILANS[1].bilan + ".";
+      var n = SITES.g.sites.filter(function (x) { return !x.occ; }).length;
+      return n ? "Construire les " + MOT_REACTIFS + " du second bilan : " + n +
+                 " sphère" + (n > 1 ? "s" : "") + " à prendre dans la boîte."
+               : "Les " + MOT_REACTIFS + " sont montés.";
+    },
+    montre: function () {
+      if (ETAT.bilan === 0) { surlignerBouton("suivant"); return; }
+      surlignerCompartiments(); surlignerSitesLibres("g");
+      surlignerBouton("construire");
+    } },
+  /* 8 — compter les sphères et remplir la ligne « avant » du second bilan */
+  { fait: function () { return BILANS.length < 2 || ETAT.reporte[BILANS[1].avant]; },
+    aide: "Presser <b>« Compter et reporter »</b> : la ligne « " +
+          (BILANS[1] ? BILANS[1].motAvant : "avant") + " » du second bilan.",
+    montre: function () { surlignerBouton("compter"); surlignerZone(ZAV); } },
+  /* 9 — réarranger sans rien ajouter ni retirer */
+  { fait: function () {
+      return BILANS.length < 2 || ETAT.reporte[BILANS[1].apres] ||
+             (ETAT.bilan === 1 && ETAT.phase === "produits" && !peutRearranger());
+    },
+    aide: function () {
+      var n = ETAT.bilan === 1 ? sphereEn("g").length : 0;
+      return n ? "Réarranger les <b>mêmes " + n + " sphères</b> ; à la fin, " +
+                 "aucune ne doit rester sur la table et aucune ne doit manquer."
+               : "Le réarrangement est fait.";
+    },
+    montre: function () {
+      surlignerActe("rearranger", 4); surlignerSitesLibres("d");
+      surlignerBouton("rearranger");
+    } },
+  /* 10 — nommer les molécules obtenues, les compter, remplir la ligne « après » */
+  { fait: function () {
+      return BILANS.length < 2 ||
+             (ETAT.reporte[BILANS[1].apres] && ETAT.molAv[1] && ETAT.molAp[1]);
+    },
+    aide: function () {
+      if (BILANS.length > 1 && !ETAT.reporte[BILANS[1].apres])
+        return "Presser <b>« Compter et reporter »</b> : la ligne « " +
+               BILANS[1].motApres + " ». Les noms des molécules obtenues sont " +
+               "écrits sous chaque modèle.";
+      return !ETAT.molAv[1]
+        ? "Cliquer le <b>bandeau de gauche</b> pour compter les molécules."
+        : "Cliquer le <b>bandeau de droite</b> pour compter celles des " +
+          MOT_PRODUITS + ".";
+    },
+    montre: function () {
+      if (BILANS.length > 1 && !ETAT.reporte[BILANS[1].apres]) {
+        surlignerBouton("compter"); surlignerZone(ZAP); return;
+      }
+      surlignerActe(ETAT.molAv[1] ? "mol-apres" : "mol-avant", 5);
+    } },
+  /* 11 — comparer les quatre lignes */
+  { fait: function () { return ETAT.compare; },
+    aide: "Presser <b>« Comparer les " + N_LIG + " lignes »</b> : qu'est-ce qui " +
+          "a changé, qu'est-ce qui n'a pas changé ?",
+    montre: function () { surlignerBouton("comparer"); } },
+  /* 12 — compter les sphères, ranger la boîte, vérifier qu'il n'en manque aucune */
+  { fait: function () { return ETAT.range; },
+    aide: "Presser <b>« Ranger la boîte et la compter »</b> : la page compare " +
+          "ce qui en est sorti à ce qui y rentre, couleur par couleur.",
+    montre: function () { surlignerBouton("ranger"); surlignerActe("prendre-" +
+      sansAccent(CONVENTION[0] ? CONVENTION[0].elem : ""), 6); } }
+];
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, premier usage de cette
+   page en classe. On agrandit le CADRE, pas la mise en page.             */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. rappeler la convention de couleurs — un clic sur la carte, pas un
+     bouton de scène : c'est elle qui nomme les trois sphères, et sans elle la
+     boîte refuse de s'ouvrir. */
+  function () { rappelerConvention(); return 380; },
+
+  /* 2. construire les réactifs du premier bilan. `construireReactifs()` est la
+     fonction du geste lui-même : elle boucle sur `prendreSphere()`, celle
+     qu'appelle le glisser depuis la boîte, emplacement par emplacement. */
+  function () { presserBouton("construire"); return 520; },
+
+  /* 3. compter les sphères et reporter la ligne « avant ». C'est ce geste qui
+     FERME la boîte : à partir de là, plus rien n'entre ni ne sort. */
+  function () { presserBouton("compter"); return 460; },
+
+  /* 4. réarranger les MÊMES sphères. Le bouton double le glisser d'un
+     sous-main à l'autre et passe par `placerSurSite()`, exactement comme la
+     main de l'élève. Aucune sphère n'est créée : le carnet le vérifie. */
+  function () { presserBouton("rearranger"); return 560; },
+
+  /* 5. compter de nouveau et remplir la ligne « après » */
+  function () { presserBouton("compter"); return 460; },
+
+  /* 6. compter le nombre de molécules avant, puis après — deux clics sur les
+     deux bandeaux. La fiche compte des ENTITÉS : un atome de carbone seul
+     n'est pas une molécule, et la page le dit. */
+  function () {
+    if (!ETAT.molAv[ETAT.bilan]) { compterMolecules("g"); return 420; }
+    compterMolecules("d");
+    return 420;
+  },
+
+  /* 7. deuxième bilan : passer au bilan, puis construire ses réactifs. Le
+     passage rend les sphères du premier à la boîte et la rouvre — la règle du
+     jeu vaut À L'INTÉRIEUR d'un bilan, c'est elle qui modélise la réaction. */
+  function () {
+    if (ETAT.bilan === 0) { presserBouton("suivant"); return 520; }
+    presserBouton("construire");
+    return 620;
+  },
+
+  /* 8. compter les sphères et remplir la ligne « avant » du second bilan */
+  function () { presserBouton("compter"); return 460; },
+
+  /* 9. réarranger sans rien ajouter ni retirer : neuf sphères traversent */
+  function () { presserBouton("rearranger"); return 680; },
+
+  /* 10. nommer les molécules obtenues, les compter, puis remplir la ligne
+     « après ». Les noms sont écrits sous chaque modèle par la scène ; il
+     reste à reporter, puis à compter les molécules des deux côtés. */
+  function () {
+    if (!ETAT.reporte[BILANS[ETAT.bilan].apres]) {
+      presserBouton("compter");
+      return 460;
+    }
+    if (!ETAT.molAv[ETAT.bilan]) { compterMolecules("g"); return 420; }
+    compterMolecules("d");
+    return 420;
+  },
+
+  /* 11. comparer les quatre lignes du tableau */
+  function () { presserBouton("comparer"); return 520; },
+
+  /* 12. compter les sphères, les ranger et vérifier qu'il n'en manque aucune.
+     C'est un vrai inventaire : la page compare ce qui est sorti de la boîte à
+     ce qui y rentre, couleur par couleur. */
+  function () { presserBouton("ranger"); return 520; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   29. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ajouterDefs();
+  ajouterCouches();
+  ETAT = neufEtat();
+
+  if (!PRET) {
+    /* La page ne montre RIEN plutôt que de montrer un modèle faux. */
+    construireDecor();
+    txt("avant", W / 2, H / 2,
+        "Bilans illisibles dans le protocole : aucun modèle à construire.",
+        { taille: 17, couleur: GRIS });
+    $("consigne").textContent =
+      "Le protocole de la fiche ne porte aucun bilan lisible — rien n'est inventé.";
+    return;
+  }
+
+  construireDecor();
+  construireZones();
+  construireBoite();
+  construireConvention();
+  construireRegle();
+  construireBoutons();
+  brancherPrise();
+  brancherBoutons();
+
+  construireHTML();
+  brancherCommandes();
+  recommencer();
+  demarrerHorloge();
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

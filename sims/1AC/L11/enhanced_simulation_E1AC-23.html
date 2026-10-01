@@ -1,0 +1,3074 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-23 · Homogène ou hétérogène ?</title>
+
+<!--
+  ===================================================================
+  E1AC-23 · 1AC · L11 — PAILLASSE VIRTUELLE
+  « Un solide et un liquide : quand distingue-t-on encore les constituants ? »
+  ===================================================================
+
+  CE QUE CETTE PAGE EST
+  ---------------------
+  Une paillasse qu'on MANIPULE, dont le verdict est CALCULÉ, et dont chaque
+  étape se voit se FAIRE.
+
+  · On manipule : les quatre cuillerées de solide se prennent sur l'étagère et
+    se versent dans le bécher qu'on veut. L'éprouvette graduée verse l'eau,
+    l'agitateur en verre plonge dans un bécher, la pissette le rince. Les
+    boutons de scène ne servent qu'aux gestes que le protocole fait d'un seul
+    coup, et chacun DOUBLE un glisser qui reste possible.
+
+  · LE VERDICT DÉPEND DE CE QU'ON A MIS, PAS D'UNE ÉTIQUETTE. On peut verser
+    le sable dans le bécher du sucre : c'est alors le bécher du sucre qui
+    devient hétérogène, et le tableau de la fiche cesse d'être renseigné parce
+    qu'on n'a plus fait l'expérience prescrite. Rien dans cette page ne lit le
+    nom d'un bécher pour décider de son aspect.
+
+  · On calcule, et par deux modèles qui ne se ressemblent pas :
+      – la SOLUBILITÉ décide de ce qui disparaît. Chaque solide porte sa
+        solubilité dans l'eau à 20 °C ; la masse dissoute vaut
+        min(masse versée, solubilité × volume). Ce qui reste est encore là.
+      – la LOI DE STOKES décide de ce qu'on voit du reste. Un grain tombe à
+        v = (ρ_solide − ρ_eau)·g·d² / (18·η) ; en deux minutes de repos, un
+        grain de sable fin parcourt 4,3 m — il est au fond depuis longtemps —
+        alors qu'une particule d'argile de 2 µm ne descend que de 0,4 mm : elle
+        reste en suspension, et c'est elle qui trouble l'eau.
+    Le NOMBRE DE PHASES sort de là, et le classement homogène / hétérogène
+    sort du nombre de phases. Aucune ligne du tableau n'est écrite.
+
+  · LE REPOS COMPTE, ET LA PAGE LE MONTRE. Le curseur « temps de repos » part
+    des deux minutes de la fiche. À cinq secondes, le sable n'est pas encore
+    tombé et l'on classerait *eau + sable* parmi les mélanges homogènes :
+    c'est exactement l'erreur que l'interprétation de la fiche signale.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau et conclusion viennent de
+    `valise/curriculum/experiences.yaml`, entrée E1AC-23. Ils ne sont PAS
+    recopiés : le bloc `DONNEES` est régénéré par `_sync_donnees.py`.
+  · Les quatre solides et le témoin sont LUS dans les lignes du tableau
+    (« Eau + sel », « Eau seule (témoin) »…), le volume d'eau et la durée de
+    repos dans le protocole. Un solide que la page ne connaîtrait pas serait
+    DIT comme tel, pas deviné.
+  · Les solubilités, les masses volumiques, les tailles de grain et la
+    viscosité de l'eau vivent dans `PHYS`, chacune avec sa provenance.
+
+  CE QUE LA FICHE NE DONNE PAS, ET QUI EST DIT
+  --------------------------------------------
+  La masse d'« une cuillère ». Elle est réglable, à 5,0 g par défaut — une
+  cuillère de laboratoire rase —, et le verdict de la fiche tient sur tout
+  l'intervalle 1 à 17 g pour le sel : la marge est de plus du triple de la
+  valeur retenue, très au-delà des 25 % qu'exige le SKILL §12.3. Au-delà de
+  18 g, le sel ne se dissout plus entièrement dans 50 mL, et la page le montre
+  au lieu de le cacher — c'est la leçon suivante.
+
+  CE QU'ELLE N'EST PAS
+  --------------------
+  · Elle est AUTONOME : ni `generer.py`, ni `moteur.js`, ni
+    `simulation.html.j2`, et elle ne s'ouvre pas depuis `index.html`. Elle
+    DOUBLE `simulation_E1AC-23.html`, elle ne la remplace pas.
+  · Elle n'a pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL : on
+    cherche qu'un bécher se reconnaisse comme un bécher.
+  · Le dessin est un schéma habillé. Sont à l'échelle : la hauteur d'eau dans
+    les béchers, qui suit le volume versé, et le niveau du dépôt, qui suit la
+    masse non dissoute. Ne le sont pas : le diamètre des béchers, la verrerie,
+    et la taille des grains — un grain d'argile de 2 µm serait invisible, et
+    c'est justement pour cela qu'il trouble l'eau.
+  · LE TEMPS EST COMPRIMÉ, et le facteur est affiché dans la scène. Les deux
+    minutes de repos de la fiche passent en 2,4 s (SKILL §12.52). La
+    compression ne change rien au résultat : la sédimentation est intégrée au
+    pas de 0,5 s de temps simulé, quel que soit le facteur.
+-->
+
+<script>
+/* L'écouteur d'erreurs est posé AVANT le script de la page, dans le <head> :
+   posé en fin de <body>, il ne voit AUCUNE erreur de démarrage — celles-ci ont
+   déjà eu lieu (SKILL §12.47, corollaire de méthode). Il n'écrit PAS dans la
+   console : un `console.error` serait compté comme une erreur par le pilote. */
+window.__ERR = [];
+window.addEventListener("error", function (e) {
+  window.__ERR.push(String(e.message || e));
+  var n = document.getElementById("errjs");
+  if (n) { n.textContent = "Erreur JS : " + window.__ERR.join(" · "); n.style.display = "block"; }
+});
+</script>
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+#errjs{display:none;background:#b03030;color:#fff;font-family:var(--mono);
+       font-size:12px;padding:6px 20px}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.hp output{color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.lect .v.ko{color:var(--orange)}
+.lect .v.ok{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ---- */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-23 · 1AC · L11</span>
+</div>
+<div id="errjs"></div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus renseigné : il consigne le résultat de
+        l'expérience prescrite, pas celui d'une variante. Le carnet de mesures,
+        lui, continue de calculer — et c'est là qu'on voit ce que le réglage change.
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ces béchers-ci</b> donnent. La masse dissoute sort de la
+        <b>solubilité</b>, la chute des grains de la <b>loi de Stokes</b>, et le
+        nombre de phases des deux — jamais d'une étiquette collée sur un bécher.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Ce que le modèle voit <span class="note" id="etatSysteme">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Béchers remplis</div><div class="v off" id="lEau">—</div></div>
+        <div><div class="k">Solides versés</div><div class="v off" id="lSolide">—</div></div>
+        <div><div class="k">Agitation</div><div class="v off" id="lAgit">—</div></div>
+        <div><div class="k">Repos écoulé</div><div class="v off" id="lRepos">—</div></div>
+        <div><div class="k">Une seule phase</div><div class="v off" id="lHom">—</div></div>
+        <div><div class="k">Deux phases</div><div class="v off" id="lHet">—</div></div>
+        <div><div class="k">Ce qui reste en suspension</div><div class="v off" id="lStokes">—</div></div>
+        <div><div class="k">Témoin</div><div class="v off" id="lTem">à désigner</div></div>
+      </div>
+      <div style="margin-top:11px"><span class="lbl">Ce qui se dissout, ce qui reste</span></div>
+      <svg id="gBarres" viewBox="0 0 360 148" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src">Une barre par bécher : en bleu ce que l'eau a dissous,
+      en orange ce qui reste. Une barre entièrement bleue, c'est un mélange
+      homogène — et l'on n'a rien écrit pour l'obtenir.</div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages <span class="note">le protocole, et ce qu'on peut en écarter</span></h2>
+      <div class="reg" id="regM">
+        <label for="rM">Masse d'une cuillerée</label>
+        <output id="oM">5 g</output>
+        <input type="range" id="rM" min="1" max="25" step="1" value="5">
+        <div class="aide">La fiche dit « une cuillère » sans la peser : c'est
+        le seul nombre qu'elle laisse au poste. Au-delà de 18 g, le sel ne se
+        dissout plus entièrement dans 50 mL — et l'eau salée devient
+        hétérogène. C'est la leçon suivante.</div>
+      </div>
+      <div class="reg" id="regV">
+        <label for="rV">Volume d'eau par bécher</label>
+        <output id="oV">50 mL</output>
+        <input type="range" id="rV" min="10" max="100" step="5" value="50">
+        <div class="aide">Moins d'eau, c'est moins de solide dissous — et une
+        colonne d'eau plus courte, donc un grain qui atteint le fond plus vite.</div>
+      </div>
+      <div class="reg" id="regT">
+        <label for="rT">Temps de repos avant d'observer</label>
+        <output id="oT">2:00</output>
+        <input type="range" id="rT" min="0" max="300" step="5" value="120">
+        <div class="aide">À cinq secondes, le sable n'est pas encore tombé et
+        l'on classerait <i>eau + sable</i> parmi les mélanges homogènes :
+        c'est exactement l'erreur que la fiche signale.</div>
+      </div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>1 · Le modèle : deux lois, et elles ne se ressemblent pas</h3>
+      <p>La <b>solubilité</b> décide de ce qui disparaît ; la <b>loi de
+      Stokes</b> décide de ce qu'on voit du reste. Le nombre de phases sort des
+      deux, et le classement sort du nombre de phases.</p>
+      <div class="eq" id="eqModele"></div>
+      <h3>2 · Ce que devient la matière</h3>
+      <p>Rien ne disparaît. Le sel et le sucre se <b>dispersent</b> entre les
+      particules d'eau — la balance les retrouverait, et l'évaporation de la
+      leçon suivante les fait réapparaître. Le sable et la terre, eux, restent
+      entiers : ils tombent, ou ils flottent.</p>
+      <div class="eq" id="eqMatiere"></div>
+      <h3>3 · Pourquoi le repos décide</h3>
+      <div class="eq" id="eqLimite"></div>
+      <h3>4 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src">Aucune de ces valeurs n'a été retouchée pour faire tomber
+      le résultat de la fiche. Les solubilités sont des tables, les tailles de
+      grain des classifications, la viscosité une propriété de l'eau. Le seul
+      seuil est celui de la <b>lecture</b> — au-dessous de 0,01 g on ne voit
+      plus rien —, et il est cinq cents fois sous ce que laissent le sable et
+      la terre.</p>
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>Il ne sait pas pourquoi un corps est soluble.</b> Il lit une
+        solubilité dans une table. Ce qui se passe entre les particules d'eau
+        et celles du sel n'est pas au programme de la 1AC, et la page ne fait
+        pas semblant de le montrer.</li>
+        <li><b>Il ne sait pas combien de temps il faut pour dissoudre.</b> La
+        dissolution est traitée comme instantanée dès qu'on agite ; en vrai
+        elle prend d'autant plus de temps que les grains sont gros et l'eau
+        froide. La fiche fixe trente secondes d'agitation, et la page les
+        respecte, mais elle ne les calcule pas.</li>
+        <li><b>La loi de Stokes suppose un grain seul dans une eau au repos.</b>
+        Dans un bécher qui vient d'être agité, les grains se gênent et l'eau
+        tourne encore : la vraie sédimentation est plus lente que celle-ci, et
+        moins régulière.</li>
+        <li><b>Un grain n'est pas une sphère.</b> Un grain de sable est
+        anguleux, une particule d'argile est une plaquette qui tombe en
+        tournoyant. Le diamètre du modèle est un ordre de grandeur, pas une
+        cote.</li>
+        <li><b>Il ignore la couleur des solutions.</b> Toutes les solutions
+        sont dessinées incolores parce que celles de la fiche le sont. Une
+        solution de sulfate de cuivre serait bleue et resterait pourtant
+        homogène : « limpide » et « incolore » ne sont pas le même mot.</li>
+        <li><b>Il ignore la température.</b> Elle change la solubilité et la
+        viscosité — donc les deux modèles à la fois. La page travaille à 20 °C
+        et ne le cache pas ; c'est l'expérience E1AC-19 qui s'en occupe.</li>
+        <li><b>Il ne modélise ni l'odeur ni le goût.</b> C'est le témoin qui
+        permet de conclure que le sel est encore là, pas le goût — et la fiche
+        interdit expressément d'y goûter.</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-23.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-23",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L11",
+  "titre": "Un solide et un liquide : quand distingue-t-on encore les constituants ?",
+  "axe": "Mélange homogène ou mélange hétérogène ?",
+  "objectif": "Classer, à l'œil nu et après agitation, quatre mélanges d'eau et d'un solide en mélanges homogènes et mélanges hétérogènes, et énoncer le critère qui permet de les distinguer.",
+  "duree": 16,
+  "modalite": "groupes de 4 — 8 postes",
+  "materiel": [
+    "5 béchers de 100 mL par poste, avec étiquettes",
+    "Eau distillée",
+    "Sel fin de cuisine · sucre en poudre",
+    "Sable fin · terre de jardin tamisée",
+    "Agitateur en verre et cuillère de laboratoire",
+    "Éprouvette graduée de 100 mL",
+    "Pissette d'eau pour le rinçage"
+  ],
+  "securite": [
+    "Ne goûter aucun mélange, même préparé avec du sel ou du sucre : au laboratoire, on ne porte jamais rien à la bouche.",
+    "Manipuler la verrerie sans la cogner et signaler tout bécher fêlé au professeur.",
+    "Essuyer immédiatement toute projection d'eau au sol : le carrelage mouillé est glissant.",
+    "Rincer l'agitateur entre deux béchers, sans quoi les essais se contaminent.",
+    "Se laver les mains après avoir manipulé la terre."
+  ],
+  "protocole": [
+    "Verser environ **50 mL d'eau distillée** dans chacun des cinq béchers, puis les étiqueter : *eau + sel*, *eau + sucre*, *eau + sable*, *eau + terre*, *eau seule*.",
+    "Le bécher *eau seule* ne reçoit aucun solide : c'est le **témoin**, il montre l'aspect d'un liquide auquel on n'a rien ajouté.",
+    "Ajouter une cuillère de sel dans le premier bécher, une de sucre dans le deuxième, une de sable dans le troisième, une de terre dans le quatrième.",
+    "Agiter chaque bécher une trentaine de secondes avec l'agitateur en verre, en rinçant l'agitateur avant de passer au bécher suivant.",
+    "Laisser reposer deux minutes, sans toucher aux béchers.",
+    "Observer chaque bécher à l'œil nu, de face puis par transparence, et noter combien de parties distinctes on y voit.",
+    "Classer les quatre mélanges en deux familles, selon que l'on distingue ou non leurs constituants."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Mélange préparé",
+      "Aspect après agitation et repos",
+      "Nombre de parties visibles",
+      "Distingue-t-on les constituants à l'œil nu ?",
+      "Type de mélange"
+    ],
+    "lignes": [
+      [
+        "Eau + sel",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Eau + sucre",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Eau + sable",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Eau + terre",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Eau seule (témoin)",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Eau + sel",
+        "liquide limpide et incolore",
+        "1",
+        "non",
+        "homogène"
+      ],
+      [
+        "Eau + sucre",
+        "liquide limpide et incolore",
+        "1",
+        "non",
+        "homogène"
+      ],
+      [
+        "Eau + sable",
+        "sable déposé au fond, eau claire au-dessus",
+        "2",
+        "oui",
+        "hétérogène"
+      ],
+      [
+        "Eau + terre",
+        "liquide trouble, dépôt brun au fond",
+        "2",
+        "oui",
+        "hétérogène"
+      ],
+      [
+        "Eau seule (témoin)",
+        "liquide limpide et incolore",
+        "1",
+        "aucun solide ajouté",
+        "ce n'est pas un mélange"
+      ]
+    ]
+  },
+  "observation": "L'eau salée et l'eau sucrée sont aussi limpides que l'eau seule, alors que l'eau sableuse et l'eau boueuse laissent voir deux parties bien distinctes.",
+  "conclusion": "Un mélange est homogène si l'on ne distingue plus ses constituants à l'œil nu après agitation, hétérogène si on les distingue encore.",
+  "oheric": {
+    "observation": "Au souk, le marchand presse des oranges : le jus est trouble et l'on y voit flotter des morceaux de pulpe. À la table voisine, un verre de thé est parfaitement limpide, alors que le vendeur y a versé trois cuillères de sucre sous nos yeux. Dans les deux cas on a mélangé un solide à un liquide, et pourtant le résultat n'a pas du tout le même aspect. Où est passé le sucre ?",
+    "hypothese": "Si un solide **se dissout** dans l'eau, alors on ne le distingue plus et le mélange présente le même aspect en tout point ; s'il **ne se dissout pas**, alors on continue de le voir et le mélange présente au moins deux parties distinctes.",
+    "experience": "Préparer quatre mélanges d'eau et d'un solide — sel, sucre, sable, terre — plus un bécher d'eau seule servant de témoin. Agiter chacun d'eux, laisser reposer deux minutes, puis les observer à l'œil nu, de face et par transparence.",
+    "resultats": "Les béchers *eau + sel* et *eau + sucre* donnent un liquide **limpide et incolore** : le solide a disparu de la vue, on ne voit qu'**une seule partie**, exactement comme dans le témoin. Le bécher *eau + sable* montre **deux parties** : le sable s'est déposé au fond, l'eau reste claire au-dessus. Le bécher *eau + terre* donne un liquide **trouble** surmontant un dépôt brun : là encore **deux parties**.",
+    "interpretation": "Le témoin est ce qui permet de conclure : l'eau seule est limpide et ne présente qu'une partie ; puisque *eau + sel* et *eau + sucre* ont rigoureusement le même aspect que lui, c'est bien que le sel et le sucre s'y sont **dissous** et non qu'ils ont disparu. Ils sont toujours là — la balance le montrerait — mais ils ne sont plus **visibles**. Ces mélanges présentent une seule **phase** : ils sont **homogènes**. Le sable et la terre, eux, ne se dissolvent pas dans l'eau : on les distingue encore après agitation et repos, le mélange présente **deux phases**, il est **hétérogène**. L'hypothèse est validée. Attention : le critère est l'observation **à l'œil nu**, et **après agitation** — un mélange jugé avant d'avoir agité conduirait à classer *eau + sel* parmi les mélanges hétérogènes.",
+    "conclusion": "Un mélange est **homogène** si, à l'œil nu et après agitation, on ne distingue plus aucun de ses constituants : il ne présente qu'**une seule phase**. Il est **hétérogène** si l'on distingue au moins deux de ses constituants : il présente **au moins deux phases**. Le sel et le sucre se dissolvent dans l'eau et donnent des mélanges homogènes ; le sable et la terre ne s'y dissolvent pas et donnent des mélanges hétérogènes."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* ⚠ LE GRAS SE DÉPOUILLE AVANT L'ITALIQUE : dans l'autre sens, le motif de
+   l'italique mord sur un mot en gras et laisse une astérisque orpheline. Et
+   l'on ne recopie JAMAIS un littéral d'expression régulière dans un
+   commentaire de bloc (SKILL §12.48) : la séquence d'échappement de
+   l'astérisque refermerait le commentaire et tout le script partirait en
+   erreur de syntaxe. On le décrit en mots. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+function majuscule(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function sansAccent(s) {
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/[àâä]/g, "a").replace(/[éèêë]/g, "e").replace(/[îï]/g, "i")
+    .replace(/[ôö]/g, "o").replace(/[ùûü]/g, "u").replace(/ç/g, "c")
+    .replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+}
+function du(nom) {
+  return (/^[haeiouyàâäéèêëîïôöùûü]/i.test(nom) ? "d'" : "de ") + nom;
+}
+function pluriel(n, s) { return n > 1 ? s : ""; }
+/* Un générateur pseudo-aléatoire DÉTERMINISTE. Le désordre d'un modèle doit
+   se rejouer à l'identique, sans quoi la manipulation à la main et le déroulé
+   ne donneraient pas le même carnet (SKILL §12bis.6). */
+function graine(s) {
+  /* ⚠ MINSTD, et PAS un congruentiel a gros multiplicateur : en JS, un
+     produit de 1103515245 par un entier de 31 bits dépasse 2^53 et le
+     résultat n'est plus exact. Le tirage divergeait alors du modèle validé
+     en Python, sans lever la moindre erreur. 16807 × 2147483646 tient
+     largement dans un double. */
+  var e = (s % 2147483646) + 1;
+  return function () { e = (e * 16807) % 2147483647; return e / 2147483647; };
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var PROTOCOLE = (DONNEES.protocole || []).map(depouille);
+var TEXTE_PROTO = PROTOCOLE.join("\n");
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i, t;
+  for (i = 0; i < m.length; i++) { t = depouille(m[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i, t;
+  for (i = 0; i < s.length; i++) { t = depouille(s[i]); if (motif.test(t)) return t; }
+  return "";
+}
+function proto(motif) {
+  var i;
+  for (i = 0; i < PROTOCOLE.length; i++) if (motif.test(PROTOCOLE[i])) return PROTOCOLE[i];
+  return "";
+}
+function citerProto(motif) {
+  var t = proto(motif);
+  return t ? " « " + t + " »" : "";
+}
+function citerSecu(motif) {
+  var t = secu(motif);
+  return t ? " « " + t + " »" : "";
+}
+/* Lire un NOMBRE suivi de son unité dans le protocole. Trois règles payées
+   sur E3AC-19 (SKILL §12.29) : le nombre commence par un chiffre, l'unité est
+   sensible à la casse, et elle n'est pas suivie d'une lettre. */
+function lireProto(unite, defaut, sensible) {
+  var re = new RegExp("(\\d[\\d,.]*)\\s*" + unite + "(?![A-Za-zÀ-ÿ])",
+                      sensible === false ? "i" : "");
+  var m = re.exec(TEXTE_PROTO);
+  return m ? parseFloat(m[1].replace(",", ".")) : defaut;
+}
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+                vingt: 20, trentaine: 30, dizaine: 10 };
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+/* ==================================================================
+   3 bis. LES DURÉES VIENNENT DE LA FICHE — jamais du code (SKILL §5)
+   ================================================================== */
+function secondesProto(motif, defaut) {
+  var i, m, t, n;
+  for (i = 0; i < PROTOCOLE.length; i++) {
+    if (!motif.test(PROTOCOLE[i])) continue;
+    t = PROTOCOLE[i].toLowerCase();
+    m = /(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trentaine|dizaine)\s+(secondes?|minutes?)/.exec(t);
+    if (!m) continue;
+    n = isNaN(+m[1]) ? MOTS_NB[m[1]] : +m[1];
+    if (!n) continue;
+    return m[2].indexOf("minute") === 0 ? n * 60 : n;
+  }
+  return defaut;
+}
+var DUREE_SEANCE = +(DONNEES.duree || 20);
+
+/* ==================================================================
+   MINUTERIES ET ANIMATION
+   ==================================================================
+   ⚠ `setTimeout` + `Date.now()`, JAMAIS `requestAnimationFrame` (SKILL
+   §13.5 bis) : sous le pilote, rAF n'est pas appelé, et toute l'animation —
+   avec le résultat qu'elle porte — disparaîtrait SANS lever d'erreur.
+
+   ⚠ ET L'ANIMATION NE DÉCIDE DE RIEN. Le solveur a déjà calculé l'état
+   d'arrivée quand elle commence ; elle ne fait que le rejoindre. Un résultat
+   qui dépendrait du nombre d'images serait un résultat faux (§12.37). */
+var MINUTEURS = [], HORLOGE = null, ANIM_ON = true;
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+/* `sur(u)` reçoit une avance u de 0 à 1, lissée. `fin()` est rappelée à
+   l'arrivée. Une animation coupée (« Recommencer », arrêt du déroulé) ne
+   laisse rien derrière elle : `purger()` efface ses minuteries. */
+function anim(ms, sur, fin) {
+  var PAS = 14, i;
+  for (i = 1; i <= PAS; i++) (function (k) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = k / PAS;
+      sur(t * t * (3 - 2 * t), t);
+      if (k === PAS && fin) fin();
+    }, Math.round(ms * k / PAS));
+  })(i);
+  if (!ms && fin) fin();
+}
+
+/* ==================================================================
+   LES COUCHES SVG — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE tout le reste
+     poste   le mobilier fixe : portoirs, balance, plaque, étagère
+     arriere l'intérieur de la verrerie, l'eau, et les zones de dépôt
+     objets  ce qui se manipule
+     avant   les parois de verre, les étiquettes, la vapeur
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout            */
+var svg = null, DEFS = null, COUCHES = {};
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+/* Les dégradés et filtres communs à toutes les paillasses du lot.
+   ⚠ AUCUN dégradé n'est jamais posé sur le CONTOUR d'un trait (SKILL §10.1) :
+   en `objectBoundingBox`, la boîte d'un segment horizontal ou vertical est
+   plate, le dégradé est dégénéré, et le navigateur NE PEINT RIEN — sans
+   erreur, et sans que le pilotage puisse le voir. Les traits fins sont donc
+   peints en couleur PLEINE. */
+function defsCommunes() {
+  DEFS = el("defs", {});
+  svg.appendChild(DEFS);
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+
+  /* la bande de bois CLAIRE du plateau : c'est la seule zone sombre-libre où
+     une étiquette se lit (SKILL §12.7) */
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#e6d5b4" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#c9b189" }));
+  DEFS.appendChild(g);
+
+  /* l'eau — dégradé vertical, et la surface se dessine en ELLIPSE */
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+
+  /* le verre : voile de teinte + reflet net + arête sombre (SKILL §10.2) */
+  g = el("linearGradient", { id: "verre", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c6d6e3", "stop-opacity": .55 }));
+  g.appendChild(el("stop", { offset: .17, "stop-color": "#ffffff", "stop-opacity": .78 }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#dce8f1", "stop-opacity": .28 }));
+  g.appendChild(el("stop", { offset: .88, "stop-color": "#a9b8c8", "stop-opacity": .5 }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#7f93a6", "stop-opacity": .62 }));
+  DEFS.appendChild(g);
+
+  f = el("filter", { id: "flou", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flouFin", x: "-50%", y: "-50%", width: "200%", height: "200%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 1.6 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombreDouce", x: "-35%", y: "-35%", width: "170%", height: "170%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .24 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-45%", y: "-45%", width: "190%", height: "190%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .42 }));
+  DEFS.appendChild(f);
+}
+/* Sans elle, tout flotte (SKILL §10.3). */
+function ombreAuSol(cx, y, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: y + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Un bécher : intérieur et liquide AVANT la paroi, bourrelet du bord,
+   bec verseur et graduations — c'est le bourrelet, plus que la paroi, qui
+   fait reconnaître un bécher (SKILL §10.2). */
+function paroiVerre(couche, x, y, w, h, r) {
+  var g = ajout(couche, el("g", { "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "url(#verre)" }));
+  g.appendChild(el("rect", { x: x + w * .1, y: y + 8, width: Math.max(3, w * .07),
+    height: h - 20, rx: 2.5, fill: "#ffffff", opacity: .66 }));
+  g.appendChild(el("rect", { x: x, y: y, width: w, height: h, rx: r || 5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3 }));
+  g.appendChild(el("ellipse", { cx: x + w / 2, cy: y, rx: w / 2 + 2.5, ry: 4.5,
+    fill: "none", stroke: "#7f93a6", "stroke-width": 3.2 }));
+  return g;
+}
+
+/* ==================================================================
+   LE MOTEUR DE GLISSER-DÉPOSER (SKILL §9)
+   ==================================================================
+   ⚠ Le pointeur est capturé sur le SVG, PAS sur l'objet : sans cela, un
+   mouvement rapide sort de l'objet et le glissement s'arrête net au milieu du
+   geste, sans erreur.
+
+   La page fournit `emplacements(o)`, `deposer(o, zone, depart)` et
+   `replacer(o)`. Les zones sont rendues de la plus PETITE à la plus GRANDE
+   (§12.16) : c'est `deposer` qui dit laquelle est la bonne, jamais l'ordre du
+   tableau.                                                                  */
+var prise = null, ptSVG = null, surbrillance = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+function placer(o, x, y) {
+  o.x = x; o.y = y;
+  o.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ")");
+}
+/* L'objet PARCOURT son trajet : c'est la troisième exigence du §1.2 bis.
+   L'état, lui, est posé AVANT (SKILL §6.2) — l'animation ne décide de rien. */
+function volerVers(o, x1, y1, ms) {
+  var x0 = o.x, y0 = o.y;
+  anim(ms || 520, function (u) {
+    o.g.setAttribute("transform", "translate(" +
+      (x0 + (x1 - x0) * u).toFixed(1) + "," + (y0 + (y1 - y0) * u).toFixed(1) + ")");
+  });
+  o.x = x1; o.y = y1;
+}
+function montrerCibles(o) {
+  effacerCibles();
+  if (!o) return;
+  emplacements(o).forEach(function (z) {
+    if (z.discret) return;
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 10,
+      fill: GOLD, opacity: .18, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* ⚠ TOUT OBJET MANIPULABLE REÇOIT UNE PLAQUE DE PRÉHENSION transparente aux
+   cotes de sa silhouette, insérée EN PREMIER dans son groupe (SKILL §12.38) :
+   un objet fin n'offre au pointeur presque rien, et le glisser ne démarrerait
+   pas — sans erreur, sans refus, sans rien. */
+function prehension(g, x, y, w, h) {
+  var r = el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "#ffffff",
+                       "fill-opacity": 0.001 });
+  if (g.firstChild) g.insertBefore(r, g.firstChild); else g.appendChild(r);
+  return r;
+}
+function brancherObjet(o) {
+  o.g.addEventListener("pointerdown", function (e) {
+    if (prise) return;                        /* verrou en PREMIÈRE ligne */
+    if (o.fige) return;
+    e.preventDefault();
+    var p = versSVG(e);
+    prise = { o: o, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+              x0: p.x, y0: p.y, bouge: false, depart: { x: o.x, y: o.y } };
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    o.g.setAttribute("filter", "url(#ombrePrise)");
+    o.g.setAttribute("cursor", "grabbing");
+    COUCHES.drag.appendChild(o.g);
+    montrerCibles(o);
+  });
+}
+function brancherPrise() {
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    /* Le seuil de 5 px sépare le CLIC du GLISSEMENT (SKILL §9.3). */
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    placer(prise.o, p.x + prise.dx, p.y + prise.dy);
+    if (typeof pendantGlisser === "function") pendantGlisser(prise.o);
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var o = prise.o, bouge = prise.bouge, depart = prise.depart;
+    o.g.removeAttribute("filter");
+    o.g.setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(o.g);
+    effacerCibles();
+    prise = null;
+    if (!bouge) {
+      placer(o, depart.x, depart.y);
+      if (typeof cliquerObjet === "function") cliquerObjet(o);
+      return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(o).forEach(function (z) {
+      var d = Math.hypot(o.x - z.x, o.y - z.y);
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    deposer(o, best, depart);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);        /* ne PAS l'oublier */
+}
+/* La zone qu'`emplacements()` propose DANS L'ÉTAT COURANT — jamais une
+   position écrite en dur. Un bouton ne vise donc jamais `emplacements(o)[0]`
+   au hasard : il vise celle que `deposer` accepterait (SKILL §12.16). */
+function zoneVoulue(o, type) {
+  var z = emplacements(o) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+
+/* ==================================================================
+   LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                            */
+var BOUTONS = {}, ACTES = [];
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", "fill-opacity": 0.001 }));
+  var r = g.appendChild(el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w,
+    height: ht, rx: 9, fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8,
+    filter: "url(#ombreDouce)" }));
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht, noeud: g,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function rangeeBoutons(W, y, libelles, actes) {
+  var n = actes.length, marge = 22, gap = 10;
+  var w = (W - 2 * marge - gap * (n - 1)) / n, i;
+  for (i = 0; i < n; i++) {
+    boutonScene(marge + w / 2 + i * (w + gap), y, w, 42,
+                libelles[i][0], libelles[i][1], actes[i]);
+  }
+}
+
+/* ==================================================================
+   CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  if (!c) return;
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  if (!o) return;
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+var N_CELL = 0;
+function compterCellules() {
+  var i, j, n = 0;
+  for (i = 0; i < N_LIG; i++) {
+    for (j = 0; j < (VAL[i] || []).length; j++) {
+      if (!(LIG[i] || [])[j] && (VAL[i] || [])[j]) n++;
+    }
+  }
+  return n;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t ? t.querySelectorAll("tr")[k + 1] : null;
+  var v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "mes";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerLigne(k) {
+  var j;
+  for (j = 0; j < (VAL[k] || []).length; j++) {
+    if (!(LIG[k] || [])[j]) revelerCellule(k, j);
+  }
+}
+function majCompteurCellules() {
+  var n = $("nbCell");
+  if (n) n.textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t ? t.querySelectorAll("tr") : [], i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  if ($("concl")) $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). L'écart se chiffre, dans l'unité de la grandeur.           */
+function signalerDivergence(cle, texte) {
+  if (ETAT.horsProto) return;
+  if (ETAT.diverge.indexOf(cle) >= 0) return;
+  ETAT.diverge.push(cle);
+  var d = $("diverge");
+  d.innerHTML += (d.innerHTML ? "<br>" : "") + texte;
+  d.style.display = "block";
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.innerHTML = md(cells[i]);
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireEtapes(noms) {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < noms.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + noms[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+/* Les panneaux communs : titre, objectif, observation, conclusion, matériel,
+   sécurité, tableau de la fiche. Tout vient du YAML, rien n'est retapé.     */
+function construireHTMLBase(soustitre) {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · " + soustitre;
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  N_CELL = compterCellules();
+  majCompteurCellules();
+}
+/* Le tableau des constantes du capot se RÉGÉNÈRE depuis `PHYS` — il n'est
+   jamais retapé dans le HTML (SKILL §7.3). */
+function construireConstantes() {
+  var ct = $("capotConst"), c;
+  if (!ct) return;
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  for (c in PHYS) {
+    ct.appendChild(ligneTab([PHYS[c].n,
+      (typeof PHYS[c].v === "number"
+        ? (Math.abs(PHYS[c].v) < 0.01 ? sci(PHYS[c].v, 2)
+                                      : nb(PHYS[c].v, PHYS[c].d === undefined ? 2 : PHYS[c].d))
+        : PHYS[c].v) + " " + PHYS[c].u, PHYS[c].s]));
+  }
+}
+
+/* ==================================================================
+   L'HORLOGE DE LA SÉANCE — et elle seule court en temps RÉEL
+   ==================================================================
+   Elle mesure ce que la manipulation coûte à l'enseignant, pas ce que le
+   modèle simule : elle ne s'accélère JAMAIS, et elle SURVIT à
+   « Recommencer » — la séance ne se rembobine pas (SKILL §5.4, §11.6).      */
+var DERNIER = 0;
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tickSeance, 250);
+}
+function tickSeance() {
+  var m = Date.now(), dt = Math.min(1, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  if (!n) return;
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance(complement) {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "") +
+    (complement ? " · " + complement : "");
+  majSeance();
+}
+
+/* ==================================================================
+   LE PLEIN ÉCRAN — c'est par lui qu'on projette la scène au tableau
+   ================================================================== */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Chaque nombre porte sa provenance, et le tableau du capot se RÉGÉNÈRE
+   depuis cet objet : il n'est jamais retapé dans le HTML (SKILL §7.3).      */
+var PHYS = {
+  G: { v: 9.81, u: "m·s⁻²", d: 2, n: "intensité de la pesanteur",
+       s: "valeur standard, latitude 45°" },
+  ETA_EAU: { v: 1.002e-3, u: "Pa·s", d: 2,
+             n: "viscosité dynamique de l'eau à 20 °C",
+             s: "tables de l'eau pure ; c'est elle qui freine la chute des " +
+                "grains, et elle double si l'eau descend à 8 °C" },
+  RHO_EAU: { v: 998.2, u: "kg·m⁻³", d: 1, n: "masse volumique de l'eau à 20 °C",
+             s: "tables de l'eau pure" },
+  S_SEL: { v: 359, u: "g·L⁻¹", d: 0, n: "solubilité du chlorure de sodium à 20 °C",
+           s: "35,9 g pour 100 mL d'eau — sel de cuisine, tables usuelles" },
+  S_SUCRE: { v: 2000, u: "g·L⁻¹", d: 0, n: "solubilité du saccharose à 20 °C",
+             s: "environ 200 g pour 100 mL d'eau ; le sucre est cinq fois " +
+                "plus soluble que le sel, et c'est pourquoi l'eau sucrée ne " +
+                "sature jamais dans un verre" },
+  S_SABLE: { v: 0.012, u: "g·L⁻¹", d: 3, n: "solubilité de la silice à 20 °C",
+             s: "quartz et silice amorphe, 6 à 12 mg/L : c'est mille fois " +
+                "moins que ce qu'on verse, donc rien ne disparaît" },
+  S_TERRE: { v: 0.30, u: "g·L⁻¹", d: 2,
+             n: "sels solubles d'une terre de jardin tamisée",
+             s: "conductivité des extraits de sol : quelques centaines de " +
+                "mg/L passent en solution ; le reste, argile et limon, non" },
+  D_SABLE: { v: 2.0e-4, u: "m", d: 1, n: "diamètre d'un grain de sable fin",
+             s: "classification de Wentworth : sable fin, 125 à 250 µm" },
+  D_TERRE: { v: 2.0e-6, u: "m", d: 1,
+             n: "diamètre de la fraction argileuse d'une terre",
+             s: "définition de l'argile : moins de 2 µm. C'est ELLE qui " +
+                "trouble l'eau, et c'est sa petitesse qui l'y maintient" },
+  D_SEL: { v: 4.0e-4, u: "m", d: 1, n: "diamètre d'un cristal de sel fin",
+           s: "sel de cuisine fin, 300 à 500 µm — sans effet sur le verdict, " +
+              "puisqu'il se dissout" },
+  D_SUCRE: { v: 5.0e-4, u: "m", d: 1, n: "diamètre d'un cristal de sucre en poudre",
+             s: "sucre semoule, 400 à 600 µm — sans effet, il se dissout" },
+  RHO_SEL: { v: 2160, u: "kg·m⁻³", d: 0, n: "masse volumique du chlorure de sodium",
+             s: "cristal de halite" },
+  RHO_SUCRE: { v: 1590, u: "kg·m⁻³", d: 0, n: "masse volumique du saccharose",
+               s: "cristal" },
+  RHO_SABLE: { v: 2650, u: "kg·m⁻³", d: 0, n: "masse volumique du quartz",
+               s: "densité des grains, non du sable en vrac" },
+  RHO_TERRE: { v: 2650, u: "kg·m⁻³", d: 0,
+               n: "masse volumique des particules d'une terre",
+               s: "les minéraux d'un sol tournent tous autour de 2 650" },
+  SEUIL_RESTE: { v: 0.01, u: "g", d: 2,
+                 n: "seuil de lecture : au-dessous, on ne voit plus rien",
+                 s: "seuil d'ASPECT, déclaré comme tel (SKILL §4.B.5). Le sel " +
+                    "et le sucre laissent 0,000 g, le sable 5,0 g et la terre " +
+                    "5,0 g : le seuil est cinq cents fois sous les uns et " +
+                    "cinq cents fois au-dessus des autres" },
+  R_BECHER: { v: 0.024, u: "m", d: 3, n: "rayon intérieur d'un bécher de 100 mL",
+              s: "bécher forme basse de 100 mL, diamètre intérieur 48 mm — " +
+                 "c'est lui qui donne la HAUTEUR d'eau, donc la distance " +
+                 "qu'un grain doit parcourir pour être au fond" },
+  ACCEL: { v: 60, u: "×", d: 0, n: "compression du temps",
+           s: "les deux minutes de repos de la fiche passent en 2,0 s. " +
+              "L'intégration garde son pas de 0,5 s de temps simulé, quel que " +
+              "soit le facteur (SKILL §12.52)" }
+};
+var G = PHYS.G.v, ETA_EAU = PHYS.ETA_EAU.v, RHO_EAU = PHYS.RHO_EAU.v;
+var SEUIL_RESTE = PHYS.SEUIL_RESTE.v, ACCEL = PHYS.ACCEL.v;
+var RAYON_BECHER = PHYS.R_BECHER.v;
+var PAS_SIM = 0.5;                 /* le pas de l'intégration, en secondes */
+
+/* Les solides connus de la page, par leur nom. Un solide que la fiche
+   citerait et que cette table ne porterait pas serait DIT comme inconnu, pas
+   deviné (§0, règle R4 du contrat de la valise). */
+var CONNUS = {
+  sel:    { s: PHYS.S_SEL.v,    d: PHYS.D_SEL.v,    rho: PHYS.RHO_SEL.v,
+            teinte: "#f2f5f8", depot: "#e9eef3", trouble: "#eaf0f6" },
+  sucre:  { s: PHYS.S_SUCRE.v,  d: PHYS.D_SUCRE.v,  rho: PHYS.RHO_SUCRE.v,
+            teinte: "#fbf8f0", depot: "#f1ead9", trouble: "#f3efe4" },
+  sable:  { s: PHYS.S_SABLE.v,  d: PHYS.D_SABLE.v,  rho: PHYS.RHO_SABLE.v,
+            teinte: "#d8b878", depot: "#c69f57", trouble: "#e6dcc4" },
+  terre:  { s: PHYS.S_TERRE.v,  d: PHYS.D_TERRE.v,  rho: PHYS.RHO_TERRE.v,
+            teinte: "#8a6136", depot: "#6b4a2a", trouble: "#a98f6d" }
+};
+
+/* ==================================================================
+   1 bis. CE QUE LA FICHE DONNE — lu, jamais retapé
+   ================================================================== */
+function colonne(motif, defaut) {
+  var i;
+  for (i = 0; i < ENTETES.length; i++) if (motif.test(depouille(ENTETES[i]))) return i;
+  return defaut;
+}
+var C_MEL = 0;
+var C_ASPECT = colonne(/aspect/i, 1);
+var C_PARTS = colonne(/parties/i, 2);
+var C_DISTINGUE = colonne(/distingue/i, 3);
+var C_TYPE = colonne(/type/i, 4);
+
+/* Les cinq béchers sont les LIGNES du tableau. Le nom du solide se lit après
+   le « + » de l'intitulé, et le témoin se reconnaît à son propre mot. */
+var BECHERS = (function () {
+  var out = [], i, t, m;
+  for (i = 0; i < N_LIG; i++) {
+    t = intitule(i, C_MEL);
+    if (/t[ée]moin|seule/i.test(t)) {
+      out.push({ k: i, cle: null, nom: "eau seule", temoin: true, titre: t });
+      continue;
+    }
+    m = /\+\s*(.+)$/.exec(t);
+    out.push({ k: i, cle: m ? sansAccent(m[1]).trim() : null, titre: t,
+               nom: m ? m[1].trim() : t, temoin: false });
+  }
+  return out;
+})();
+var INCONNUS = BECHERS.filter(function (b) {
+  return !b.temoin && !CONNUS[b.cle];
+}).map(function (b) { return b.nom; });
+
+/* « Verser environ 50 mL d'eau distillée » et « Laisser reposer deux minutes » */
+var V_FICHE = lireProto("mL", 50, false);
+var T_REPOS = secondesProto(/reposer/i, 120);
+var T_AGIT = secondesProto(/agiter/i, 30);
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO : ce que le protocole prescrit. REG : ce qui court.
+   ==================================================================
+   ⚠ La valeur initiale d'un curseur DOIT tomber sur la grille des pas
+   (SKILL §12.12) : les attributs sont posés depuis PROTO, jamais à la main. */
+var PROTO = { m: 5, v: V_FICHE, t: T_REPOS };
+var REG = { m: 5, v: V_FICHE, t: T_REPOS };
+function horsProtocole() {
+  return REG.m !== PROTO.m || REG.v !== PROTO.v || REG.t !== PROTO.t;
+}
+function revenirAuProtocole() { REG.m = PROTO.m; REG.v = PROTO.v; REG.t = PROTO.t; }
+
+/* ==================================================================
+   5. LE SOLVEUR — deux modèles, et ils ne se ressemblent pas
+   ==================================================================
+   La SOLUBILITÉ décide de ce qui disparaît ; la LOI DE STOKES décide de ce
+   qu'on voit du reste. Le nombre de phases sort des deux, et le classement du
+   nombre de phases. Aucune ligne du tableau n'est écrite.                   */
+
+/* La masse dissoute : jamais plus que ce que le volume peut porter. */
+function dissous(cle, masse, volume_mL) {
+  var c = CONNUS[cle];
+  if (!c) return null;
+  return Math.min(masse, c.s * volume_mL / 1000);
+}
+/* La vitesse limite de chute d'un grain — loi de Stokes, régime visqueux. */
+function stokes(cle) {
+  var c = CONNUS[cle];
+  if (!c) return null;
+  return (c.rho - RHO_EAU) * G * c.d * c.d / (18 * ETA_EAU);
+}
+/* La hauteur d'eau dans un bécher, en mètres : c'est elle que le grain doit
+   parcourir pour être « au fond ». Elle suit le volume versé (SKILL §12.18 :
+   le dessin la relit, il ne la recopie pas). */
+function hauteurEau(volume_mL) {
+  return volume_mL * 1e-6 / (Math.PI * RAYON_BECHER * RAYON_BECHER);
+}
+/* L'état d'un bécher après `t` secondes de repos. TOUT en sort. */
+function etatBecher(b) {
+  var m = b.masse, cle = b.solide, c = CONNUS[cle];
+  if (!b.eau) {
+    return { vide: true, phases: 0, dis: 0, reste: 0, v: 0, chute: 0,
+             tombe: false, suspendu: false, part: 0 };
+  }
+  if (!cle) {
+    return { vide: false, temoin: true, phases: 1, dis: 0, reste: 0, v: 0,
+             chute: 0, tombe: false, suspendu: false, part: 0 };
+  }
+  if (!c) return { vide: false, inconnu: true, phases: 1, dis: 0, reste: 0 };
+  var dis = dissous(cle, m, b.volume);
+  var reste = m - dis;
+  var v = stokes(cle);
+  var chute = v * b.tRepos;                       /* mètres parcourus */
+  var h = hauteurEau(b.volume);
+  var tombe = reste > SEUIL_RESTE && chute >= h;
+  var suspendu = reste > SEUIL_RESTE && chute < h;
+  return {
+    vide: false, dis: dis, reste: reste, v: v, chute: chute, h: h,
+    tombe: tombe, suspendu: suspendu,
+    part: borne(chute / h, 0, 1),                 /* avance de la décantation */
+    phases: reste > SEUIL_RESTE ? 2 : 1
+  };
+}
+/* Ce que l'œil voit, composé à partir du modèle — jamais recopié du tableau. */
+function aspectDe(b) {
+  var e = etatBecher(b);
+  if (e.vide) return "bécher vide";
+  if (e.inconnu) return "solide inconnu de la page";
+  if (e.phases === 1) return "liquide limpide et incolore";
+  if (e.tombe) return b.solide + " déposé au fond, eau claire au-dessus";
+  return "liquide trouble, dépôt " + (b.solide === "terre" ? "brun " : "") +
+         "au fond";
+}
+function typeDe(b) {
+  var e = etatBecher(b);
+  if (e.vide) return "—";
+  if (e.temoin) return "ce n'est pas un mélange";
+  if (e.inconnu) return "inconnu";
+  return e.phases === 1 ? "homogène" : "hétérogène";
+}
+function distingueDe(b) {
+  var e = etatBecher(b);
+  if (e.temoin) return "aucun solide ajouté";
+  return e.phases === 1 ? "non" : "oui";
+}
+
+/* ==================================================================
+   7. L'ÉTAT
+   ==================================================================
+   ⚠ TOUTE CLÉ LUE DANS LE CODE FIGURE ICI (SKILL §12.17) : une clé oubliée
+   rend une branche entière morte, sans lever la moindre erreur.             */
+var ETAT = {};
+function neufEtat() {
+  return {
+    tSeance: 0, horsProto: false, nCell: 0, diverge: [],
+    becher: BECHERS.map(function (b) {
+      return { k: b.k, temoin: false, eau: false, volume: 0,
+               solide: null, masse: 0, agite: false, tRepos: 0 };
+    }),
+    temoinVu: false,
+    tRepos: 0,          /* le repos COMMUN, en secondes de temps simulé */
+    repos: false,
+    observe: false,
+    classe: false,
+    carnet: BECHERS.map(function () { return null; }),
+    propre: true        /* l'agitateur est-il rincé ? */
+  };
+}
+
+/* ==================================================================
+   8. GÉOMÉTRIE — toutes les cotes de la scène, en constantes nommées
+   ================================================================== */
+var W = 1120, H = 760;
+var BANC = 596, BOIS = 648, Y_BOUTONS = 706;
+var ETAG_Y = 348;                       /* le dessus de l'étagère */
+var BEC = { w: 152, h: 176, bas: 580, dx: 194, x0: 122 };
+var HAUT_MAX = BEC.h - 26;              /* hauteur utile, pour 100 mL */
+var V_MAX = 100;                        /* un bécher de 100 mL */
+/* ⚠ TOUTES LES HAUTEURS D'ÉTIQUETTE DANS UN SEUL OBJET (SKILL §12.7). */
+var Y_ETIQ = { etagere: 336, becher: 616, legende: 152, temps: 170 };
+var REPOS = {
+  sel: { x: 120, y: 300 }, sucre: { x: 258, y: 300 },
+  sable: { x: 396, y: 300 }, terre: { x: 534, y: 300 },
+  eprouvette: { x: 700, y: 272 }, agitateur: { x: 838, y: 266 },
+  pissette: { x: 970, y: 282 }
+};
+function xBecher(i) { return BEC.x0 + i * BEC.dx; }
+function yEau(v) { return BEC.bas - 8 - HAUT_MAX * borne(v / V_MAX, 0, 1); }
+
+/* ==================================================================
+   9. LES DÉGRADÉS PROPRES À CETTE PAILLASSE
+   ================================================================== */
+function defsPage() {
+  var g, k;
+  g = el("linearGradient", { id: "eauTrouble", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#d9e7f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#8fb4c9" }));
+  DEFS.appendChild(g);
+  for (k in CONNUS) {
+    (function (k) {
+      var r = el("linearGradient", { id: "poudre-" + k, x1: 0, y1: 0, x2: 0, y2: 1 });
+      r.appendChild(el("stop", { offset: 0, "stop-color":
+        melange(CONNUS[k].teinte, "#ffffff", .35) }));
+      r.appendChild(el("stop", { offset: 1, "stop-color": CONNUS[k].depot }));
+      DEFS.appendChild(r);
+    })(k);
+  }
+  g = el("linearGradient", { id: "inox", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#f2f5f8" }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#aab4c0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#6b7480" }));
+  DEFS.appendChild(g);
+}
+
+/* ==================================================================
+   11. LE DÉCOR ET L'ÉTAGÈRE
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: BOIS - BANC,
+                             fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: BOIS, width: W, height: H - BOIS,
+                             fill: "url(#banc)" }));
+  ajout("poste", el("rect", { x: 44, y: ETAG_Y, width: W - 88, height: 13, rx: 3,
+                              fill: "url(#bois)", stroke: "#a08a5e", "stroke-width": 1.4 }));
+  txt("fond", W - 30, Y_ETIQ.legende,
+      "schéma habillé — la hauteur d'eau et celle du dépôt sont à l'échelle",
+      { ancre: "end", taille: 10.5, couleur: "#8391a1" });
+  txt("fond", W - 30, Y_ETIQ.temps, "temps × " + ACCEL.toFixed(0) +
+      " pendant le repos", { ancre: "end", taille: 11, couleur: ORANGE });
+}
+
+/* ==================================================================
+   12. LES CINQ BÉCHERS
+   ==================================================================
+   ⚠ L'INTÉRIEUR ET LE LIQUIDE AVANT LA PAROI (SKILL §8) : peinte d'abord, la
+   paroi recouvre le liquide et le bécher se lit plein… et gris.             */
+var BEC_N = [];
+function construireBechers() {
+  BECHERS.forEach(function (b, i) {
+    var x = xBecher(i), g = ajout("poste", el("g", {}));
+    var xg = x - BEC.w / 2, yh = BEC.bas - BEC.h;
+    ombreAuSol(x, BEC.bas, BEC.w / 2 - 6, .26);
+    /* l'intérieur */
+    g.appendChild(el("rect", { x: xg + 5, y: yh + 4, width: BEC.w - 10,
+      height: BEC.h - 8, rx: 5, fill: "#f7fbfd" }));
+    var eau = ajout("arriere", el("rect", { x: xg + 5, y: BEC.bas - 8,
+      width: BEC.w - 10, height: 0, fill: "url(#eau)", opacity: .9 }));
+    var surf = ajout("arriere", el("ellipse", { cx: x, cy: BEC.bas - 8,
+      rx: BEC.w / 2 - 5, ry: 6, fill: "#cfe6f3", opacity: 0 }));
+    var trouble = ajout("arriere", el("rect", { x: xg + 5, y: BEC.bas - 8,
+      width: BEC.w - 10, height: 0, fill: "#b08a52", opacity: 0 }));
+    var depot = ajout("arriere", el("rect", { x: xg + 6, y: BEC.bas - 12,
+      width: BEC.w - 12, height: 0, fill: "#c69f57", rx: 3 }));
+    var grains = ajout("arriere", el("g", { opacity: 0 }));
+    var j;
+    for (j = 0; j < 14; j++) {
+      grains.appendChild(el("circle", { cx: xg + 16 + (j * 37) % (BEC.w - 32),
+        cy: 0, r: 3.2, fill: "#b8933f" }));
+    }
+    /* la paroi de verre, PAR-DESSUS */
+    var v = paroiVerre("avant", xg, yh, BEC.w, BEC.h, 5);
+    /* le bec verseur et les graduations — c'est le bourrelet qui fait le bécher */
+    ajout("avant", el("path", { d: "M" + pt(xg + BEC.w - 4, yh + 2) + " q10,-2 13,7",
+      fill: "none", stroke: "#7f93a6", "stroke-width": 3, "pointer-events": "none" }));
+    for (j = 1; j <= 4; j++) {
+      ajout("avant", el("line", { x1: xg + BEC.w - 34, y1: yEau(j * 25),
+        x2: xg + BEC.w - 10, y2: yEau(j * 25), stroke: "#8ba3b6",
+        "stroke-width": 1.6, "pointer-events": "none" }));
+      ajout("avant", el("text", { x: xg + BEC.w - 38, y: yEau(j * 25) + 4,
+        "text-anchor": "end", "font-size": 9.5, fill: "#7d8c9b",
+        "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" },
+        j * 25 + ""));
+    }
+    /* l'étiquette : elle vit sur la bande de bois CLAIRE, jamais sur le meuble
+       sombre (SKILL §12.7) */
+    var et = txt("avant", x, Y_ETIQ.becher, "", { taille: 12, gras: true,
+      couleur: "#5b4a2c", halo: "#e6d5b4" });
+    var lu = txt("avant", x, BEC.bas - BEC.h - 14, "", { taille: 11,
+      couleur: GRIS, halo: true });
+    BEC_N.push({ g: g, eau: eau, surf: surf, trouble: trouble, depot: depot,
+                 grains: grains, etiq: et, lect: lu, x: x, i: i });
+    /* la zone de dépôt est le bécher lui-même : on y verse, on y plonge */
+    var z = ajout("arriere", el("rect", { x: xg, y: yh, width: BEC.w, height: BEC.h,
+      rx: 6, fill: "#ffffff", "fill-opacity": 0.001, "data-act": "becher-" + i,
+      cursor: "pointer" }));
+    z.addEventListener("click", function () { cliquerBecher(i); });
+  });
+}
+
+/* ==================================================================
+   13. CE QUI SE MANIPULE — cuillères, éprouvette, agitateur, pissette
+   ==================================================================
+   ⚠ Chaque objet reçoit une PLAQUE DE PRÉHENSION aux cotes de sa silhouette
+   (SKILL §12.38) : un objet fin n'offre au pointeur presque rien.           */
+var CUILLERES = [], EPROUVETTE = null, AGITATEUR = null, PISSETTE = null;
+function cuillere(cle, nom) {
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "cuillere-" + cle }));
+  prehension(g, -56, -30, 112, 60);
+  g.appendChild(el("rect", { x: -6, y: -6, width: 58, height: 7, rx: 3.5,
+    fill: "url(#inox)", "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: -22, cy: 0, rx: 27, ry: 15,
+    fill: "url(#inox)", stroke: "#68727e", "stroke-width": 1.4 }));
+  var tas = g.appendChild(el("path", { d: "M" + pt(-42, -3) + " q20,-19 40,0 z",
+    fill: "url(#poudre-" + cle + ")", stroke: melange(CONNUS[cle].depot, "#000000", .2),
+    "stroke-width": .8, "pointer-events": "none" }));
+  g.appendChild(el("text", { x: -18, y: 33, "text-anchor": "middle",
+    "font-size": 12, "font-weight": "bold", fill: "#41586b",
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none",
+    "paint-order": "stroke", stroke: "#f4f7fa", "stroke-width": 3.4 }, nom));
+  var o = { type: "cuillere", cle: cle, nom: nom, g: g, tas: tas, fige: false,
+            x: REPOS[cle].x, y: REPOS[cle].y };
+  brancherObjet(o);
+  placer(o, o.x, o.y);
+  return o;
+}
+function construireObjets() {
+  BECHERS.forEach(function (b) {
+    if (b.temoin || !CONNUS[b.cle]) return;
+    CUILLERES.push(cuillere(b.cle, b.nom));
+  });
+
+  var g = ajout("objets", el("g", { cursor: "grab", "data-act": "eprouvette" }));
+  prehension(g, -22, -54, 44, 108);
+  g.appendChild(el("rect", { x: -15, y: -46, width: 30, height: 92, rx: 4,
+    fill: "#e9f3f9", stroke: "#7f93a6", "stroke-width": 2.4 }));
+  g.appendChild(el("rect", { x: -12, y: -6, width: 24, height: 50,
+    fill: "url(#eau)", opacity: .88, "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -11, y: -44, width: 5, height: 86, rx: 2.5,
+    fill: "#ffffff", opacity: .6, "pointer-events": "none" }));
+  g.appendChild(el("ellipse", { cx: 0, cy: 50, rx: 20, ry: 6, fill: "#cfdae6",
+    stroke: "#7f93a6", "stroke-width": 2, "pointer-events": "none" }));
+  g.appendChild(el("text", { x: 0, y: 70, "text-anchor": "middle", "font-size": 11.5,
+    "font-weight": "bold", fill: "#41586b", "pointer-events": "none",
+    "font-family": "Arial, Helvetica, sans-serif", "paint-order": "stroke",
+    stroke: "#f4f7fa", "stroke-width": 3.4 }, "éprouvette"));
+  EPROUVETTE = { type: "eprouvette", g: g, fige: false,
+                 x: REPOS.eprouvette.x, y: REPOS.eprouvette.y };
+  brancherObjet(EPROUVETTE);
+  placer(EPROUVETTE, EPROUVETTE.x, EPROUVETTE.y);
+
+  g = ajout("objets", el("g", { cursor: "grab", "data-act": "agitateur" }));
+  prehension(g, -14, -62, 28, 124);
+  g.appendChild(el("rect", { x: -5, y: -58, width: 10, height: 116, rx: 5,
+    fill: "#dbe7ef", stroke: "#7f93a6", "stroke-width": 1.8 }));
+  g.appendChild(el("rect", { x: -3, y: -54, width: 3, height: 106, rx: 1.5,
+    fill: "#ffffff", opacity: .75, "pointer-events": "none" }));
+  var sale = g.appendChild(el("rect", { x: -5, y: 26, width: 10, height: 32, rx: 5,
+    fill: "#a98f6d", opacity: 0, "pointer-events": "none" }));
+  g.appendChild(el("text", { x: 0, y: 76, "text-anchor": "middle", "font-size": 11.5,
+    "font-weight": "bold", fill: "#41586b", "pointer-events": "none",
+    "font-family": "Arial, Helvetica, sans-serif", "paint-order": "stroke",
+    stroke: "#f4f7fa", "stroke-width": 3.4 }, "agitateur"));
+  AGITATEUR = { type: "agitateur", g: g, sale: sale, fige: false,
+                x: REPOS.agitateur.x, y: REPOS.agitateur.y };
+  brancherObjet(AGITATEUR);
+  placer(AGITATEUR, AGITATEUR.x, AGITATEUR.y);
+
+  g = ajout("objets", el("g", { cursor: "grab", "data-act": "pissette" }));
+  prehension(g, -26, -50, 52, 100);
+  g.appendChild(el("rect", { x: -20, y: -18, width: 40, height: 62, rx: 8,
+    fill: "#dff0e4", stroke: "#5f8f6b", "stroke-width": 2.2 }));
+  g.appendChild(el("rect", { x: -16, y: 2, width: 32, height: 38, rx: 5,
+    fill: "url(#eau)", opacity: .8, "pointer-events": "none" }));
+  g.appendChild(el("rect", { x: -7, y: -30, width: 14, height: 14, rx: 3,
+    fill: "#5f8f6b", "pointer-events": "none" }));
+  g.appendChild(el("path", { d: "M" + pt(0, -30) + " L" + pt(-26, -44),
+    stroke: "#5f8f6b", "stroke-width": 4, fill: "none", "pointer-events": "none" }));
+  g.appendChild(el("text", { x: 0, y: 60, "text-anchor": "middle", "font-size": 11.5,
+    "font-weight": "bold", fill: "#41586b", "pointer-events": "none",
+    "font-family": "Arial, Helvetica, sans-serif", "paint-order": "stroke",
+    stroke: "#f4f7fa", "stroke-width": 3.4 }, "pissette"));
+  PISSETTE = { type: "pissette", g: g, fige: false,
+               x: REPOS.pissette.x, y: REPOS.pissette.y };
+  brancherObjet(PISSETTE);
+  placer(PISSETTE, PISSETTE.x, PISSETTE.y);
+}
+function objetDe(cle) {
+  var i;
+  for (i = 0; i < CUILLERES.length; i++) if (CUILLERES[i].cle === cle) return CUILLERES[i];
+  return null;
+}
+
+/* ==================================================================
+   14. LE FILET QUI COULE ET LES GRAINS QUI TOMBENT
+   ==================================================================
+   Ce qui se passe doit se VOIR se faire (SKILL §1.2 bis) : le filet coule, le
+   niveau monte, la poudre tombe et se disperse.                             */
+var gFilet = null, gChute = null;
+function construireEffets() {
+  gFilet = ajout("avant", el("rect", { x: 0, y: 0, width: 7, height: 0,
+    fill: "#9ecbe4", opacity: 0, rx: 3, "pointer-events": "none" }));
+  gChute = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  var j;
+  for (j = 0; j < 10; j++) {
+    gChute.appendChild(el("circle", { cx: 0, cy: 0, r: 3.4, fill: "#c8a96b" }));
+  }
+}
+function filetVers(i, y0, ms, fin) {
+  var x = xBecher(i), b = ETAT.becher[i];
+  gFilet.setAttribute("x", x - 3.5);
+  gFilet.setAttribute("opacity", .9);
+  anim(ms, function (u) {
+    var yb = yEau(b.volume);
+    gFilet.setAttribute("y", y0);
+    gFilet.setAttribute("height", Math.max(0, yb - y0));
+  }, function () { gFilet.setAttribute("opacity", 0); if (fin) fin(); });
+}
+function chuteVers(i, cle, ms, fin) {
+  var x = xBecher(i), b = ETAT.becher[i], n = gChute.children.length;
+  var y0 = 300, y1 = yEau(b.volume) + 10, j;
+  for (j = 0; j < n; j++) {
+    gChute.children[j].setAttribute("fill", CONNUS[cle] ? CONNUS[cle].teinte : "#c8a96b");
+  }
+  gChute.setAttribute("opacity", 1);
+  anim(ms, function (u) {
+    for (j = 0; j < n; j++) {
+      var w = borne(u * 1.6 - j * 0.06, 0, 1);
+      gChute.children[j].setAttribute("cx",
+        (x + (j - n / 2) * 5 * (0.4 + w)).toFixed(1));
+      gChute.children[j].setAttribute("cy", (y0 + (y1 - y0) * w).toFixed(1));
+      gChute.children[j].setAttribute("opacity", w >= 1 ? 0 : 1);
+    }
+  }, function () { gChute.setAttribute("opacity", 0); if (fin) fin(); });
+}
+
+/* ==================================================================
+   16. LES BOUTONS DE SCÈNE
+   ================================================================== */
+function construireBoutons() {
+  ACTES = ["remplir", "temoin", "agiter", "reposer", "observer", "classer"];
+  rangeeBoutons(W, Y_BOUTONS, [
+    ["Verser " + nb(PROTO.v, 0) + " mL", "dans les " + BECHERS.length + " béchers"],
+    ["Désigner", "le témoin"],
+    ["Agiter " + T_AGIT + " s", "et rincer"],
+    ["Laisser reposer", motDuree(Math.round(REG.t / 60)) + " minutes"],
+    ["Observer", "les béchers"],
+    ["Classer en", "deux familles"]
+  ], ACTES);
+  ACTES.forEach(function (a) {
+    BOUTONS[a].noeud.addEventListener("click", function () { agir(a); });
+  });
+}
+
+/* ==================================================================
+   17. LES ZONES DE DÉPÔT ET CE QUI SE PASSE QUAND ON DÉPOSE
+   ==================================================================
+   Les zones sont rendues de la plus PETITE à la plus GRANDE (SKILL §12.16). */
+function zoneBecher(i, quoi) {
+  return { type: "becher", i: i, x: xBecher(i), y: BEC.bas - BEC.h / 2,
+           r: BEC.dx * 0.62, hw: BEC.w / 2, hh: BEC.h / 2, quoi: quoi };
+}
+function emplacements(o) {
+  var z = [], i;
+  if (o.type === "cuillere") {
+    for (i = 0; i < ETAT.becher.length; i++) {
+      if (!ETAT.becher[i].eau || ETAT.becher[i].solide) continue;
+      if (ETAT.becher[i].temoin) continue;
+      z.push(zoneBecher(i, "la cuillerée dans un bécher qui n'a rien reçu"));
+    }
+  } else if (o.type === "eprouvette") {
+    for (i = 0; i < ETAT.becher.length; i++) {
+      if (ETAT.becher[i].eau) continue;
+      z.push(zoneBecher(i, "l'eau dans un bécher encore vide"));
+    }
+  } else if (o.type === "agitateur") {
+    for (i = 0; i < ETAT.becher.length; i++) {
+      if (!ETAT.becher[i].eau || !ETAT.becher[i].solide || ETAT.becher[i].agite) continue;
+      z.push(zoneBecher(i, "l'agitateur dans un bécher qui n'a pas encore été agité"));
+    }
+  } else if (o.type === "pissette") {
+    z.push({ type: "rincage", x: AGITATEUR.x, y: AGITATEUR.y, r: 150,
+             hw: 40, hh: 70, quoi: "la pissette au-dessus de l'agitateur, pour le rincer" });
+  }
+  z.sort(function (a, b) { return a.r - b.r; });
+  return z;
+}
+/* Un refus n'est jamais muet : il dit la raison, et il CITE la fiche. */
+function deposer(o, z, depart) {
+  var i, b;
+  if (!z) {
+    volerVers(o, REPOS[o.cle || o.type].x, REPOS[o.cle || o.type].y, 420);
+    signaler(refusDe(o));
+    return;
+  }
+  if (o.type === "eprouvette") {
+    verserEau(z.i, o);
+    return;
+  }
+  if (o.type === "cuillere") {
+    verserSolide(z.i, o);
+    return;
+  }
+  if (o.type === "agitateur") {
+    agiterBecher(z.i);
+    return;
+  }
+  if (o.type === "pissette") {
+    rincer(o);
+    return;
+  }
+}
+function refusDe(o) {
+  var i, libres;
+  if (o.type === "cuillere") {
+    if (!ETAT.becher.some(function (b) { return b.eau; }))
+      return "Verser d'abord l'eau :" + citerProto(/verser environ/i);
+    libres = ETAT.becher.filter(function (b) {
+      return b.eau && !b.solide && !b.temoin;
+    }).length;
+    if (!libres) return "Tous les béchers ont reçu leur solide — sauf le " +
+      "témoin, et lui n'en reçoit aucun :" + citerProto(/t[ée]moin/i);
+    return "Poser la cuillerée DANS un bécher : il en reste " + libres +
+      " qui n'ont rien reçu. Pas le témoin.";
+  }
+  if (o.type === "eprouvette") {
+    if (ETAT.becher.every(function (b) { return b.eau; }))
+      return "Les " + ETAT.becher.length + " béchers ont déjà leur eau.";
+    return "Verser l'eau DANS un bécher encore vide.";
+  }
+  if (o.type === "agitateur") {
+    if (!ETAT.propre) return "Rincer l'agitateur d'abord :" +
+      citerSecu(/rincer l'agitateur/i);
+    if (!ETAT.becher.some(function (b) { return b.eau && b.solide && !b.agite; }))
+      return "Il n'y a plus de bécher à agiter.";
+    return "Plonger l'agitateur DANS un bécher qui a reçu son solide.";
+  }
+  return "Poser la pissette au-dessus de l'agitateur pour le rincer.";
+}
+/* Cliquer un bécher : le LIRE. C'est le savoir-faire n° 3 de la fiche —
+   observer à l'œil nu et décrire ce que l'on voit. */
+function cliquerBecher(i) {
+  var b = ETAT.becher[i], e = etatBecher(b);
+  if (!b.eau) {
+    noter("Bécher « " + BECHERS[i].titre + " » : vide. Il attend ses " +
+          nb(REG.v, 0) + " mL d'eau.", null);
+  } else if (e.temoin || !b.solide) {
+    noter("Bécher « " + BECHERS[i].titre + " » : " + nb(b.volume, 0) +
+          " mL d'eau, aucun solide ajouté. " + majuscule(aspectDe(b)) + " — " +
+          e.phases + " partie visible.", null);
+  } else {
+    noter("Bécher « " + BECHERS[i].titre + " » : " + nb(b.masse, 1) + " g " +
+          du(b.solide) + " dans " + nb(b.volume, 0) + " mL. Dissous " +
+          nb(e.dis, 3) + " g, il reste " + nb(e.reste, 3) + " g. " +
+          majuscule(aspectDe(b)) + " — " + e.phases + " partie" +
+          pluriel(e.phases, "s") + " visible" + pluriel(e.phases, "s") + ".", null);
+  }
+  succes(); avancer();
+}
+
+/* ==================================================================
+   18. LES GESTES — chacun DOUBLE un glisser, et chacun s'ANIME
+   ==================================================================
+   ⚠ L'ÉTAT EST POSÉ TOUT DE SUITE, l'image ensuite (SKILL §6.2). Le solveur
+   a déjà l'état d'arrivée quand l'animation commence.                       */
+function verserEau(i, o) {
+  var b = ETAT.becher[i];
+  b.eau = true; b.volume = REG.v;              /* l'état d'abord */
+  var x = xBecher(i);
+  volerVers(o, x, BEC.bas - BEC.h - 46, 420);
+  tard(function () {
+    filetVers(i, BEC.bas - BEC.h - 30, 640, function () {
+      volerVers(o, REPOS.eprouvette.x, REPOS.eprouvette.y, 380);
+      armer(); avancer();
+    });
+    /* le NIVEAU MONTE pendant que le filet coule — jamais d'un saut */
+    anim(640, function (u) { dessinerBecher(i, u); },
+         function () { dessinerBecher(i, 1); });
+  }, 420);
+  noter(nb(REG.v, 0) + " mL d'eau versés dans le bécher « " +
+        BECHERS[i].titre + " ».", true);
+  succes();
+}
+function verserSolide(i, o) {
+  var b = ETAT.becher[i];
+  if (b.temoin) {
+    volerVers(o, REPOS[o.cle].x, REPOS[o.cle].y, 420);
+    signaler("Pas dans le témoin :" + citerProto(/t[ée]moin/i));
+    return;
+  }
+  b.solide = o.cle; b.masse = REG.m;            /* l'état d'abord */
+  var x = xBecher(i);
+  volerVers(o, x, 300, 460);
+  o.tas.setAttribute("opacity", 0.15);
+  tard(function () {
+    chuteVers(i, o.cle, 640, function () {
+      o.tas.setAttribute("opacity", 1);
+      volerVers(o, REPOS[o.cle].x, REPOS[o.cle].y, 380);
+      armer(); avancer();
+    });
+  }, 460);
+  noter("Une cuillerée " + du(o.nom) + " — " + nb(REG.m, 1) + " g — versée " +
+        "dans « " + BECHERS[i].titre + " ». Rien n'est encore agité.", true);
+  succes();
+}
+function agiterBecher(i) {
+  var b = ETAT.becher[i];
+  if (!ETAT.propre) {
+    signaler("Rincer l'agitateur avant de passer au bécher suivant :" +
+             citerSecu(/rincer l'agitateur/i));
+    volerVers(AGITATEUR, REPOS.agitateur.x, REPOS.agitateur.y, 420);
+    return;
+  }
+  b.agite = true;                                /* l'état d'abord */
+  b.tRepos = 0;
+  ETAT.propre = false;
+  ETAT.tRepos = 0; ETAT.repos = false;
+  var x = xBecher(i), y = BEC.bas - BEC.h / 2;
+  volerVers(AGITATEUR, x, y, 420);
+  tard(function () {
+    anim(760, function (u) {
+      AGITATEUR.g.setAttribute("transform", "translate(" +
+        (x + Math.sin(u * 12) * 22).toFixed(1) + "," + y.toFixed(1) + ")");
+      dessinerBecher(i, 1);
+    }, function () {
+      AGITATEUR.x = x; AGITATEUR.y = y;
+      AGITATEUR.sale.setAttribute("opacity", .75);
+      volerVers(AGITATEUR, REPOS.agitateur.x, REPOS.agitateur.y, 380);
+      armer(); avancer();
+    });
+  }, 420);
+  noter("Bécher « " + BECHERS[i].titre + " » agité " + T_AGIT + " s. " +
+        "L'agitateur est sali : il faut le rincer avant le suivant.", true);
+  succes();
+}
+function rincer(o) {
+  ETAT.propre = true;
+  volerVers(o, AGITATEUR.x, AGITATEUR.y - 60, 420);
+  tard(function () {
+    anim(520, function (u) {
+      AGITATEUR.sale.setAttribute("opacity", (0.75 * (1 - u)).toFixed(2));
+    }, function () {
+      AGITATEUR.sale.setAttribute("opacity", 0);
+      volerVers(o, REPOS.pissette.x, REPOS.pissette.y, 380);
+      armer(); avancer();
+    });
+  }, 420);
+  noter("Agitateur rincé — sans quoi les essais se contaminent :" +
+        citerSecu(/rincer l'agitateur/i), true);
+  succes();
+}
+/* ⚠ LE TEMPS SE JOUE, IL NE SE SAUTE PAS. Le repos est intégré par tranches
+   de PAS_SIM secondes de temps simulé, quel que soit le facteur de
+   compression : le résultat ne dépend donc pas de la vitesse d'affichage
+   (SKILL §12bis.6, le piège du pas de l'accéléré).                          */
+function reposer() {
+  var duree = REG.t, tics = Math.max(1, Math.round(duree / PAS_SIM));
+  var ms = Math.round(duree / ACCEL * 1000);
+  ETAT.repos = true;
+  ETAT.tRepos = duree;                           /* l'état d'arrivée, tout de suite */
+  ETAT.becher.forEach(function (b) { b.tRepos = duree; });
+  anim(ms, function (u) {
+    var n = Math.round(u * tics);
+    var t = n * PAS_SIM;
+    ETAT.becher.forEach(function (b) { b.tRepos = t; });
+    ETAT.becher.forEach(function (b, i) { dessinerBecher(i, 1); });
+    majLectures();
+  }, function () {
+    ETAT.becher.forEach(function (b) { b.tRepos = duree; });
+    ETAT.becher.forEach(function (b, i) { dessinerBecher(i, 1); });
+    armer(); avancer();
+  });
+  noter("Repos de " + mmss(duree) + " — sans toucher aux béchers. " +
+        "Le temps court à × " + ACCEL.toFixed(0) + ".", true);
+  succes();
+}
+function observer() {
+  var i = 0;
+  ETAT.observe = true;                            /* l'état d'abord */
+  ETAT.becher.forEach(function (b, k) {
+    var e = etatBecher(b);
+    ETAT.carnet[k] = { aspect: aspectDe(b), parts: e.phases, dis: e.dis,
+                       reste: e.reste, v: e.v, chute: e.chute, h: e.h,
+                       type: typeDe(b), distingue: distingueDe(b) };
+  });
+  /* la loupe passe d'un bécher à l'autre : on voit qu'on observe */
+  anim(1000, function (u) {
+    var k = Math.min(ETAT.becher.length - 1, Math.floor(u * ETAT.becher.length));
+    gLoupe.setAttribute("opacity", .95);
+    gLoupe.setAttribute("transform", "translate(" + xBecher(k).toFixed(1) +
+      "," + (BEC.bas - BEC.h / 2).toFixed(1) + ")");
+  }, function () {
+    gLoupe.setAttribute("opacity", 0);
+    armer(); avancer();
+  });
+  ETAT.becher.forEach(function (b, k) {
+    revelerCellule(k, C_ASPECT); revelerCellule(k, C_PARTS);
+    revelerCellule(k, C_DISTINGUE); revelerCellule(k, C_TYPE);
+    verifierContreFiche(k);
+  });
+  majCarnet();
+  var het = ETAT.carnet.filter(function (c) { return c && c.type === "hétérogène"; });
+  noter("Observation faite : " + (ETAT.carnet.length - het.length - 1) +
+        " mélanges ne laissent voir qu'une seule partie, " + het.length +
+        " en laissent voir deux.", true);
+  succes();
+}
+function classer() {
+  var hom = [], het = [], i;
+  for (i = 0; i < BECHERS.length; i++) {
+    if (BECHERS[i].temoin || !ETAT.carnet[i]) continue;
+    (ETAT.carnet[i].type === "homogène" ? hom : het).push(BECHERS[i].nom);
+  }
+  ETAT.classe = true;
+  casesFamille[0].t2.textContent = hom.join(", ") || "aucun";
+  casesFamille[1].t2.textContent = het.join(", ") || "aucun";
+  anim(900, function (u) {
+    casesFamille[0].g.setAttribute("opacity", borne(u * 2, 0, 1).toFixed(2));
+    casesFamille[1].g.setAttribute("opacity", borne(u * 2 - 1, 0, 1).toFixed(2));
+  }, function () { armer(); avancer(); });
+  noter("Deux familles : " + (hom.length ? hom.join(" et ") : "aucun") +
+        " donnent des mélanges HOMOGÈNES ; " +
+        (het.length ? het.join(" et ") : "aucun") + " des mélanges " +
+        "HÉTÉROGÈNES.", true);
+  succes();
+  if (ETAT.observe) $("concl").classList.remove("masque");
+}
+/* Le chemin COMMUN au bouton et au glisser (SKILL §12.13). */
+function agir(a) {
+  var i, b;
+  if (a === "remplir") {
+    for (i = 0; i < ETAT.becher.length; i++) {
+      if (!ETAT.becher[i].eau) { verserEau(i, EPROUVETTE); return; }
+    }
+    signaler("Les " + ETAT.becher.length + " béchers ont déjà leur eau.");
+    return;
+  }
+  if (a === "temoin") {
+    designerTemoin();
+    return;
+  }
+  if (a === "agiter") {
+    for (i = 0; i < ETAT.becher.length; i++) {
+      b = ETAT.becher[i];
+      if (b.eau && b.solide && !b.agite) {
+        if (!ETAT.propre) { rincer(PISSETTE); return; }
+        agiterBecher(i); return;
+      }
+    }
+    signaler("Il n'y a plus de bécher à agiter. " +
+             (ETAT.repos ? "" : "Laisser reposer, maintenant."));
+    return;
+  }
+  if (a === "reposer") {
+    if (!ETAT.becher.some(function (b) { return b.agite; })) {
+      signaler("Agiter d'abord :" + citerProto(/agiter chaque/i));
+      return;
+    }
+    reposer(); return;
+  }
+  if (a === "observer") {
+    if (!ETAT.repos) {
+      signaler("Laisser reposer d'abord :" + citerProto(/reposer/i) +
+               " — un mélange jugé trop tôt se classe mal.");
+      return;
+    }
+    observer(); return;
+  }
+  if (a === "classer") {
+    if (!ETAT.observe) { signaler("Observer les béchers d'abord."); return; }
+    classer(); return;
+  }
+}
+function designerTemoin() {
+  var i, t = -1;
+  for (i = 0; i < BECHERS.length; i++) if (BECHERS[i].temoin) t = i;
+  if (t < 0) { signaler("La fiche ne désigne aucun témoin."); return; }
+  ETAT.becher[t].temoin = true;
+  ETAT.temoinVu = true;
+  anim(700, function (u) {
+    BEC_N[t].lect.setAttribute("opacity", u.toFixed(2));
+    gTemoin.setAttribute("opacity", u.toFixed(2));
+    gTemoin.setAttribute("transform", "translate(" + xBecher(t).toFixed(1) +
+      "," + (BEC.bas - BEC.h + 54 - (1 - u) * 18).toFixed(1) + ")");
+  }, function () { armer(); avancer(); });
+  noter("Le bécher « " + BECHERS[t].titre + " » est le TÉMOIN : il ne reçoit " +
+        "aucun solide, et c'est lui qui montre l'aspect d'un liquide auquel " +
+        "on n'a rien ajouté.", true);
+  succes();
+}
+
+/* ==================================================================
+   19. LE RENDU — le dessin RELIT le modèle, il ne le recopie pas (§12.18)
+   ================================================================== */
+var gLoupe = null, gTemoin = null, gFamilles = null, casesFamille = [];
+function construireLecture() {
+  gLoupe = ajout("ui", el("g", { opacity: 0, "pointer-events": "none" }));
+  gLoupe.appendChild(el("circle", { cx: 0, cy: 0, r: BEC.w / 2 + 8, fill: "none",
+    stroke: GOLD, "stroke-width": 4 }));
+  gTemoin = ajout("avant", el("g", { opacity: 0, "pointer-events": "none" }));
+  gTemoin.appendChild(el("rect", { x: -46, y: -20, width: 92, height: 26, rx: 13,
+    fill: "#fdf6e6", stroke: GOLD, "stroke-width": 2 }));
+  gTemoin.appendChild(el("text", { x: 0, y: -2, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: "#8a5a00",
+    "font-family": "Arial, Helvetica, sans-serif" }, "TÉMOIN"));
+
+  gFamilles = ajout("ui", el("g", {}));
+  [["MÉLANGES HOMOGÈNES — une seule phase", VERT, "#eef6e6"],
+   ["MÉLANGES HÉTÉROGÈNES — au moins deux phases", ORANGE, "#fdf1e7"]
+  ].forEach(function (f, i) {
+    var g = gFamilles.appendChild(el("g", { opacity: 0 }));
+    var x = 44 + i * 520, y = 640;
+    g.appendChild(el("rect", { x: x, y: y, width: 500, height: 44, rx: 8,
+      fill: f[2], stroke: f[1], "stroke-width": 1.8 }));
+    g.appendChild(el("text", { x: x + 14, y: y + 18, "font-size": 11,
+      "font-weight": "bold", fill: f[1],
+      "font-family": "Arial, Helvetica, sans-serif" }, f[0]));
+    var t2 = g.appendChild(el("text", { x: x + 14, y: y + 34, "font-size": 12.5,
+      fill: INK, "font-family": "Arial, Helvetica, sans-serif" }, ""));
+    casesFamille.push({ g: g, t2: t2 });
+  });
+}
+function dessinerBecher(i, u) {
+  var b = ETAT.becher[i], n = BEC_N[i], e = etatBecher(b);
+  var v = b.eau ? b.volume * (u === undefined ? 1 : u) : 0;
+  var yh = yEau(v), hEau = Math.max(0, BEC.bas - 8 - yh);
+  n.eau.setAttribute("y", yh);
+  n.eau.setAttribute("height", hEau);
+  n.surf.setAttribute("cy", yh);
+  n.surf.setAttribute("opacity", v > 0 ? .85 : 0);
+  /* le trouble : la part encore EN SUSPENSION, qui décroît avec le repos */
+  var susp = (e.reste > SEUIL_RESTE && e.suspendu) ? 1 - (e.part || 0) : 0;
+  if (e.reste > SEUIL_RESTE && !e.suspendu) susp = Math.max(0, 1 - (e.part || 0));
+  var c = CONNUS[b.solide];
+  n.trouble.setAttribute("y", yh);
+  n.trouble.setAttribute("height", hEau);
+  n.trouble.setAttribute("fill", c ? c.trouble : "#b08a52");
+  n.trouble.setAttribute("opacity", b.agite ? (0.12 + 0.62 * susp).toFixed(2) : 0);
+  /* le dépôt : sa hauteur suit la MASSE non dissoute réellement déposée */
+  var mDep = (e.reste > SEUIL_RESTE && !e.suspendu) ? e.reste
+           : (e.reste > SEUIL_RESTE ? e.reste * (e.part || 0) * 0.55 : 0);
+  var hDep = c ? borne(mDep / c.rho * 1e6 / (Math.PI * 24 * 24) * 10, 0, HAUT_MAX * .5) : 0;
+  n.depot.setAttribute("y", BEC.bas - 12 - hDep);
+  n.depot.setAttribute("height", hDep);
+  n.depot.setAttribute("fill", c ? c.depot : "#c69f57");
+  n.grains.setAttribute("opacity", hDep > 1 ? .9 : 0);
+  var j;
+  for (j = 0; j < n.grains.children.length; j++) {
+    n.grains.children[j].setAttribute("cy",
+      (BEC.bas - 14 - (j % 4) * 4 - hDep * (0.2 + (j % 3) * 0.28)).toFixed(1));
+    n.grains.children[j].setAttribute("fill", c ? c.depot : "#c69f57");
+  }
+  n.etiq.textContent = b.eau ? BECHERS[i].titre : "(vide)";
+  n.lect.textContent = !b.eau ? "" : (ETAT.observe
+    ? e.phases + " partie" + pluriel(e.phases, "s") + " · " + typeDe(b)
+    : (b.agite ? "agité" : (b.solide ? "à agiter" : (b.temoin ? "témoin" : "eau seule"))));
+}
+function dessiner() {
+  var i;
+  for (i = 0; i < ETAT.becher.length; i++) dessinerBecher(i, 1);
+  CUILLERES.forEach(function (o) { COUCHES.objets.appendChild(o.g); });
+  [EPROUVETTE, AGITATEUR, PISSETTE].forEach(function (o) {
+    if (o) COUCHES.objets.appendChild(o.g);
+  });
+}
+
+/* ==================================================================
+   20. CONSIGNE, PARCOURS D'ÉTAPES, ARMEMENT
+   ================================================================== */
+function prochainSansEau() {
+  var i;
+  for (i = 0; i < ETAT.becher.length; i++) if (!ETAT.becher[i].eau) return i;
+  return -1;
+}
+function prochainSansSolide() {
+  var i;
+  for (i = 0; i < ETAT.becher.length; i++) {
+    if (ETAT.becher[i].eau && !ETAT.becher[i].solide && !ETAT.becher[i].temoin) return i;
+  }
+  return -1;
+}
+function prochainAAgiter() {
+  var i, b;
+  for (i = 0; i < ETAT.becher.length; i++) {
+    b = ETAT.becher[i];
+    if (b.eau && b.solide && !b.agite) return i;
+  }
+  return -1;
+}
+function consigne() {
+  if (prochainSansEau() >= 0) return "Verser " + nb(REG.v, 0) + " mL d'eau dans " +
+    "chacun des " + ETAT.becher.length + " béchers — à l'éprouvette, ou d'un " +
+    "seul geste.";
+  if (!ETAT.temoinVu) return "Désigner le bécher « " +
+    (BECHERS.filter(function (b) { return b.temoin; })[0] || {}).titre +
+    " » : c'est le témoin, il ne reçoit aucun solide.";
+  if (prochainSansSolide() >= 0) return "Verser une cuillerée de solide dans " +
+    "chaque bécher, sauf le témoin.";
+  if (prochainAAgiter() >= 0) return ETAT.propre
+    ? "Agiter le bécher « " + BECHERS[prochainAAgiter()].titre + " » " +
+      T_AGIT + " s à l'agitateur en verre."
+    : "Rincer l'agitateur à la pissette avant de passer au bécher suivant.";
+  if (!ETAT.repos) return "Laisser reposer " + mmss(REG.t) + " sans toucher " +
+    "aux béchers : c'est le repos qui décide.";
+  if (!ETAT.observe) return "Observer chaque bécher, de face puis par " +
+    "transparence, et compter les parties visibles.";
+  if (!ETAT.classe) return "Classer les mélanges en deux familles, selon que " +
+    "l'on distingue ou non leurs constituants.";
+  return "Un mélange est homogène si l'on ne distingue plus ses constituants " +
+         "à l'œil nu après agitation, hétérogène si on les distingue encore.";
+}
+var ETAPES = ["Verser l'eau", "Désigner le témoin", "Ajouter les solides",
+              "Agiter et rincer", "Laisser reposer", "Observer",
+              "Compter les phases", "Classer"];
+function faits() {
+  return [prochainSansEau() < 0,
+          ETAT.temoinVu,
+          prochainSansSolide() < 0,
+          prochainAAgiter() < 0 && ETAT.becher.some(function (b) { return b.agite; }),
+          ETAT.repos,
+          ETAT.observe,
+          ETAT.observe,
+          ETAT.classe];
+}
+function armer() {
+  BOUTONS.remplir.armer(prochainSansEau() >= 0);
+  BOUTONS.temoin.armer(!ETAT.temoinVu && prochainSansEau() < 0);
+  BOUTONS.agiter.armer(prochainAAgiter() >= 0 && prochainSansSolide() < 0);
+  BOUTONS.reposer.armer(prochainAAgiter() < 0 && !ETAT.repos &&
+    ETAT.becher.some(function (b) { return b.agite; }));
+  BOUTONS.observer.armer(ETAT.repos && !ETAT.observe);
+  BOUTONS.classer.armer(ETAT.observe && !ETAT.classe);
+  AGITATEUR.sale.setAttribute("opacity", ETAT.propre ? 0 : .75);
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majLectures();
+  majProtocole();
+  majGraphe();
+  dessiner();
+  if (ETAT.classe && ETAT.observe) $("concl").classList.remove("masque");
+}
+
+/* ==================================================================
+   21. LES PANNEAUX HTML
+   ================================================================== */
+function majLectures() {
+  var n = ETAT.becher.filter(function (b) { return b.eau; }).length;
+  var s = ETAT.becher.filter(function (b) { return b.solide; }).length;
+  var a = ETAT.becher.filter(function (b) { return b.agite; }).length;
+  $("lEau").textContent = n + " / " + ETAT.becher.length + " béchers";
+  $("lEau").className = "v" + (n ? "" : " off");
+  $("lSolide").textContent = s + " cuillerée" + pluriel(s, "s") + " · " +
+    nb(REG.m, 1) + " g chacune";
+  $("lSolide").className = "v" + (s ? "" : " off");
+  $("lAgit").textContent = a + " agité" + pluriel(a, "s") +
+    (ETAT.propre ? " · agitateur propre" : " · agitateur à rincer");
+  $("lAgit").className = "v " + (ETAT.propre ? "ok" : "ko");
+  $("lRepos").textContent = mmss(ETAT.tRepos) + " / " + mmss(REG.t);
+  $("lRepos").className = "v" + (ETAT.repos ? " ok" : " off");
+  var hom = 0, het = 0;
+  ETAT.becher.forEach(function (b, i) {
+    if (!b.eau || BECHERS[i].temoin) return;
+    if (etatBecher(b).phases === 1) hom++; else het++;
+  });
+  $("lHom").textContent = ETAT.observe ? hom + " mélange" + pluriel(hom, "s") : "—";
+  $("lHom").className = "v" + (ETAT.observe ? " ok" : " off");
+  $("lHet").textContent = ETAT.observe ? het + " mélange" + pluriel(het, "s") : "—";
+  $("lHet").className = "v" + (ETAT.observe ? " ko" : " off");
+  var i = prochainAAgiter();
+  $("lStokes").textContent = "—";
+  ETAT.becher.forEach(function (b, k) {
+    var e;
+    if (!b.solide || BECHERS[k].temoin) return;
+    e = etatBecher(b);
+    if (e.suspendu) $("lStokes").textContent = nb(e.v * 1e6, 1) + " µm/s · " +
+      b.solide;
+  });
+  if ($("lStokes").textContent === "—" && ETAT.observe) {
+    $("lStokes").textContent = "tout est au fond";
+  }
+  $("lStokes").className = "v" + ($("lStokes").textContent === "—" ? " off" : "");
+  var t = BECHERS.filter(function (b) { return b.temoin; })[0];
+  $("lTem").textContent = ETAT.temoinVu ? (t ? t.titre : "désigné") : "à désigner";
+  $("lTem").className = "v" + (ETAT.temoinVu ? " ok" : " off");
+  $("etatSysteme").textContent = ETAT.observe
+    ? (ETAT.classe ? "classé" : "observé") : (ETAT.repos ? "au repos" : "en préparation");
+}
+function majCarnet() {
+  var t = $("carnet"), i, c;
+  vide(t);
+  t.appendChild(ligneTab(["Bécher", "Dissous", "Reste", "Chute au repos",
+                          "Parties", "Type"], true));
+  for (i = 0; i < BECHERS.length; i++) {
+    c = ETAT.carnet[i];
+    t.appendChild(ligneTab([BECHERS[i].titre,
+      c ? nb(c.dis, 3) + " g" : "—",
+      c ? nb(c.reste, 3) + " g" : "—",
+      c && c.h ? nb(c.chute * 1000, 1) + " mm / " + nb(c.h * 1000, 1) + " mm" : "—",
+      c ? c.parts + "" : "—",
+      c ? c.type : "—"]));
+  }
+}
+/* Quand le modèle et la fiche divergent, on le DIT (SKILL §11.5). */
+function verifierContreFiche(k) {
+  var c = ETAT.carnet[k], f;
+  if (!c || ETAT.horsProto) return;
+  f = parseInt(cel(k, C_PARTS), 10);
+  if (isFinite(f) && f !== c.parts) {
+    signalerDivergence("p" + k, "<b>" + BECHERS[k].titre + ".</b> Le modèle " +
+      "compte " + c.parts + " partie(s), la fiche en écrit " + f + ".");
+  }
+  f = cel(k, C_TYPE);
+  if (f && f.toLowerCase().indexOf(c.type.toLowerCase()) < 0 &&
+      c.type.indexOf("mélange") < 0) {
+    signalerDivergence("t" + k, "<b>" + BECHERS[k].titre + ".</b> Le modèle " +
+      "classe « " + c.type + " », la fiche écrit « " + f + " ».");
+  }
+}
+var gBar = null;
+function construireGraphe() { gBar = $("gBarres"); }
+function majGraphe() {
+  if (!gBar) return;
+  vide(gBar);
+  var Wg = 360, x0 = 30, y0 = 128, hMax = 96, i;
+  var w = (Wg - x0 - 12) / BECHERS.length;
+  gBar.appendChild(el("line", { x1: x0 - 6, y1: y0, x2: Wg - 8, y2: y0,
+    stroke: LIGNE, "stroke-width": 1.4 }));
+  var maxM = Math.max(0.001, REG.m);
+  for (i = 0; i < BECHERS.length; i++) {
+    (function (i) {
+      var b = ETAT.becher[i], e = etatBecher(b), bx0 = x0 + i * w;
+      if (!b.eau || !b.solide) {
+        gBar.appendChild(el("text", { x: bx0 + w / 2, y: y0 - 4,
+          "text-anchor": "middle", "font-size": 9.5, fill: "#b7bfca" }, "—"));
+      } else {
+        var hd = hMax * (e.dis / maxM), hr = hMax * (e.reste / maxM);
+        gBar.appendChild(el("rect", { x: bx0 + 5, y: y0 - hd, width: w - 12,
+          height: Math.max(0, hd), fill: "#2f7fb5", rx: 2 }));
+        gBar.appendChild(el("rect", { x: bx0 + 5, y: y0 - hd - hr, width: w - 12,
+          height: Math.max(0, hr), fill: ORANGE, rx: 2 }));
+      }
+      gBar.appendChild(el("text", { x: bx0 + w / 2, y: y0 + 13,
+        "text-anchor": "middle", "font-size": 9.5, fill: GRIS },
+        (BECHERS[i].nom || "").slice(0, 9)));
+    })(i);
+  }
+  gBar.appendChild(el("text", { x: x0 - 6, y: 12, "font-size": 10, fill: GRIS },
+    "dissous (bleu) · non dissous (orange)"));
+}
+function construireCapot() {
+  $("eqModele").textContent =
+    "masse dissoute .. m_dis = min( m versée , S(solide) × V )\n" +
+    "reste ........... m_reste = m − m_dis\n" +
+    "chute d'un grain  v = (ρ_solide − ρ_eau)·g·d² / (18·η)      [Stokes]\n" +
+    "                  z(t) = v · t   à comparer à la hauteur d'eau h\n" +
+    "hauteur d'eau ... h = V / (π·R²)   avec R = " + nb(RAYON_BECHER * 1000, 0) +
+      " mm\n" +
+    "phases .......... 1 si m_reste ≤ " + nb(SEUIL_RESTE, 2) + " g, 2 sinon\n" +
+    "classement ...... homogène si 1 phase, hétérogène si 2";
+  var l = [];
+  BECHERS.forEach(function (b) {
+    var o, e;
+    if (b.temoin || !CONNUS[b.cle]) return;
+    o = { eau: true, volume: PROTO.v, solide: b.cle, masse: PROTO.m, tRepos: PROTO.t };
+    e = etatBecher(o);
+    l.push("  " + (b.nom + "        ").slice(0, 8) +
+      " dissous " + nb(e.dis, 3) + " g · reste " + nb(e.reste, 3) +
+      " g · v = " + sci(e.v, 2) + " m/s\n" +
+      "           chute en " + mmss(PROTO.t) + " : " + nb(e.chute * 1000, 1) +
+      " mm pour " + nb(e.h * 1000, 1) + " mm d'eau → " +
+      (e.tombe ? "au fond" : (e.suspendu ? "EN SUSPENSION" : "rien à voir")) +
+      " · " + e.phases + " phase" + pluriel(e.phases, "s"));
+  });
+  $("eqMatiere").textContent = "aux réglages du protocole (" + nb(PROTO.m, 1) +
+    " g dans " + nb(PROTO.v, 0) + " mL, repos " + mmss(PROTO.t) + ") :\n" +
+    l.join("\n") + "\n\n" +
+    "le témoin ne reçoit rien : une seule phase, et c'est LUI qui permet de\n" +
+    "conclure — l'eau salée a exactement son aspect.";
+  $("eqLimite").textContent =
+    "le REPOS décide, et on peut le vérifier :\n" +
+    "  sable, chute de " + nb(stokes("sable") * 1000, 1) + " mm/s :\n" +
+    "    il lui faut " + nb(hauteurEau(PROTO.v) / stokes("sable"), 1) +
+      " s pour traverser la colonne d'eau\n" +
+    "  argile de la terre, chute de " + nb(stokes("terre") * 1e6, 1) + " µm/s :\n" +
+    "    il lui faudrait " + nb(hauteurEau(PROTO.v) / stokes("terre") / 3600, 1) +
+      " heures — d'où le trouble qui ne part pas\n" +
+    "un mélange jugé AVANT le repos se classe donc mal, et la fiche le dit.";
+  construireConstantes();
+}
+
+/* ==================================================================
+   22. LES CURSEURS
+   ==================================================================
+   ⚠ Un curseur qui ne fait rien est pire qu'un curseur absent (§12.5) : les
+   trois changent un nombre affiché, d'un bout à l'autre de leur course.     */
+function brancherCurseurs() {
+  var rm = $("rM"), rv = $("rV"), rt = $("rT");
+  rm.min = 1; rm.max = 25; rm.step = 1; rm.value = PROTO.m;
+  rv.min = 10; rv.max = 100; rv.step = 5; rv.value = PROTO.v;
+  rt.min = 0; rt.max = 300; rt.step = 5; rt.value = PROTO.t;
+  function lire() {
+    REG.m = +rm.value; REG.v = +rv.value; REG.t = +rt.value;
+    $("oM").textContent = nb(REG.m, 0) + " g";
+    $("oV").textContent = nb(REG.v, 0) + " mL";
+    $("oT").textContent = mmss(REG.t);
+    $("regM").className = "reg" + (REG.m !== PROTO.m ? " hp" : "");
+    $("regV").className = "reg" + (REG.v !== PROTO.v ? " hp" : "");
+    $("regT").className = "reg" + (REG.t !== PROTO.t ? " hp" : "");
+    ETAT.horsProto = horsProtocole();
+    $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  }
+  function changer() { lire(); perimer(); }
+  rm.addEventListener("input", changer);
+  rv.addEventListener("input", changer);
+  rt.addEventListener("input", changer);
+  $("bProto").addEventListener("click", function () {
+    revenirAuProtocole();
+    rm.value = PROTO.m; rv.value = PROTO.v; rt.value = PROTO.t;
+    changer();
+    noter("Réglages du protocole rétablis : " + nb(PROTO.m, 1) + " g dans " +
+          nb(PROTO.v, 0) + " mL, repos " + mmss(PROTO.t) + ".", true);
+  });
+  lire();
+}
+/* Un réglage périme l'essai : les masses et les hauteurs changent (§12.19). */
+function perimer() {
+  var avait = ETAT.nCell > 0 || ETAT.observe;
+  remettre(true);
+  if (avait) {
+    noter("Un réglage a changé : les béchers sont rincés et le tableau " +
+          "redevient vierge. Le carnet, lui, continue de calculer.", false);
+  }
+}
+
+/* ==================================================================
+   26. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages. Le minuteur de séance
+   SURVIT — la séance ne se rembobine pas (SKILL §11.6).                     */
+function remettre(silencieux) {
+  var seance = ETAT.tSeance || 0;
+  succes();
+  purger();
+  ANIM_ON = true;
+  effacerCibles();
+  effacerGuide();
+  prise = null;
+  ETAT = neufEtat();
+  ETAT.tSeance = seance;
+  ETAT.horsProto = horsProtocole();
+  CUILLERES.forEach(function (o) {
+    placer(o, REPOS[o.cle].x, REPOS[o.cle].y);
+    o.tas.setAttribute("opacity", 1);
+  });
+  placer(EPROUVETTE, REPOS.eprouvette.x, REPOS.eprouvette.y);
+  placer(AGITATEUR, REPOS.agitateur.x, REPOS.agitateur.y);
+  placer(PISSETTE, REPOS.pissette.x, REPOS.pissette.y);
+  AGITATEUR.sale.setAttribute("opacity", 0);
+  gFilet.setAttribute("opacity", 0);
+  gChute.setAttribute("opacity", 0);
+  gLoupe.setAttribute("opacity", 0);
+  gTemoin.setAttribute("opacity", 0);
+  casesFamille.forEach(function (c) { c.g.setAttribute("opacity", 0); });
+  BEC_N.forEach(function (n) { n.lect.setAttribute("opacity", 1); });
+  ACTES.forEach(function (a) { BOUTONS[a].neuf(); });
+  viderTableau();
+  $("diverge").style.display = "none"; $("diverge").innerHTML = "";
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  majCarnet();
+  majSeance();
+  if (INCONNUS.length && !silencieux) {
+    noter("⚠ La fiche cite un solide que la page ne connaît pas : " +
+          INCONNUS.join(", ") + ". Rien n'est deviné.", false);
+  } else if (!silencieux) {
+    noter("Poste remis en état : " + BECHERS.length + " béchers vides, les " +
+          CUILLERES.length + " solides sur l'étagère, l'agitateur rincé.", false);
+  }
+  armer(); avancer();
+}
+function recommencer() {
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  remettre(false);
+}
+
+/* ==================================================================
+   27. LE GUIDE — une entrée par étape du protocole
+   ==================================================================
+   ⚠ Une étape NON FAITE doit toujours montrer quelque chose (§12bis.4).     */
+var GUIDE = [
+  /* 1 — verser environ 50 mL d'eau dans chacun des cinq béchers, et étiqueter */
+  { fait: function () { return prochainSansEau() < 0; },
+    aide: function () {
+      var n = ETAT.becher.filter(function (b) { return !b.eau; }).length;
+      return "Faire glisser l'<b>éprouvette</b> sur un bécher — ou presser " +
+        "<b>« Verser " + nb(REG.v, 0) + " mL »</b>. Il en reste <b>" + n +
+        "</b> à remplir.";
+    },
+    montre: function () {
+      surlignerObjet(EPROUVETTE, 6);
+      surlignerZone(zoneBecher(Math.max(0, prochainSansEau()), ""));
+      surlignerBouton("remplir");
+    } },
+  /* 2 — le bécher eau seule ne reçoit aucun solide : c'est le témoin */
+  { fait: function () { return ETAT.temoinVu; },
+    aide: "Presser <b>« Désigner le témoin »</b> : le bécher d'eau seule ne " +
+          "reçoit aucun solide, et c'est lui qui montre l'aspect d'un liquide " +
+          "auquel on n'a rien ajouté.",
+    montre: function () {
+      var i, t = 0;
+      for (i = 0; i < BECHERS.length; i++) if (BECHERS[i].temoin) t = i;
+      surlignerBouton("temoin"); surlignerZone(zoneBecher(t, ""));
+    } },
+  /* 3 — ajouter une cuillère de chaque solide dans son bécher */
+  { fait: function () { return prochainSansSolide() < 0; },
+    aide: function () {
+      var i = prochainSansSolide();
+      if (i < 0) return "Les quatre solides sont versés.";
+      return "Faire glisser une <b>cuillerée</b> dans le bécher « " +
+        BECHERS[i].titre + " ». Le témoin, lui, ne reçoit rien.";
+    },
+    montre: function () {
+      var i = prochainSansSolide();
+      if (i < 0) return;
+      surlignerObjet(objetDe(BECHERS[i].cle) || CUILLERES[0], 6);
+      surlignerZone(zoneBecher(i, ""));
+    } },
+  /* 4 — agiter chaque bécher, en rinçant l'agitateur entre deux */
+  { fait: function () {
+      return prochainAAgiter() < 0 && ETAT.becher.some(function (b) { return b.agite; });
+    },
+    aide: function () {
+      var i = prochainAAgiter();
+      if (i < 0) return "Tous les béchers sont agités.";
+      return ETAT.propre
+        ? "Plonger l'<b>agitateur</b> dans « " + BECHERS[i].titre + " » et " +
+          "agiter " + T_AGIT + " s."
+        : "<b>Rincer l'agitateur</b> à la pissette avant de passer au bécher " +
+          "suivant — sans quoi les essais se contaminent.";
+    },
+    montre: function () {
+      var i = prochainAAgiter();
+      if (i < 0) { surlignerBouton("agiter"); return; }
+      if (!ETAT.propre) { surlignerObjet(PISSETTE, 6); surlignerObjet(AGITATEUR, 6); return; }
+      surlignerObjet(AGITATEUR, 6); surlignerZone(zoneBecher(i, ""));
+      surlignerBouton("agiter");
+    } },
+  /* 5 — laisser reposer deux minutes, sans toucher aux béchers */
+  { fait: function () { return ETAT.repos; },
+    aide: "Presser <b>« Laisser reposer »</b> : " + mmss(T_REPOS) + " sans " +
+          "toucher à rien. C'est le repos qui révèle la nature du mélange — " +
+          "le temps court à × " + ACCEL.toFixed(0) + ".",
+    montre: function () { surlignerBouton("reposer"); } },
+  /* 6 — observer chaque bécher et compter les parties visibles */
+  { fait: function () { return ETAT.observe; },
+    aide: "Presser <b>« Observer les béchers »</b> — ou cliquer chaque bécher " +
+          "pour le lire un par un. On compte les parties distinctes.",
+    montre: function () { surlignerBouton("observer"); surlignerZone(zoneBecher(0, "")); } },
+  /* 7 — classer les quatre mélanges en deux familles */
+  { fait: function () { return ETAT.classe; },
+    aide: "Presser <b>« Classer en deux familles »</b> : ceux dont on ne " +
+          "distingue plus les constituants, et les autres.",
+    montre: function () { surlignerBouton("classer"); } }
+];
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle où
+   l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le geste
+      reste à faire. C'est le §1.1 : un bouton qui rejoue le YAML est le refus
+      explicite de l'enseignant.                                              */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* `getBBox()` est LOCAL : sous un groupe translaté, le halo tomberait à côté.
+   On passe donc par `getBoundingClientRect()` ramené au repère du viewBox
+   (SKILL §12bis.3-5). */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+/* ⚠ On vise par `data-act`, jamais par un `id` : un `id` de `<defs>` volerait
+   le sélecteur et rendrait un dégradé, qui n'a pas de boîte (§12bis.3-4). */
+function surlignerActe(act, marge) {
+  var n = svg.querySelector('[data-act="' + act + '"]'), b = boiteSVG(n), m = marge || 8;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return false;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+  return true;
+}
+function surlignerZone(z, m) {
+  if (!z) return false;
+  m = m === undefined ? 8 : m;
+  halo(z.x - z.hw - m, z.y - z.hh - m, 2 * (z.hw + m), 2 * (z.hh + m), 14);
+  return true;
+}
+function surlignerObjet(o, m) {
+  if (!o) return false;
+  var b = boiteSVG(o.g);
+  m = m === undefined ? 8 : m;
+  if (b) halo(b.x - m, b.y - m, b.w + 2 * m, b.h + 2 * m, 14);
+  return !!b;
+}
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. verser environ 50 mL d'eau dans chacun des cinq béchers. Le bouton
+     double le glisser de l'éprouvette et passe par la MÊME `verserEau()` :
+     un bécher par pression, comme à la main. */
+  function () { presserBouton("remplir"); return 1100; },
+
+  /* 2. désigner le bécher d'eau seule : c'est le témoin, il ne reçoit aucun
+     solide. À partir de là, toute cuillerée qu'on y verserait est refusée,
+     et le refus cite la fiche. */
+  function () { presserBouton("temoin"); return 750; },
+
+  /* 3. ajouter une cuillerée dans chaque bécher, sauf le témoin. On passe par
+     `deposer()`, celui du glisser-déposer, et la cible est la zone
+     qu'`emplacements()` propose DANS L'ÉTAT COURANT — jamais une position
+     écrite en dur. */
+  function () {
+    var i = prochainSansSolide();
+    if (i < 0) return 0;
+    var o = objetDe(BECHERS[i].cle);
+    if (!o) return 0;
+    deposer(o, zoneBecher(i, ""));
+    return 1150;
+  },
+
+  /* 4. agiter chaque bécher une trentaine de secondes, en RINÇANT l'agitateur
+     avant de passer au suivant. Le geste rince d'abord s'il le faut : c'est
+     ce que le protocole demande, et la page refuse l'ordre inverse. */
+  function () {
+    if (!ETAT.propre) { rincer(PISSETTE); return 950; }
+    var i = prochainAAgiter();
+    if (i < 0) return 0;
+    deposer(AGITATEUR, zoneBecher(i, ""));
+    return 1250;
+  },
+
+  /* 5. laisser reposer deux minutes sans toucher aux béchers. Le temps se
+     JOUE, il ne se saute pas : la sédimentation est intégrée par tranches de
+     0,5 s de temps simulé, quel que soit le facteur de compression. */
+  function () { presserBouton("reposer"); return 900; },
+
+  /* 6. observer chaque bécher, de face puis par transparence, et compter les
+     parties visibles. C'est le geste qui remplit le tableau. */
+  function () { presserBouton("observer"); return 1150; },
+
+  /* 7. classer les quatre mélanges en deux familles. C'est le geste qui
+     démasque la conclusion. */
+  function () { presserBouton("classer"); return 1000; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+/* Les écouteurs du guide et du cadre. Ils sont posés une fois, au démarrage. */
+function brancherGuide() {
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  $("rezero").addEventListener("click", recommencer);
+}
+
+/* ==================================================================
+   28. DÉMARRAGE
+   ================================================================== */
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  defsCommunes();
+  defsPage();
+  ajouterCouches();
+  ETAT = neufEtat();
+
+  construireDecor();
+  construireBechers();
+  construireEffets();
+  construireLecture();
+  construireObjets();
+  construireBoutons();
+  brancherPrise();
+
+  construireHTMLBase("solubilité et loi de Stokes calculées");
+  construireEtapes(ETAPES);
+  construireProtocole();
+  construireSeance("repos de " + mmss(T_REPOS) + " prescrit");
+  construireGraphe();
+  construireCapot();
+  brancherCurseurs();
+  brancherGuide();
+  remettre(false);
+  demarrerHorloge();
+}
+
+demarrer();
+
+})();
+</script>
+</body>
+</html>

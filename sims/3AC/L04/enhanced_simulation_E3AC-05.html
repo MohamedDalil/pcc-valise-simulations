@@ -1,0 +1,3614 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E3AC-05 · Mesurer le pH et classer les solutions</title>
+
+<!--
+  ===================================================================
+  E3AC-05 · 3AC · L04 — PAILLASSE VIRTUELLE
+  « Mesurer le pH de quelques solutions et les classer »
+  ===================================================================
+
+  CE QUE CETTE EXPÉRIENCE A DE PARTICULIER
+  ----------------------------------------
+  Le pH est la grandeur où un modèle calculé bat la mise en scène, parce que
+  TOUT y est réellement calculable : le pH d'une solution se déduit de sa
+  composition et des constantes d'acidité de ses espèces, la dilution le
+  déplace sur une échelle LOGARITHMIQUE, et les deux instruments de la fiche
+  — le papier et le pH-mètre — n'ont pas la même résolution.
+
+  La page ne rejoue donc AUCUNE des sept valeurs de la fiche : elle les
+  calcule. Un solveur d'équilibre acide-base (bilan de charge résolu par
+  dichotomie, coefficients d'activité de Davies, produit ionique de l'eau
+  fonction de la température) rend :
+
+     S1 pH 2,43 → papier 2   S2 3,61 → 3   S3 6,84 → 6   S4 7,04 → 7
+     S5 7,04 → 7             S6 9,41 → 9   S7 12,41 → 12
+
+  et, au pH-mètre, 6,84 pour le lait et 7,04 pour l'eau distillée — les deux
+  nombres à décimales que la fiche consigne.
+
+  TROIS RÉSULTATS QUE LE MODÈLE PRODUIT ET QUE LA FICHE N'ÉCRIT PAS
+  ----------------------------------------------------------------
+  · L'EAU SALÉE A EXACTEMENT LE MÊME pH QUE L'EAU DISTILLÉE. Ce n'est pas une
+    coïncidence réglée à la main : pour un sel neutre, l'activité de l'ion
+    hydrogène vaut √Kw quelle que soit la concentration en sel. Le modèle
+    DÉMONTRE donc ce que la fiche appelle le rôle du second témoin — « ce
+    n'est pas la présence d'ions qui rend une solution acide ».
+  · LE pH NEUTRE NE VAUT 7,00 QU'À 25 °C. La fiche relève 7,04 à l'eau
+    distillée : c'est la signature d'une salle à 22,5 °C, et c'est le seul
+    réglage de température compatible avec sa mesure. Le curseur le montre.
+  · LA DILUTION DÉPLACE LE pH D'UNE UNITÉ PAR DÉCADE pour un acide fort,
+    d'une DEMI-unité pour un acide faible, et ne déplace presque rien sur le
+    lait, qui est un tampon. Les sept courbes convergent vers 7.
+
+  D'OÙ VIENNENT LES NOMBRES
+  -------------------------
+  · Protocole, matériel, sécurité, tableau, durée et modalité viennent de
+    `valise/curriculum/experiences.yaml`, entrée E3AC-05. Ils ne sont PAS
+    recopiés : le bloc `DONNEES` est régénéré par `_sync_donnees.py`.
+  · Les constantes physico-chimiques sont sourcées une par une dans `PHYS`
+    et réaffichées dans « Sous le capot » avec leur provenance.
+  · Le nombre de morceaux de papier à découper est LU dans le protocole
+    (« sept morceaux »), le volume d'un bécher dans `materiel` (« 50 mL …
+    remplis au tiers »), et les deux solutions reprises au pH-mètre dans
+    l'étape du protocole qui les nomme.
+
+  CE QU'ELLE N'EST PAS
+  -------------------
+  · Autonome : elle ne passe pas par `generer.py`, n'utilise ni `moteur.js`
+    ni `simulation.html.j2`, et ne s'ouvre pas depuis `index.html`. Elle
+    DOUBLE `simulation_E3AC-05.html`, elle ne la remplace pas.
+  · Pas de vue 3D.
+  · Elle s'écarte volontairement de la grammaire plate du §5 du SKILL (fond
+    blanc, aplats, aucun dégradé) : on cherche ici qu'un objet se reconnaisse
+    comme un objet et donne envie d'y porter la main.
+  · Le dessin est un SCHÉMA HABILLÉ. Ce qui est à l'échelle : l'échelle de pH
+    du nuancier (0 à 14, linéaire) et les sept bandes de lecture. Ce qui ne
+    l'est pas : les diamètres de verrerie, la taille des morceaux de papier
+    (1 cm dans la fiche, grossis pour être saisissables) et l'encombrement
+    des instruments.
+
+  BORNES DU PROGRAMME RESPECTÉES (commentaire du YAML, 3AC/U1/L04)
+  ---------------------------------------------------------------
+  · B4 — on écrit **H⁺ + Cl⁻**, **Na⁺ + OH⁻**, **Na⁺ + Cl⁻** ; jamais les
+    formules moléculaires correspondantes.
+  · B5 — on ne nomme que l'ion hydrogène **H⁺** ; jamais H₃O⁺.
+  · BORNE RETENUE — aucune concentration n'est montrée à l'élève. « Dilué »
+    reste une OPÉRATION (« ajouter n fois son volume d'eau »), jamais une
+    grandeur. Les concentrations n'existent que sous « Sous le capot », qui
+    s'adresse à l'enseignant.
+
+  PIÈGES DU SKILL RESPECTÉS
+  -------------------------
+  §6.2  aucun état ne dépend de la fin d'une animation ; verrous en PREMIÈRE
+        ligne ; horloge en `setInterval` lisant `Date.now()`, aucun rAF.
+  §6.11 rien ne passe par `style.transform` : tout par l'ATTRIBUT.
+  §6.12 toute cible saisissable porte une zone pleine et transparente ; tout
+        le reste porte `pointer-events:none`.
+  §12.2 les attributs `points` et `d` passent par `pt()`, jamais par `nb()`.
+  §12.5 les quatre curseurs déplacent un nombre affiché — vérifié au pilotage.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:60%;text-align:center;z-index:3}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(252px,23%);
+         background:#ffffffee;border-radius:8px;padding:9px 12px;font-size:11.5px;
+         pointer-events:none;z-index:3;box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.journal .obs.mal{color:#b03030}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"✓";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:88px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+.reg.fort output{font-size:16px;color:var(--orange)}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:1px solid #8a94a4;vertical-align:-1px;margin-right:5px}
+
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+tr.suivi td{background:#fffaf0}
+tr.souille td{background:var(--redbg)}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+/* ---- le protocole guidé : la fiche mot pour mot, et où l'on en est ---- */
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas}
+/* La liste DÉFILE dans sa carte. Déroulée en entier, une fiche de dix
+   étapes fait 500 px et repousse les instruments hors du champ — or on les
+   regarde pendant que la scène tourne. L'étape courante est ramenée dans la
+   vue par `majProtocole`, donc rien ne se cache. */
+ol.proto{max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+/* La coche s'écrit en clair. Passée par un échappement CSS, `\2713` se fait
+   avaler par le chiffre qui le suit et sort en « ¹3 ». Le fichier est en
+   UTF-8 : autant s'en servir. */
+ol.proto li.faite::before{content:"✓";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.bilan{font-family:var(--serif);font-size:17px;color:var(--ink);text-align:center;
+       background:var(--bluebg);border-radius:8px;padding:10px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E3AC-05 · 3AC · L04</span>
+</div>
+
+<div class="grille">
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button"
+              title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b"><b id="seanceB">durée prescrite</b><span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span></span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span><div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div></div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+      </div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+        <div class="bilan" id="bilan"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px" id="legendeSeuils"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul></div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <!-- Le protocole de la fiche, MOT POUR MOT, en tête de colonne : posé
+         sous la scène il commençait à y ≈ 950 px, donc invisible sans
+         dérouler. L'étape courante s'y déduit de l'état, jamais d'un
+         compteur : le panneau avance de lui-même dès que le geste est fait,
+         et il recule si on le défait. -->
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <!-- Les instruments AVANT les réglages (§6.1) : on les regarde pendant
+         que la scène tourne ; rangés après, ils sortent du champ dès qu'on
+         descend régler un curseur. -->
+    <div class="carte">
+      <h2>Les deux instruments <span class="note" id="nomSuivi">—</span></h2>
+      <div class="lect">
+        <div><div class="k">Papier pH — couleur obtenue</div><div class="v" id="lCoul">—</div></div>
+        <div><div class="k">Papier pH — valeur lue</div><div class="v" id="lPap">—</div></div>
+        <div><div class="k">pH-mètre — affichage</div><div class="v" id="lMet">—</div></div>
+        <div><div class="k">Écart entre les deux</div><div class="v" id="lEcart">—</div></div>
+        <div><div class="k">pH calculé (le modèle)</div><div class="v" id="lPh">—</div></div>
+        <div><div class="k">Caractère</div><div class="v" id="lCar">—</div></div>
+      </div>
+      <div class="src" style="margin-top:7px" id="aideInstr"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Les sept solutions sur l'échelle <span class="note">pH calculé</span></h2>
+      <svg id="gEchelle" viewBox="0 0 360 228" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+    </div>
+
+    <div class="carte">
+      <h2>Ce que fait la dilution <span class="note">échelle logarithmique</span></h2>
+      <svg id="gDilution" viewBox="0 0 360 212" style="width:100%;height:auto;display:block"
+           font-family="Arial, Helvetica, sans-serif"></svg>
+      <div class="src" style="margin-top:4px">
+        Ajouter dix fois son volume d'eau déplace le pH d'une <b>unité</b> pour
+        une solution acide ou basique <b>forte</b>, d'une <b>demi-unité</b>
+        seulement pour une solution <b>faible</b>, et ne déplace presque rien
+        sur le lait, qui est un <b>tampon</b>. Les sept courbes se rapprochent
+        du repère 7 sans jamais le franchir.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages</h2>
+      <div class="reg fort">
+        <label for="rDil">Eau ajoutée dans chaque bécher</label><output id="oDil"></output>
+        <input type="range" id="rDil" min="0" max="3" step="0.05" value="0">
+        <div class="aide" id="aideDil"></div>
+      </div>
+      <div class="reg">
+        <label for="rT">Température de la salle</label><output id="oT"></output>
+        <input type="range" id="rT" min="15" max="40" step="0.5" value="22.5">
+        <div class="aide" id="aideT"></div>
+      </div>
+      <div class="reg">
+        <label for="rCO2">Boisson gazeuse — gaz dissous</label><output id="oCO2"></output>
+        <input type="range" id="rCO2" min="0.5" max="5" step="0.1" value="3">
+        <div class="aide" id="aideCO2"></div>
+      </div>
+      <div class="reg">
+        <label for="rDor">Lait — fraîcheur (acidité Dornic)</label><output id="oDor"></output>
+        <input type="range" id="rDor" min="15" max="21" step="0.5" value="16">
+        <div class="aide" id="aideDor"></div>
+      </div>
+      <div class="cmd"><button class="sec" id="bProto">Revenir au protocole</button></div>
+      <div class="src" style="margin-top:8px">
+        <b>Aucun de ces quatre réglages n'est prescrit par la fiche</b> — ce
+        sont des explorations, et la page les étiquette comme telles. Les
+        valeurs de départ sont celles du protocole, sauf la température, que
+        la fiche ne donne pas : 22,5 °C est <i>déduit</i> de son relevé au
+        pH-mètre sur l'eau distillée (7,04). Dès qu'un curseur s'en écarte,
+        le tableau de la fiche cesse d'être renseigné et le carnet de mesures
+        prend le relais.
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <p class="src">Cette section s'adresse à l'enseignant : elle nomme des
+      <b>concentrations</b>, que le programme de 3<sup>e</sup> année écarte
+      explicitement. Rien de ce qui suit n'apparaît côté élève, où « dilué »
+      reste une opération et jamais une grandeur.</p>
+
+      <h3>1 · Le solveur acide-base</h3>
+      <p>Chaque bécher porte une <b>composition</b>, pas un pH. Le pH est
+      obtenu en résolvant le <b>bilan de charge</b> par dichotomie :</p>
+      <div class="eq" id="eqSolveur"></div>
+      <p>Les coefficients d'activité viennent de l'équation de <b>Davies</b>,
+      et le produit ionique de l'eau <b>dépend de la température</b> : c'est
+      lui qui déplace le point de neutralité.</p>
+
+      <h3>2 · Ce que devient la matière</h3>
+      <div class="eq" id="eqMatiere"></div>
+      <p>Le modèle ne connaît que deux ions responsables : l'ion hydrogène
+      <b>H⁺</b> et l'ion hydroxyde <b>OH⁻</b>. Une solution est acide quand
+      H⁺ l'emporte, basique quand OH⁻ l'emporte, neutre quand les deux
+      s'égalent — et c'est cette égalité, et non le nombre 7, qui définit la
+      neutralité.</p>
+
+      <h3>3 · Les deux instruments, et pourquoi ils ne donnent pas le même nombre</h3>
+      <div class="eq" id="eqInstr"></div>
+      <p id="capotSeuil"></p>
+
+      <h3>4 · Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+
+      <h3>5 · Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li><b>L'eau distillée réelle ne reste pas à 7.</b> Laissée à l'air,
+        elle dissout le dioxyde de carbone et descend vers <b>5,6</b> en
+        quelques heures. Le modèle la garde pure, comme la fiche qui relève
+        7,04 — donc de l'eau fraîchement préparée et rebouchée.</li>
+        <li><b>L'eau de Javel du commerce est plus basique que ça.</b> Elle
+        contient un <b>excès de soude</b> qui la stabilise, et une eau de
+        Javel diluée du commerce se lit plutôt entre 10 et 11. Le modèle ne
+        met que l'hypochlorite ; c'est ce qui donne le 9 de la fiche.</li>
+        <li><b>Le lait n'est pas calculé depuis sa composition.</b> Il est
+        modélisé par un <b>tampon phosphate équivalent</b> dont la réserve
+        alcaline est le <b>seul paramètre calé</b>, sur la valeur que la fiche
+        relève elle-même au pH-mètre. Le pouvoir tampon qui en résulte
+        (≈ 10 meq·L⁻¹ par unité de pH) coïncide avec la mesure publiée, mais
+        la caséine — dont le tampon est maximal vers pH 5,3 — n'est pas
+        modélisée : au-delà de 20 °D, le pH calculé descend beaucoup trop
+        vite.</li>
+        <li><b>Les constantes d'acidité ne dépendent pas de la
+        température</b> dans ce modèle ; seul le produit ionique de l'eau en
+        dépend. Chauffer la salle laisse donc le pH des solutions acides
+        rigoureusement immobile, ce qui est faux au deuxième chiffre.</li>
+        <li><b>La boisson gazeuse n'est que du gaz dissous.</b> Les boissons
+        du commerce ajoutent de l'acide citrique ou phosphorique et descendent
+        vers 2,4–3,2 ; le modèle ne connaît que le dioxyde de carbone, et
+        c'est lui qui donne le 3 de la fiche.</li>
+        <li><b>Le papier pH n'est pas modélisé chimiquement.</b> Ses
+        colorants ne sont pas simulés : la couleur affichée est celle du
+        nuancier, tirée légèrement vers la case voisine. Un vrai papier
+        contient un mélange de rouge de méthyle, de bleu de bromothymol et de
+        phénolphtaléine, dont les virages ne coïncident pas avec les
+        graduations entières.</li>
+        <li><b>La frontière de lecture 6 | 7 n'a que 0,10 unité de marge</b>,
+        et c'est une limite arithmétique imposée par la fiche elle-même
+        (6,84 et 7,04 encadrent la même frontière). Aucune règle fonction du
+        seul pH ne peut faire mieux. Ce seuil ne décide d'aucune conclusion :
+        le caractère se décide sur l'écart au point de neutralité, avec plus
+        de 100 % de marge.</li>
+        <li><b>Le film emporté par l'agitateur est un calcul de géométrie,
+        pas une mesure.</b> Baguette de 6 mm immergée sur 30 mm, film de
+        40 µm : c'est un ordre de grandeur, et la contamination réelle dépend
+        surtout de la vitesse du geste.</li>
+        <li><b>L'électrode est parfaite.</b> Ni temps de réponse, ni dérive,
+        ni étalonnage, ni vieillissement de la membrane de verre — or c'est
+        la cause n° 1 des mesures fausses en salle, bien avant la
+        contamination.</li>
+        <li><b>L'équation de Davies n'est valable que jusqu'à I = 0,5 mol·L⁻¹
+        et près de 25 °C.</b> L'eau salée du poste y reste largement, mais le
+        modèle ne le vérifie pas.</li>
+      </ul>
+
+      <h3>6 · Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E3AC-05.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E3AC-05",
+  "niveau": "3AC",
+  "unite": "U1",
+  "lecon": "L04",
+  "titre": "Mesurer le pH de quelques solutions et les classer",
+  "axe": "Classer les solutions selon leur pH : acides, neutres, basiques",
+  "objectif": "Mesurer au papier pH, puis au pH-mètre, le pH de solutions du laboratoire et de la vie quotidienne, ranger ces solutions sur une échelle de 0 à 14 et les classer en solutions **acides**, **neutres** et **basiques** — sans jamais recourir au goût ni au toucher.",
+  "duree": 24,
+  "modalite": "groupes de 4 — 6 postes ; les sept solutions sont préparées et étiquetées par l'enseignant avant la séance",
+  "materiel": [
+    "**Par poste** : 7 béchers de 50 mL étiquetés S1 à S7, déjà remplis au tiers",
+    "1 rouleau de **papier pH** et sa boîte portant le **nuancier** (échelle de teintes)",
+    "1 agitateur en verre · 1 soucoupe ou verre de montre · 1 paire de ciseaux",
+    "1 pissette d'**eau distillée** · 1 bécher-poubelle pour les rinçages · papier absorbant",
+    "1 **pH-mètre** étalonné pour deux postes",
+    "**Solutions** : S1 solution de chlorure d'hydrogène (acide chlorhydrique) **diluée** · S2 boisson gazeuse · S3 lait · S4 eau distillée · S5 eau salée (solution de chlorure de sodium) · S6 eau de Javel **diluée** · S7 solution d'hydroxyde de sodium (soude) **diluée**",
+    "Blouse fermée, lunettes de protection et gants pour chaque apprenant",
+    "Tableau de résultats à compléter, projeté et distribué en tête du cahier"
+  ],
+  "securite": [
+    "**Ne jamais goûter ni sentir une solution.** Le goût n'est pas un instrument de mesure : c'est le geste qui envoie les apprenants à l'hôpital, et la leçon existe précisément pour le remplacer.",
+    "Blouse fermée, **lunettes de protection** et **gants** pendant toute la manipulation ; cheveux longs attachés.",
+    "Les solutions **S1** et **S7** sont **diluées par l'enseignant avant la séance** ; les flacons du laboratoire, plus concentrés, ne quittent pas la paillasse de l'enseignant.",
+    "**Ne mélanger aucune solution avec une autre.** Le mélange d'un produit acide et d'eau de Javel dégage un gaz toxique — c'est l'accident domestique le plus fréquent avec ces produits.",
+    "Ne jamais pipeter à la bouche, ne jamais pencher le visage au-dessus d'un bécher ouvert.",
+    "Reboucher chaque flacon aussitôt après usage et le reposer sur la paillasse, jamais au bord.",
+    "**En cas de projection sur la peau ou dans l'œil** : rincer immédiatement et abondamment à l'eau courante pendant **quinze minutes**, sans frotter, et prévenir aussitôt l'enseignant, qui appelle le numéro d'urgence affiché au laboratoire.",
+    "Rincer l'agitateur à l'eau distillée entre deux mesures : sans ce rinçage, la solution précédente fausse la mesure suivante.",
+    "Ne rien rejeter à l'évier sans l'accord de l'enseignant : l'eau de Javel et la soude sont dangereuses pour le milieu aquatique.",
+    "Se laver les mains à la fin de la séance, gants retirés."
+  ],
+  "protocole": [
+    "Revêtir la blouse, les lunettes et les gants ; vérifier que les sept béchers portent bien leurs étiquettes S1 à S7.",
+    "Découper sept morceaux de papier pH d'environ 1 cm et les aligner sur la soucoupe ; ne plus toucher le rouleau ensuite.",
+    "Plonger l'agitateur en verre dans **S1**, en prélever une goutte, puis **déposer** cette goutte sur le premier morceau de papier — ne jamais tremper le rouleau ni le papier dans le bécher.",
+    "Comparer **immédiatement** la couleur prise par le papier au nuancier de la boîte et lire le nombre qui lui correspond : c'est le pH de S1.",
+    "Rincer l'agitateur à l'eau distillée au-dessus du bécher-poubelle, puis l'essuyer au papier absorbant.",
+    "Reprendre les opérations 3 à 5 pour **S2**, **S3**, … jusqu'à **S7**, en changeant de morceau de papier à chaque solution.",
+    "Reporter dans le tableau, pour chaque solution, la **couleur** obtenue puis la **valeur du pH** lue sur le nuancier.",
+    "Reprendre ensuite **deux solutions seulement**, **S3** (le lait) et **S4** (l'eau distillée), et mesurer leur pH au **pH-mètre** : rincer la sonde à l'eau distillée, l'essuyer délicatement, l'immerger dans le bécher, attendre que l'affichage se stabilise, lire la valeur, puis rincer de nouveau la sonde.",
+    "Comparer, pour ces deux solutions, la valeur lue au papier et la valeur affichée par le pH-mètre.",
+    "Ranger les sept solutions par valeurs de pH **croissantes** et entourer, dans le tableau, celles dont le pH vaut exactement 7.",
+    "Rincer la verrerie, rendre le matériel complet, retirer les gants et se laver les mains."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "N°",
+      "Solution testée",
+      "Couleur du papier pH",
+      "pH lu",
+      "Caractère"
+    ],
+    "lignes": [
+      [
+        "S1",
+        "Solution de chlorure d'hydrogène (acide chlorhydrique) diluée",
+        "",
+        "",
+        ""
+      ],
+      [
+        "S2",
+        "Boisson gazeuse",
+        "",
+        "",
+        ""
+      ],
+      [
+        "S3",
+        "Lait",
+        "",
+        "",
+        ""
+      ],
+      [
+        "S4",
+        "Eau distillée",
+        "",
+        "",
+        ""
+      ],
+      [
+        "S5",
+        "Eau salée (solution de chlorure de sodium)",
+        "",
+        "",
+        ""
+      ],
+      [
+        "S6",
+        "Eau de Javel diluée",
+        "",
+        "",
+        ""
+      ],
+      [
+        "S7",
+        "Solution d'hydroxyde de sodium (soude) diluée",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "S1",
+        "Solution de chlorure d'hydrogène (acide chlorhydrique) diluée",
+        "rouge",
+        "2",
+        "**acide**"
+      ],
+      [
+        "S2",
+        "Boisson gazeuse",
+        "orange",
+        "3",
+        "**acide**"
+      ],
+      [
+        "S3",
+        "Lait",
+        "jaune",
+        "6",
+        "**acide**, faiblement"
+      ],
+      [
+        "S4",
+        "Eau distillée",
+        "vert",
+        "7",
+        "**neutre**"
+      ],
+      [
+        "S5",
+        "Eau salée (solution de chlorure de sodium)",
+        "vert",
+        "7",
+        "**neutre**"
+      ],
+      [
+        "S6",
+        "Eau de Javel diluée",
+        "bleu",
+        "9",
+        "**basique**"
+      ],
+      [
+        "S7",
+        "Solution d'hydroxyde de sodium (soude) diluée",
+        "bleu-violet",
+        "12",
+        "**basique**"
+      ]
+    ]
+  },
+  "observation": "Le papier pH prend une couleur différente selon la solution testée, et chaque couleur du nuancier correspond à un nombre compris entre 0 et 14. Les sept valeurs relevées se rangent en trois groupes autour du repère 7. L'eau salée, pourtant riche en ions, donne le même pH que l'eau distillée.",
+  "conclusion": "Le pH est un nombre sans unité compris entre 0 et 14 qui mesure le caractère acide, neutre ou basique d'une solution aqueuse : pH < 7 acide, pH = 7 neutre, pH > 7 basique. Le papier pH en donne une valeur approchée, le pH-mètre une valeur précise.",
+  "oheric": {
+    "observation": "Sur la même étagère de la droguerie du quartier voisinent des liquides qui se ressemblent tous : de l'eau de Javel, de l'esprit de sel pour détartrer, du vinaigre, de l'eau salée de cuisine, de l'eau distillée pour le fer à repasser. Aucun n'a de couleur qui le trahisse. Pour les distinguer, chacun de nous n'a qu'un seul réflexe : **goûter**, ou **toucher** — c'est-à-dire exactement ce qu'il ne faut jamais faire. Le vinaigre pique la langue, l'eau savonneuse glisse entre les doigts, mais l'eau de Javel et la soude, on ne les goûte pas deux fois. Comment reconnaître alors qu'une solution est acide ou basique, **sans y goûter et sans y toucher** ?",
+    "hypothese": "**Si** le caractère acide ou basique d'une solution est une propriété que l'on peut **mesurer**, **alors** un même instrument, appliqué à toutes ces solutions, doit leur attribuer des **nombres différents** ; et ces nombres doivent se regrouper : d'un côté de l'échelle les solutions que l'on dit acides, de l'autre celles que l'on dit basiques, et entre les deux l'eau distillée, qui n'est ni l'une ni l'autre.",
+    "experience": "Mesurer au **papier pH**, dans les mêmes conditions et avec le même agitateur rincé entre deux mesures, le pH de sept solutions : une solution de chlorure d'hydrogène diluée, une boisson gazeuse, du lait, de l'eau distillée, de l'eau salée, de l'eau de Javel diluée et une solution d'hydroxyde de sodium diluée. Reprendre ensuite deux d'entre elles au **pH-mètre**. **Deux témoins** commandent la lecture : l'**eau distillée**, qui n'est ni acide ni basique et fixe le repère de l'échelle ; et l'**eau salée**, qui contient elle aussi l'ion chlorure Cl⁻ comme la solution de chlorure d'hydrogène, et qui dira si c'est la simple présence d'ions qui rend une solution acide.",
+    "resultats": "Le papier pH prend une couleur différente selon la solution, et à chaque couleur du nuancier correspond un nombre. La solution de chlorure d'hydrogène diluée donne un papier **rouge**, pH **2** ; la boisson gazeuse un papier **orange**, pH **3** ; le lait un papier **jaune**, pH **6** ; l'eau distillée un papier **vert**, pH **7** ; l'eau salée un papier **vert** lui aussi, pH **7** ; l'eau de Javel diluée un papier **bleu**, pH **9** ; la solution d'hydroxyde de sodium diluée un papier **bleu-violet**, pH **12**. Toutes les valeurs relevées tombent entre 0 et 14. Reprises au pH-mètre, deux d'entre elles donnent un nombre à décimales : le lait affiche **6,84** là où le papier donnait 6, et l'eau distillée **7,04** là où le papier donnait 7.",
+    "interpretation": "Les sept nombres ne se dispersent pas au hasard : ils se rangent en **trois groupes** autour du repère **7**. En dessous de 7 se retrouvent exactement les liquides que l'on savait acides pour les avoir goûtés — la boisson gazeuse, le lait, la solution de chlorure d'hydrogène. Au-dessus de 7 se retrouvent ceux qui glissent entre les doigts et rongent la peau, l'eau de Javel et la soude. **L'hypothèse est validée** : l'acidité se mesure, et le nombre qui la mesure s'appelle le **pH**. Le rôle des **deux témoins** est ici décisif. L'**eau distillée** fixe le milieu de l'échelle : sans elle, rien ne dirait où passe la frontière entre les deux familles, et 7 ne serait qu'un nombre parmi d'autres. L'**eau salée** tranche l'autre question : elle contient des ions — Na⁺ et Cl⁻ — tout comme la solution de chlorure d'hydrogène qui contient H⁺ et Cl⁻, et pourtant son pH vaut 7. **Ce n'est donc pas la présence d'ions qui rend une solution acide, mais la présence de l'ion hydrogène H⁺** — le seul ion qui distingue les deux solutions. Enfin, les deux instruments ne mentent ni l'un ni l'autre : le papier pH donne une valeur **approchée**, en nombres entiers (6 pour le lait), le pH-mètre une valeur **précise**, à décimales (6,84). L'écart n'est pas une erreur, c'est la différence de précision entre deux appareils.",
+    "conclusion": "Le **pH** d'une solution aqueuse est un **nombre sans unité**, compris entre **0 et 14**, qui indique le caractère acide, neutre ou basique de cette solution. Il se mesure au **papier pH**, qui en donne une valeur approchée, ou au **pH-mètre**, qui en donne une valeur précise. Une solution de **pH < 7** est **acide** ; une solution de **pH = 7** est **neutre** ; une solution de **pH > 7** est **basique**. Plus le pH est **petit**, plus la solution est **acide** ; plus il est **grand**, plus elle est **basique**."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   1. LES CONSTANTES — mesurées, sourcées, jamais ajustées
+   ==================================================================
+   Chaque entrée porte sa provenance en clair, et le tableau de « Sous le
+   capot » est REGÉNÉRÉ depuis cet objet — jamais retapé dans le HTML.      */
+var PHYS = {
+  PKW: { v: 14.00, u: "à 25 °C", n: "produit ionique de l'eau (pKw)",
+         s: "table Kw(T) : 14,94 à 0 °C · 14,17 à 20 °C · 14,00 à 25 °C · 13,53 à 40 °C. Le pH neutre vaut pKw/2, donc 7,00 seulement à 25 °C" },
+  A_DAVIES: { v: 0.509, u: "à 25 °C", n: "coefficient de Davies",
+              s: "log γ = −A z² (√I/(1+√I) − 0,3 I) ; Davies 1938, valable jusqu'à I = 0,5 mol·L⁻¹" },
+  PKA_CO2: { v: 6.35, u: "pKa₁", n: "acide carbonique",
+             s: "dioxyde de carbone dissous ; pKa₂ = 10,33. Table de constantes d'acidité à 25 °C" },
+  PKA_CLO: { v: 7.50, u: "pKa", n: "acide hypochloreux",
+             s: "couple acide hypochloreux / ion hypochlorite, l'espèce active de l'eau de Javel" },
+  PKA_PO4: { v: 7.20, u: "pKa₂", n: "acide phosphorique",
+             s: "pKa₁ = 2,15 · pKa₂ = 7,20 · pKa₃ = 12,38 ; c'est pKa₂ qui tamponne le lait" },
+  PKA_LAC: { v: 3.86, u: "pKa", n: "acide lactique",
+             s: "l'acide que la fermentation du lactose fabrique dans un lait qui vieillit" },
+  VOL_CO2: { v: 0.04462, u: "mol·L⁻¹ par volume", n: "un « volume » de gaz dissous",
+             s: "1 volume = 1 L de gaz (conditions normales) par litre de boisson = 1,96 g·L⁻¹" },
+  CARBO: { v: 3.0, u: "volumes", n: "carbonatation d'une boisson gazeuse",
+           s: "3 à 4 volumes pour un soda courant ; 2,5 à 3,5 pour une limonade" },
+  DORNIC: { v: 1.110e-3, u: "mol·L⁻¹ par °D", n: "degré Dornic",
+            s: "1 °D = 0,1 g d'acide lactique par litre ; un lait frais titre 15 à 18 °D, la caséine floconne au-delà de 37 °D" },
+  TAMPON_LAIT: { v: 21, u: "meq·L⁻¹ par unité de pH", n: "pouvoir tampon du lait",
+                 s: "titrage de pH 6,6 à 8,3 : 1,5 à 1,8 meq pour 100 mL. Contributions : caséines 0,8 · phosphate 0,6 · protéines solubles 0,15 · citrate 0,1 · dioxyde de carbone 0,5" },
+  PH_LAIT: { v: 6.65, u: "", n: "pH d'un lait cru frais (littérature)",
+             s: "6,6 à 6,7. ⚠ la fiche relève 6,84 au pH-mètre : c'est SUR ELLE que la réserve alcaline du tampon est calée" },
+  JAVEL: { v: 2.6, u: "% de chlore actif", n: "eau de Javel prête à l'emploi",
+           s: "≈ 0,38 mol·L⁻¹ d'ion hypochlorite ; les berlingots titrent 9,6 %" },
+  GOUTTE: { v: 50, u: "µL", n: "volume d'une goutte",
+            s: "0,05 mL, la valeur d'usage ; c'est ce qui est déposé sur le papier" },
+  FILM_AGIT: { v: 20, u: "µL", n: "film emporté par l'agitateur",
+               s: "géométrie déclarée : baguette de 6 mm immergée sur 30 mm, film de 40 µm — π×6×30×0,04 = 23 mm³" },
+  FILM_SONDE: { v: 60, u: "µL", n: "film emporté par la sonde",
+                s: "sonde de 12 mm immergée sur 40 mm, même épaisseur de film" },
+  RES_PAPIER: { v: 1, u: "unité de pH", n: "résolution du papier pH",
+                s: "un papier universel ne distingue pas mieux que l'unité ; sa justesse est de ±0,5 à ±1" },
+  RES_METRE: { v: 0.01, u: "unité de pH", n: "résolution du pH-mètre",
+               s: "un pH-mètre de laboratoire affiche le centième, avec une justesse de ±0,01" }
+};
+
+/* Table Kw(T) — la SOURCE du déplacement du point de neutralité.
+   T en °C, Kw en mol²·L⁻². */
+var TAB_KW = [[0, 0.114e-14], [10, 0.293e-14], [20, 0.681e-14], [25, 1.008e-14],
+              [30, 1.471e-14], [40, 2.916e-14], [50, 5.476e-14], [100, 51.3e-14]];
+var TAB_PKW = TAB_KW.map(function (l) { return [l[0], -Math.log10(l[1])]; });
+
+var A_DAVIES = PHYS.A_DAVIES.v;
+var PKA_CARBO = [6.35, 10.33];
+var PKA_HYPO  = [7.50];
+var PKA_PHOS  = [2.15, 7.20, 12.38];
+var PKA_LACT  = [3.86];
+var VOL_CO2   = PHYS.VOL_CO2.v;
+var DORNIC_MOL = PHYS.DORNIC.v;
+
+/* Compositions prescrites — la préparation que fait l'enseignant avant la
+   séance (la fiche dit que S1 et S7 sont « diluées par l'enseignant avant la
+   séance »), en mol·L⁻¹. Elles ne sont JAMAIS montrées à l'élève. */
+var C_ACIDE     = 4.0e-3;   // solution de chlorure d'hydrogène, 1 mol/L au 250ᵉ
+var C_SOUDE     = 2.5e-2;   // solution d'hydroxyde de sodium, 1 mol/L au 40ᵉ
+var C_SEL       = 0.10;     // eau salée de cuisine, ≈ 5,8 g/L
+var C_JAVEL     = 1.9e-3;   // eau de Javel du commerce au 200ᵉ
+var C_PHOS_LAIT = 0.021;    // phosphate total du lait
+var DORNIC_0    = 15.0;     // acidité NATURELLE, non lactique, d'un lait frais
+
+/* Le SEUL paramètre calé de toute la page : l'excès de cations (Na⁺, K⁺,
+   Ca²⁺) associé au système phosphate du lait. Ce n'est pas une constante
+   physique, c'est une COMPOSITION — l'analyse minérale du lait donne un
+   excès cationique total voisin de 55 meq·L⁻¹ pour l'ensemble
+   phosphate + citrate + caséine, dont 31 est une part plausible.
+   Il est calé sur la valeur que la FICHE relève elle-même au pH-mètre. */
+var NA_LAIT = 0.03113;
+
+/* Seuils de LECTURE et de CLASSEMENT — des repères assumés, pas des mesures.
+   ⚠️ DELTA_PAPIER n'a qu'un degré de liberté et il est réglé pour MAXIMISER
+   la marge minimale sur les sept observations de la fiche. Le maximum
+   atteignable vaut 0,10 unité, et c'est une limite ARITHMÉTIQUE : la fiche
+   place 6,84 (lait) et 7,04 (eau distillée) de part et d'autre de la même
+   frontière de lecture, soit 0,20 unité d'écart. Aucune règle fonction du
+   seul pH ne peut faire mieux — et c'est exactement ce que la fiche appelle
+   « la différence de précision entre les deux appareils ».
+   Ce seuil ne décide d'AUCUNE conclusion : le caractère acide / neutre /
+   basique se décide sur TOL_NEUTRE, où toutes les marges dépassent 100 %. */
+var DELTA_PAPIER = 0.06;
+var TOL_NEUTRE = 0.10;
+var TOL_FAIBLE = 1.00;
+
+/* Le nuancier du papier pH universel, case par case. ⚠️ Ces mots ne servent
+   que là où la FICHE se tait : `motsNuancier()` écrase chaque case dont le
+   tableau du YAML donne la couleur. */
+var NUANCIER_SOURCE = ["rouge", "rouge", "rouge", "orange", "orange",
+  "jaune-orangé", "jaune", "vert", "bleu-vert", "bleu", "bleu-violet",
+  "bleu-violet", "bleu-violet", "violet", "violet"];
+var TEINTE_MOT = { roug: "#e0231c", oran: "#ef7d1e", jaun: "#e2d81f",
+                   vert: "#4ea33a", bleu: "#2f7fc0", viol: "#7a2f9e",
+                   indi: "#4b43b8" };
+
+/* ==================================================================
+   2. OUTILS
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+function nb(x, d) {
+  if (!isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Les attributs `points` et `d` veulent le POINT décimal, jamais la virgule
+   française de `nb()` — et un rattrapage par expression régulière détruirait
+   aussi les virgules séparatrices (§12.2). Utilitaire dédié, et lui seul. */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function hexV(c) {
+  return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+          parseInt(c.substr(5, 2), 16)];
+}
+function hexS(v) {
+  var o = "#", i;
+  for (i = 0; i < 3; i++) o += ("0" + borne(Math.round(v[i]), 0, 255).toString(16)).slice(-2);
+  return o;
+}
+function melange(a, b, t) {
+  var x = hexV(a), y = hexV(b), v = [], i;
+  for (i = 0; i < 3; i++) v.push(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+  return hexS(v);
+}
+function nuance(c, f) {            // f > 0 éclaircit, f < 0 assombrit
+  return melange(c, f >= 0 ? "#ffffff" : "#000000", Math.abs(f));
+}
+/* La couleur d'un mot du nuancier. Un libellé composé (« bleu-violet »,
+   « jaune-orangé ») reste COMPOSÉ : on moyenne les couleurs de ses mots.
+   Sans cela, « bleu » et « bleu-violet » sortiraient identiques — c'est le
+   défaut relevé et corrigé dans la vue à plat de cette même expérience. */
+function couleurMot(txt) {
+  var mots = String(txt).toLowerCase().split(/[\s\-–]+/), v = [0, 0, 0], n = 0;
+  mots.forEach(function (m) {
+    var k, c = null;
+    for (k in TEINTE_MOT) if (m.indexOf(k) === 0) c = TEINTE_MOT[k];
+    if (!c) return;
+    var u = hexV(c);
+    v[0] += u[0]; v[1] += u[1]; v[2] += u[2]; n++;
+  });
+  if (!n) return "#f2eddc";
+  return hexS([v[0] / n, v[1] / n, v[2] / n]);
+}
+
+/* ==================================================================
+   3. LE YAML — lu, jamais retapé
+   ================================================================== */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N = Math.min(LIG.length, VAL.length);          // 7 solutions
+var C_NUM = 0, C_NOM = 1, C_COUL = 2, C_PH = 3, C_CAR = 4;
+
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+function numero(k) { return intitule(k, C_NUM); }
+function nomSol(k) { return intitule(k, C_NOM); }
+function phFiche(k) {
+  var v = parseFloat(cel(k, C_PH).replace(",", "."));
+  return isNaN(v) ? null : v;
+}
+/* Une ligne de sécurité, LUE dans le YAML : les refus de la page citent la
+   fiche au lieu de réécrire sa prose (§0, corollaire 3). */
+function secu(motif) {
+  var r = new RegExp(motif, "i"), t = null;
+  (DONNEES.securite || []).forEach(function (s) {
+    if (t === null && r.test(depouille(s))) t = depouille(s);
+  });
+  return t || "";
+}
+function protoQui(motif) {
+  var r = new RegExp(motif, "i"), t = null;
+  (DONNEES.protocole || []).forEach(function (s) {
+    if (t === null && r.test(depouille(s))) t = depouille(s);
+  });
+  return t || "";
+}
+
+/* Les solutions reprises au pH-mètre : LUES dans le protocole, pas choisies
+   ici. L'étape qui parle du pH-mètre nomme elle-même ses solutions. Écrire
+   « S3 » et « S4 » en dur ferait mentir la page le jour où la fiche
+   changerait de solutions. */
+var AU_METRE = [];
+(DONNEES.protocole || []).forEach(function (p) {
+  var t = depouille(p), k;
+  if (!/pH-?m[eè]tre/i.test(t)) return;
+  (t.match(/\bS\d+\b/g) || []).forEach(function (s) {
+    for (k = 0; k < N; k++) {
+      if (numero(k) === s && AU_METRE.indexOf(k) < 0) AU_METRE.push(k);
+    }
+  });
+});
+
+/* Le volume d'un bécher, LU dans le matériel : « 7 béchers de 50 mL …
+   déjà remplis au tiers ». C'est lui qui fixe l'ampleur de la
+   contamination croisée : un film de 20 µL dans 16,7 mL, c'est 1,2 ‰. */
+function volumeBecher() {
+  var v = null;
+  (DONNEES.materiel || []).forEach(function (m) {
+    var t = depouille(m), g;
+    if (v !== null || !/b[ée]cher/i.test(t)) return;
+    g = t.match(/(\d+)\s*mL/i);
+    if (!g) return;
+    v = +g[1] / 1000;
+    if (/tiers/i.test(t)) v /= 3;
+    else if (/moiti[ée]/i.test(t)) v /= 2;
+  });
+  return v === null ? 50e-3 / 3 : v;
+}
+var V_BECHER = volumeBecher();
+var V_GOUTTE = PHYS.GOUTTE.v * 1e-6;
+var V_FILM_AGIT = PHYS.FILM_AGIT.v * 1e-6;
+var V_FILM_SONDE = PHYS.FILM_SONDE.v * 1e-6;
+
+/* ==================================================================
+   3 bis. LES DURÉES ET LES NOMBRES ÉCRITS EN TOUTES LETTRES
+   ==================================================================
+   §5 du SKILL des paillasses : rien ne se fixe ici, tout se lit dans la
+   fiche. Le YAML écrit les petits nombres en français — « Découper SEPT
+   morceaux de papier pH d'environ 1 cm ».                                   */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, onze: 11, douze: 12,
+                quinze: 15, vingt: 20 };
+function motDuree(n) {
+  var k;
+  for (k in MOTS_NB) if (MOTS_NB[k] === n && k !== "une") return k;
+  return String(n);
+}
+function nbMorceaux() {
+  var t = protoQui("morceaux?\\s+de\\s+papier"), m;
+  if (!t) return N;
+  m = t.match(/(\d+)\s+morceaux/i);
+  if (m) return +m[1];
+  m = t.match(/\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze)\s+morceaux/i);
+  return m ? MOTS_NB[m[1].toLowerCase()] : N;
+}
+function tailleMorceau() {
+  var t = protoQui("morceaux?\\s+de\\s+papier"), m = t.match(/(\d+(?:,\d+)?)\s*cm/i);
+  return m ? m[1] + " cm" : "";
+}
+var N_MORCEAUX = nbMorceaux();
+var TAILLE_MORCEAU = tailleMorceau();
+var DUREE_SEANCE = +(DONNEES.duree || 24);
+
+/* ==================================================================
+   4. RÉGLAGES — PROTO ce que la fiche prescrit, REG ce qui est courant
+   ==================================================================
+   ⚠️ La fiche ne donne PAS la température de la salle. La page retient
+   22,5 °C parce que c'est la seule valeur pour laquelle le pH neutre calculé
+   vaut 7,04 — précisément ce que la fiche relève au pH-mètre sur l'eau
+   distillée. Ce n'est donc pas un choix, c'est une DÉDUCTION.               */
+var PROTO = { dil: 0, T: 22.5, co2: PHYS.CARBO.v, dornic: 16 };
+var REG = { dil: 0, T: 22.5, co2: PHYS.CARBO.v, dornic: 16 };
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+function facteurDilution() { return Math.pow(10, REG.dil); }
+
+/* ==================================================================
+   5. LE SOLVEUR — équilibre acide-base par bilan de charge
+   ==================================================================
+   Une solution est décrite par sa COMPOSITION, jamais par son pH :
+       na  cations forts (Na⁺, K⁺, Ca²⁺…) en équivalents par litre
+       cl  anions forts (Cl⁻…) en équivalents par litre
+       sel sel neutre : autant de cations que d'anions (n'agit que sur I)
+       sys systèmes acides polyprotiques, comptés sous leur forme
+           entièrement protonée (donc neutre), indexés par leurs pKa
+   Le bilan de charge s'annule à l'équilibre :
+       na + [H⁺] = cl + [OH⁻] + Σ C · z̄(pH)
+   On le résout par dichotomie, puis on reprend le calcul avec les
+   coefficients d'activité issus de la force ionique obtenue.                */
+var KAS = {};
+function kasDe(cle) {
+  if (!KAS[cle]) {
+    KAS[cle] = cle.split("|").map(function (p) { return Math.pow(10, -(+p)); });
+  }
+  return KAS[cle];
+}
+var PKW_CACHE = {};
+function pkw(T) {
+  var c = T.toFixed(3), i, t0, p0, t1, p1;
+  if (PKW_CACHE[c] !== undefined) return PKW_CACHE[c];
+  var r = TAB_PKW[TAB_PKW.length - 1][1];
+  for (i = 0; i < TAB_PKW.length - 1; i++) {
+    t0 = TAB_PKW[i][0]; p0 = TAB_PKW[i][1];
+    t1 = TAB_PKW[i + 1][0]; p1 = TAB_PKW[i + 1][1];
+    if (T <= t1 || i === TAB_PKW.length - 2) {
+      r = p0 + (p1 - p0) * (T - t0) / (t1 - t0);
+      break;
+    }
+  }
+  PKW_CACHE[c] = r;
+  return r;
+}
+function phNeutre(T) { return pkw(T) / 2; }
+function gammaD(z, I) {
+  if (I <= 0) return 1;
+  var r = Math.sqrt(I);
+  return Math.pow(10, -A_DAVIES * z * z * (r / (1 + r) - 0.3 * I));
+}
+function solNeuve() { return { na: 0, cl: 0, sel: 0, sys: {} }; }
+function ajSys(s, pkas, c) {
+  if (!(c > 0)) return;
+  var k = pkas.join("|");
+  s.sys[k] = (s.sys[k] || 0) + c;
+}
+function dilueSol(s, f) {
+  var o = { na: s.na / f, cl: s.cl / f, sel: s.sel / f, sys: {} }, k;
+  for (k in s.sys) o.sys[k] = s.sys[k] / f;
+  return o;
+}
+function melangeSol(a, va, b, vb) {
+  var v = va + vb, o = { na: (a.na * va + b.na * vb) / v,
+                         cl: (a.cl * va + b.cl * vb) / v,
+                         sel: (a.sel * va + b.sel * vb) / v, sys: {} }, k;
+  for (k in a.sys) o.sys[k] = (o.sys[k] || 0) + a.sys[k] * va / v;
+  for (k in b.sys) o.sys[k] = (o.sys[k] || 0) + b.sys[k] * vb / v;
+  return o;
+}
+/* Fractions de chaque forme d'un système polyprotique. `g` est indexé par la
+   charge : g[0] = 1, g[1] = γ des monovalents, etc. La constante
+   conditionnelle vaut Ka·γ(j−1)/(γ₁·γj) — le passage de l'activité à la
+   concentration, qui est justement ce qu'un pH mesure. */
+function alphas(cle, h, g) {
+  var ka = kasDe(cle), t = [1], prod = 1, j, s = 0, i;
+  for (j = 1; j <= ka.length; j++) {
+    prod *= (ka[j - 1] * g[j - 1] / (g[1] * g[j])) / h;
+    t.push(prod);
+  }
+  for (i = 0; i < t.length; i++) s += t[i];
+  for (i = 0; i < t.length; i++) t[i] /= s;
+  return t;
+}
+function bilanCharge(s, h, g, kwc) {
+  var b = s.na + h - s.cl - kwc / h, k, a, j;
+  for (k in s.sys) {
+    a = alphas(k, h, g);
+    for (j = 1; j < a.length; j++) b -= s.sys[k] * a[j] * j;
+  }
+  return b;
+}
+function forceIonique(s, h, g, kwc) {
+  var I = s.na + s.cl + 2 * s.sel + h + kwc / h, k, a, j;
+  for (k in s.sys) {
+    a = alphas(k, h, g);
+    for (j = 1; j < a.length; j++) I += s.sys[k] * a[j] * j * j;
+  }
+  return 0.5 * I;
+}
+function phDe(s, T) {
+  var g = [1, 1, 1, 1, 1], it, lo, hi, mid, h = 1e-7, I = 0, z, i, kwc;
+  var kw = Math.pow(10, -pkw(T));
+  for (it = 0; it < 3; it++) {
+    kwc = kw / (g[1] * g[1]);
+    lo = -1; hi = 15;
+    for (i = 0; i < 46; i++) {
+      mid = 0.5 * (lo + hi);
+      if (bilanCharge(s, Math.pow(10, -mid), g, kwc) > 0) lo = mid; else hi = mid;
+    }
+    h = Math.pow(10, -0.5 * (lo + hi));
+    I = forceIonique(s, h, g, kwc);
+    g = [1];
+    for (z = 1; z <= 4; z++) g.push(gammaD(z, I));
+  }
+  return -Math.log10(g[1] * h);
+}
+
+/* ---- les sept recettes, évaluées avec les réglages COURANTS -------- */
+function recette(k) {
+  var s = solNeuve();
+  if (k === 0) { s.cl = C_ACIDE; return s; }                    // H⁺ + Cl⁻
+  if (k === 1) { ajSys(s, PKA_CARBO, REG.co2 * VOL_CO2); return s; }
+  if (k === 2) {                                                // le lait
+    s.na = NA_LAIT;
+    ajSys(s, PKA_PHOS, C_PHOS_LAIT);
+    ajSys(s, PKA_LACT, Math.max(0, REG.dornic - DORNIC_0) * DORNIC_MOL);
+    return s;
+  }
+  if (k === 3) return s;                                        // eau distillée
+  if (k === 4) { s.sel = C_SEL; return s; }                     // Na⁺ + Cl⁻
+  if (k === 5) { s.na = C_JAVEL; ajSys(s, PKA_HYPO, C_JAVEL); return s; }
+  if (k === 6) { s.na = C_SOUDE; return s; }                    // Na⁺ + OH⁻
+  return s;
+}
+function recetteDiluee(k) { return dilueSol(recette(k), facteurDilution()); }
+
+/* ==================================================================
+   6. LES DEUX INSTRUMENTS — et pourquoi ils ne disent pas la même chose
+   ================================================================== */
+function lecturePapier(ph) {
+  return Math.round(borne(Math.floor(ph + DELTA_PAPIER), 0, 14));
+}
+/* Les mots du nuancier : ceux de la FICHE là où elle parle, ceux du chart
+   universel ailleurs. Le YAML gagne toujours (§0). */
+var MOTS_NUANCIER = null;
+function motsNuancier() {
+  if (MOTS_NUANCIER) return MOTS_NUANCIER;
+  MOTS_NUANCIER = NUANCIER_SOURCE.slice();
+  var k, v, c;
+  for (k = 0; k < N; k++) {
+    v = phFiche(k); c = cel(k, C_COUL);
+    if (v !== null && c && v >= 0 && v <= 14) MOTS_NUANCIER[Math.round(v)] = c;
+  }
+  return MOTS_NUANCIER;
+}
+function motCase(n) { return motsNuancier()[borne(Math.round(n), 0, 14)]; }
+function hexCase(n) {
+  n = borne(Math.round(n), 0, 14);
+  var m = motsNuancier(), base = couleurMot(m[n]), i0 = n, i1 = n, f;
+  while (i0 > 0 && m[i0 - 1] === m[n]) i0--;
+  while (i1 < 14 && m[i1 + 1] === m[n]) i1++;
+  /* Deux cases voisines peuvent porter le même mot ; on les sépare par une
+     variation de clarté, sinon le nuancier montre des plages uniformes. */
+  f = i1 === i0 ? 0 : ((n - i0) / (i1 - i0) - 0.5) * 0.30;
+  return nuance(base, -f);
+}
+/* La teinte prise par le papier : celle de SA case, légèrement tirée vers la
+   case voisine — un rendu, pas une mesure (dit dans « Sous le capot »). */
+function teintePapier(ph) {
+  var n = lecturePapier(ph), t = (ph + DELTA_PAPIER) - Math.floor(ph + DELTA_PAPIER);
+  var vers = t < 0.44 ? n - 1 : n + 1;
+  var f = Math.abs(t - 0.44) / 0.56 * 0.22;
+  if (vers < 0 || vers > 14) return hexCase(n);
+  return melange(hexCase(n), hexCase(vers), f);
+}
+function lectureMetre(ph) { return Math.round(ph * 100) / 100; }
+/* Le CARACTÈRE se décide sur l'écart au point de neutralité, jamais sur le
+   nombre 7 : à 40 °C, une eau pure est neutre à 6,77. C'est ce seuil-là qui
+   décide la conclusion, et toutes les solutions de la fiche en sont à plus
+   de 100 % de marge. */
+function caractere(ph, T) {
+  var d = ph - phNeutre(T);
+  if (Math.abs(d) <= TOL_NEUTRE) return { mot: "neutre", qual: "", d: d };
+  return { mot: d < 0 ? "acide" : "basique",
+           qual: Math.abs(d) < TOL_FAIBLE ? "faiblement" : "", d: d };
+}
+function caractereFiche(k) {
+  var t = cel(k, C_CAR).toLowerCase();
+  return { mot: /neutre/.test(t) ? "neutre" : (/basique/.test(t) ? "basique" : "acide"),
+           qual: /faible/.test(t) ? "faiblement" : "" };
+}
+
+/* ==================================================================
+   7. L'ÉTAT
+   ================================================================== */
+var BECHERS = [], MORCEAUX = [], ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0;
+var AGIT = null, SONDE = null;
+var svg = null, COUCHES = {};
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+function neufEtat() {
+  return { epi: false, suivi: 0, tSeance: 0, horsProto: false,
+           rincages: 0, compare: false, compareTxt: "", classe: false,
+           metre: [] };
+}
+function neufBecher(k) { return { k: k, ajouts: [] }; }
+function neufMorceau(i) {
+  return { i: i, coupe: false, sol: null, ph: null, lu: false, souille: false };
+}
+function creerPostes() {
+  var i;
+  BECHERS = [];
+  for (i = 0; i < N; i++) BECHERS.push(neufBecher(i));
+  MORCEAUX = [];
+  for (i = 0; i < N_MORCEAUX; i++) MORCEAUX.push(neufMorceau(i));
+  AGIT = { goutte: null, film: null };
+  SONDE = { rincee: false, essuyee: false, film: null, valeur: null, sol: null };
+}
+/* La composition COURANTE d'un bécher : sa recette, diluée par le réglage,
+   plus tout ce qu'un instrument sale y a versé. Rien n'est prémâché — le
+   modèle ne lit que cet état. */
+function compo(k) {
+  var s = recetteDiluee(k), v = V_BECHER, i, a;
+  for (i = 0; i < BECHERS[k].ajouts.length; i++) {
+    a = BECHERS[k].ajouts[i];
+    s = melangeSol(s, v, a.comp, a.v);
+    v += a.v;
+  }
+  return s;
+}
+/* Mémoire du solveur. La clé est la SIGNATURE de l'état : dès qu'un réglage
+   bouge ou qu'un bécher reçoit un ajout, tout est jeté et recalculé. */
+var MEMO = {}, MEMO_SIG = null;
+function signature() {
+  var s = REG.dil + "|" + REG.T + "|" + REG.co2 + "|" + REG.dornic, k;
+  for (k = 0; k < N; k++) s += "|" + BECHERS[k].ajouts.length;
+  return s;
+}
+function memoPh(cle, calc) {
+  var sg = signature();
+  if (sg !== MEMO_SIG) { MEMO = {}; MEMO_SIG = sg; }
+  if (MEMO[cle] === undefined) MEMO[cle] = calc();
+  return MEMO[cle];
+}
+function phBecher(k) {
+  return memoPh("b" + k, function () { return phDe(compo(k), REG.T); });
+}
+function phDilue(k, f) {
+  return memoPh("d" + k + "_" + f.toFixed(3), function () {
+    return phDe(dilueSol(recette(k), Math.pow(10, f)), REG.T);
+  });
+}
+function souille(k) { return BECHERS[k].ajouts.length > 0; }
+
+/* ==================================================================
+   8. LA GÉOMÉTRIE DE LA PAILLASSE
+   ==================================================================
+   viewBox 1120 × 760 — étroit à dessein (§10.5) : le SVG est ajusté sur la
+   largeur de sa colonne, et chaque unité gagnée en largeur est une unité
+   perdue sur la taille apparente des objets.
+
+   ZONES INTERDITES, mesurées et non devinées (le SVG fait ~940 px de large,
+   soit 1,19 unité de viewBox par pixel) :
+     consigne  x 224..896, y < 56       journal  x < 280, y < 115
+     bouton ⟳  x > 1050,  y < 72        commandes  y 672..712
+   Le nuancier commence donc à x = 300 et à y = 96, et le titre du poste de
+   gauche à y = 132.                                                          */
+var W = 1120, H = 760, BANC = 616, Y_BOUTONS = 692;
+/* Le nuancier — à l'échelle : les quinze cases couvrent 0 à 14 linéairement.
+   C'est LUI l'échelle de la leçon, et les solutions mesurées viennent s'y
+   poser à leur valeur. */
+/* ⚠️ NU_Y est passé de 96 à 122 : mesuré sur la capture, le titre du poste
+   (à NU_Y − 12) passait DERRIÈRE la bulle de consigne, qui descend jusqu'à
+   y ≈ 78 en unités de viewBox et davantage dès qu'elle tient sur deux
+   lignes. Aucune mesure ne voyait cela — il a fallu regarder l'image. */
+var NU_X0 = 300, NU_X1 = 1092, NU_Y = 122, NU_H = 62;
+var NU_N = 15, NU_W = (NU_X1 - NU_X0) / NU_N;
+var NU_YNUM = NU_Y + NU_H + 16;
+var NU_YMARQ = NU_Y + NU_H + 34;
+/* L'étagère et ses six postes. */
+var ET_Y = 410, ET_X0 = 24, ET_X1 = 1096;
+var POSTE_X = { rouleau: 92, ciseaux: 196, agitateur: 288, pissette: 382,
+                absorbant: 478, poubelle: 574 };
+/* Le pH-mètre, sur l'étagère à droite. */
+var ME_X = 700, ME_Y = 300, ME_W = 210, ME_H = 110;
+var SONDE_X = 1006, SONDE_Y0 = 318, SONDE_Y1 = ET_Y;
+/* La soucoupe et les morceaux de papier. */
+var SO_CX = 898, SO_CY = 518, SO_RX = 172, SO_RY = 46;
+var MO_W = 30;
+/* Les sept béchers — tous IDENTIQUES : rien à l'œil ne distingue un acide
+   d'une base, et c'est justement la leçon. */
+var BE_X0 = 84, BE_DX = 92, BE_W = 76, BE_H = 108;
+var BE_Y = BANC - BE_H;
+
+function xBecher(k) { return BE_X0 + k * BE_DX; }
+function xPh(p) { return NU_X0 + (borne(p, 0, 14) + 0.5) * NU_W; }
+function xCase(n) { return NU_X0 + n * NU_W; }
+function posMorceau(i) {
+  /* Deux rangées sur la soucoupe : quatre devant, le reste derrière. */
+  var haut = Math.ceil(N_MORCEAUX / 2), bas = N_MORCEAUX - haut, r, j, n;
+  if (i < haut) { r = 0; j = i; n = haut; } else { r = 1; j = i - haut; n = bas; }
+  var larg = SO_RX * 1.62;
+  return { x: SO_CX - larg / 2 + larg * (j + 0.5) / Math.max(1, n),
+           y: SO_CY + (r ? 22 : -22) };
+}
+
+/* ==================================================================
+   9. DÉGRADÉS ET FILTRES
+   ================================================================== */
+function ajouterDefs() {
+  var D = svg.appendChild(el("defs", {})), g, f;
+  function grad(id, stops, horiz) {
+    g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: horiz ? 1 : 0,
+                               y2: horiz ? 0 : 1 });
+    stops.forEach(function (s) {
+      g.appendChild(el("stop", { offset: s[0], "stop-color": s[1],
+        "stop-opacity": s[2] === undefined ? 1 : s[2] }));
+    });
+    D.appendChild(g);
+  }
+  grad("mur", [[0, "#fdfefe"], [1, "#e4eaf1"]]);
+  grad("banc", [[0, "#5a6474"], [0.09, "#3d4553"], [1, "#272d38"]]);
+  grad("bois", [[0, "#c99a58"], [0.5, "#a97c3c"], [1, "#8a6128"]]);
+  grad("verrerie", [[0, "#ffffff", .74], [0.15, "#dbe6ef", .3],
+                    [0.55, "#eef4f9", .14], [0.9, "#c9d7e3", .34],
+                    [1, "#ffffff", .68]], true);
+  /* Les sept solutions sont dessinées IDENTIQUES — un même liquide pâle.
+     Colorer le lait en blanc et la boisson en ambre aurait défait la leçon :
+     rien à l'œil ne distingue un acide d'une base, et c'est le papier qui
+     les sépare, lui seul. */
+  grad("liquide", [[0, "#dceef7", .88], [1, "#a8cfe4", .92]]);
+  grad("rincage", [[0, "#c9dfe0", .8], [1, "#8fa8a4", .9]]);
+  grad("plastique", [[0, "#f0f4f8"], [0.28, "#ffffff"], [0.62, "#dbe3ec"],
+                     [1, "#b9c3cf"]], true);
+  grad("metalBoite", [[0, "#59616e"], [0.5, "#39414d"], [1, "#252b34"]]);
+  grad("lcd", [[0, "#c6d9b4"], [1, "#a8c092"]]);
+  grad("inox", [[0, "#8d97a5"], [0.28, "#e7ecf1"], [0.55, "#aab4c0"],
+                [1, "#79838f"]], true);
+  grad("carton", [[0, "#e8ddc4"], [0.5, "#d6c49f"], [1, "#b9a377"]]);
+  grad("papier", [[0, "#fffdf4"], [1, "#efe9d8"]]);
+
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%",
+                     width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+    "flood-color": "#12203a", "flood-opacity": .28 }));
+  D.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%",
+                     width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+    "flood-color": "#12203a", "flood-opacity": .4 }));
+  D.appendChild(f);
+  f = el("filter", { id: "flou", x: "-70%", y: "-70%", width: "240%", height: "240%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 5 }));
+  D.appendChild(f);
+  /* Un papier indicateur lisse ne ressemble à rien : il lui faut du GRAIN. */
+  f = el("filter", { id: "grain", x: "-10%", y: "-10%", width: "120%", height: "120%" });
+  f.appendChild(el("feTurbulence", { type: "fractalNoise", baseFrequency: "0.7",
+    numOctaves: 3, seed: 11, result: "n" }));
+  f.appendChild(el("feColorMatrix", { in: "n", type: "saturate", values: "0",
+    result: "ng" }));
+  f.appendChild(el("feComponentTransfer", { in: "ng", result: "nc" }))
+    .appendChild(el("feFuncA", { type: "linear", slope: ".35", intercept: ".65" }));
+  f.appendChild(el("feComposite", { in: "SourceGraphic", in2: "nc",
+    operator: "arithmetic", k1: "1.05", k2: "0", k3: "0", k4: "0" }));
+  D.appendChild(f);
+}
+
+/* ==================================================================
+   10. LES COUCHES — l'ordre est la moitié du dessin
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées et halos — DERRIÈRE les objets
+     poste   le mobilier fixe : nuancier, étagère, soucoupe, pH-mètre
+     arriere l'intérieur de la verrerie, les liquides, les zones de dépôt
+     objets  ce qui se manipule : agitateur, ciseaux, morceaux, béchers
+     avant   les PAROIS DE VERRE, les étiquettes
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout             */
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  return ajout(c, el("text", { x: x, y: y, "text-anchor": o.ancre || "middle",
+    "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+    fill: o.couleur || INK, "pointer-events": "none",
+    "letter-spacing": o.esp || 0 }, s));
+}
+function titrePoste(x, y, s) {
+  return txt("poste", x, y, s, { ancre: "start", taille: 11.5, gras: true,
+                                 couleur: GOLD, esp: 1.1 });
+}
+function ombreAuSol(cx, cy, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: cy + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Un intitulé long sous un bécher de 76 px : on le replie sur trois lignes
+   courtes plutôt que de le laisser déborder sur le voisin (§12.7). */
+function enrouler(s, larg, lignes) {
+  var mots = String(s).split(/\s+/), out = [], cur = "";
+  mots.forEach(function (m) {
+    if (!cur.length) { cur = m; return; }
+    if ((cur + " " + m).length <= larg) cur += " " + m;
+    else { out.push(cur); cur = m; }
+  });
+  if (cur.length) out.push(cur);
+  if (out.length > lignes) {
+    out = out.slice(0, lignes);
+    out[lignes - 1] = out[lignes - 1].replace(/.{0,2}$/, "…");
+  }
+  return out;
+}
+
+/* ==================================================================
+   11. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC + 4,
+    fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: 7, fill: "#8f9aa8" }));
+  ajout("fond", el("rect", { x: 0, y: BANC + 7, width: W, height: H - BANC - 7,
+    fill: "url(#banc)" }));
+  txt("fond", W - 14, H - 12,
+      "schéma habillé — l'échelle de pH est à l'échelle, la verrerie ne l'est pas",
+      { ancre: "end", taille: 10.5, couleur: "#7d8896" });
+}
+
+/* La plaque de sécurité, à gauche du nuancier. Son texte est LU dans
+   `securite` : c'est la première consigne de la fiche, et c'est aussi la
+   leçon — le goût n'est pas un instrument de mesure. */
+function construireSecurite() {
+  var X = 24, Y = 132, LG = 258, HT = 132;
+  ajout("poste", el("rect", { x: X, y: Y, width: LG, height: HT, rx: 9,
+    fill: "#fdeeee", stroke: "#e0b4b4", "stroke-width": 1.8,
+    "pointer-events": "none" }));
+  txt("poste", X + 14, Y + 24, "SÉCURITÉ", { ancre: "start", taille: 10.5,
+      gras: true, couleur: ROUGE, esp: 1.4 });
+  var t = secu("go[uû]ter"), i;
+  var l = enrouler(t.replace(/\s*Le goût.*$/, ""), 26, 3);
+  l.forEach(function (s, i) {
+    txt("poste", X + 14, Y + 46 + i * 15, s, { ancre: "start", taille: 11.5,
+        gras: true, couleur: ROUGE });
+  });
+  txt("poste", X + 14, Y + 104, "Ni goûter, ni sentir, ni toucher.",
+      { ancre: "start", taille: 11, couleur: "#8a5252" });
+  txt("poste", X + 14, Y + 119, "Seul le pH répond.",
+      { ancre: "start", taille: 11, couleur: "#8a5252" });
+}
+
+/* ==================================================================
+   12. LE NUANCIER — le poste central, et l'échelle de la leçon
+   ================================================================== */
+var gMarques = null, gMotsZone = [], gRep7 = null, casesNu = [];
+function construireNuancier() {
+  titrePoste(NU_X0, NU_Y - 12,
+    "NUANCIER DE LA BOÎTE — y glisser un papier mouillé pour lire sa valeur");
+  ombreAuSol(NU_X0 + (NU_X1 - NU_X0) / 2, NU_Y + NU_H + 2, (NU_X1 - NU_X0) / 2, .16);
+  casesNu = [];
+  var n;
+  for (n = 0; n < NU_N; n++) {
+    casesNu.push(ajout("poste", el("rect", { x: xCase(n), y: NU_Y, width: NU_W,
+      height: NU_H, fill: hexCase(n), "pointer-events": "none" })));
+    ajout("poste", el("rect", { x: xCase(n), y: NU_Y, width: NU_W, height: NU_H,
+      fill: hexCase(n), opacity: .5, filter: "url(#grain)",
+      "pointer-events": "none" }));
+    txt("poste", xPh(n), NU_YNUM, String(n),
+        { taille: n === 7 ? 14 : 12, gras: n === 0 || n === 7 || n === 14,
+          couleur: n === 7 ? VERT : INK });
+  }
+  ajout("poste", el("rect", { x: NU_X0, y: NU_Y, width: NU_X1 - NU_X0,
+    height: NU_H, fill: "none", stroke: "#7f8a99", "stroke-width": 2.4,
+    "pointer-events": "none" }));
+  /* Le repère 7, que l'étape 10 du protocole demande de situer. */
+  gRep7 = ajout("poste", el("line", { x1: xPh(7), y1: NU_Y - 8, x2: xPh(7),
+    y2: NU_YNUM + 6, stroke: VERT, "stroke-width": 2.2, "stroke-dasharray": "5 4",
+    "pointer-events": "none" }));
+  /* Zone de dépôt PLEINE et transparente (§6.12) : sans elle, on ne pourrait
+     viser qu'un trait de 2 px. */
+  ajout("arriere", el("rect", { x: NU_X0 - 8, y: NU_Y - 10,
+    width: NU_X1 - NU_X0 + 16, height: NU_H + 34, fill: "transparent",
+    "data-cible": "nuancier", "pointer-events": "none" }));
+  gMarques = ajout("avant", el("g", { "pointer-events": "none" }));
+  /* Les trois mots du classement, révélés seulement à la fin : c'est la
+     conclusion, pas une donnée de départ.
+     ⚠️ Ils sont écrits DANS la bande de couleur, et non sous les marques :
+     posés en dessous, ils tombaient sur le boîtier du pH-mètre. Écrits en
+     blanc cerné de sombre pour rester lisibles sur le rouge comme sur le
+     violet. */
+  gMotsZone = [xPh(3.2), xPh(7), xPh(11)].map(function (x) {
+    var t = ajout("avant", el("text", { x: x, y: NU_Y + NU_H / 2 + 6,
+      "text-anchor": "middle", "font-size": 15, "font-weight": "bold",
+      fill: "#ffffff", stroke: "#12203a", "stroke-width": 3.4,
+      "paint-order": "stroke", "letter-spacing": 1.6,
+      "pointer-events": "none" }, ""));
+    return t;
+  });
+}
+
+/* ==================================================================
+   13. L'ÉTAGÈRE ET SES POSTES
+   ================================================================== */
+var gAgit = null, gCiseaux = null, gRouleau = null, gGoutte = null;
+function construireEtagere() {
+  ajout("poste", el("rect", { x: ET_X0, y: ET_Y, width: ET_X1 - ET_X0, height: 11,
+    rx: 3, fill: "url(#bois)", stroke: "#6d4b1c", "stroke-width": 1.2,
+    "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: ET_X0, y: ET_Y + 11, width: ET_X1 - ET_X0, height: 5,
+    fill: "#00000022", "pointer-events": "none" }));
+
+  /* --- la boîte de papier pH et son rouleau (objet PRENABLE, mais qu'on
+         refusera de tremper : le protocole l'interdit explicitement) */
+  gRouleau = ajout("objets", el("g", { cursor: "grab", "data-act": "outil-rouleau" }));
+  gRouleau.appendChild(el("rect", { x: -44, y: -92, width: 88, height: 96,
+    fill: "transparent" }));
+  gRouleau.appendChild(el("rect", { x: -38, y: -46, width: 76, height: 46, rx: 4,
+    fill: "url(#carton)", stroke: "#8a7748", "stroke-width": 1.5 }));
+  gRouleau.appendChild(el("rect", { x: -32, y: -38, width: 64, height: 16, rx: 2,
+    fill: "#fffdf4", opacity: .9 }));
+  gRouleau.appendChild(el("text", { x: 0, y: -26, "text-anchor": "middle",
+    "font-size": 9.5, "font-weight": "bold", fill: "#6d5a2a",
+    "font-family": "Arial, Helvetica, sans-serif" }, "pH 0-14"));
+  gRouleau.appendChild(el("circle", { cx: 0, cy: -62, r: 20, fill: "url(#papier)",
+    stroke: "#c9c2ab", "stroke-width": 1.6 }));
+  gRouleau.appendChild(el("circle", { cx: 0, cy: -62, r: 6, fill: "#d6c49f",
+    stroke: "#a8946a", "stroke-width": 1.2 }));
+  gRouleau.appendChild(el("path", { d: "M 20 -62 L 40 -58 L 40 -48 L 20 -52 Z",
+    fill: "url(#papier)", stroke: "#c9c2ab", "stroke-width": 1.3 }));
+  gRouleau.setAttribute("transform", "translate(" + POSTE_X.rouleau + "," + ET_Y + ")");
+  txt("poste", POSTE_X.rouleau, ET_Y + 28, "rouleau de papier pH",
+      { taille: 10.5, couleur: "#5d6874" });
+  txt("poste", POSTE_X.rouleau, ET_Y + 40, "et sa boîte",
+      { taille: 9.5, couleur: "#98a2b0" });
+
+  /* --- les ciseaux : les glisser sur le rouleau découpe un morceau */
+  gCiseaux = ajout("objets", el("g", { cursor: "grab", "data-act": "outil-ciseaux" }));
+  gCiseaux.appendChild(el("rect", { x: -30, y: -74, width: 60, height: 78,
+    fill: "transparent" }));
+  gCiseaux.appendChild(el("path", { d: "M -12 -66 L 6 -18", stroke: "url(#inox)",
+    "stroke-width": 6, "stroke-linecap": "round", fill: "none" }));
+  gCiseaux.appendChild(el("path", { d: "M 12 -66 L -6 -18", stroke: "url(#inox)",
+    "stroke-width": 6, "stroke-linecap": "round", fill: "none" }));
+  gCiseaux.appendChild(el("circle", { cx: 12, cy: -8, r: 9, fill: "none",
+    stroke: "#c8912a", "stroke-width": 5 }));
+  gCiseaux.appendChild(el("circle", { cx: -12, cy: -8, r: 9, fill: "none",
+    stroke: "#c8912a", "stroke-width": 5 }));
+  gCiseaux.appendChild(el("circle", { cx: 0, cy: -34, r: 3.6, fill: "#5d6874" }));
+  gCiseaux.setAttribute("transform", "translate(" + POSTE_X.ciseaux + "," + ET_Y + ")");
+  txt("poste", POSTE_X.ciseaux, ET_Y + 28, "ciseaux", { taille: 10.5, couleur: "#5d6874" });
+  txt("poste", POSTE_X.ciseaux, ET_Y + 40, "→ sur le rouleau",
+      { taille: 9.5, couleur: "#98a2b0" });
+
+  /* --- l'agitateur en verre : l'objet central de la manipulation */
+  gAgit = ajout("objets", el("g", { cursor: "grab", "data-act": "outil-agitateur" }));
+  gAgit.appendChild(el("rect", { x: -22, y: -108, width: 44, height: 120,
+    fill: "transparent" }));
+  gAgit.appendChild(el("rect", { x: -7, y: -104, width: 14, height: 108, rx: 7,
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2 }));
+  gAgit.appendChild(el("rect", { x: -4.2, y: -98, width: 4, height: 92, rx: 2,
+    fill: "#ffffff", opacity: .72 }));
+  gAgit.appendChild(el("ellipse", { cx: 0, cy: -104, rx: 7, ry: 3.4,
+    fill: "#eef5fa", stroke: "#7f93a6", "stroke-width": 1.6 }));
+  gGoutte = gAgit.appendChild(el("path", {
+    d: "M 0 2 q 7 8 0 15 q -7 -7 0 -15 Z", fill: "url(#liquide)",
+    stroke: "#7f93a6", "stroke-width": 1.1, opacity: 0 }));
+  gAgit.setAttribute("transform", "translate(" + POSTE_X.agitateur + "," + ET_Y + ")");
+  txt("poste", POSTE_X.agitateur, ET_Y + 28, "agitateur en verre",
+      { taille: 10.5, couleur: "#5d6874" });
+  txt("poste", POSTE_X.agitateur, ET_Y + 40, "prélever · déposer",
+      { taille: 9.5, couleur: "#98a2b0" });
+
+  /* --- la pissette d'eau distillée : le poste de rinçage */
+  var g = ajout("poste", el("g", { "pointer-events": "none" }));
+  g.appendChild(el("path", { d: "M -22 -8 L -22 -46 Q -22 -56 -12 -58 L -12 -68 " +
+    "L 12 -68 L 12 -58 Q 22 -56 22 -46 L 22 -8 Q 22 0 14 0 L -14 0 Q -22 0 -22 -8 Z",
+    fill: "url(#plastique)", stroke: "#8a94a4", "stroke-width": 1.8 }));
+  g.appendChild(el("rect", { x: -20, y: -40, width: 40, height: 30, rx: 2,
+    fill: "url(#liquide)", opacity: .8 }));
+  g.appendChild(el("path", { d: "M -22 -8 L -22 -46 Q -22 -56 -12 -58 L -12 -68 " +
+    "L 12 -68 L 12 -58 Q 22 -56 22 -46 L 22 -8 Q 22 0 14 0 L -14 0 Q -22 0 -22 -8 Z",
+    fill: "url(#verrerie)", stroke: "#8a94a4", "stroke-width": 1.8 }));
+  g.appendChild(el("rect", { x: -13, y: -80, width: 26, height: 13, rx: 3,
+    fill: "#3f6ea8" }));
+  g.appendChild(el("path", { d: "M 6 -78 L 30 -78 L 30 -30", fill: "none",
+    stroke: "#3f6ea8", "stroke-width": 5, "stroke-linecap": "round",
+    "stroke-linejoin": "round" }));
+  g.setAttribute("transform", "translate(" + POSTE_X.pissette + "," + ET_Y + ")");
+  txt("poste", POSTE_X.pissette, ET_Y + 28, "pissette", { taille: 10.5, couleur: "#5d6874" });
+  txt("poste", POSTE_X.pissette, ET_Y + 40, "eau distillée — rincer",
+      { taille: 9.5, couleur: "#98a2b0" });
+
+  /* --- le papier absorbant : essuyer la sonde */
+  g = ajout("poste", el("g", { "pointer-events": "none" }));
+  [0, 1, 2].forEach(function (i) {
+    g.appendChild(el("rect", { x: -34 + i * 3, y: -20 - i * 7, width: 68,
+      height: 22, rx: 2, fill: "url(#papier)", stroke: "#cfc9b6",
+      "stroke-width": 1.3 }));
+  });
+  g.setAttribute("transform", "translate(" + POSTE_X.absorbant + "," + ET_Y + ")");
+  txt("poste", POSTE_X.absorbant, ET_Y + 28, "papier absorbant",
+      { taille: 10.5, couleur: "#5d6874" });
+  txt("poste", POSTE_X.absorbant, ET_Y + 40, "essuyer la sonde",
+      { taille: 9.5, couleur: "#98a2b0" });
+
+  /* --- le bécher-poubelle : on rince AU-DESSUS de lui */
+  g = ajout("poste", el("g", { "pointer-events": "none" }));
+  g.appendChild(el("path", { d: "M -26 -56 L -22 0 L 22 0 L 26 -56",
+    fill: "url(#rincage)", stroke: "none" }));
+  g.appendChild(el("path", { d: "M -26 -56 L -22 0 L 22 0 L 26 -56",
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2.4,
+    "stroke-linejoin": "round" }));
+  g.appendChild(el("ellipse", { cx: 0, cy: -56, rx: 26, ry: 5, fill: "#eef5fa",
+    opacity: .5, stroke: "#7f93a6", "stroke-width": 2.4 }));
+  g.setAttribute("transform", "translate(" + POSTE_X.poubelle + "," + ET_Y + ")");
+  txt("poste", POSTE_X.poubelle, ET_Y + 28, "bécher-poubelle",
+      { taille: 10.5, couleur: "#5d6874" });
+  txt("poste", POSTE_X.poubelle, ET_Y + 40, "les rinçages", { taille: 9.5, couleur: "#98a2b0" });
+}
+
+/* ==================================================================
+   14. LE pH-MÈTRE ET SA SONDE
+   ================================================================== */
+var ecranMetre = null, gSonde = null, gFilmSonde = null;
+function construirePhMetre() {
+  ajout("poste", el("rect", { x: ME_X, y: ME_Y, width: ME_W, height: ME_H, rx: 10,
+    fill: "url(#metalBoite)", stroke: "#1b2029", "stroke-width": 1.6,
+    filter: "url(#ombreDouce)", "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: ME_X + 14, y: ME_Y + 16, width: ME_W - 28,
+    height: 54, rx: 6, fill: "url(#lcd)", stroke: "#2a3038", "stroke-width": 1.4,
+    "pointer-events": "none" }));
+  txt("poste", ME_X + 24, ME_Y + 32, "pH", { ancre: "start", taille: 11,
+      gras: true, couleur: "#3d5236" });
+  ecranMetre = ajout("poste", el("text", { x: ME_X + ME_W - 24, y: ME_Y + 60,
+    "text-anchor": "end", "font-size": 34, "font-weight": "bold",
+    "font-family": "ui-monospace, Consolas, monospace", fill: "#20301c",
+    "pointer-events": "none" }, "—,——"));
+  [0, 1, 2].forEach(function (i) {
+    ajout("poste", el("circle", { cx: ME_X + 26 + i * 22, cy: ME_Y + 88, r: 7,
+      fill: "#2b323c", stroke: "#151a21", "stroke-width": 1.2,
+      "pointer-events": "none" }));
+  });
+  txt("poste", ME_X + ME_W - 16, ME_Y + 92,
+      "résolution " + nb(PHYS.RES_METRE.v, 2), { ancre: "end", taille: 9.5,
+      couleur: "#9aa7b2" });
+  txt("poste", ME_X + ME_W / 2, ET_Y + 28, "pH-mètre étalonné",
+      { taille: 10.5, couleur: "#5d6874" });
+
+  /* Le câble, dans la couche `fils` : peint dans `arriere`, il passerait
+     PAR-DESSUS le boîtier et le montage se lirait comme un plat de
+     spaghettis posé sur l'appareil. */
+  ajout("fils", el("path", { d: "M " + (ME_X + ME_W) + " " + (ME_Y + 72) +
+    " Q " + (ME_X + ME_W + 60) + " " + (ME_Y + 120) + " " + SONDE_X + " " + (SONDE_Y0 + 6),
+    fill: "none", stroke: "#4a5462", "stroke-width": 4.5, "stroke-linecap": "round",
+    "pointer-events": "none" }));
+  /* Le support de la sonde */
+  ajout("poste", el("rect", { x: SONDE_X + 26, y: SONDE_Y0 - 6, width: 9,
+    height: SONDE_Y1 - SONDE_Y0 + 6, fill: "url(#inox)", "pointer-events": "none" }));
+  ajout("poste", el("rect", { x: SONDE_X - 6, y: SONDE_Y0 - 6, width: 44,
+    height: 9, rx: 4, fill: "url(#inox)", "pointer-events": "none" }));
+
+  gSonde = ajout("objets", el("g", { cursor: "grab", "data-act": "outil-sonde" }));
+  gSonde.appendChild(el("rect", { x: -20, y: -6, width: 40, height: 104,
+    fill: "transparent" }));
+  gSonde.appendChild(el("rect", { x: -9, y: 0, width: 18, height: 66, rx: 4,
+    fill: "url(#inox)", stroke: "#6b7480", "stroke-width": 1.4 }));
+  gSonde.appendChild(el("path", { d: "M -7 66 L -7 84 Q -7 92 0 92 Q 7 92 7 84 L 7 66 Z",
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 1.8 }));
+  gSonde.appendChild(el("ellipse", { cx: 0, cy: 86, rx: 6.4, ry: 5.6,
+    fill: "#cfe0ec", stroke: "#7f93a6", "stroke-width": 1.4 }));
+  gFilmSonde = gSonde.appendChild(el("ellipse", { cx: 0, cy: 90, rx: 8, ry: 5,
+    fill: "url(#liquide)", stroke: "#7f93a6", "stroke-width": 1, opacity: 0 }));
+  gSonde.setAttribute("transform", "translate(" + SONDE_X + "," + SONDE_Y0 + ")");
+  txt("poste", SONDE_X, ET_Y + 28, "sonde", { taille: 10.5, couleur: "#5d6874" });
+  txt("poste", SONDE_X, ET_Y + 40, "rincer · essuyer · immerger",
+      { taille: 9.5, couleur: "#98a2b0" });
+}
+
+/* ==================================================================
+   15. LA SOUCOUPE, LES MORCEAUX DE PAPIER, LES SEPT BÉCHERS
+   ================================================================== */
+var gMorceau = [], gBecher = [], gEtiqB = [];
+function construireSoucoupe() {
+  ombreAuSol(SO_CX, SO_CY + SO_RY - 6, SO_RX * 0.92, .26);
+  ajout("poste", el("ellipse", { cx: SO_CX, cy: SO_CY, rx: SO_RX, ry: SO_RY,
+    fill: "#f3f5f8", stroke: "#c2cbd6", "stroke-width": 2.4,
+    "pointer-events": "none" }));
+  ajout("poste", el("ellipse", { cx: SO_CX, cy: SO_CY - 3, rx: SO_RX - 10,
+    ry: SO_RY - 8, fill: "#ffffff", opacity: .7, "pointer-events": "none" }));
+  txt("poste", SO_CX, SO_CY + SO_RY + 42,
+      "soucoupe — les " + motDuree(N_MORCEAUX) + " morceaux de papier pH" +
+      (TAILLE_MORCEAU ? " (" + TAILLE_MORCEAU + ")" : ""),
+      { taille: 10.5, couleur: "#5d6874" });
+
+  gMorceau = [];
+  var i;
+  for (i = 0; i < N_MORCEAUX; i++) (function (i) {
+    var p = posMorceau(i);
+    var g = ajout("objets", el("g", { cursor: "grab", "data-act": "morceau-" + i,
+      opacity: 0, "pointer-events": "none" }));
+    g.appendChild(el("rect", { x: -MO_W / 2 - 6, y: -MO_W / 2 - 6, width: MO_W + 12,
+      height: MO_W + 12, fill: "transparent" }));
+    var f = g.appendChild(el("rect", { x: -MO_W / 2, y: -MO_W / 2, width: MO_W,
+      height: MO_W, rx: 2, fill: "#f6f2e4", stroke: "#c9c2ab", "stroke-width": 1.4,
+      "data-role": "feuille" }));
+    g.appendChild(el("rect", { x: -MO_W / 2, y: -MO_W / 2, width: MO_W,
+      height: MO_W, rx: 2, fill: "#ffffff", opacity: .22, filter: "url(#grain)",
+      "pointer-events": "none" }));
+    var t = g.appendChild(el("text", { x: 0, y: MO_W / 2 + 13,
+      "text-anchor": "middle", "font-size": 10.5, "font-weight": "bold",
+      fill: INK, "font-family": "Arial, Helvetica, sans-serif",
+      "pointer-events": "none" }, ""));
+    g.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+    gMorceau.push({ g: g, feuille: f, etiq: t, x: p.x, y: p.y });
+  })(i);
+}
+
+function construireBechers() {
+  titrePoste(BE_X0 - BE_W / 2, BE_Y - 22,
+    "LES " + motDuree(N).toUpperCase() + " SOLUTIONS — dessinées IDENTIQUES : rien à l'œil ne les distingue");
+  var k;
+  gBecher = []; gEtiqB = [];
+  for (k = 0; k < N; k++) (function (k) {
+    var x = xBecher(k), r = BE_W / 2;
+    ombreAuSol(x, BANC, r + 6, .3);
+    /* Ordre de peinture : l'intérieur et le liquide AVANT la paroi. Peinte
+       d'abord, la paroi recouvre le liquide et le récipient se lit plein…
+       et gris. Le défaut a déjà été commis deux fois dans ce dossier. */
+    var d = "M " + (x - r) + " " + BE_Y + " L " + (x - r + 3) + " " + BANC +
+            " L " + (x + r - 3) + " " + BANC + " L " + (x + r) + " " + BE_Y;
+    ajout("arriere", el("path", { d: d + " Z", fill: "#eef4f9", opacity: .55,
+      "pointer-events": "none" }));
+    var niv = BE_Y + BE_H * 0.34;
+    ajout("arriere", el("path", { d: "M " + (x - r + 2.4) + " " + niv +
+      " L " + (x - r + 3.6) + " " + (BANC - 2) + " L " + (x + r - 3.6) + " " +
+      (BANC - 2) + " L " + (x + r - 2.4) + " " + niv + " Z",
+      fill: "url(#liquide)", "pointer-events": "none" }));
+    ajout("arriere", el("ellipse", { cx: x, cy: niv, rx: r - 2.6, ry: 4.5,
+      fill: "#cfe6f2", stroke: "#7fa8c4", "stroke-width": 1.6,
+      "pointer-events": "none" }));
+
+    /* La paroi de verre : voile de teinte, reflet vertical net, arête
+       sombre, bourrelet du bord et bec verseur. Sans le reflet, ce n'est
+       jamais du verre ; sans le bourrelet, ce n'est jamais un bécher. */
+    var gb = ajout("avant", el("g", { "pointer-events": "none" }));
+    gb.appendChild(el("path", { d: d + " Z", fill: "#dce8f1", opacity: .3 }));
+    gb.appendChild(el("path", { d: d + " Z", fill: "url(#verrerie)" }));
+    gb.appendChild(el("rect", { x: x - r + 8, y: BE_Y + 14, width: 7,
+      height: BE_H - 34, rx: 3.5, fill: "#fff", opacity: .66 }));
+    [0.25, 0.5, 0.75].forEach(function (f) {
+      gb.appendChild(el("line", { x1: x + r - 20, y1: BANC - BE_H * f,
+        x2: x + r - 6, y2: BANC - BE_H * f, stroke: "#8fa3b5", "stroke-width": 1.2 }));
+    });
+    gb.appendChild(el("path", { d: d, fill: "none", stroke: "#7f93a6",
+      "stroke-width": 3, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    gb.appendChild(el("ellipse", { cx: x, cy: BE_Y, rx: r, ry: 6.5,
+      fill: "#eef5fa", opacity: .5, stroke: "#7f93a6", "stroke-width": 3 }));
+    gb.appendChild(el("path", { d: "M " + (x + r - 4) + " " + (BE_Y - 4) +
+      " q 12 0 13 8", fill: "none", stroke: "#7f93a6", "stroke-width": 2.6,
+      "stroke-linecap": "round" }));
+
+    /* L'étiquette collée : c'est elle, et elle seule, qui distingue les
+       solutions. La fiche dit « 7 béchers étiquetés S1 à S7 ». */
+    var et = ajout("avant", el("g", { "pointer-events": "none" }));
+    et.appendChild(el("rect", { x: x - 22, y: BE_Y + 42, width: 44, height: 27,
+      rx: 3, fill: "#fffdf4", stroke: "#d8cfae", "stroke-width": 1.3 }));
+    et.appendChild(el("text", { x: x, y: BE_Y + 62, "text-anchor": "middle",
+      "font-size": 17, "font-weight": "bold", fill: INK,
+      "font-family": "Arial, Helvetica, sans-serif" }, numero(k)));
+    gEtiqB.push(et);
+
+    /* Le nom sous le bécher, replié — le nom complet est dans le tableau. */
+    enrouler(nomSol(k).replace(/\s*\([^)]*\)\s*/g, " ").trim(), 15, 3)
+      .forEach(function (s, i) {
+        txt("poste", x, BANC + 22 + i * 11, s, { taille: 10, couleur: "#e3e9f1" });
+      });
+
+    /* Zone de prise et de dépôt PLEINE (§6.12). */
+    var z = ajout("objets", el("rect", { x: x - r - 8, y: BE_Y - 26,
+      width: BE_W + 16, height: BE_H + 34, fill: "transparent", cursor: "grab",
+      "data-act": "becher-" + k }));
+    gBecher.push({ g: gb, zone: z, x: x });
+  })(k);
+}
+
+/* ==================================================================
+   16. LES BOUTONS DE SCÈNE
+   ==================================================================
+   Sur le bandeau sombre du meuble (§10.5) : posés au milieu de la scène,
+   ils prendraient la place des objets et se liraient comme des étiquettes. */
+var BOUTONS = {};
+function boutonScene(cx, cy, w, ht, l1, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#fff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var t = g.appendChild(el("text", { x: cx, y: cy + 5, "text-anchor": "middle",
+    "font-size": 12, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      t.setAttribute("fill", v ? INK : GRIS);
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6"); t.setAttribute("fill", VERT);
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8); t.setAttribute("fill", GRIS);
+    },
+    texte: function (s) { t.textContent = s; }
+  };
+  return BOUTONS[act];
+}
+
+/* ==================================================================
+   17. PRENDRE ET DÉPOSER
+   ==================================================================
+   Le pointeur est capturé sur le SVG lui-même, jamais sur l'objet : sans
+   cela, un mouvement rapide sort de la baguette et le glissement s'arrête
+   net au milieu du geste, sans erreur.                                      */
+var prise = null, ptSVG = null, surbrillance = [];
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+/* Les emplacements sont CALCULÉS à partir de l'état courant, jamais figés. */
+function emplacements(quoi) {
+  var z = [], k, i, p;
+  if (quoi === "agitateur" || quoi === "sonde" || quoi === "rouleau" ||
+      quoi === "becher") {
+    for (k = 0; k < N; k++) {
+      z.push({ type: "becher", i: k, x: xBecher(k), y: BE_Y + BE_H / 2, r: 62 });
+    }
+  }
+  if (quoi === "agitateur") {
+    for (i = 0; i < N_MORCEAUX; i++) {
+      if (!MORCEAUX[i].coupe) continue;
+      p = posMorceau(i);
+      z.push({ type: "morceau", i: i, x: p.x, y: p.y, r: 46 });
+    }
+    z.push({ type: "pissette", i: -1, x: POSTE_X.pissette, y: ET_Y - 40, r: 62 });
+  }
+  if (quoi === "sonde") {
+    z.push({ type: "pissette", i: -1, x: POSTE_X.pissette, y: ET_Y - 40, r: 62 });
+    z.push({ type: "absorbant", i: -1, x: POSTE_X.absorbant, y: ET_Y - 20, r: 58 });
+  }
+  if (quoi === "ciseaux") {
+    z.push({ type: "rouleau", i: -1, x: POSTE_X.rouleau, y: ET_Y - 60, r: 66 });
+  }
+  if (quoi === "morceau") {
+    z.push({ type: "nuancier", i: -1, x: (NU_X0 + NU_X1) / 2,
+             y: NU_Y + NU_H / 2, r: 460 });
+    for (k = 0; k < N; k++) {
+      z.push({ type: "becher", i: k, x: xBecher(k), y: BE_Y + BE_H / 2, r: 62 });
+    }
+  }
+  return z;
+}
+function zoneSous(quoi, p) {
+  var z = emplacements(quoi), best = null, db = 1e9, i, d;
+  for (i = 0; i < z.length; i++) {
+    d = Math.abs(p.x - z[i].x) + Math.abs(p.y - z[i].y) * 0.9;
+    if (d < z[i].r * 1.6 && d < db) { db = d; best = z[i]; }
+  }
+  return best;
+}
+function montrerCibles(quoi) {
+  effacerCibles();
+  if (!quoi) return;
+  emplacements(quoi).forEach(function (z) {
+    if (!accepte(quoi, z)) return;
+    var w = z.type === "nuancier" ? (NU_X1 - NU_X0) / 2 + 8 : z.r * 0.62;
+    var h = z.type === "nuancier" ? NU_H / 2 + 16
+          : (z.type === "becher" ? BE_H / 2 + 16 : z.r * 0.6);
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - w, y: z.y - h, width: 2 * w, height: 2 * h, rx: 12,
+      fill: GOLD, opacity: .17, stroke: GOLD, "stroke-width": 2.4,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+
+/* Ce poste accepte-t-il cet objet, dans son état courant ? C'est ici que vit
+   la logique du protocole, et c'est elle qui refuse les gestes interdits. */
+function accepte(quoi, z) {
+  if (!ETAT.epi) return false;
+  if (!z) return false;
+  if (quoi === "rouleau") return false;                    // jamais tremper
+  if (quoi === "becher") return false;                     // jamais mélanger
+  if (quoi === "ciseaux") return z.type === "rouleau" && nbCoupes() < N_MORCEAUX;
+  if (quoi === "agitateur") {
+    if (z.type === "becher") return AGIT.goutte === null;
+    if (z.type === "morceau") {
+      return AGIT.goutte !== null && MORCEAUX[z.i].sol === null;
+    }
+    if (z.type === "pissette") return true;
+    return false;
+  }
+  if (quoi === "sonde") {
+    if (z.type === "becher") return SONDE.essuyee || SONDE.film !== null || true;
+    if (z.type === "pissette") return true;
+    if (z.type === "absorbant") return SONDE.rincee;
+    return false;
+  }
+  if (quoi === "morceau") return z.type === "nuancier";
+  return false;
+}
+function refus(quoi, z) {
+  if (!ETAT.epi) {
+    return "Rien ne se touche avant l'équipement : " +
+      depouille(protoQui("blouse")).replace(/\s*;.*$/, "") + ".";
+  }
+  if (quoi === "rouleau") {
+    return "Non — " + depouille(protoQui("ne jamais tremper"))
+      .replace(/^.*?—\s*/, "").replace(/^ne jamais/i, "il ne faut jamais").replace(/\.\s*$/, "") + ".";
+  }
+  if (quoi === "becher") {
+    return "Non. " + secu("m[ée]langer aucune solution");
+  }
+  if (quoi === "morceau" && z && z.type === "becher") {
+    return "Le papier ne se trempe jamais dans le bécher : la goutte vient à " +
+      "lui, portée par l'agitateur.";
+  }
+  if (quoi === "ciseaux") {
+    return nbCoupes() >= N_MORCEAUX
+      ? "Les " + N_MORCEAUX + " morceaux sont déjà découpés."
+      : "Viser le rouleau de papier pH avec les ciseaux.";
+  }
+  if (quoi === "agitateur") {
+    if (!z) return "Rien ici. Viser un bécher, un morceau de papier, ou la pissette.";
+    if (z.type === "becher" && AGIT.goutte !== null) {
+      return "L'agitateur porte déjà une goutte : la déposer d'abord sur un papier.";
+    }
+    if (z.type === "morceau" && AGIT.goutte === null) {
+      return "L'agitateur ne porte pas de goutte : le plonger d'abord dans un bécher.";
+    }
+    if (z.type === "morceau") {
+      return "Ce morceau a déjà servi. Un papier pH ne se lit qu'une fois — " +
+        "le protocole demande d'en changer à chaque solution.";
+    }
+  }
+  if (quoi === "sonde" && z && z.type === "absorbant" && !SONDE.rincee) {
+    return "On essuie APRÈS avoir rincé : rincer, essuyer, immerger, attendre, lire.";
+  }
+  if (quoi === "morceau") return "Comparer ce papier au nuancier de la boîte.";
+  return "Geste impossible ici.";
+}
+
+var OBJETS_PRIS = {};
+function brancherPrise() {
+  function prendre(cle, g, pos, avant) {
+    g.addEventListener("pointerdown", function (e) {
+      if (prise) return;                                   // verrou en 1re ligne
+      if (avant && avant() === false) return;
+      e.preventDefault();
+      var p = versSVG(e), h = pos();
+      prise = { quoi: cle.replace(/-\d+$/, ""), cle: cle, id: e.pointerId,
+                dx: h.x - p.x, dy: h.y - p.y, x0: p.x, y0: p.y, bouge: false };
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      g.setAttribute("filter", "url(#ombrePrise)");
+      g.setAttribute("cursor", "grabbing");
+      COUCHES.drag.appendChild(g);
+      montrerCibles(prise.quoi);
+    });
+    OBJETS_PRIS[cle] = { g: g, pos: pos };
+  }
+  prendre("rouleau", gRouleau, function () {
+    return { x: POSTE_X.rouleau, y: ET_Y }; });
+  prendre("ciseaux", gCiseaux, function () {
+    return { x: POSTE_X.ciseaux, y: ET_Y }; });
+  prendre("agitateur", gAgit, function () {
+    return { x: POSTE_X.agitateur, y: ET_Y }; });
+  prendre("sonde", gSonde, function () {
+    return { x: SONDE_X, y: SONDE_Y0 }; });
+  gMorceau.forEach(function (m, i) {
+    prendre("morceau-" + i, m.g, function () { return { x: m.x, y: m.y }; },
+      function () { return MORCEAUX[i].coupe; });
+  });
+  gBecher.forEach(function (b, k) {
+    b.zone.addEventListener("pointerdown", function (e) {
+      if (prise) return;                                   // verrou en 1re ligne
+      e.preventDefault();
+      prise = { quoi: "becher", cle: "becher-" + k, id: e.pointerId,
+                dx: 0, dy: 0, x0: versSVG(e).x, y0: versSVG(e).y, bouge: false };
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      montrerCibles("becher");
+    });
+  });
+
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    var p = versSVG(e);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    var o = OBJETS_PRIS[prise.cle];
+    if (!o) return;
+    /* Un agitateur qu'on approche d'un morceau de papier s'INCLINE : c'est le
+       geste de déposer la goutte, et il se lit sans légende. */
+    var rot = "", z = zoneSous(prise.quoi, p);
+    if (prise.quoi === "agitateur" && z && z.type === "morceau") rot = " rotate(24)";
+    if (prise.quoi === "ciseaux" && z && z.type === "rouleau") rot = " rotate(-22)";
+    o.g.setAttribute("transform", "translate(" + (p.x + prise.dx).toFixed(1) + "," +
+      (p.y + prise.dy).toFixed(1) + ")" + rot);
+  });
+
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.id) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var p = versSVG(e), d = prise, z = zoneSous(d.quoi, p);
+    prise = null;
+    effacerCibles();
+    var o = OBJETS_PRIS[d.cle];
+    if (o) {
+      o.g.removeAttribute("filter");
+      o.g.setAttribute("cursor", "grab");
+      COUCHES.objets.appendChild(o.g);
+      /* Un objet qui tombe hors zone RETOURNE CHEZ LUI. On ne laisse jamais
+         un objet flotter. */
+      var h = o.pos();
+      o.g.setAttribute("transform", "translate(" + h.x.toFixed(1) + "," +
+        h.y.toFixed(1) + ")");
+    }
+    if (!d.bouge) { dire(aide(d.quoi)); return; }
+    if (!accepte(d.quoi, z)) { dire(refus(d.quoi, z)); return; }
+    appliquer(d.quoi, d.cle, z);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);
+}
+function aide(quoi) {
+  var m = {
+    rouleau: "Le rouleau reste sur l'étagère : on en découpe des morceaux aux ciseaux.",
+    ciseaux: "Glisser les ciseaux sur le rouleau pour découper un morceau.",
+    agitateur: "Plonger l'agitateur dans un bécher, puis déposer la goutte sur un papier.",
+    sonde: "La sonde se rince, s'essuie, puis s'immerge dans un bécher.",
+    morceau: "Glisser le papier mouillé sur le nuancier pour lire sa valeur.",
+    becher: "Les béchers restent en place — on ne mélange jamais deux solutions."
+  };
+  return m[quoi] || "";
+}
+
+/* ==================================================================
+   18. CE QUI SE PASSE QUAND ON DÉPOSE
+   ================================================================== */
+function nbCoupes() {
+  var n = 0, i;
+  for (i = 0; i < N_MORCEAUX; i++) if (MORCEAUX[i].coupe) n++;
+  return n;
+}
+function nbDeposes() {
+  var n = 0, i;
+  for (i = 0; i < N_MORCEAUX; i++) if (MORCEAUX[i].sol !== null) n++;
+  return n;
+}
+function nbLus() {
+  var n = 0, i;
+  for (i = 0; i < N_MORCEAUX; i++) if (MORCEAUX[i].lu) n++;
+  return n;
+}
+function morceauDe(k) {
+  var i;
+  for (i = 0; i < N_MORCEAUX; i++) if (MORCEAUX[i].sol === k) return i;
+  return -1;
+}
+/* ⚠️ CE QUI SE DIT AVANT LA MANIPULATION NE SE DIT PAS.
+   La première version affichait, dès l'ouverture de la page, le pH calculé
+   des sept solutions dans le carnet, dans le panneau des instruments et
+   dans les deux graphes. L'élève lisait donc la réponse avant d'avoir
+   touché un bécher — exactement ce que `revelerCellule` interdit sur le
+   tableau de la fiche. Une solution n'existe pour les panneaux qu'une fois
+   son papier LU au nuancier. Trouvé en regardant la capture. */
+function mesuree(k) {
+  var i = morceauDe(k);
+  return i >= 0 && MORCEAUX[i].lu;
+}
+function premierLibre() {
+  var i;
+  for (i = 0; i < N_MORCEAUX; i++) {
+    if (MORCEAUX[i].coupe && MORCEAUX[i].sol === null) return i;
+  }
+  return -1;
+}
+
+function appliquer(quoi, cle, z) {
+  if (quoi === "ciseaux") { couper(1); return; }
+  if (quoi === "agitateur") {
+    if (z.type === "becher") { plonger(z.i); return; }
+    if (z.type === "morceau") { deposer(z.i); return; }
+    if (z.type === "pissette") { rincerAgitateur(); return; }
+  }
+  if (quoi === "sonde") {
+    if (z.type === "pissette") { rincerSonde(); return; }
+    if (z.type === "absorbant") { essuyerSonde(); return; }
+    if (z.type === "becher") { immergerSonde(z.i); return; }
+  }
+  if (quoi === "morceau") { lireAuNuancier(+cle.split("-")[1]); return; }
+}
+
+function couper(combien) {
+  var n = 0, i;
+  for (i = 0; i < N_MORCEAUX && n < combien; i++) {
+    if (MORCEAUX[i].coupe) continue;
+    MORCEAUX[i].coupe = true;                              // état posé TOUT DE SUITE
+    n++;
+  }
+  if (!n) { dire("Les " + N_MORCEAUX + " morceaux sont déjà découpés."); return; }
+  if (nbCoupes() >= N_MORCEAUX) {
+    BOUTONS.couper.fait();
+    noter("Les " + motDuree(N_MORCEAUX) + " morceaux sont alignés sur la " +
+          "soucoupe. On ne touche plus au rouleau.", true);
+  } else {
+    noter("Morceau découpé (" + nbCoupes() + "/" + N_MORCEAUX + ").", true);
+  }
+  majTout();
+}
+
+/* Plonger l'agitateur : s'il n'a pas été rincé, il DÉVERSE son film dans le
+   bécher. C'est le piège réel de cette manipulation, et la fiche le dit :
+   « sans ce rinçage, la solution précédente fausse la mesure suivante ». */
+function plonger(k) {
+  if (AGIT.goutte !== null) return;                        // verrou en 1re ligne
+  var sale = AGIT.film !== null;
+  if (sale) {
+    BECHERS[k].ajouts.push({ comp: AGIT.film, v: V_FILM_AGIT });
+  }
+  var c = compo(k);
+  AGIT.goutte = { k: k, comp: c };
+  AGIT.film = c;
+  if (sale) {
+    noter("⚠ Agitateur non rincé : " + nb(PHYS.FILM_AGIT.v, 0) + " µL de la " +
+          "solution précédente viennent de tomber dans " + numero(k) + ". Le " +
+          "bécher est souillé — sa valeur ne sera plus reportée dans le tableau.",
+          false);
+  } else {
+    noter(numero(k) + " · " + nomSol(k) + " — une goutte prélevée à l'agitateur.", true);
+  }
+  majTout();
+}
+
+function deposer(i) {
+  if (AGIT.goutte === null || MORCEAUX[i].sol !== null) return;   // verrou 1re ligne
+  var g = AGIT.goutte, ph = phDe(g.comp, REG.T);
+  MORCEAUX[i].sol = g.k;
+  MORCEAUX[i].ph = ph;
+  MORCEAUX[i].souille = souille(g.k);
+  AGIT.goutte = null;
+  noter(numero(g.k) + " : la goutte est déposée sur le papier, qui change de " +
+        "couleur immédiatement. Reste à la comparer au nuancier.", true);
+  majTout();
+}
+
+function rincerAgitateur() {
+  if (AGIT.film === null && AGIT.goutte === null) {
+    dire("L'agitateur est déjà propre.");
+    return;
+  }
+  AGIT.film = null; AGIT.goutte = null;
+  ETAT.rincages++;
+  noter("Agitateur rincé à l'eau distillée au-dessus du bécher-poubelle, puis " +
+        "essuyé (" + ETAT.rincages + " rinçage" + (ETAT.rincages > 1 ? "s" : "") +
+        ").", true);
+  majTout();
+}
+
+/* Lire au nuancier : c'est ICI que le modèle rend sa valeur, et c'est ici que
+   la fiche se remplit — cellule par cellule (§6.3), jamais par ligne. */
+function lireAuNuancier(i) {
+  var m = MORCEAUX[i];
+  if (m.sol === null || m.lu) {                            // verrou en 1re ligne
+    dire(m.sol === null ? "Ce papier est encore sec : y déposer d'abord une goutte."
+                        : "Ce papier a déjà été lu.");
+    return;
+  }
+  m.lu = true;
+  var k = m.sol, n = lecturePapier(m.ph), mot = motCase(n);
+  if (!m.souille) {
+    revelerCellule(k, C_COUL);
+    revelerCellule(k, C_PH);
+  }
+  noter(numero(k) + " · " + nomSol(k) + " — papier " + mot + ", pH lu = " + n +
+        (m.souille ? " (bécher souillé : rien n'est reporté dans le tableau)" : "") +
+        ".", !m.souille);
+  /* Le modèle et la fiche disent-ils la même chose ? La question mérite
+     d'être posée à voix haute plutôt que masquée (§11.5). */
+  if (!ETAT.horsProto && !m.souille && phFiche(k) !== null && n !== phFiche(k)) {
+    noter("⚠ Le modèle et la fiche divergent sur " + numero(k) + " : le modèle " +
+          "lit " + n + ", la fiche " + phFiche(k) + " — vérifier les constantes.",
+          false);
+  }
+  majTout();
+}
+
+/* ---- le pH-mètre ---- */
+function rincerSonde() {
+  SONDE.film = recetteDiluee(3).sys ? solNeuve() : solNeuve();   // eau distillée
+  SONDE.rincee = true; SONDE.essuyee = false;
+  noter("Sonde rincée à l'eau distillée. Il reste un film d'eau sur le verre : " +
+        "l'essuyer avant d'immerger.", true);
+  majTout();
+}
+function essuyerSonde() {
+  if (!SONDE.rincee) return;                               // verrou en 1re ligne
+  SONDE.film = null; SONDE.essuyee = true;
+  noter("Sonde essuyée délicatement au papier absorbant. Prête à être " +
+        "immergée.", true);
+  majTout();
+}
+function immergerSonde(k) {
+  if (nbLus() < N) {
+    dire("Terminer d'abord les " + N + " mesures au papier pH : le protocole " +
+         "ne reprend au pH-mètre qu'ENSUITE, et sur " + AU_METRE.length +
+         " solutions seulement.");
+    return;
+  }
+  var sale = SONDE.film !== null && !SONDE.essuyee;
+  var avant = SONDE.rincee;
+  if (SONDE.film !== null) {
+    BECHERS[k].ajouts.push({ comp: SONDE.film, v: V_FILM_SONDE });
+  }
+  var ph = phBecher(k), v = lectureMetre(ph);
+  SONDE.valeur = v; SONDE.sol = k;
+  SONDE.film = compo(k); SONDE.rincee = false; SONDE.essuyee = false;
+  ETAT.suivi = k;
+  if (ETAT.metre.indexOf(k) < 0) ETAT.metre.push(k);
+  /* L'affichage se stabilise — délai purement visuel : la fiche demande
+     d'« attendre que l'affichage se stabilise » sans chiffrer l'attente. */
+  ecranMetre.textContent = "— , — —";
+  tard(function () { majMetre(); }, 900);
+  if (!avant) {
+    noter("⚠ Sonde immergée SANS avoir été rincée : elle a emporté " +
+          nb(PHYS.FILM_SONDE.v, 0) + " µL de la mesure précédente dans " +
+          numero(k) + ".", false);
+  } else if (sale) {
+    noter("Sonde rincée mais non essuyée : le film d'eau distillée dilue à " +
+          "peine, l'écart calculé est inférieur au centième affiché.", true);
+  } else {
+    noter("pH-mètre dans " + numero(k) + " · " + nomSol(k) + " : l'affichage se " +
+          "stabilise sur " + nb(v, 2) + ".", true);
+  }
+  majComparaison();
+  majTout();
+}
+/* Étape 9 du protocole : comparer, pour ces deux solutions, la valeur lue au
+   papier et la valeur affichée par le pH-mètre. */
+function majComparaison() {
+  if (ETAT.compare) return;                                // verrou en 1re ligne
+  var i, k, ok = AU_METRE.length > 0;
+  for (i = 0; i < AU_METRE.length; i++) {
+    if (ETAT.metre.indexOf(AU_METRE[i]) < 0) ok = false;
+  }
+  if (!ok) return;
+  ETAT.compare = true;
+  BOUTONS.metre.fait();
+  var bouts = [];
+  for (i = 0; i < AU_METRE.length; i++) {
+    k = AU_METRE[i];
+    var ph = phBecher(k), np = lecturePapier(ph);
+    bouts.push(numero(k) + " : papier " + np + ", pH-mètre " + nb(ph, 2) +
+               " (écart " + nb(Math.abs(ph - np), 2) + ")");
+  }
+  ETAT.compareTxt = bouts.join(" · ") + " — l'écart n'est pas une erreur : " +
+    "le papier donne une valeur approchée, le pH-mètre une valeur précise.";
+  noter(ETAT.compareTxt, true);
+}
+
+/* ==================================================================
+   19. LE RENDU — redessiné à chaque changement
+   ================================================================== */
+function majMetre() {
+  ecranMetre.textContent = SONDE.valeur === null ? "—,——" : nb(SONDE.valeur, 2);
+}
+function redessiner() {
+  var i, m, g;
+  for (i = 0; i < N_MORCEAUX; i++) {
+    m = MORCEAUX[i]; g = gMorceau[i];
+    g.g.setAttribute("opacity", m.coupe ? 1 : 0);
+    g.g.setAttribute("pointer-events", m.coupe ? "auto" : "none");
+    if (m.sol === null) {
+      g.feuille.setAttribute("fill", "#f6f2e4");
+      g.feuille.setAttribute("stroke", "#c9c2ab");
+      g.etiq.textContent = "";
+    } else {
+      g.feuille.setAttribute("fill", teintePapier(m.ph));
+      g.feuille.setAttribute("stroke", INK);
+      g.etiq.textContent = m.lu ? (numero(m.sol) + " → " + lecturePapier(m.ph))
+                                : numero(m.sol);
+    }
+  }
+  gGoutte.setAttribute("opacity", AGIT.goutte !== null ? 1 : 0);
+  gAgit.querySelector('rect[y="-104"]').setAttribute("stroke",
+    AGIT.film !== null ? "#b4530f" : "#7f93a6");
+  gFilmSonde.setAttribute("opacity", SONDE.film !== null ? .85 : 0);
+  /* Les marques posées sur le nuancier : chaque solution lue vient à SA
+     valeur. Deux solutions peuvent partager un pH — ici l'eau distillée et
+     l'eau salée, et c'est justement une observation de la fiche : on les
+     EMPILE au lieu de les superposer. */
+  vide(gMarques);
+  var rangs = {}, k, n, x, y, ph;
+  for (i = 0; i < N_MORCEAUX; i++) {
+    m = MORCEAUX[i];
+    if (!m.lu) continue;
+    k = m.sol; n = lecturePapier(m.ph);
+    rangs[n] = (rangs[n] || 0);
+    x = xPh(n); y = NU_YMARQ + 4 + rangs[n] * 26;
+    rangs[n]++;
+    gMarques.appendChild(el("rect", { x: x - 22, y: y, width: 44, height: 22,
+      rx: 5, fill: teintePapier(m.ph), stroke: INK, "stroke-width": 1.5 }));
+    gMarques.appendChild(el("text", { x: x, y: y + 16, "text-anchor": "middle",
+      "font-size": 12, "font-weight": "bold", fill: INK,
+      "font-family": "Arial, Helvetica, sans-serif" }, numero(k)));
+    gMarques.appendChild(el("line", { x1: x, y1: NU_Y + NU_H, x2: x, y2: y,
+      stroke: INK, "stroke-width": 1, "stroke-dasharray": "2 3", opacity: .5 }));
+  }
+  for (k = 0; k < N; k++) {
+    gEtiqB[k].setAttribute("opacity", 1);
+    gBecher[k].g.setAttribute("opacity", souille(k) ? .82 : 1);
+  }
+  majMetre();
+}
+
+/* ==================================================================
+   20. CONSIGNE, JOURNAL, TABLEAU
+   ================================================================== */
+function dire(t, fini) {
+  var c = $("consigne");
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function noter(t, positif) {
+  var o = $("obs");
+  o.textContent = t;
+  o.className = "obs" + (positif === true ? " pos" : (positif === false ? " mal" : ""));
+}
+/* Dévoile UNE cellule. Ni `revelerColonne` ni `revelerLigne` ne
+   conviendraient : la couleur et le pH se lisent au papier, le caractère se
+   conclut de la place occupée sur l'échelle — trois moments différents. */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto || souille(k)) return;
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+}
+
+var ETAPES = [];
+function construireEtapes() {
+  var d = $("etapes"), i, e;
+  vide(d);
+  /* Chaque libellé qui porte un nombre le LIT dans la fiche. */
+  ETAPES = [
+    "Blouse, lunettes et gants",
+    "Découper les " + N_MORCEAUX + " morceaux de papier",
+    "Déposer une goutte de chaque solution",
+    "Rincer l'agitateur entre deux mesures",
+    "Comparer chaque papier au nuancier",
+    "Rincer et essuyer la sonde",
+    "Reprendre " + AU_METRE.map(numero).join(" et ") + " au pH-mètre",
+    "Ranger par pH croissants et classer"
+  ];
+  for (i = 0; i < ETAPES.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + ETAPES[i];
+    d.appendChild(e);
+  }
+}
+function etatEtapes() {
+  return [ETAT.epi, nbCoupes() >= N_MORCEAUX, nbDeposes() >= N,
+          ETAT.rincages >= N - 1, nbLus() >= N,
+          SONDE.essuyee || ETAT.metre.length > 0,
+          ETAT.metre.length >= AU_METRE.length && AU_METRE.length > 0,
+          ETAT.classe];
+}
+function majEtapes() {
+  var fait = etatEtapes(), lis = $("etapes").children, i, actif = fait.length;
+  for (i = 0; i < fait.length; i++) if (!fait[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+/* La consigne est reconstruite par une cascade de `if` sur ETAT : une seule
+   vérité. Elle doit TOUJOURS décrire un geste que la page accepte. */
+function consigne() {
+  if (!ETAT.epi) return "Revêtir la blouse, les lunettes et les gants avant de " +
+    "toucher quoi que ce soit.";
+  if (nbCoupes() < N_MORCEAUX) return "Découper " + motDuree(N_MORCEAUX) +
+    " morceaux de papier pH aux ciseaux (" + nbCoupes() + "/" + N_MORCEAUX + ").";
+  if (AGIT.goutte !== null) return "Déposer la goutte sur un morceau de papier " +
+    "encore sec.";
+  if (nbDeposes() < N) {
+    if (AGIT.film !== null) return "Rincer l'agitateur à la pissette, puis " +
+      "prélever la solution suivante (" + nbDeposes() + "/" + N + ").";
+    return "Plonger l'agitateur dans un bécher et porter la goutte sur un " +
+      "papier (" + nbDeposes() + "/" + N + ").";
+  }
+  if (nbLus() < N) return "Glisser chaque papier mouillé sur le nuancier pour " +
+    "lire sa valeur (" + nbLus() + "/" + N + ").";
+  if (ETAT.metre.length < AU_METRE.length) {
+    if (!SONDE.rincee && SONDE.film !== null) return "Rincer la sonde à la " +
+      "pissette avant de la replonger.";
+    if (SONDE.rincee && !SONDE.essuyee) return "Essuyer la sonde au papier " +
+      "absorbant, puis l'immerger.";
+    return "Reprendre " + AU_METRE.map(numero).join(" et ") + " au pH-mètre : " +
+      "rincer, essuyer, immerger, attendre, lire.";
+  }
+  if (!ETAT.classe) return "Ranger les " + N + " solutions par pH croissants et " +
+    "entourer celles dont le pH vaut exactement 7.";
+  return "pH < 7 acide · pH = 7 neutre · pH > 7 basique.";
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majProtocole();          /* le panneau suit l'etat, sans compteur */
+}
+function armer() {
+  BOUTONS.epi.armer(!ETAT.epi);
+  BOUTONS.couper.armer(ETAT.epi && nbCoupes() < N_MORCEAUX);
+  BOUTONS.tester.armer(ETAT.epi && nbCoupes() >= N_MORCEAUX && nbLus() < N);
+  BOUTONS.rincer.armer(ETAT.epi && (AGIT.film !== null || AGIT.goutte !== null));
+  BOUTONS.metre.armer(nbLus() >= N && ETAT.metre.length < AU_METRE.length);
+  BOUTONS.classer.armer(nbLus() >= N && ETAT.metre.length >= AU_METRE.length &&
+                        !ETAT.classe);
+}
+
+/* ==================================================================
+   21. LES GESTES COLLECTIFS — les boutons
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que le protocole fait d'un seul
+   coup (revêtir l'équipement, découper les sept morceaux), ou s'il DOUBLE un
+   glisser qui reste possible — ce qui est le cas de « Tester les N
+   solutions » et de « Rincer ».                                             */
+function brancherBoutons() {
+  function ec(act, fn) {
+    var n = svg.querySelector('[data-act="' + act + '"]');
+    if (n) n.addEventListener("click", fn);
+  }
+  ec("epi", function () {
+    if (ETAT.epi) return;                                  // verrou en 1re ligne
+    ETAT.epi = true;
+    BOUTONS.epi.fait();
+    noter(depouille(protoQui("blouse")), true);
+    majTout();
+  });
+  ec("couper", function () {
+    if (!ETAT.epi) { dire(refus("rouleau", null)); return; }
+    couper(N_MORCEAUX);
+  });
+  ec("rincer", function () {
+    if (!ETAT.epi) { dire(refus("rouleau", null)); return; }
+    rincerAgitateur();
+  });
+  ec("tester", function () {
+    if (!ETAT.epi) { dire(refus("rouleau", null)); return; }
+    if (nbCoupes() < N_MORCEAUX) {
+      dire("Découper d'abord les " + N_MORCEAUX + " morceaux de papier."); return;
+    }
+    /* Le protocole exécuté d'un coup : prélever, déposer, lire, rincer —
+       et rincer ENTRE deux solutions, ce qui est précisément la consigne. */
+    var k, i;
+    for (k = 0; k < N; k++) {
+      if (morceauDe(k) >= 0) continue;
+      if (AGIT.film !== null) rincerAgitateur();
+      i = premierLibre();
+      if (i < 0) break;
+      plonger(k);
+      deposer(i);
+      lireAuNuancier(i);
+    }
+    if (AGIT.film !== null) rincerAgitateur();
+    noter("Les " + N + " solutions sont testées au papier pH, l'agitateur rincé " +
+          "entre chacune. Reste à reprendre " + AU_METRE.map(numero).join(" et ") +
+          " au pH-mètre.", true);
+    BOUTONS.tester.fait();
+    majTout();
+  });
+  ec("metre", function () {
+    if (ETAT.metre.length >= AU_METRE.length) return;      // verrou en 1re ligne
+    if (nbLus() < N) {
+      dire("Terminer d'abord les " + N + " mesures au papier pH."); return;
+    }
+    AU_METRE.forEach(function (k) {
+      if (ETAT.metre.indexOf(k) >= 0) return;
+      rincerSonde(); essuyerSonde(); immergerSonde(k);
+    });
+    rincerSonde();
+    /* Le rinçage final est prescrit (« puis rincer de nouveau la sonde »),
+       mais sa note écrasait la comparaison de l'étape 9 — qui est le
+       résultat, pas une manœuvre. On la remet au journal. */
+    if (ETAT.compareTxt) noter(ETAT.compareTxt, true);
+    majTout();
+  });
+  ec("classer", function () {
+    if (ETAT.classe) return;                               // verrou en 1re ligne
+    if (nbLus() < N) { dire("Mesurer d'abord les " + N + " solutions."); return; }
+    if (ETAT.metre.length < AU_METRE.length) {
+      dire("Reprendre d'abord " + AU_METRE.map(numero).join(" et ") +
+           " au pH-mètre."); return;
+    }
+    ETAT.classe = true;
+    BOUTONS.classer.fait();
+    classer();
+    majTout(); avancer(true);
+  });
+}
+
+/* Le classement : les trois mots viennent du YAML, la RÉPARTITION vient du
+   modèle. On ne recopie pas « acide » et « basique », on les relève dans la
+   colonne « Caractère » de la fiche et on les place là où le CALCUL les met. */
+function classer() {
+  var mots = { bas: "", neu: "", hau: "" }, k, c, cf;
+  for (k = 0; k < N; k++) {
+    revelerCellule(k, C_CAR);
+    c = caractere(phBecher(k), REG.T);
+    cf = cel(k, C_CAR).replace(/,.*$/, "").trim();
+    if (!cf) continue;
+    if (c.mot === "acide") mots.bas = cf;
+    else if (c.mot === "basique") mots.hau = cf;
+    else mots.neu = cf;
+    /* Divergence modèle / fiche : on le DIT (§11.5). */
+    if (!ETAT.horsProto && !souille(k) && c.mot !== caractereFiche(k).mot) {
+      noter("⚠ Le modèle classe " + numero(k) + " en « " + c.mot + " » là où la " +
+            "fiche écrit « " + caractereFiche(k).mot + " » — vérifier les " +
+            "constantes.", false);
+    }
+  }
+  gMotsZone[0].textContent = mots.bas.toUpperCase();
+  gMotsZone[1].textContent = mots.neu.toUpperCase();
+  gMotsZone[2].textContent = mots.hau.toUpperCase();
+  gRep7.setAttribute("stroke-width", 3.4);
+  /* Entourer CHACUNE de celles dont le pH lu vaut exactement 7 (étape 10). */
+  var neutre = Math.round(phNeutre(REG.T));
+  gMarques.querySelectorAll("rect").forEach(function (r) {
+    if (Math.abs(+r.getAttribute("x") + 22 - xPh(neutre)) > 2) return;
+    gMarques.appendChild(el("rect", { x: +r.getAttribute("x") - 5,
+      y: +r.getAttribute("y") - 5, width: 54, height: 32, rx: 9, fill: "none",
+      stroke: VERT, "stroke-width": 2.6 }));
+  });
+  noter("Les " + N + " solutions rangées sur l'échelle : trois groupes de part " +
+        "et d'autre du repère " + neutre + ".", true);
+  if (!ETAT.horsProto) $("concl").classList.remove("masque");
+}
+
+/* ==================================================================
+   22. LES PANNEAUX HTML
+   ================================================================== */
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    if (cells[i] && cells[i].html !== undefined) c.innerHTML = cells[i].html;
+    else c.textContent = cells[i];
+    if (!entete && i >= 2) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+function construireHTML() {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "E3AC-05") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · résultats calculés";
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+  $("bilan").textContent = "pH < 7 acide   ·   pH = 7 neutre   ·   pH > 7 basique";
+
+  $("eqSolveur").textContent =
+    "bilan de charge, résolu par dichotomie sur le pH :\n\n" +
+    "   [cations forts] + [H⁺]  =  [anions forts] + [OH⁻] + Σ C·z̄(pH)\n\n" +
+    "   z̄(pH)  charge moyenne d'un système acide, depuis ses pKa\n" +
+    "   [OH⁻]  = Kw(T) / [H⁺]        Kw dépend de la TEMPÉRATURE\n" +
+    "   pH     = −log(activité de H⁺) = −log(γ₁·[H⁺])\n" +
+    "   log γ  = −" + nb(A_DAVIES, 3) + " z² (√I/(1+√I) − 0,3 I)      (Davies)\n\n" +
+    "un mélange (contamination, dilution) se fait sur les COMPOSITIONS,\n" +
+    "jamais sur les pH : mélanger deux pH n'a aucun sens.";
+  $("eqMatiere").textContent =
+    "solution acide     H⁺ + Cl⁻        l'ion H⁺ l'emporte\n" +
+    "solution basique   Na⁺ + OH⁻       l'ion OH⁻ l'emporte\n" +
+    "sel neutre         Na⁺ + Cl⁻       ni l'un ni l'autre\n\n" +
+    "eau pure           [H⁺] = [OH⁻]  →  pH = pKw(T)/2\n" +
+    "                   7,08 à 20 °C · 7,04 à " + nb(PROTO.T, 1) +
+    " °C · 7,00 à 25 °C · 6,77 à 40 °C\n\n" +
+    "l'eau salée contient autant d'ions que la solution acide, et pourtant\n" +
+    "son pH est celui de l'eau pure : le modèle le DÉMONTRE, parce que pour\n" +
+    "un sel neutre l'activité de H⁺ vaut √Kw quelle que soit la salinité.";
+  $("eqInstr").textContent =
+    "papier pH    lecture = plancher(pH + " + nb(DELTA_PAPIER, 2) + ")\n" +
+    "             résolution " + PHYS.RES_PAPIER.v + " unité, justesse ±0,5 à ±1\n" +
+    "pH-mètre     affichage = pH arrondi au centième\n" +
+    "             résolution " + nb(PHYS.RES_METRE.v, 2) + " unité\n\n" +
+    "caractère    |pH − pKw(T)/2| ≤ " + nb(TOL_NEUTRE, 2) + "   →  neutre\n" +
+    "             en dessous → acide · au-dessus → basique\n" +
+    "             écart < " + nb(TOL_FAIBLE, 2) + " → « faiblement »";
+  $("capotSeuil").innerHTML =
+    "Le décalage de lecture <b>" + nb(DELTA_PAPIER, 2) + "</b> est le seul degré " +
+    "de liberté de la règle du papier, et il est réglé pour <b>maximiser la " +
+    "marge minimale</b> sur les sept observations de la fiche. Cette marge " +
+    "maximale vaut <b>0,10 unité</b>, et c'est une limite arithmétique : la " +
+    "fiche place 6,84 (le lait) et 7,04 (l'eau distillée) de part et d'autre de " +
+    "la <b>même</b> frontière de lecture, soit 0,20 unité d'écart. Les cinq " +
+    "autres lectures gardent de 33 % à 49 % de marge. Ce seuil ne décide " +
+    "<b>aucune conclusion</b> : le caractère se joue sur l'écart au point de " +
+    "neutralité, où la plus faible marge (le lait, à 0,20 unité pour une " +
+    "tolérance de " + nb(TOL_NEUTRE, 2) + ") dépasse <b>100 %</b>.";
+
+  var ul = $("materiel");
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab"), i, tr;
+  vide(t);
+  tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (cc) {
+      var td = document.createElement("td");
+      if (cc) td.innerHTML = md(cc); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+
+  var ct = $("capotConst");
+  vide(ct);
+  ct.appendChild(ligneTab(["Grandeur", "Valeur", "Provenance"], true));
+  Object.keys(PHYS).forEach(function (k) {
+    var p = PHYS[k], d = p.v < 0.01 ? 5 : (p.v < 1 ? 3 : (p.v < 100 ? 2 : 0));
+    ct.appendChild(ligneTab([p.n, nb(p.v, d) + (p.u ? " " + p.u : ""), p.s]));
+  });
+  $("capotSrc").innerHTML =
+    "Produit ionique de l'eau, constantes d'acidité, coefficient de Davies, " +
+    "carbonatation des boissons, degré Dornic, pouvoir tampon du lait et titre " +
+    "de l'eau de Javel : valeurs de la littérature, prises à 25 °C sauf pour Kw. " +
+    "<b>Aucune n'a été retouchée pour faire sortir le résultat de la fiche.</b> " +
+    "Le seul paramètre calé est la réserve alcaline du tampon du lait (" +
+    nb(NA_LAIT * 1000, 1) + " meq·L⁻¹), qui est une composition et non une " +
+    "constante — et elle l'est sur la valeur que la fiche relève elle-même au " +
+    "pH-mètre.";
+  $("legendeSeuils").innerHTML =
+    "Le pH est celui que le solveur calcule pour la composition RÉELLE de " +
+    "chaque bécher, contamination comprise. « Papier » est la valeur qu'en tire " +
+    "la règle de lecture, « caractère » le classement obtenu par comparaison au " +
+    "point de neutralité, qui vaut <b>" + nb(phNeutre(REG.T), 2) + "</b> à " +
+    nb(REG.T, 1) + " °C. Une ligne en rouge signale un bécher souillé.";
+  construireEtapes();
+  construireGrapheEchelle();
+  construireGrapheDilution();
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "");
+}
+
+function majCarnet() {
+  var t = $("carnet"), k, ph, c, tr;
+  vide(t);
+  t.appendChild(ligneTab(["N°", "Solution", "pH calculé", "Papier", "Couleur",
+                          "Caractère"], true));
+  for (k = 0; k < N; k++) {
+    if (!mesuree(k)) {
+      tr = ligneTab([numero(k), nomSol(k).replace(/\s*\([^)]*\)/g, ""),
+                     "—", "—", "pas encore mesurée", "—"]);
+      if (k === ETAT.suivi) tr.className = "suivi";
+      t.appendChild(tr);
+      continue;
+    }
+    ph = phBecher(k);
+    c = caractere(ph, REG.T);
+    tr = ligneTab([numero(k), nomSol(k).replace(/\s*\([^)]*\)/g, ""),
+      nb(ph, 2), String(lecturePapier(ph)),
+      { html: '<span class="pastille" style="background:' + teintePapier(ph) +
+              '"></span>' + motCase(lecturePapier(ph)) },
+      c.mot + (c.qual ? ", " + c.qual : "")]);
+    if (souille(k)) tr.className = "souille";
+    else if (k === ETAT.suivi) tr.className = "suivi";
+    t.appendChild(tr);
+  }
+}
+function majLectures() {
+  function set(id, v, off) {
+    var n = $(id); n.innerHTML = v; n.className = "v" + (off ? " off" : "");
+  }
+  var k = ETAT.suivi, i = morceauDe(k), m = i >= 0 ? MORCEAUX[i] : null;
+  var ph = phBecher(k), c = caractere(ph, REG.T);
+  $("nomSuivi").textContent = numero(k) + " · " +
+    nomSol(k).replace(/\s*\([^)]*\)/g, "");
+  var lu = m && m.lu;
+  set("lCoul", lu ? '<span class="pastille" style="background:' +
+      teintePapier(m.ph) + '"></span>' + motCase(lecturePapier(m.ph)) : "—", !lu);
+  set("lPap", lu ? String(lecturePapier(m.ph)) : "—", !lu);
+  var met = SONDE.sol === k && SONDE.valeur !== null;
+  set("lMet", met ? nb(SONDE.valeur, 2) : "—", !met);
+  set("lEcart", (lu && met)
+    ? nb(Math.abs(SONDE.valeur - lecturePapier(m.ph)), 2) + " unité" : "—",
+    !(lu && met));
+  set("lPh", lu ? nb(ph, 3) : "—", !lu);
+  set("lCar", lu ? c.mot + (c.qual ? "<br>" + c.qual : "") : "—", !lu);
+  $("aideInstr").innerHTML = "Le pH-mètre affiche le centième, le papier ne " +
+    "distingue pas mieux que l'unité : c'est toute la différence de " +
+    "<b>précision</b> entre les deux appareils, et l'écart n'est pas une " +
+    "erreur. Point de neutralité à " + nb(REG.T, 1) + " °C : <b>" +
+    nb(phNeutre(REG.T), 2) + "</b>." +
+    (souille(k) ? " <b style='color:#b03030'>Ce bécher est souillé.</b>" : "");
+}
+
+/* ---- l'échelle des sept solutions ---- */
+var lgE = {};
+function construireGrapheEchelle() {
+  var g = $("gEchelle"), X0 = 26, X1 = 348, Y0 = 16, Y1 = 176, p;
+  vide(g);
+  for (p = 0; p <= 14; p += 1) {
+    var x = X0 + (X1 - X0) * p / 14;
+    g.appendChild(el("rect", { x: x - (X1 - X0) / 28, y: Y1 + 4,
+      width: (X1 - X0) / 14, height: 12, fill: hexCase(p) }));
+    if (p % 2 === 0) {
+      g.appendChild(el("text", { x: x, y: Y1 + 30, "text-anchor": "middle",
+        "font-size": 9.5, fill: GRIS }, String(p)));
+    }
+  }
+  g.appendChild(el("line", { x1: X0, y1: Y1, x2: X1, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  lgE.neutre = g.appendChild(el("line", { x1: X0, y1: Y0, x2: X0, y2: Y1 + 16,
+    stroke: VERT, "stroke-width": 1.8, "stroke-dasharray": "4 4" }));
+  lgE.tNeutre = g.appendChild(el("text", { x: X0, y: Y0 - 4, "text-anchor": "middle",
+    "font-size": 9.5, "font-weight": "bold", fill: VERT }, ""));
+  lgE.barres = []; lgE.noms = []; lgE.vals = [];
+  var k;
+  for (k = 0; k < N; k++) {
+    lgE.barres.push(g.appendChild(el("rect", { x: X0, y: 0, width: 0, height: 13,
+      rx: 3, fill: "#cfd6de", stroke: INK, "stroke-width": 1 })));
+    lgE.noms.push(g.appendChild(el("text", { x: X0 - 4, y: 0, "text-anchor": "end",
+      "font-size": 9.5, "font-weight": "bold", fill: INK }, numero(k))));
+    lgE.vals.push(g.appendChild(el("text", { x: X0, y: 0, "text-anchor": "start",
+      "font-size": 9.5, fill: GRIS }, "")));
+  }
+  /* ⚠️ La légende était à y = 206, exactement sur la ligne des graduations :
+     les deux textes se croisaient. Vu à la capture, jamais à la lecture. */
+  g.appendChild(el("text", { x: X0 - 22, y: 222, "font-size": 9.5, fill: GRIS },
+    "pH calculé · la couleur est celle qu'aurait le papier"));
+  lgE.b = { X0: X0, X1: X1, Y0: Y0, Y1: Y1 };
+}
+function majGrapheEchelle() {
+  var b = lgE.b, k, ph, x, y, xn = b.X0 + (b.X1 - b.X0) * phNeutre(REG.T) / 14;
+  lgE.neutre.setAttribute("x1", xn.toFixed(1));
+  lgE.neutre.setAttribute("x2", xn.toFixed(1));
+  lgE.tNeutre.setAttribute("x", xn.toFixed(1));
+  var vu = false, q;
+  for (q = 0; q < N; q++) if (mesuree(q)) vu = true;
+  lgE.tNeutre.textContent = vu ? "neutre " + nb(phNeutre(REG.T), 2) : "neutre";
+  for (k = 0; k < N; k++) {
+    y = b.Y0 + 6 + k * 22;
+    lgE.noms[k].setAttribute("y", (y + 10).toFixed(1));
+    if (!mesuree(k)) {                       // rien tant que rien n'est lu
+      lgE.barres[k].setAttribute("width", 0);
+      lgE.noms[k].setAttribute("opacity", .35);
+      lgE.vals[k].textContent = "";
+      continue;
+    }
+    ph = phBecher(k);
+    x = b.X0 + (b.X1 - b.X0) * borne(ph, 0, 14) / 14;
+    lgE.barres[k].setAttribute("x", Math.min(b.X0, x).toFixed(1));
+    lgE.barres[k].setAttribute("y", y.toFixed(1));
+    lgE.barres[k].setAttribute("width", Math.max(2, x - b.X0).toFixed(1));
+    lgE.barres[k].setAttribute("fill", teintePapier(ph));
+    lgE.noms[k].setAttribute("opacity", 1);
+    lgE.vals[k].setAttribute("x", (x + 5).toFixed(1));
+    lgE.vals[k].setAttribute("y", (y + 10).toFixed(1));
+    lgE.vals[k].textContent = nb(ph, 2);
+  }
+}
+
+/* ---- ce que fait la dilution ---- */
+var lgD = {};
+function construireGrapheDilution() {
+  var g = $("gDilution"), X0 = 34, X1 = 330, Y0 = 12, Y1 = 158, i, k;
+  vide(g);
+  g.appendChild(el("line", { x1: X0, y1: Y1, x2: X1, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  g.appendChild(el("line", { x1: X0, y1: Y0, x2: X0, y2: Y1, stroke: LIGNE,
+    "stroke-width": 1.4 }));
+  for (i = 0; i <= 14; i += 7) {
+    var y = Y1 - (Y1 - Y0) * i / 14;
+    g.appendChild(el("line", { x1: X0, y1: y, x2: X1, y2: y,
+      stroke: i === 7 ? VERT : LIGNE, "stroke-width": i === 7 ? 1.6 : 1,
+      "stroke-dasharray": i === 7 ? "4 4" : "" }));
+    g.appendChild(el("text", { x: X0 - 4, y: y + 3, "text-anchor": "end",
+      "font-size": 9.5, fill: i === 7 ? VERT : GRIS }, String(i)));
+  }
+  for (i = 0; i <= 3; i++) {
+    var x = X0 + (X1 - X0) * i / 3;
+    g.appendChild(el("text", { x: x, y: Y1 + 14, "text-anchor": "middle",
+      "font-size": 9.5, fill: GRIS },
+      i === 0 ? "sans eau" : ("×" + Math.pow(10, i))));
+  }
+  lgD.c = []; lgD.et = [];
+  for (k = 0; k < N; k++) {
+    lgD.c.push(g.appendChild(el("polyline", { points: "", fill: "none",
+      stroke: "#8a94a4", "stroke-width": 2, "stroke-linejoin": "round" })));
+    lgD.et.push(g.appendChild(el("text", { x: X1 + 3, y: Y1, "text-anchor": "start",
+      "font-size": 9, "font-weight": "bold", fill: INK }, numero(k))));
+  }
+  lgD.curseur = g.appendChild(el("line", { x1: X0, y1: Y0, x2: X0, y2: Y1,
+    stroke: ORANGE, "stroke-width": 2 }));
+  lgD.vide = g.appendChild(el("text", { x: (X0 + X1) / 2, y: Y0 + 26,
+    "text-anchor": "middle", "font-size": 11, fill: "#b7bfca" },
+    "les courbes apparaissent au fur et à mesure des mesures"));
+  g.appendChild(el("text", { x: X0 - 26, y: 180, "font-size": 9, fill: GRIS },
+    "pH · abscisse : eau ajoutée, échelle logarithmique"));
+  g.appendChild(el("text", { x: X0 - 26, y: 193, "font-size": 9, fill: GRIS },
+    "une décade = une unité pour une solution FORTE, une demi-unité"));
+  g.appendChild(el("text", { x: X0 - 26, y: 203, "font-size": 9, fill: GRIS },
+    "pour une FAIBLE, presque rien pour un TAMPON"));
+  lgD.b = { X0: X0, X1: X1, Y0: Y0, Y1: Y1 };
+}
+function majGrapheDilution() {
+  var b = lgD.b, NP = 10, k, n, f, pts, ph, ys = [], pris = [], y, j, vus = 0;
+  function sx(d) { return b.X0 + (b.X1 - b.X0) * borne(d / 3, 0, 1); }
+  function sy(p) { return b.Y1 - (b.Y1 - b.Y0) * borne(p / 14, 0, 1); }
+  for (k = 0; k < N; k++) {
+    if (!mesuree(k)) {                       // rien tant que rien n'est lu
+      lgD.c[k].setAttribute("points", "");
+      lgD.c[k].setAttribute("opacity", 0);
+      lgD.et[k].setAttribute("opacity", 0);
+      ys.push(null);
+      continue;
+    }
+    vus++;
+    pts = "";
+    for (n = 0; n < NP; n++) {
+      f = 3 * n / (NP - 1);
+      ph = phDilue(k, f);
+      pts += (n ? " " : "") + pt(sx(f), sy(ph));
+      if (n === NP - 1) ys.push(sy(ph));
+    }
+    lgD.c[k].setAttribute("points", pts);
+    lgD.c[k].setAttribute("opacity", k === ETAT.suivi ? 1 : .42);
+    lgD.c[k].setAttribute("stroke-width", k === ETAT.suivi ? 2.8 : 1.5);
+    lgD.c[k].setAttribute("stroke", teintePapier(phDilue(k, 0)));
+    lgD.et[k].setAttribute("opacity", k === ETAT.suivi ? 1 : .6);
+  }
+  /* ⚠️ Deux solutions peuvent finir au MÊME pH — ici l'eau distillée et
+     l'eau salée, superposées à la perfection, et c'est justement une
+     observation de la fiche. Leurs deux étiquettes se recouvraient : on les
+     décale d'un cran tant qu'elles se touchent. */
+  var ordre = [];
+  for (k = 0; k < N; k++) if (ys[k] !== null) ordre.push(k);
+  ordre.sort(function (a, b) { return ys[a] - ys[b]; });
+  y = -99;
+  for (j = 0; j < ordre.length; j++) {
+    y = Math.max(ys[ordre[j]], y + 9);
+    lgD.et[ordre[j]].setAttribute("y", (y + 3).toFixed(1));
+  }
+  pris = null;
+  lgD.vide.setAttribute("opacity", vus ? 0 : 1);
+  lgD.curseur.setAttribute("x1", sx(REG.dil).toFixed(1));
+  lgD.curseur.setAttribute("x2", sx(REG.dil).toFixed(1));
+}
+
+function majTout() {
+  redessiner();
+  majCarnet(); majLectures(); majGrapheEchelle(); majGrapheDilution();
+  armer(); avancer();
+}
+
+/* ==================================================================
+   23. LES COMMANDES HTML — les curseurs
+   ==================================================================
+   ⚠️ Chaque curseur doit déplacer un NOMBRE AFFICHÉ, d'un bout à l'autre de
+   sa course : un curseur inerte est pire qu'un curseur absent (§12.5). Les
+   quatre agissent sur le pH d'au moins une solution, et l'aide dit où.      */
+function lireReglages() {
+  REG.dil = +$("rDil").value;
+  REG.T = +$("rT").value;
+  REG.co2 = +$("rCO2").value;
+  REG.dornic = +$("rDor").value;
+}
+function majAffichageReglages() {
+  var f = facteurDilution();
+  $("oDil").value = f < 1.05 ? "aucune" : ("× " + nb(f, f < 10 ? 1 : 0));
+  $("oT").value = nb(REG.T, 1) + " °C";
+  $("oCO2").value = nb(REG.co2, 1) + " vol.";
+  $("oDor").value = nb(REG.dornic, 1) + " °D";
+  $("aideDil").innerHTML = f < 1.05
+    ? "Les solutions sont celles que l'enseignant a préparées. Ajouter de " +
+      "l'eau déplace le pH de toutes les solutions <b>sauf des deux neutres</b>."
+    : "Chaque bécher reçoit " + nb(f - 1, f < 10 ? 1 : 0) + " fois son volume " +
+      "d'eau. Solution acide forte : " + nb(phBecher(0) - phDilue(0, 0), 2) +
+      " unité ; boisson : " + nb(phBecher(1) - phDilue(1, 0), 2) +
+      " ; lait (tampon) : " + nb(phBecher(2) - phDilue(2, 0), 2) + ".";
+  $("aideT").innerHTML = "Le point de neutralité vaut <b>" +
+    nb(phNeutre(REG.T), 2) + "</b> à cette température — 7,00 seulement à " +
+    "25 °C. La fiche relève 7,04 à l'eau distillée : c'est la signature " +
+    "d'une salle à " + nb(PROTO.T, 1) + " °C.";
+  /* Les aides ne montrent un pH ABSOLU que si la solution a déjà été
+     mesurée ; sinon elles n'en donnent que la variation, qui n'apprend pas
+     le résultat d'avance. */
+  $("aideCO2").innerHTML = "Agit sur " + numero(1) + " seule. Le gaz dissous " +
+    "donne un acide faible" + (mesuree(1)
+      ? " : son pH est de " + nb(phBecher(1), 2) + "."
+      : " ; sa valeur apparaîtra une fois " + numero(1) + " mesurée.");
+  $("aideDor").innerHTML = "Agit sur " + numero(2) + " seul. Un lait frais " +
+    "titre 15 à 18 °D ; au-delà, la fermentation fabrique de l'acide lactique " +
+    "et le pH descend" + (mesuree(2) ? " à " + nb(phBecher(2), 2) : "") +
+    ". Au-delà de 20 °D le modèle descend trop vite : la caséine n'est pas " +
+    "modélisée.";
+}
+function appliquerReglages() {
+  lireReglages(); majAffichageReglages();
+  var hp = horsProtocole();
+  if (hp && !ETAT.horsProto) {
+    noter("Réglages modifiés : le tableau de référence n'est plus renseigné, " +
+          "le carnet de mesures continue.", false);
+  } else if (!hp && ETAT.horsProto) {
+    noter("Réglages du protocole rétablis.", true);
+  }
+  ETAT.horsProto = hp;
+  $("alerte").className = "alerte" + (hp ? " on" : "");
+  majAffichageReglages();
+  majTout();
+}
+function brancherCommandes() {
+  /* Le guide MONTRE, il n'execute pas : il n'a donc rien a
+     defaire, et il ne figure pas dans « Recommencer ». */
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  ["rDil", "rT", "rCO2", "rDor"].forEach(function (id) {
+    $(id).addEventListener("input", appliquerReglages);
+  });
+  $("bProto").addEventListener("click", function () {
+    $("rDil").value = PROTO.dil; $("rT").value = PROTO.T;
+    $("rCO2").value = PROTO.co2; $("rDor").value = PROTO.dornic;
+    appliquerReglages();
+  });
+  $("rezero").addEventListener("click", recommencer);
+}
+
+/* ==================================================================
+   24. L'HORLOGE
+   ==================================================================
+   `setInterval` + `Date.now()`, jamais `requestAnimationFrame` : aucun état
+   ne doit dépendre du rafraîchissement (SKILL §6.2).                        */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tick, 200);
+}
+function tick() {
+  var m = Date.now(), dt = Math.min(0.5, (m - DERNIER) / 1000);
+  DERNIER = m;
+  /* Le minuteur de séance court en temps RÉEL : il mesure ce que la
+     manipulation coûte à l'enseignant, pas ce que le modèle simule. */
+  ETAT.tSeance += dt;
+  majSeance();
+}
+function majSeance() {
+  var f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  $("seanceT").textContent = mmss(ETAT.tSeance);
+  $("seanceJ").style.width = borne(f, 0, 1) * 100 + "%";
+  $("seanceT").parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+
+/* ==================================================================
+   25. RECOMMENCER
+   ==================================================================
+   Remet l'expérience à zéro SANS toucher aux réglages : on refait la même
+   manipulation dans les mêmes conditions. Le minuteur de séance, lui, ne se
+   rembobine pas — la séance ne recommence pas.                              */
+function recommencer() {
+  purger(); effacerCibles(); prise = null;
+  effacerGuide();          /* aucun halo ne survit a la remise en etat */
+  arreterDeroule();        /* ni un deroule en cours */
+  var garde = ETAT.tSeance || 0;
+  ETAT = neufEtat();
+  ETAT.tSeance = garde;
+  ETAT.horsProto = horsProtocole();
+  creerPostes();
+  ["epi", "couper", "tester", "rincer", "metre", "classer"]
+    .forEach(function (a) { BOUTONS[a].neuf(); });
+  gMorceau.forEach(function (m) {
+    m.g.removeAttribute("filter");
+    m.g.setAttribute("transform", "translate(" + m.x.toFixed(1) + "," +
+      m.y.toFixed(1) + ")");
+  });
+  [gAgit, gCiseaux, gRouleau, gSonde].forEach(function (g) {
+    if (g) g.removeAttribute("filter");
+  });
+  gAgit.setAttribute("transform", "translate(" + POSTE_X.agitateur + "," + ET_Y + ")");
+  gCiseaux.setAttribute("transform", "translate(" + POSTE_X.ciseaux + "," + ET_Y + ")");
+  gRouleau.setAttribute("transform", "translate(" + POSTE_X.rouleau + "," + ET_Y + ")");
+  gSonde.setAttribute("transform", "translate(" + SONDE_X + "," + SONDE_Y0 + ")");
+  gMotsZone.forEach(function (t) { t.textContent = ""; });
+  gRep7.setAttribute("stroke-width", 2.2);
+  ecranMetre.textContent = "—,——";
+
+  /* Le tableau redevient vierge et la conclusion se remasque — sans quoi
+     l'élève suivant trouverait la réponse déjà écrite. */
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  $("concl").classList.add("masque");
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+  majAffichageReglages();
+  majTout();
+  noter("Paillasse remise en état : " + N + " béchers propres, rouleau intact, " +
+        "agitateur et sonde rincés.", null);
+}
+
+/* ==================================================================
+   26. DÉMARRAGE
+   ================================================================== */
+
+/* ==================================================================
+   LE PROTOCOLE GUIDÉ
+   ==================================================================
+   Le panneau reprend les étapes de la fiche MOT POUR MOT, et marque celle
+   où l'on en est.
+
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état, jamais d'un compteur. Le
+      panneau avance donc TOUT SEUL dès que le geste est fait — et il
+      RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Une page où
+      l'élève clique et regarde la réponse s'écrire ne manipule rien, et
+      c'est le refus explicite de l'enseignant. Le bouton écrit la
+      consigne, SURLIGNE l'objet à prendre et la zone où le poser — le
+      geste reste à faire.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape
+   suivante ». Le bouton ne fait pas avancer, il montre.               */
+
+var guideSurb = [], guideMinuteur = null;
+
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Un halo qui bat. L'animation est SMIL et purement décorative : si le
+   navigateur ne la joue pas — c'est le cas sous le pilote —, le halo reste
+   visible et rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* Un bouton de scène, surligné par la géométrie qu'il a retenue à sa
+   construction — aucune coordonnée n'est recopiée ici. */
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b || b.cx === undefined) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+
+/* --- ce que le guide surligne, sur CETTE paillasse --- */
+function surlignerPoste(x) { halo(x - 52, ET_Y - 84, 104, 102, 14); }
+function surlignerBecher(k) {
+  halo(xBecher(k) - BE_W / 2 - 14, BE_Y - 28, BE_W + 28, BE_H + 46, 12);
+}
+function surlignerTousBechers() {
+  halo(xBecher(0) - BE_W / 2 - 14, BE_Y - 28,
+       xBecher(N - 1) - xBecher(0) + BE_W + 28, BE_H + 46, 12);
+}
+function surlignerNuancier() {
+  halo(NU_X0 - 12, NU_Y - 14, NU_X1 - NU_X0 + 24, NU_H + 46, 12);
+}
+function surlignerMorceau(i) {
+  var p = posMorceau(i);
+  halo(p.x - 26, p.y - 26, 52, 52, 10);
+}
+function surlignerSoucoupe() {
+  halo(SO_CX - SO_RX - 12, SO_CY - SO_RY - 36, 2 * SO_RX + 24, 2 * SO_RY + 68, 16);
+}
+function surlignerSonde() { halo(SONDE_X - 36, SONDE_Y0 - 30, 72, 164, 12); }
+function surlignerMetre() { halo(ME_X - 12, ME_Y - 12, ME_W + 24, ME_H + 24, 12); }
+
+/* Le premier bécher dont aucun morceau ne porte encore la goutte. */
+function becherAPrelever() {
+  var k;
+  for (k = 0; k < N; k++) if (morceauDe(k) < 0) return k;
+  return -1;
+}
+function morceauALire() {
+  var i;
+  for (i = 0; i < N_MORCEAUX; i++) {
+    if (MORCEAUX[i].sol !== null && !MORCEAUX[i].lu) return i;
+  }
+  return -1;
+}
+function becherASonder() {
+  var i;
+  for (i = 0; i < AU_METRE.length; i++) {
+    if (ETAT.metre.indexOf(AU_METRE[i]) < 0) return AU_METRE[i];
+  }
+  return -1;
+}
+function montrerPrelevement() {
+  var k = becherAPrelever();
+  surlignerPoste(POSTE_X.agitateur);
+  montrerCibles("agitateur");
+  if (AGIT.goutte !== null) {
+    var i = morceauALire();
+    surlignerSoucoupe();
+    if (i >= 0) surlignerMorceau(i);
+    return;
+  }
+  if (k >= 0) surlignerBecher(k);
+}
+function montrerLecture() {
+  var i = morceauALire();
+  surlignerNuancier();
+  montrerCibles("morceau");
+  if (i >= 0) surlignerMorceau(i);
+}
+
+var GUIDE = [
+  { fait: function () { return ETAT.epi; },
+    aide: function () {
+      return "Presser <b>« Blouse, lunettes, gants »</b>, puis vérifier que les " +
+        N + " béchers portent bien leurs étiquettes.";
+    },
+    montre: function () { surlignerBouton("epi"); surlignerTousBechers(); } },
+
+  { fait: function () { return nbCoupes() >= N_MORCEAUX; },
+    aide: function () {
+      return "Prendre les <b>ciseaux</b> et les glisser sur le rouleau pour découper " +
+        N_MORCEAUX + " morceaux d'environ 1 cm (" + nbCoupes() + " sur " +
+        N_MORCEAUX + ") — ensuite, on ne touche plus le rouleau.";
+    },
+    montre: function () {
+      surlignerPoste(POSTE_X.ciseaux); montrerCibles("ciseaux");
+      surlignerPoste(POSTE_X.rouleau); surlignerBouton("couper");
+    } },
+
+  { fait: function () { return nbDeposes() >= 1; },
+    aide: function () {
+      if (AGIT.goutte !== null) return "Déposer la goutte sur un morceau de papier encore <b>sec</b> — jamais tremper le papier dans le bécher.";
+      return "Plonger l'<b>agitateur</b> dans <b>" + numero(0) +
+        "</b>, en prélever une goutte, puis la porter sur le premier morceau de papier.";
+    },
+    montre: function () { montrerPrelevement(); } },
+
+  { fait: function () { return nbLus() >= 1; },
+    aide: "Glisser le morceau mouillé sur le <b>nuancier</b> et lire, immédiatement, le nombre de la case dont la couleur s'en approche le plus.",
+    montre: function () { montrerLecture(); } },
+
+  { fait: function () { return ETAT.rincages >= 1; },
+    aide: "Prendre l'agitateur et le glisser sur la <b>pissette</b>, au-dessus du bécher-poubelle : il est rincé à l'eau distillée, puis essuyé.",
+    montre: function () {
+      surlignerPoste(POSTE_X.agitateur); surlignerPoste(POSTE_X.pissette);
+      surlignerPoste(POSTE_X.poubelle); surlignerBouton("rincer");
+    } },
+
+  { fait: function () { return nbDeposes() >= N && ETAT.rincages >= N - 1; },
+    aide: function () {
+      var k = becherAPrelever();
+      if (k < 0) return "Il reste à rincer l'agitateur entre deux prélèvements (" +
+        ETAT.rincages + " rinçage" + (ETAT.rincages > 1 ? "s" : "") + " sur " +
+        (N - 1) + ").";
+      if (AGIT.film !== null) return "Rincer l'agitateur, <b>puis</b> prélever <b>" +
+        numero(k) + "</b> : un film de la solution précédente fausserait la lecture.";
+      return "Reprendre les opérations 3 à 5 pour <b>" + numero(k) + "</b> (" +
+        nbDeposes() + " sur " + N + " déposés), en changeant de morceau de papier.";
+    },
+    montre: function () {
+      if (AGIT.film !== null) {
+        surlignerPoste(POSTE_X.pissette); surlignerBouton("rincer"); return;
+      }
+      montrerPrelevement(); surlignerBouton("tester");
+    } },
+
+  { fait: function () { return nbLus() >= N; },
+    aide: function () {
+      return "Reporter la <b>couleur</b> puis la <b>valeur du pH</b> de chaque solution : glisser sur le nuancier les morceaux qui restent (" +
+        nbLus() + " sur " + N + " lus).";
+    },
+    montre: function () { montrerLecture(); surlignerBouton("tester"); } },
+
+  { fait: function () {
+      return AU_METRE.length === 0 || ETAT.metre.length >= AU_METRE.length;
+    },
+    aide: function () {
+      var k = becherASonder();
+      if (!SONDE.rincee && SONDE.film !== null) return "Rincer la <b>sonde</b> à la pissette avant de la replonger.";
+      if (SONDE.rincee && !SONDE.essuyee) return "Essuyer la sonde au <b>papier absorbant</b>, puis l'immerger.";
+      if (k < 0) return "Les deux solutions ont été reprises au pH-mètre.";
+      return "Reprendre <b>" + numero(k) + "</b> au pH-mètre : rincer la sonde, l'essuyer, l'immerger, attendre la stabilisation, lire, puis rincer de nouveau.";
+    },
+    montre: function () {
+      var k = becherASonder();
+      surlignerSonde();
+      if (!SONDE.rincee && SONDE.film !== null) {
+        surlignerPoste(POSTE_X.pissette); montrerCibles("sonde"); return;
+      }
+      if (SONDE.rincee && !SONDE.essuyee) {
+        surlignerPoste(POSTE_X.absorbant); montrerCibles("sonde"); return;
+      }
+      if (k >= 0) surlignerBecher(k);
+      montrerCibles("sonde"); surlignerBouton("metre");
+    } },
+
+  { fait: function () { return ETAT.compare || AU_METRE.length === 0; },
+    aide: "Comparer, pour ces deux solutions, la valeur lue au <b>papier</b> et celle affichée par le <b>pH-mètre</b> : l'écart n'est pas une erreur.",
+    montre: function () { surlignerMetre(); surlignerNuancier(); } },
+
+  { fait: function () { return ETAT.classe; },
+    aide: "Presser <b>« Ranger et classer »</b> : les solutions se rangent par pH croissants, et celles dont le pH vaut exactement 7 sont entourées.",
+    montre: function () { surlignerBouton("classer"); surlignerTousBechers(); } },
+
+  /* La page ne modélise pas le rangement final : l'étape partage donc le
+     prédicat de celle qui la précède, et l'aide le dit. */
+  { fait: function () { return ETAT.classe; },
+    aide: "Geste de fin, que la page ne simule pas : rincer la verrerie à la pissette, rendre le matériel complet, retirer les gants et se laver les mains.",
+    montre: function () {
+      surlignerPoste(POSTE_X.pissette); surlignerPoste(POSTE_X.poubelle);
+    } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  /* on ramène l'étape courante dans la vue — une liste qui défile et ne
+     suit pas l'avancement cache précisément ce qu'on cherche */
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  /* le halo s'efface de lui-même : laissé en place, il se superposerait aux
+     cibles du glisser suivant et on ne saurait plus laquelle vise quoi */
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. les EPI — blouse, lunettes, gants */
+  function () { presserBouton("epi"); return 340; },
+
+  /* 2. découper les morceaux de papier pH */
+  function () { presserBouton("couper"); return 460; },
+
+  /* 3 à 7. « Tester » exécute le protocole d'un coup POUR CHAQUE solution —
+     prélever, déposer, lire, et rincer ENTRE deux solutions, ce qui est
+     précisément la consigne. Les cinq étapes de la fiche se cochent donc
+     ensemble, et le panneau saute d'autant : il déduit, il ne compte pas. */
+  function () { presserBouton("tester"); return 820; },
+  function () { presserBouton("tester"); return 820; },
+  function () { presserBouton("tester"); return 820; },
+  function () { presserBouton("tester"); return 820; },
+  function () { presserBouton("tester"); return 820; },
+
+  /* 8 et 9. la reprise au pH-mètre, et la comparaison qu'elle permet —
+     le même bouton pose les deux, le second étant le résultat du premier. */
+  function () { presserBouton("metre"); return 720; },
+  function () { presserBouton("metre"); return 720; },
+
+  /* 10 et 11. le classement */
+  function () { presserBouton("classer"); return 560; },
+  function () { presserBouton("classer"); return 560; }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   La page générée le porte, la paillasse ne l'avait pas — et c'est par lui
+   qu'on projette la scène au tableau, ce qui est le premier usage de cette
+   page en classe. On agrandit le CADRE, pas la mise en page.            */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {   /* Safari */
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+
+function demarrer() {
+  if (!DONNEES || !DONNEES.tableau_mesures) {
+    $("consigne").textContent = "Bloc DONNEES vide — lancer : python _sync_donnees.py";
+    return;
+  }
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet",
+                    "font-family": "Arial, Helvetica, sans-serif" });
+  var hote = $("paillasse");
+  hote.insertBefore(svg, hote.firstChild);
+  ajouterDefs(); ajouterCouches();
+  creerPostes();
+  construireDecor();
+  construireSecurite();
+  construireNuancier();
+  construireEtagere();
+  construirePhMetre();
+  construireSoucoupe();
+  construireBechers();
+  boutonScene(105, Y_BOUTONS, 172, 40, "Blouse, lunettes, gants", "epi");
+  boutonScene(287, Y_BOUTONS, 172, 40, "Découper les " + N_MORCEAUX + " morceaux", "couper");
+  boutonScene(469, Y_BOUTONS, 172, 40, "Tester les " + N + " solutions", "tester");
+  boutonScene(651, Y_BOUTONS, 172, 40, "Rincer l'agitateur", "rincer");
+  boutonScene(833, Y_BOUTONS, 172, 40,
+    AU_METRE.map(numero).join(" et ") + " au pH-mètre", "metre");
+  boutonScene(1015, Y_BOUTONS, 172, 40, "Ranger et classer", "classer");
+  brancherPrise(); brancherBoutons();
+  construireHTML(); brancherCommandes();
+  lireReglages(); majAffichageReglages();
+  construireProtocole();
+  recommencer();
+  demarrerHorloge();
+}
+demarrer();
+
+})();
+</script>
+</body>
+</html>

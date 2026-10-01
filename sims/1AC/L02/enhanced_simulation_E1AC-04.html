@@ -1,0 +1,2616 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paillasse virtuelle — E1AC-04 · ni forme propre ni volume propre</title>
+
+<!-- ⚠️ SKILL §12.47 : l'écouteur d'erreurs se pose AVANT le script de la page.
+     Posé en fin de body, il ne voit AUCUNE erreur de démarrage — elles ont
+     déjà eu lieu, et l'on croit à un défaut du harnais. -->
+<script>
+window.__erreurs = [];
+window.addEventListener("error", function (e) {
+  window.__erreurs.push(String(e.message));
+  var c = document.getElementById("consigne");
+  if (c) { c.textContent = "Erreur JavaScript : " + e.message; }
+});
+</script>
+
+<!--
+CE QUE CETTE PAGE EST, ET CE QU'ELLE N'EST PAS (SKILL_PAILLASSES §1.3)
+
+  * Elle est AUTONOME : ni `generer.py`, ni `moteur.js`, ni `simulation.html.j2`,
+    et elle ne s'ouvre pas depuis `index.html`. Elle DOUBLE
+    `simulation_E1AC-04.html`, elle ne la remplace pas.
+  * Elle n'a pas de vue 3D (§3.1 du SKILL principal).
+  * Elle s'écarte volontairement du §5.
+  * SCHÉMA HABILLÉ, ET IL PORTE DEUX ÉCHELLES — c'est dit dans le cadre. Le
+    poste sur cuve est à 1,5 unité de dessin par millimètre : la cuve, la
+    hauteur de l'éprouvette et la montée des bulles y sont à l'échelle. LA
+    SERINGUE EST GROSSIE DEUX FOIS (3,0 unités par millimètre) : sans cela,
+    vingt millilitres ne feraient que quatre-vingt-quinze unités de course et
+    le piston serait insaisissable au tableau. Ce qui reste exact, et c'est ce
+    qui compte, c'est que LA COURSE EST PROPORTIONNELLE AU VOLUME : 1 mL vaut
+    9,55 unités, toujours, et le modèle lit la position du piston.
+
+CE QUE LE MODÈLE CALCULE, ET QUI N'EST PAS ÉCRIT
+
+  La fiche donne trois volumes — 20, environ 10, environ 30 — et trois
+  « efforts ressentis ». L'effort n'est pas un mot : c'est une FORCE, et elle
+  se chiffre. De la loi de Boyle-Mariotte, P.V = constante à température
+  constante, on tire la pression de l'air emprisonné, puis la force à exercer
+  sur le piston :
+
+      F = (P - P_atm) x S,   S = pi d² / 4 = 3,14 cm² pour un diamètre de 20 mm
+
+  Comprimer de moitié demande alors 32 N — trois kilogrammes-force. C'est ce
+  qui donne son sens à la consigne de sécurité de la fiche (« ne pas comprimer
+  au-delà de la moitié ») : au-delà, le piston peut échapper. La page REFUSE
+  d'aller plus loin, et elle dit pourquoi.
+
+  Trois choses de plus, qu'aucune ligne de la fiche ne porte :
+
+    * LE PISTON REVIENT DE LUI-MÊME. La fiche l'observe ; ici, c'est une
+      conséquence — l'équilibre est en F = 0, donc en V = V0, et le piston y
+      retourne dès qu'on le lâche. Rien n'a été écrit pour cela.
+    * LA COMPRESSION BRUSQUE CHAUFFE. À geste rapide, la transformation est
+      adiabatique (gamma = 1,40) : l'air passerait à 113 °C, et l'effort du
+      premier instant dépasse de moitié celui de l'équilibre. Le curseur
+      « vitesse du geste » le montre.
+    * LE GAZ RECUEILLI SUR L'EAU EST SATURÉ EN VAPEUR. À 20 °C, 2,3 % de ce
+      qu'on lit dans l'éprouvette ne vient pas du ballon. Le curseur de
+      température de l'eau le fait varier.
+
+  Modèle validé en Python d'abord — `_scratch_LOT1/modeles.py`, fonction
+  `e04()` : les trois volumes, les trois phénomènes et les trois efforts, tous
+  conformes à la fiche.
+-->
+
+<style>
+:root{
+  --ink:#12203a; --text:#2f3a4d; --muted:#6b7686; --line:#e3e6ea;
+  --gold:#c8912a; --green:#375623; --greenbg:#f0f6ea;
+  --orange:#b4530f; --orangebg:#fdf1e7; --bluebg:#eef3fa; --redbg:#fdeeee;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--text);background:#eef1f5;
+     font-size:15px;line-height:1.5}
+.haut{background:var(--ink);color:#fff;padding:11px 20px;display:flex;
+      justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.haut h1{font-family:var(--serif);font-size:19px;margin:0;font-weight:700}
+.haut .ref{font-family:var(--mono);font-size:12px;opacity:.75}
+.grille{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(340px,1fr);
+        gap:14px;padding:14px;align-items:start}
+@media(max-width:1150px){.grille{grid-template-columns:1fr}}
+#paillasse{position:relative;border-radius:10px;overflow:hidden;
+           box-shadow:0 2px 14px #12203a1f;background:#eef1f5}
+#paillasse svg{width:100%;height:auto;display:block;touch-action:none;
+               user-select:none;-webkit-user-select:none}
+.consigne{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+          background:#12203aee;color:#fff;font-size:13px;font-weight:600;
+          padding:7px 16px;border-radius:16px;box-shadow:0 3px 12px #12203a55;
+          pointer-events:none;max-width:56%;text-align:center;z-index:3;
+          backdrop-filter:blur(2px)}
+.consigne.ok{background:#375623ee}
+.journal{position:absolute;left:14px;top:12px;width:min(258px,24%);
+         background:#ffffffee;border:1px solid #ffffff;border-radius:8px;
+         padding:9px 12px;font-size:11.5px;pointer-events:none;z-index:3;
+         box-shadow:0 2px 10px #12203a33}
+.journal b{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--gold);
+           text-transform:uppercase;margin-bottom:5px}
+.journal .obs{font-size:13px;font-weight:600;line-height:1.4;color:var(--muted)}
+.journal .obs.pos{color:var(--green)}
+.rezero{position:absolute;right:14px;top:12px;z-index:4;width:44px;height:44px;
+        border-radius:50%;border:2px solid #8a5a00;cursor:pointer;color:#fff;
+        background:radial-gradient(circle at 35% 30%,#ffd071,#e08e0b);
+        font-size:22px;line-height:1;padding:0;box-shadow:0 2px 8px #0004}
+.rezero:hover{filter:brightness(1.09)}
+.seance{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff;
+        border:1px solid var(--line);border-radius:9px;padding:9px 14px}
+.seance .t{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+           line-height:1}
+.seance .b{flex:1;font-size:11.5px;color:var(--muted)}
+.seance .b b{color:var(--gold);font-size:10px;letter-spacing:.13em;
+             text-transform:uppercase;display:block}
+.seance .jauge{display:block;height:5px;border-radius:3px;background:var(--line);
+               margin-top:5px;overflow:hidden}
+.seance .jauge i{display:block;height:100%;width:0;background:var(--gold);
+                 border-radius:3px}
+.seance.deborde .t{color:var(--orange)}
+.seance.deborde .jauge i{background:var(--orange)}
+.etapes{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.etapes div{flex:1 1 calc(25% - 5px);background:#fff;border:1px solid var(--line);
+            border-radius:7px;padding:7px 9px;font-size:11.5px;color:var(--muted);
+            position:relative}
+.etapes div .n{font-family:var(--mono);font-size:10px;font-weight:700;
+               color:#b7bfca;display:block}
+.etapes div.actif{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);
+                  color:var(--ink);font-weight:600}
+.etapes div.actif .n{color:var(--gold)}
+.etapes div.faite{background:var(--greenbg);border-color:#cfdfc0;color:var(--green)}
+.etapes div.faite .n{color:var(--green)}
+.etapes div.faite::after{content:"\2713";position:absolute;right:8px;top:6px;
+                         font-weight:700;color:var(--green)}
+.carte{background:#fff;border:1px solid var(--line);border-radius:9px;
+       padding:12px 14px;margin-bottom:12px}
+.carte h2{font-family:var(--serif);font-size:15px;color:var(--ink);margin:0 0 8px;
+          padding-bottom:5px;border-bottom:1.5px solid var(--gold);
+          display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.carte h2 .note{font-family:var(--sans);font-size:10.5px;font-weight:600;
+                color:var(--muted);letter-spacing:.03em;text-align:right}
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     font-weight:700;color:var(--gold);display:block;margin-bottom:3px}
+.reg{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;
+     margin-bottom:8px}
+.reg label{font-size:12.5px;grid-column:1}
+.reg output{font-family:var(--mono);font-size:12.5px;font-weight:700;
+            color:var(--ink);grid-column:2;text-align:right;min-width:76px}
+.reg input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;accent-color:var(--gold)}
+.reg .aide{grid-column:1/3;font-size:10.5px;color:var(--muted);margin:1px 0 2px}
+button{font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+       border:1px solid var(--ink);background:var(--ink);color:#fff;
+       border-radius:6px;padding:7px 13px}
+button.sec{background:#fff;color:var(--ink)}
+button.sec.on{background:var(--gold);border-color:var(--gold);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.cmd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lect{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.lect div{background:var(--bluebg);border-radius:7px;padding:6px 9px}
+.lect .k{display:block;font-size:9.5px;letter-spacing:.09em;
+         text-transform:uppercase;color:var(--muted);font-weight:700}
+.lect .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--ink);
+         line-height:1.25;word-break:break-word}
+.lect .v.off{color:#b7bfca}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+th{background:var(--bluebg);color:var(--ink);font-weight:600;font-size:11px}
+td.vide{color:#c3cad3}
+td.mes{font-family:var(--mono);font-size:11.5px}
+.box{border-left:3px solid var(--green);background:var(--greenbg);
+     padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+.box.secu{border-left-color:#b03030;background:var(--redbg)}
+.box.obs{border-left-color:var(--orange);background:var(--orangebg)}
+.box ul{margin:4px 0 0;padding-left:17px}
+.masque{filter:blur(4px);opacity:.45;user-select:none}
+.alerte{display:none;background:var(--orangebg);border-left:3px solid var(--orange);
+        border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.alerte.on{display:block}
+.alerte b{color:var(--orange)}
+.diverge{background:var(--redbg);border-left:3px solid #b03030;
+         border-radius:0 6px 6px 0;padding:7px 10px;font-size:12px;margin-top:8px}
+.diverge b{color:#b03030}
+/* ---- le plein écran : c'est ainsi qu'on projette la scène au tableau ----
+   Le SVG est en `width:100%;height:auto` : sur un écran large il déborderait
+   en hauteur. En plein écran on le contraint donc par la HAUTEUR, et le
+   cadre centre ce qui reste. */
+#paillasse:fullscreen{border-radius:0;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;background:#eef1f5}
+#paillasse:fullscreen svg{width:auto;height:100vh;max-width:100vw}
+.plein{position:absolute;right:66px;top:12px;z-index:4;height:44px;min-width:44px;
+  border-radius:22px;border:1.6px solid #b7bfca;cursor:pointer;color:var(--ink);
+  background:#ffffffee;font-size:17px;line-height:1;padding:0 12px;
+  box-shadow:0 2px 8px #12203a29}
+.plein:hover{background:#fff;border-color:var(--gold)}
+/* ---- l'avance en PLEIN ÉCRAN ----
+   Projetée au tableau, la scène prend tout l'écran et la carte « Protocole »
+   n'y est plus : le bouton qui exécute doit donc se retrouver DANS le cadre.
+   Cette flèche n'existe QU'EN plein écran — ailleurs, c'est la carte qui
+   reste le chemin normal, et « Montrer » y garde sa place. */
+.avance{display:none}
+/* ⚠ LA FLÈCHE A SA PROPRE BANDE, et ce n'est pas un luxe. Posée en
+   flottant, elle recouvrait le contenu — quel que soit le coin : en bas à
+   droite elle mangeait le dernier mot d'une ligne d'E3AC-22, en haut à
+   droite la lampe L1 d'E3AC-19. Aucun coin n'est libre sur toutes les
+   scènes. On raccourcit donc la scène de 56 px et l'on range le bouton
+   dans la bande libérée. */
+#paillasse:fullscreen{align-items:flex-start}
+/* ⚠ `!important` À DESSEIN : le SVG de certaines scènes porte un style EN
+   LIGNE (`height:auto`) qui bat tout sélecteur. Sans cela, mesuré sur
+   E3AC-19, la scène calculait 1900 × 1289 px dans un cadre de 1900 × 900 et
+   se trouvait rognée en haut et en bas — défaut antérieur, invisible tant
+   qu'on tenait le plein écran pour non éprouvable. */
+#paillasse:fullscreen svg{width:100vw !important;
+  height:calc(100vh - 56px) !important;max-width:100vw !important}
+#paillasse:fullscreen .avance{display:inline-flex;align-items:center;gap:11px;
+  position:absolute;right:24px;bottom:6px;z-index:5;height:44px;min-width:44px;
+  border-radius:22px;border:1.8px solid #b7bfca;background:#ffffffee;
+  color:var(--ink);font-size:22px;line-height:1;padding:0 18px;cursor:pointer;
+  box-shadow:0 2px 10px #12203a29}
+#paillasse:fullscreen .avance:hover{background:#fff;border-color:var(--gold)}
+#paillasse:fullscreen .avance:disabled{opacity:.32;cursor:not-allowed}
+#paillasse:fullscreen .avance .n{font-family:var(--mono);font-size:15px;
+  font-weight:700;color:var(--muted)}
+ol.proto{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;
+  max-height:232px;overflow-y:auto;scrollbar-width:thin}
+ol.proto li{counter-increment:pas;position:relative;padding:7px 10px 7px 34px;
+  font-size:13px;line-height:1.45;border-radius:7px;color:var(--muted);
+  border:1px solid transparent}
+ol.proto li::before{content:counter(pas);position:absolute;left:8px;top:7px;
+  width:19px;height:19px;border-radius:50%;background:#eef1f5;color:#8a94a4;
+  font-size:10.5px;font-weight:700;text-align:center;line-height:19px;
+  font-family:var(--mono)}
+ol.proto li.faite{color:var(--green)}
+ol.proto li.faite::before{content:"\2713";background:var(--greenbg);color:var(--green)}
+ol.proto li.actif{color:var(--ink);font-weight:600;background:#fdf6e6;
+  border-color:var(--gold)}
+ol.proto li.actif::before{background:var(--gold);color:#fff}
+.guide{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.guide .aide{flex:1;min-width:180px;font-size:11.5px;color:var(--muted);
+  line-height:1.4}
+.guide .aide b{color:var(--ink)}
+/* Le bouton qui EXÉCUTE se tient à côté de celui qui montre — et le déroulé,
+   qui enchaîne les étapes restantes, prend toute la largeur : c'est lui
+   qu'on cherche quand on projette au tableau. */
+.guide.deroule{margin-top:7px}
+.guide.deroule button{width:100%}
+details.capot{background:#fff;border:1px solid var(--line);border-radius:9px;
+              padding:10px 14px;font-size:13px}
+details.capot summary{font-family:var(--serif);font-size:15px;color:var(--ink);
+                      cursor:pointer;font-weight:700}
+details.capot h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+                 color:var(--gold);margin:14px 0 5px}
+details.capot .eq{font-family:var(--mono);font-size:12.5px;background:var(--bluebg);
+                  padding:9px 12px;border-radius:6px;overflow-x:auto;
+                  white-space:pre;color:var(--ink)}
+details.capot li{margin-bottom:5px}
+.src{font-size:11px;color:var(--muted)}
+.pousse{font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<div class="haut">
+  <h1 id="titre">Paillasse virtuelle</h1>
+  <span class="ref" id="ref">E1AC-04</span>
+</div>
+
+<div class="grille">
+
+  <div>
+    <div id="paillasse">
+      <div class="consigne" id="consigne">Chargement…</div>
+      <div class="journal"><b>Observation en cours</b><div class="obs" id="obs">—</div></div>
+      <button class="avance" id="pleinFaire" type="button"
+              title="Faire l'étape suivante"><span class="n" id="pleinNum">–</span>→</button>
+      <button class="plein" id="plein" type="button" title="Plein écran — pour projeter au tableau">⛶</button>
+      <button class="rezero" id="rezero" title="Recommencer l'expérience">⟳</button>
+    </div>
+
+    <div class="seance">
+      <span class="t" id="seanceT">0:00</span>
+      <span class="b">
+        <b id="seanceB">durée prescrite</b>
+        <span id="seanceM"></span>
+        <span class="jauge"><i id="seanceJ"></i></span>
+      </span>
+    </div>
+
+    <div class="etapes" id="etapes"></div>
+
+    <div class="carte" style="margin-top:12px">
+      <span class="lbl">Objectif</span>
+      <div id="objectif"></div>
+      <div class="box obs"><span class="lbl" style="color:var(--orange)">Observation de départ</span>
+        <div id="observation"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Résultats <span class="note">tableau de la fiche — <span id="nbCell">0 / 0</span> cellules</span></h2>
+      <table id="tab"></table>
+      <div class="alerte" id="alerte">
+        <b>Réglages hors protocole.</b> Le tableau de référence n'est plus
+        renseigné : il consigne le résultat de l'expérience prescrite, pas
+        celui d'une variante. Le carnet de mesures, lui, continue d'enregistrer.
+        <div class="cmd"><button id="bProto" type="button" class="sec">Revenir au protocole</button></div>
+      </div>
+      <div class="diverge" id="diverge" style="display:none"></div>
+      <div class="box masque" id="concl">
+        <span class="lbl" style="color:var(--green)">Conclusion</span>
+        <div id="conclTxt"></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Carnet de mesures <span class="note">ce que le modèle a calculé</span></h2>
+      <table id="carnet"></table>
+      <div class="src" style="margin-top:6px">
+        Ce carnet n'est pas le tableau de la fiche : il enregistre ce que
+        <b>ce réglage-ci</b> a donné.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Matériel et sécurité</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px" id="materiel"></ul>
+      <div class="box secu"><span class="lbl" style="color:#b03030">Sécurité</span>
+        <ul id="securite"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= COLONNE DROITE ================= -->
+  <div>
+
+    <div class="carte">
+      <h2>Protocole <span class="note">de la fiche — étape <span id="protoNum">1</span> sur <span id="protoTot">–</span></span></h2>
+      <ol class="proto" id="protocole"></ol>
+      <div class="guide">
+        <button id="bEtape" type="button">Montrer l'étape suivante</button>
+        <button id="bFaire" type="button" class="sec">Faire l'étape</button>
+      </div>
+      <div class="guide deroule">
+        <button id="bDerouler" type="button" class="sec">Dérouler jusqu'au bout</button>
+        <span class="aide" id="protoAide"></span>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Instruments <span class="note">ce que la seringue mesure</span></h2>
+      <div class="lect">
+        <div><div class="k">Volume emprisonné</div><div class="v" id="lV">—</div></div>
+        <div><div class="k">Pression de l'air</div><div class="v" id="lP">—</div></div>
+        <div><div class="k">Force sur le piston</div><div class="v" id="lF">—</div></div>
+        <div><div class="k">Effort ressenti</div><div class="v" id="lEff">—</div></div>
+        <div><div class="k">Air recueilli dans l'éprouvette</div><div class="v" id="lRec">—</div></div>
+        <div><div class="k">dont vapeur d'eau</div><div class="v" id="lVap">—</div></div>
+      </div>
+      <div class="src" style="margin-top:8px">
+        Section du piston <b id="lS">—</b>. La page <b>refuse</b> de comprimer
+        au-delà de la moitié du volume : c'est la consigne de sécurité de la
+        fiche, et elle vaut <b id="lFmax">—</b> sur la main.
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages <span class="note">trois conditions que la fiche<br>ne chiffre pas : ce sont des AJOUTS</span></h2>
+
+      <div class="reg">
+        <label for="rPatm">Pression atmosphérique</label><output id="oPatm"></output>
+        <input type="range" id="rPatm" min="850" max="1050" step="1" value="1013">
+        <div class="aide">Ajout — 1013 hPa au niveau de la mer. En altitude, la
+          même compression demande moins d'effort : c'est la <b>différence</b>
+          de pression qui pousse le piston, pas la pression elle-même.</div>
+      </div>
+
+      <div class="reg">
+        <label for="rTeau">Température de l'eau de la cuve</label><output id="oTeau"></output>
+        <input type="range" id="rTeau" min="5" max="40" step="5" value="20">
+        <div class="aide">Ajout — elle décide de la <b>vapeur d'eau</b> qui
+          accompagne l'air recueilli : 2,3 % à 20 °C, 7 % à 40 °C. Ce n'est pas
+          de l'air du ballon.</div>
+      </div>
+
+      <div class="reg">
+        <label for="rGeste">Vitesse du geste</label><output id="oGeste"></output>
+        <input type="range" id="rGeste" min="0" max="1" step="1" value="0">
+        <div class="aide">Ajout — <b>lent</b> : la température a le temps de
+          s'égaliser, c'est la loi de Boyle. <b>Rapide</b> : la compression est
+          adiabatique, l'air chauffe et l'effort du premier instant dépasse
+          celui de l'équilibre.</div>
+      </div>
+    </div>
+
+    <details class="capot">
+      <summary>Sous le capot — le modèle, ses constantes, ses limites</summary>
+      <h3>Le modèle — Boyle-Mariotte, et ce qu'il donne sous la main</h3>
+      <div class="eq" id="eqCapot"></div>
+
+      <h3>Ce que devient la matière</h3>
+      <div class="eq">Rien. Aucune transformation chimique.
+La QUANTITÉ d'air ne change pas : ni pendant la compression, ni
+pendant la détente. C'est le point de la leçon — le volume change
+alors que la quantité, elle, ne varie pas. Un gaz n'a donc pas de
+volume propre.
+
+Le gaz recueilli sur l'eau, lui, n'est pas de l'air pur :
+   fraction de vapeur = p_sat(T) / P_atm ,  p_sat par Magnus-Tetens
+   à 20 °C : 23,4 hPa sur 1013 hPa, soit 2,3 %.</div>
+
+      <h3>Les constantes</h3>
+      <table id="capotCst"></table>
+      <p class="src">Diamètre intérieur d'une seringue de 20 mL : 20 mm.
+      Surpression d'un ballon de baudruche gonflé : environ 100 hPa. Diamètre
+      d'une bulle sortant d'un tube à dégagement : 5 mm ; sa vitesse
+      d'ascension suit le régime de calotte sphérique, v = 0,71 racine(g d).</p>
+      <h3>Les constantes, et d'où elles viennent</h3>
+      <table id="capotConst"></table>
+      <p class="src" id="capotSrc"></p>
+      <h3>Ce que le modèle ne sait pas</h3>
+      <ul>
+        <li>Il suppose la seringue <b>parfaitement étanche</b> et sans
+        frottement. En salle, le joint fuit et le piston finit par revenir même
+        sans qu'on le lâche : c'est la cause n°1 des ratés.</li>
+        <li>Il ignore le <b>volume mort</b> de l'embout et du bouchon —
+        quelques dixièmes de millilitre qui ne se compriment pas comme le
+        reste.</li>
+        <li>Il traite l'air comme un <b>gaz parfait</b>. À ces pressions c'est
+        excellent, mais la loi cesserait de valoir bien avant que le piston ne
+        cède.</li>
+        <li>La compression rapide est calculée <b>adiabatique parfaite</b> : en
+        vrai la chaleur fuit par la paroi pendant qu'on pousse, et la
+        température atteinte est plus basse que celle qui est affichée.</li>
+        <li>Il ne modélise pas la <b>dissolution de l'air dans l'eau</b> de la
+        cuve, ni la pression hydrostatique sous l'éprouvette : le gaz recueilli
+        est compté à la pression atmosphérique.</li>
+        <li>Le ballon de baudruche est traité comme une <b>réserve infinie</b> :
+        il se vide sans que sa surpression tombe, alors qu'elle tombe.</li>
+        <li>Le seuil de deux newtons, sous lequel la main ne sent « aucun »
+        effort, est un seuil d'ASPECT. Il laisse un facteur 16 de marge
+        au-dessus (32 N en compression) et un facteur 5 (10,6 N) en
+        détente.</li>
+      </ul>
+      <h3>Ce que l'expérience montre, et ce qu'elle n'explique pas</h3>
+      <p id="capotReserve"></p>
+    </details>
+
+  </div>
+</div>
+
+<script>
+/* @@DONNEES-DEBUT — régénéré par _sync_donnees.py depuis
+   valise/curriculum/experiences.yaml, entrée E1AC-04.
+   NE PAS ÉDITER À LA MAIN : relancer le script. */
+const DONNEES = {
+  "id": "E1AC-04",
+  "niveau": "1AC",
+  "unite": "U1",
+  "lecon": "L02",
+  "titre": "Les propriétés physiques d'un gaz",
+  "axe": "Les propriétés physiques des gaz",
+  "objectif": "Montrer qu'un gaz n'a ni forme propre ni volume propre, et mettre en évidence sa compressibilité et son expansibilité.",
+  "duree": 20,
+  "modalite": "groupes de 4 — 8 postes ; recueil sur cuve à eau au bureau",
+  "materiel": [
+    "Seringue de 20 mL sans aiguille",
+    "Ballon de baudruche gonflé d'air",
+    "Tube à dégagement souple",
+    "Cristallisoir rempli d'eau",
+    "Éprouvette remplie d'eau et retournée sur la cuve",
+    "Bouchon ou pince pour obturer la seringue"
+  ],
+  "securite": [
+    "Ne jamais diriger la seringue vers le visage d'un camarade.",
+    "N'utiliser aucune aiguille : la seringue sert seule.",
+    "Ne pas comprimer l'air au-delà de la moitié du volume : le piston peut être éjecté.",
+    "Essuyer l'eau renversée autour de la cuve."
+  ],
+  "protocole": [
+    "Remplir le cristallisoir d'eau, puis y retourner l'éprouvette entièrement pleine d'eau, sans bulle.",
+    "Relier le ballon gonflé d'air au tube à dégagement et amener l'extrémité du tube sous l'éprouvette.",
+    "Ouvrir le ballon : observer les bulles et la forme prise par l'air recueilli dans l'éprouvette.",
+    "Tirer le piston de la seringue jusqu'à la graduation 20 mL pour emprisonner de l'air, puis obturer l'orifice.",
+    "Pousser le piston : lire le nouveau volume et décrire l'effort ressenti.",
+    "Relâcher le piston, puis le tirer : lire le nouveau volume et décrire l'effort ressenti."
+  ],
+  "tableau_mesures": {
+    "entetes": [
+      "Action sur le piston",
+      "Départ (orifice bouché)",
+      "On pousse le piston",
+      "On tire le piston"
+    ],
+    "lignes": [
+      [
+        "Volume de l'air emprisonné (mL)",
+        "20",
+        "",
+        ""
+      ],
+      [
+        "Nom du phénomène",
+        "—",
+        "",
+        ""
+      ],
+      [
+        "Effort ressenti sur le piston",
+        "aucun",
+        "",
+        ""
+      ]
+    ],
+    "valeurs": [
+      [
+        "Volume de l'air emprisonné (mL)",
+        "20",
+        "≈ 10",
+        "≈ 30"
+      ],
+      [
+        "Nom du phénomène",
+        "—",
+        "compression",
+        "expansion (détente)"
+      ],
+      [
+        "Effort ressenti sur le piston",
+        "aucun",
+        "résistance croissante",
+        "le piston est aspiré"
+      ]
+    ]
+  },
+  "observation": "L'air recueilli épouse exactement la forme de l'éprouvette ; dans la seringue bouchée, son volume passe de 20 mL à environ 10 mL quand on pousse le piston et à environ 30 mL quand on le tire.",
+  "conclusion": "Un gaz n'a ni forme propre ni volume propre : il occupe tout le volume du récipient qui le contient. Il est compressible et expansible. Comme le liquide, il s'écoule : c'est un fluide, et il ne peut pas être saisi entre les doigts.",
+  "oheric": {
+    "observation": "Une bombonne de butane de la taille d'un seau alimente une cuisine pendant des semaines, alors qu'un ballon de baudruche de volume comparable se vide en quelques secondes. On arrive à faire tenir énormément de gaz dans un petit volume — ce qui est impossible avec de l'eau.",
+    "hypothese": "Si un gaz occupait un volume propre, comme un liquide, alors on ne pourrait pas le faire tenir dans un récipient plus petit. Le gaz n'aurait donc ni forme propre ni volume propre.",
+    "experience": "Faire passer l'air d'un ballon de baudruche dans une éprouvette retournée sur une cuve à eau et observer la forme qu'il prend. Emprisonner ensuite un volume d'air dans une seringue bouchée et agir sur le piston dans les deux sens.",
+    "resultats": "L'air quitte le ballon sous forme de bulles, remonte dans l'éprouvette et en épouse exactement la forme, en chassant l'eau vers le bas. Dans la seringue bouchée, le volume de l'air passe de 20 mL à environ 10 mL quand on pousse et de 20 mL à environ 30 mL quand on tire ; dans les deux cas le piston revient de lui-même à sa position de départ dès qu'on le lâche.",
+    "interpretation": "L'air a quitté la forme arrondie du ballon pour prendre la forme cylindrique de l'éprouvette : un gaz n'a donc pas de forme propre. Le volume de l'air emprisonné change alors que sa quantité, elle, n'a pas varié : un gaz n'a donc pas non plus de volume propre. La diminution du volume est une **compression**, l'augmentation une **expansion** — ou détente.",
+    "conclusion": "Un gaz n'a **ni forme propre ni volume propre** : il occupe tout le volume du récipient qui le contient. Il est **compressible** et **expansible**. Comme le liquide, il s'écoule : c'est un **fluide**, et il ne peut pas être saisi entre les doigts."
+  }
+};
+/* @@DONNEES-FIN */
+</script>
+
+<script>
+(function () {
+"use strict";
+
+/* ==================================================================
+   A. OUTILS — identiques d'une paillasse à l'autre
+   ================================================================== */
+var NS = "http://www.w3.org/2000/svg";
+var INK = "#12203a", GOLD = "#c8912a", ORANGE = "#b4530f", VERT = "#375623";
+var GRIS = "#6b7686", LIGNE = "#cfd6de", ROUGE = "#b03030", FOND = "#f2f5f9";
+
+function el(n, a, t) {
+  var e = document.createElementNS(NS, n), k;
+  for (k in a) e.setAttribute(k, a[k]);
+  if (t !== undefined) e.textContent = t;
+  return e;
+}
+function vide(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+var $ = function (id) { return document.getElementById(id); };
+
+/* ⚠️ SKILL §12.47 — `isFinite(null)` vaut TRUE, parce que `Number(null)` vaut 0.
+   Le TYPE se teste donc AVANT la finitude, sans quoi `null.toFixed` lève
+   pendant le démarrage : scène dessinée, panneaux vides, consigne bloquée sur
+   « Chargement… », et aucun message à l'écran. */
+function nb(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(d === undefined ? 1 : d).replace(".", ",");
+}
+var EXPO = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴",
+             5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sup(n) {
+  return String(n).split("").map(function (c) { return EXPO[c] || c; }).join("");
+}
+function sci(x, d) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  var e = Math.floor(Math.log(Math.abs(x)) / Math.LN10), m = x / Math.pow(10, e);
+  if (m >= 9.995) { m /= 10; e += 1; }
+  return nb(m, d === undefined ? 2 : d) + " × 10" + sup(e);
+}
+function mmss(t) {
+  var s = Math.floor(t);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* Le gras et l'italique du YAML : dépouillés pour un `<text>` SVG, rendus
+   pour du HTML. ⚠️ SKILL §12.48 : on ne recopie JAMAIS le motif dans un
+   commentaire de bloc — l'astérisque échappé y refermerait le commentaire. */
+function depouille(t) {
+  return String(t == null ? "" : t).replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1").replace(/`(.+?)`/g, "$1");
+}
+function md(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1<i>$2</i>");
+}
+function borne(x, a, b) { return x < a ? a : (x > b ? b : x); }
+/* Les attributs `points` et `d` veulent le POINT décimal — jamais la virgule
+   française de `nb()`. Utilitaire dédié, et lui seul (SKILL §12.2). */
+function pt(x, y) { return x.toFixed(1) + "," + y.toFixed(1); }
+function melange(a, b, t) {
+  function u(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16),
+                          parseInt(c.substr(5, 2), 16)]; }
+  var x = u(a), y = u(b), o = "#", i, v;
+  for (i = 0; i < 3; i++) {
+    v = Math.round(x[i] + (y[i] - x[i]) * borne(t, 0, 1));
+    o += ("0" + v.toString(16)).slice(-2);
+  }
+  return o;
+}
+/* Le YAML, lu — jamais retapé. */
+var TM = DONNEES.tableau_mesures || {};
+var ENTETES = TM.entetes || [], LIG = TM.lignes || [], VAL = TM.valeurs || [];
+var N_LIG = Math.min(LIG.length, VAL.length);
+var N_COL = ENTETES.length;
+function cel(k, c) { return depouille((VAL[k] || [])[c]); }
+function intitule(k, c) { return depouille((LIG[k] || [])[c]); }
+/* Le compte des cellules À DÉVOILER se CALCULE depuis le tableau du YAML : il
+   n'est jamais écrit à la main. C'est lui qui attrape le §12.12 — une page dont
+   tous les gestes marchent et dont le tableau ne se remplit jamais. */
+var N_CELL = (function () {
+  var n = 0, k, c;
+  for (k = 0; k < N_LIG; k++) {
+    for (c = 1; c < N_COL; c++) if ((VAL[k] || [])[c]) n++;
+  }
+  return n;
+})();
+function materiel(motif) {
+  var m = DONNEES.materiel || [], i;
+  for (i = 0; i < m.length; i++) if (motif.test(m[i])) return depouille(m[i]);
+  return "";
+}
+function secu(motif) {
+  var s = DONNEES.securite || [], i;
+  for (i = 0; i < s.length; i++) if (motif.test(s[i])) return depouille(s[i]);
+  return s.length ? depouille(s[0]) : "";
+}
+function proto(motif) {
+  var p = DONNEES.protocole || [], i;
+  for (i = 0; i < p.length; i++) if (motif.test(p[i])) return depouille(p[i]);
+  return "";
+}
+/* SKILL §5 — les durées viennent de la fiche, jamais du code. */
+var MOTS_NB = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+                sept: 7, huit: 8, neuf: 9, dix: 10, quinze: 15, vingt: 20 };
+var DUREE_SEANCE = +(DONNEES.duree || 15);
+
+/* ==================================================================
+   B. L'ÉTAT, LES MINUTERIES
+   ================================================================== */
+var ETAT = {}, MINUTEURS = [], HORLOGE = null, DERNIER = 0;
+var svg = null, DEFS = null, COUCHES = {};
+var OBJ = {}, GROUPES = {}, BOUTONS = {};
+var ANIM_ON = true;
+
+function tard(fn, ms) { var id = setTimeout(fn, ms); MINUTEURS.push(id); return id; }
+function purger() { MINUTEURS.forEach(clearTimeout); MINUTEURS = []; }
+
+/* ==================================================================
+   C. LES COUCHES — l'ordre est la moitié du dessin (SKILL §8)
+   ==================================================================
+     fond    le mur et le meuble
+     fils    ombres portées, tuyaux, halos — DERRIÈRE les appareils
+     poste   le mobilier fixe
+     arriere l'intérieur de la verrerie, le liquide, les zones de dépôt
+     objets  ce qui se manipule
+     avant   les PAROIS DE VERRE et les étiquettes
+     ui      les boutons de scène
+     drag    l'objet en cours de déplacement, au-dessus de tout             */
+function ajouterCouches() {
+  ["fond", "fils", "poste", "arriere", "objets", "avant", "ui", "drag"]
+    .forEach(function (n) { COUCHES[n] = svg.appendChild(el("g", { id: "c-" + n })); });
+}
+function ajout(c, n) { return COUCHES[c].appendChild(n); }
+function txt(c, x, y, s, o) {
+  o = o || {};
+  var a = { x: x, y: y, "text-anchor": o.ancre || "middle",
+            "font-size": o.taille || 12.5, "font-weight": o.gras ? "bold" : "normal",
+            fill: o.couleur || INK, "pointer-events": "none" };
+  /* Un liseré de la couleur du fond rend l'étiquette lisible par-dessus
+     n'importe quel trait, et le restera (SKILL §12.46). */
+  if (o.halo) {
+    a["paint-order"] = "stroke"; a.stroke = o.halo === true ? "#f4f7fa" : o.halo;
+    a["stroke-width"] = o.hw || 3.4; a["stroke-linejoin"] = "round";
+  }
+  return ajout(c, el("text", a, s));
+}
+function titrePoste(x, y, s, ancre) {
+  return txt("avant", x, y, s, { ancre: ancre || "middle", taille: 11.5, gras: true,
+                                 couleur: GOLD, halo: true });
+}
+function ombreAuSol(cx, w, o) {
+  return ajout("fils", el("ellipse", { cx: cx, cy: BANC + 2, rx: w, ry: 5,
+    fill: "#12203a", opacity: o === undefined ? .3 : o, filter: "url(#flou)",
+    "pointer-events": "none" }));
+}
+/* Les défs que TOUTES les paillasses emploient. Chaque page y ajoute les
+   siennes dans `ajouterDefs()`. */
+function defsCommunes() {
+  var g, f;
+  g = el("linearGradient", { id: "mur", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#fdfefe" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#e4eaf1" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "banc", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#5a6474" }));
+  g.appendChild(el("stop", { offset: 0.09, "stop-color": "#3d4553" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#272d38" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "eau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#bfe0f0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#5e9cbe" }));
+  DEFS.appendChild(g);
+  /* Le verre : voile de teinte, reflet vertical net près du bord gauche,
+     arête sombre à droite. Sans le reflet, ce n'est jamais du verre. */
+  g = el("linearGradient", { id: "verrerie", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0,    "stop-color": "#ffffff", "stop-opacity": .72 }));
+  g.appendChild(el("stop", { offset: 0.14, "stop-color": "#dbe6ef", "stop-opacity": .34 }));
+  g.appendChild(el("stop", { offset: 0.55, "stop-color": "#eef4f9", "stop-opacity": .16 }));
+  g.appendChild(el("stop", { offset: 0.9,  "stop-color": "#c9d7e3", "stop-opacity": .38 }));
+  g.appendChild(el("stop", { offset: 1,    "stop-color": "#ffffff", "stop-opacity": .66 }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "inox", x1: 0, y1: 0, x2: 1, y2: 0 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#8d97a5" }));
+  g.appendChild(el("stop", { offset: .28, "stop-color": "#e7ecf1" }));
+  g.appendChild(el("stop", { offset: .55, "stop-color": "#aab4c0" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#79838f" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "bois", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#c8a86a" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#a5813f" }));
+  DEFS.appendChild(g);
+  f = el("filter", { id: "ombreDouce", x: "-40%", y: "-40%",
+                     width: "180%", height: "180%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 3, stdDeviation: 4,
+                                     "flood-color": "#12203a", "flood-opacity": .28 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "ombrePrise", x: "-60%", y: "-60%",
+                     width: "220%", height: "220%" });
+  f.appendChild(el("feDropShadow", { dx: 0, dy: 9, stdDeviation: 8,
+                                     "flood-color": "#12203a", "flood-opacity": .38 }));
+  DEFS.appendChild(f);
+  f = el("filter", { id: "flou", x: "-60%", y: "-60%", width: "220%", height: "220%" });
+  f.appendChild(el("feGaussianBlur", { stdDeviation: 7 }));
+  DEFS.appendChild(f);
+}
+
+/* ==================================================================
+   D. LES BOUTONS DE SCÈNE
+   ==================================================================
+   Un bouton n'est légitime que pour un geste que LE PROTOCOLE fait d'un seul
+   coup — et il DOUBLE un glisser qui reste possible, en passant par la MÊME
+   fonction (SKILL §4.A, §12.13).                                           */
+function boutonScene(cx, cy, w, ht, l1, l2, act) {
+  var g = ajout("ui", el("g", { cursor: "pointer", "data-act": act }));
+  var r = el("rect", { x: cx - w / 2, y: cy - ht / 2, width: w, height: ht, rx: 9,
+    fill: "#ffffff", stroke: LIGNE, "stroke-width": 1.8, filter: "url(#ombreDouce)" });
+  g.appendChild(r);
+  var ts = [];
+  ts.push(g.appendChild(el("text", { x: cx, y: cy + (l2 ? -2 : 5),
+    "text-anchor": "middle", "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l1)));
+  if (l2) ts.push(g.appendChild(el("text", { x: cx, y: cy + 13, "text-anchor": "middle",
+    "font-size": 12.5, "font-weight": "bold", fill: GRIS,
+    "font-family": "Arial, Helvetica, sans-serif", "pointer-events": "none" }, l2)));
+  BOUTONS[act] = {
+    cx: cx, cy: cy, w: w, h: ht,
+    armer: function (v) {
+      r.setAttribute("stroke", v ? GOLD : LIGNE);
+      r.setAttribute("stroke-width", v ? 2.6 : 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", v ? INK : GRIS); });
+    },
+    fait: function () {
+      r.setAttribute("stroke", VERT); r.setAttribute("stroke-width", 1.8);
+      r.setAttribute("fill", "#eef6e6");
+      ts.forEach(function (t) { t.setAttribute("fill", VERT); });
+    },
+    neuf: function () {
+      r.setAttribute("fill", "#fff"); r.setAttribute("stroke", LIGNE);
+      r.setAttribute("stroke-width", 1.8);
+      ts.forEach(function (t) { t.setAttribute("fill", GRIS); });
+    }
+  };
+  return BOUTONS[act];
+}
+function brancherActe(act, fn) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (n) n.addEventListener("click", function (e) { reprendreAnim(); fn(e); });
+}
+
+/* ==================================================================
+   E. PLACEMENT ET ANIMATION
+   ==================================================================
+   ⚠️ SKILL §1.2 bis — CHAQUE ÉTAPE DOIT SE VOIR SE FAIRE. Un objet qui SAUTE
+   de sa place de départ à sa place d'arrivée montre deux états ; il ne montre
+   pas le geste. Tout déplacement passe donc par `glisserVers`, qui interpole
+   par une échelle de MINUTERIES — `setTimeout` + `Date.now()`, jamais
+   `requestAnimationFrame` : sous le pilote, rAF n'est pas appelé et
+   l'animation disparaîtrait SANS lever d'erreur (SKILL §13.5 bis).
+   L'animation ne DÉCIDE de rien : le solveur a déjà l'état d'arrivée.      */
+/* ⚠️ `arreterDeroule()` coupe l'animation là où elle en est — c'est voulu :
+   la scène doit se figer sur le geste qu'on vient d'interrompre. Mais le
+   geste SUIVANT, lui, doit se voir se faire. Toute action de l'élève réarme
+   donc l'animation, APRÈS avoir purgé les images restées en attente : sans
+   cette purge, le mouvement interrompu reprendrait tout seul. */
+function reprendreAnim() { if (!ANIM_ON) { purger(); ANIM_ON = true; } }
+function poser(id, x, y, rot, ech) {
+  var o = OBJ[id];
+  o.x = x; o.y = y;
+  if (rot !== undefined && rot !== null) o.rot = rot;
+  if (ech !== undefined && ech !== null) o.ech = ech;
+  GROUPES[id].setAttribute("transform", "translate(" + x.toFixed(1) + "," +
+    y.toFixed(1) + ") rotate(" + (o.rot || 0).toFixed(1) + ")" +
+    (o.ech && o.ech !== 1 ? " scale(" + o.ech.toFixed(3) + ")" : ""));
+}
+function replacer(id) {
+  var a = ancre(id, OBJ[id].place);
+  poser(id, a[0], a[1], a.length > 2 ? a[2] : 0);
+}
+function replacerTout() { var k; for (k in OBJ) replacer(k); }
+/* Le trajet, en douze pas lissés. `fin` est appelé à l'arrivée — mais l'ÉTAT,
+   lui, est posé AVANT l'appel (SKILL §6.2) : `fin` ne sert qu'à l'image. */
+function glisserVers(id, x1, y1, rot1, ms, fin) {
+  var o = OBJ[id], x0 = o.x, y0 = o.y, r0 = o.rot || 0, PAS = 12, i;
+  if (rot1 === null || rot1 === undefined) rot1 = r0;
+  for (i = 1; i <= PAS; i++) (function (i) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = i / PAS, e = t * t * (3 - 2 * t);
+      poser(id, x0 + (x1 - x0) * e, y0 + (y1 - y0) * e, r0 + (rot1 - r0) * e);
+      dessiner();
+      if (i === PAS && fin) fin();
+    }, Math.max(16, ms * i / PAS));
+  })(i);
+}
+/* Une grandeur du MODÈLE qui rejoint sa valeur d'arrivée sous les yeux : le
+   niveau qui monte, la couleur qui vire, le piston qui glisse. La valeur
+   d'arrivée est déjà calculée ; on ne fait que la rejoindre. */
+function animerVers(lire, ecrire, cible, ms, fin) {
+  var v0 = lire(), PAS = 12, i;
+  for (i = 1; i <= PAS; i++) (function (i) {
+    tard(function () {
+      if (!ANIM_ON) return;
+      var t = i / PAS, e = t * t * (3 - 2 * t);
+      ecrire(v0 + (cible - v0) * e);
+      dessiner();
+      if (i === PAS && fin) fin();
+    }, Math.max(16, ms * i / PAS));
+  })(i);
+}
+
+/* ==================================================================
+   F. PRENDRE ET DÉPOSER (SKILL §9)
+   ==================================================================
+   Le pointeur est capturé sur le SVG lui-même, pas sur l'objet : sans cela,
+   un mouvement rapide sort de la forme et le glissement s'arrête net au
+   milieu du geste, sans erreur.                                             */
+var prise = null, ptSVG = null;
+function versSVG(e) {
+  if (!ptSVG) ptSVG = svg.createSVGPoint();
+  ptSVG.x = e.clientX; ptSVG.y = e.clientY;
+  var m = svg.getScreenCTM();
+  return m ? ptSVG.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+}
+var surbrillance = [];
+function montrerCibles(id) {
+  effacerCibles();
+  if (!id) return;
+  emplacements(id).forEach(function (z) {
+    if (z.propre) return;                       /* sa propre place */
+    surbrillance.push(ajout("arriere", el("rect", {
+      x: z.x - z.hw, y: z.y - z.hh, width: 2 * z.hw, height: 2 * z.hh, rx: 12,
+      fill: GOLD, opacity: .16, stroke: GOLD, "stroke-width": 2,
+      "stroke-dasharray": "7 5", "pointer-events": "none" })));
+  });
+}
+function effacerCibles() {
+  surbrillance.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  surbrillance = [];
+}
+/* La zone que `deposer` accepterait — un bouton ne vise JAMAIS
+   `emplacements(id)[0]`, sinon bouton et glisser divergent (SKILL §12.16). */
+function zoneVoulue(id, type) {
+  var z = emplacements(id), i;
+  for (i = 0; i < z.length; i++) if (z[i].type === type) return z[i];
+  return null;
+}
+function brancherPrise(liste) {
+  liste.forEach(function (id) {
+    GROUPES[id].addEventListener("pointerdown", function (e) {
+      if (prise) return;                        /* verrou en PREMIÈRE ligne */
+      var r = typeof refusPrise === "function" ? refusPrise(id) : null;
+      if (r === false) return;                  /* muet : l'objet n'existe pas */
+      if (r) { signaler(r); return; }
+      e.preventDefault();
+      var p = versSVG(e), o = OBJ[id];
+      prise = { id: id, pid: e.pointerId, dx: o.x - p.x, dy: o.y - p.y,
+                x0: p.x, y0: p.y, bouge: false };
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      GROUPES[id].setAttribute("filter", "url(#ombrePrise)");
+      GROUPES[id].setAttribute("cursor", "grabbing");
+      COUCHES.drag.appendChild(GROUPES[id]);
+      montrerCibles(id);
+    });
+  });
+  svg.addEventListener("pointermove", function (e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    var p = versSVG(e);
+    if (Math.abs(p.x - prise.x0) + Math.abs(p.y - prise.y0) > 5) prise.bouge = true;
+    poser(prise.id, p.x + prise.dx, p.y + prise.dy);
+    dessiner();
+  });
+  function relacher(e) {
+    if (!prise || e.pointerId !== prise.pid) return;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    var id = prise.id, o = OBJ[id];
+    GROUPES[id].removeAttribute("filter");
+    GROUPES[id].setAttribute("cursor", "grab");
+    COUCHES.objets.appendChild(GROUPES[id]);
+    effacerCibles();
+    if (!prise.bouge) {                    /* un clic, pas un glissement */
+      prise = null; replacer(id); dessiner(); return;
+    }
+    var best = null, bd = 1e9;
+    emplacements(id).forEach(function (z) {
+      var d = Math.sqrt((o.x - z.x) * (o.x - z.x) + (o.y - z.y) * (o.y - z.y));
+      if (d < z.r && d < bd) { bd = d; best = z; }
+    });
+    prise = null;
+    deposer(id, best);
+  }
+  svg.addEventListener("pointerup", relacher);
+  svg.addEventListener("pointercancel", relacher);   /* ne PAS l'oublier */
+}
+/* Un objet qui n'a nulle part où aller revient chez lui, et le refus DIT où
+   poser. On ne laisse jamais un objet flotter. */
+function deposer(id, z) {
+  reprendreAnim();
+  if (!z) {
+    replacer(id);
+    var d = emplacements(id).filter(function (e) { return !e.propre; })
+      .map(function (e) { return e.quoi; }).join(", ou ");
+    signaler("Rien ici. " + (d ? "Poser " + d + "." : "Reposer l'objet à sa place."));
+    dessiner(); return;
+  }
+  if (z.propre) {
+    OBJ[id].place = z.type;
+    var a = ancre(id, z.type);
+    glisserVers(id, a[0], a[1], a.length > 2 ? a[2] : 0, 420);
+    succes(); avancer(); return;
+  }
+  accepter(id, z);
+}
+
+/* ==================================================================
+   G. CONSIGNE, JOURNAL, TABLEAUX
+   ==================================================================
+   Un refus tient tant qu'il n'est pas résolu, et pas une seconde de plus :
+   toute action qui ABOUTIT lève la retenue (SKILL §12.10).                  */
+var retenue = 0;
+function dire(t, fini) {
+  if (Date.now() < retenue) return;
+  var c = $("consigne");
+  c.textContent = t;
+  c.className = "consigne" + (fini ? " ok" : "");
+}
+function signaler(t) {
+  retenue = 0; dire(t, false); retenue = Date.now() + 4000;
+  noter(t, false);
+}
+function succes() { retenue = 0; }
+function noter(t, positif) {
+  var o = $("obs");
+  o.textContent = t;
+  o.className = "obs" + (positif ? " pos" : "");
+}
+function ligneTab(cells, entete) {
+  var tr = document.createElement("tr"), i, c;
+  for (i = 0; i < cells.length; i++) {
+    c = document.createElement(entete ? "th" : "td");
+    c.textContent = cells[i];
+    if (!entete && i > 0) c.className = "mes";
+    tr.appendChild(c);
+  }
+  return tr;
+}
+/* Dévoile UNE cellule, avec la valeur du YAML. Le tableau de la fiche est la
+   vérité de la fiche ; le carnet est celle de l'expérience qu'on vient de
+   faire. Les confondre serait réécrire la fiche (SKILL §6.2, §6.3). */
+function revelerCellule(k, c) {
+  if (ETAT.horsProto) return;
+  var t = $("tab"), tr = t.querySelectorAll("tr")[k + 1], v = (VAL[k] || [])[c];
+  if (!tr || !tr.children[c] || !v) return;
+  if (tr.children[c].getAttribute("data-plein") === "1") return;
+  tr.children[c].innerHTML = md(v);
+  tr.children[c].className = "";
+  tr.children[c].setAttribute("data-plein", "1");
+  ETAT.nCell++;
+  majCompteurCellules();
+}
+function revelerColonneEntiere(c) {
+  var k;
+  for (k = 0; k < N_LIG; k++) revelerCellule(k, c);
+}
+function majCompteurCellules() {
+  $("nbCell").textContent = ETAT.nCell + " / " + N_CELL;
+}
+function viderTableau() {
+  var t = $("tab"), trs = t.querySelectorAll("tr"), i, j, tds;
+  for (i = 1; i < trs.length; i++) {
+    tds = trs[i].children;
+    for (j = 0; j < tds.length; j++) {
+      tds[j].removeAttribute("data-plein");
+      if (LIG[i - 1] && LIG[i - 1][j]) {
+        tds[j].innerHTML = md(LIG[i - 1][j]); tds[j].className = "";
+      } else { tds[j].textContent = ""; tds[j].className = "vide"; }
+    }
+  }
+  ETAT.nCell = 0;
+  majCompteurCellules();
+  $("concl").classList.add("masque");
+}
+/* Quand le modèle et la fiche divergent, on le DIT — on ne le masque pas
+   (SKILL §11.5). */
+function signalerDivergence(nom, msg) {
+  if (ETAT.horsProto) return;
+  if (ETAT.divNoms.indexOf("|" + nom + "|") >= 0) return;
+  ETAT.divNoms += "|" + nom + "|";
+  ETAT.diverge += (ETAT.diverge ? "<br>" : "") + msg;
+  $("diverge").innerHTML = ETAT.diverge;
+  $("diverge").style.display = "block";
+}
+
+/* ==================================================================
+   H. LE PARCOURS D'ÉTAPES, LA CONSIGNE, LA SÉANCE
+   ================================================================== */
+function construireEtapes() {
+  var d = $("etapes"), i, e;
+  vide(d);
+  for (i = 0; i < ETAPES.length; i++) {
+    e = document.createElement("div");
+    e.innerHTML = '<span class="n">ÉTAPE ' + (i + 1) + '</span>' + ETAPES[i];
+    d.appendChild(e);
+  }
+}
+function majEtapes() {
+  var f = faits(), lis = $("etapes").children, i, actif = f.length;
+  for (i = 0; i < f.length; i++) if (!f[i]) { actif = i; break; }
+  for (i = 0; i < lis.length; i++) {
+    lis[i].className = i < actif ? "faite" : (i === actif ? "actif" : "");
+  }
+}
+function avancer(fini) {
+  dire(consigne(), !!fini);
+  majEtapes();
+  majProtocole();
+  majPanneaux();
+  if (typeof armer === "function") armer();
+}
+function majSeance() {
+  var n = $("seanceT"), j = $("seanceJ"), f = ETAT.tSeance / (DUREE_SEANCE * 60);
+  n.textContent = mmss(ETAT.tSeance);
+  j.style.width = borne(f, 0, 1) * 100 + "%";
+  n.parentNode.className = "seance" + (f > 1 ? " deborde" : "");
+}
+function construireSeance() {
+  $("seanceB").textContent = "Séance — durée prescrite par la fiche";
+  $("seanceM").textContent = DUREE_SEANCE + " min" +
+    (DONNEES.modalite ? " · " + depouille(DONNEES.modalite) : "");
+  majSeance();
+}
+/* ⚠️ SKILL §5.4 — le minuteur de séance court en temps RÉEL, jamais accéléré :
+   il mesure ce que la manipulation coûte à l'enseignant, pas ce que le modèle
+   simule. Et il SURVIT à « Recommencer ».                                   */
+function demarrerHorloge() {
+  if (HORLOGE) clearInterval(HORLOGE);
+  DERNIER = Date.now();
+  HORLOGE = setInterval(tic, 50);
+}
+function tic() {
+  var m = Date.now(), dt = Math.min(0.25, (m - DERNIER) / 1000);
+  DERNIER = m;
+  ETAT.tSeance += dt;
+  majSeance();
+  if (typeof avancerScene === "function") avancerScene(dt);
+}
+
+/* ==================================================================
+   I. LES PANNEAUX HTML COMMUNS
+   ================================================================== */
+function construireHTMLCommun() {
+  $("titre").textContent = depouille(DONNEES.titre || "");
+  $("ref").textContent = (DONNEES.id || "") + " · " + (DONNEES.niveau || "") +
+    " · " + (DONNEES.lecon || "") + " · résultats calculés";
+  $("objectif").innerHTML = md(DONNEES.objectif);
+  $("observation").innerHTML = md((DONNEES.oheric || {}).observation);
+  $("conclTxt").innerHTML = md((DONNEES.oheric || {}).conclusion || DONNEES.conclusion);
+  $("capotReserve").innerHTML = md((DONNEES.oheric || {}).interpretation);
+
+  var ul = $("materiel"), i;
+  vide(ul);
+  (DONNEES.materiel || []).forEach(function (m) {
+    var li = document.createElement("li"); li.innerHTML = md(m); ul.appendChild(li);
+  });
+  var us = $("securite");
+  vide(us);
+  (DONNEES.securite || []).forEach(function (s) {
+    var li = document.createElement("li"); li.innerHTML = md(s); us.appendChild(li);
+  });
+
+  var t = $("tab");
+  vide(t);
+  var tr = document.createElement("tr");
+  ENTETES.forEach(function (e) {
+    var th = document.createElement("th"); th.innerHTML = md(e); tr.appendChild(th);
+  });
+  t.appendChild(tr);
+  for (i = 0; i < N_LIG; i++) {
+    tr = document.createElement("tr");
+    LIG[i].forEach(function (c) {
+      var td = document.createElement("td");
+      if (c) td.innerHTML = md(c); else td.className = "vide";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  }
+  /* Le tableau des constantes se REGÉNÈRE depuis PHYS — jamais retapé dans le
+     HTML (SKILL §7.3). */
+  var ct = $("capotConst");
+  vide(ct);
+  ct.appendChild(ligneTab(["Constante", "Valeur", "Provenance"], true));
+  Object.keys(PHYS).forEach(function (c) {
+    var p = PHYS[c], a = Math.abs(p.v), s;
+    /* Une constante s'écrit avec les chiffres qu'elle mérite : la notation
+       scientifique dès qu'un zéro de tête ou de queue rendrait le nombre
+       illisible — « 0,0001 s⁻¹ » ne dit rien de 5,2 × 10⁻⁵. */
+    if (a !== 0 && (a < 0.01 || a >= 1e5)) s = sci(p.v, 2);
+    else s = nb(p.v, a >= 100 ? 0 : (a >= 1 ? 2 : 3));
+    ct.appendChild(ligneTab([p.n, s + " " + p.u, p.s]));
+  });
+  construireEtapes();
+  construireProtocole();
+  construireSeance();
+}
+
+/* ==================================================================
+   J. LES RÉGLAGES — PROTO contre REG (SKILL §11.3)
+   ==================================================================
+   `PROTO` porte les valeurs PRESCRITES par la fiche, `REG` les courantes. Dès
+   qu'un réglage s'en écarte, le tableau de la fiche cesse d'être renseigné —
+   il consigne l'expérience prescrite, pas une variante — un bandeau l'explique,
+   le carnet de mesures continue, et un bouton rétablit tout.               */
+function litCurseurs() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id);
+    if (n) REG[c.cle] = parseFloat(n.value);
+  });
+}
+function majSorties() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.out);
+    if (n) n.textContent = c.fmt(REG[c.cle]);
+  });
+}
+function horsProtocole() {
+  var k;
+  for (k in PROTO) if (Math.abs(REG[k] - PROTO[k]) > 1e-9) return true;
+  return false;
+}
+function majHorsProto() {
+  ETAT.horsProto = horsProtocole();
+  $("alerte").className = "alerte" + (ETAT.horsProto ? " on" : "");
+}
+/* ⚠️ SKILL §12.34 — un état a plusieurs reflets ; les remettre un par un en
+   oublie toujours un. On repasse par la fonction qui les tient TOUS.       */
+function reglerTout() {
+  litCurseurs();
+  majSorties();
+  majHorsProto();
+  if (typeof surReglage === "function") surReglage();
+  dessiner();
+  avancer();
+}
+function revenirProtocole() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id);
+    if (n && PROTO[c.cle] !== undefined) n.value = PROTO[c.cle];
+  });
+  reglerTout();
+}
+/* ⚠️ SKILL §12.12 — LE DÉFAUT LE PLUS SILENCIEUX DE TOUTE LA SÉRIE.
+   Avec `min="0"` et `step="0.02"`, la valeur `0.15` n'est pas sur la grille :
+   le navigateur la ramène SANS RIEN DIRE à 0,14. `REG` ne vaut alors jamais
+   `PROTO`, `horsProtocole()` rend `true` dès le chargement, `revelerCellule`
+   sort à sa première ligne — et le tableau de la fiche reste vide pendant que
+   toute la manipulation fonctionne. Le contrôle tient en dix lignes, rien
+   d'autre ne le trouve, et il PARLE.                                       */
+function verifierPasCurseurs() {
+  var mauvais = [];
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id), mi, st, v;
+    if (!n) return;
+    mi = parseFloat(n.min); st = parseFloat(n.step); v = parseFloat(n.value);
+    if (!(st > 0)) return;
+    if (Math.abs((v - mi) / st - Math.round((v - mi) / st)) > 1e-6) mauvais.push(c.id);
+  });
+  if (mauvais.length) {
+    noter("⚠ curseur hors de sa grille de pas : " + mauvais.join(", "), false);
+  }
+}
+
+/* ==================================================================
+   K. RECOMMENCER, ET DÉMARRER
+   ==================================================================
+   « Recommencer » remet l'expérience à zéro SANS toucher aux réglages : on
+   refait la même manipulation dans les mêmes conditions. Il purge toutes les
+   minuteries en attente, remet les objets à leur place et à leurs couches,
+   rend le tableau vierge, REMASQUE la conclusion — sans quoi l'élève suivant
+   trouve la réponse déjà écrite — et CONSERVE le minuteur de séance.       */
+function recommencer() {
+  purger();
+  effacerGuide();
+  arreterDeroule();        /* ni un deroule en cours */
+  ANIM_ON = true;
+  var s = ETAT.tSeance;
+  ETAT = neufEtat();
+  ETAT.tSeance = s;                     /* la séance ne se rembobine pas (§5.4) */
+  remettreScene();
+  replacerTout();
+  viderTableau();
+  var k;
+  for (k in BOUTONS) BOUTONS[k].neuf();
+  $("diverge").style.display = "none";
+  $("diverge").innerHTML = "";
+  majHorsProto();
+  if (typeof surReglage === "function") surReglage();
+  dessiner();
+  avancer();
+}
+function brancherCurseurs() {
+  CURSEURS.forEach(function (c) {
+    var n = $(c.id);
+    if (n) n.addEventListener("input", reglerTout);
+  });
+  var b = $("bProto");
+  if (b) b.addEventListener("click", revenirProtocole);
+  $("rezero").addEventListener("click", recommencer);
+  $("bEtape").addEventListener("click", montrerEtape);
+  $("bFaire").addEventListener("click", function () { faireEtape(); });
+  $("bDerouler").addEventListener("click", basculerDeroule);
+  var bpf = $("pleinFaire");
+  if (bpf) bpf.addEventListener("click", function () { faireEtape(); });
+  brancherPlein();
+  if (typeof brancherPage === "function") brancherPage();
+}
+function demarrer() {
+  var cadre = $("paillasse");
+  svg = el("svg", { viewBox: "0 0 " + W + " " + H,
+                    preserveAspectRatio: "xMidYMid meet" });
+  cadre.insertBefore(svg, cadre.firstChild);
+  DEFS = svg.appendChild(el("defs", {}));
+  defsCommunes();
+  ajouterDefs();
+  ajouterCouches();
+  ETAT = neufEtat();
+  ETAT.tSeance = 0;
+  construireDecor();
+  construireScene();
+  construireHTMLCommun();
+  brancherCurseurs();
+  verifierPasCurseurs();
+  litCurseurs();
+  majSorties();
+  majHorsProto();
+  if (typeof surReglage === "function") surReglage();
+  viderTableau();
+  remettreScene();
+  replacerTout();
+  dessiner();
+  avancer();
+  demarrerHorloge();
+}
+
+/* ==================================================================
+   1. LES CONSTANTES
+   ================================================================== */
+var PHYS = {
+  P_ATM: { v: 101325, u: "Pa", n: "pression atmospherique normale",
+           s: "au niveau de la mer, 1013,25 hPa" },
+  GAMMA: { v: 1.400, u: "-", n: "rapport des chaleurs massiques de l'air sec",
+           s: "il ne sert qu'au geste RAPIDE, ou la compression est adiabatique" },
+  D_SER: { v: 0.0200, u: "m", n: "diametre interieur d'une seringue de 20 mL",
+           s: "cote courante du materiel scolaire" },
+  DP_BALLON: { v: 10000, u: "Pa", n: "surpression d'un ballon de baudruche gonfle",
+               s: "environ 100 hPa : il pousse l'air jusqu'a egaliser" },
+  D_BULLE: { v: 0.005, u: "m", n: "diametre d'une bulle au tube a degagement",
+             s: "sa vitesse d'ascension suit le regime de calotte spherique" },
+  G: { v: 9.81, u: "m/s2", n: "pesanteur", s: "valeur normale" },
+  SEUIL_F: { v: 2.0, u: "N", n: "SEUIL D'ASPECT — « aucun » effort",
+             s: "sous deux newtons, la main ne sent rien : c'est le poids de " +
+                "deux tablettes de chocolat" }
+};
+var COLONNES = ENTETES.slice(1);
+var N_COLS = COLONNES.length;
+/* Le volume prescrit se LIT dans le protocole de la fiche, jamais ici
+   (SKILL §5.2) : « tirer le piston jusqu'a la graduation 20 mL ». */
+function volumePrescrit() {
+  var p = (DONNEES.protocole || []).join(" · ");
+  var m = p.match(/(\d[\d,.]*)\s*mL(?![A-Za-zÀ-ÿ])/);
+  return m ? parseFloat(m[1].replace(",", ".")) : 20;
+}
+var V_NOM = volumePrescrit();
+var V_MAX = 32;                       /* la course du corps de pompe */
+
+/* ==================================================================
+   2. LES RÉGLAGES
+   ================================================================== */
+var PROTO = { patm: 1013, teau: 20, geste: 0 };
+var REG = { patm: 1013, teau: 20, geste: 0 };
+var CURSEURS = [
+  { id: "rPatm", out: "oPatm", cle: "patm", fmt: function (v) { return nb(v, 0) + " hPa"; } },
+  { id: "rTeau", out: "oTeau", cle: "teau", fmt: function (v) { return nb(v, 0) + " °C"; } },
+  { id: "rGeste", out: "oGeste", cle: "geste", fmt: function (v) {
+      return v ? "rapide — adiabatique" : "lent — isotherme"; } }
+];
+
+/* ==================================================================
+   3. LE SOLVEUR
+   ================================================================== */
+function pAtm() { return REG.patm * 100; }                     /* Pa */
+function section() { return Math.PI * Math.pow(PHYS.D_SER.v / 2, 2); }   /* m2 */
+/* Boyle-Mariotte : P.V = constante a temperature constante. */
+function pression(v) {
+  if (!ETAT.v0 || v <= 0) return pAtm();
+  return pAtm() * ETAT.v0 / v;
+}
+/* Le geste RAPIDE ne laisse pas la temperature s'egaliser : la pression du
+   premier instant suit la loi adiabatique, et elle depasse celle d'equilibre. */
+function pressionInstant(v) {
+  if (!ETAT.v0 || v <= 0) return pAtm();
+  if (!REG.geste) return pression(v);
+  return pAtm() * Math.pow(ETAT.v0 / v, PHYS.GAMMA.v);
+}
+function force(v) { return (pressionInstant(v) - pAtm()) * section(); }
+function temperature(v) {
+  if (!ETAT.v0 || v <= 0 || !REG.geste) return 20;
+  return (273.15 + 20) * Math.pow(ETAT.v0 / v, PHYS.GAMMA.v - 1) - 273.15;
+}
+/* ⚠ LE MOT DE LA FICHE SORT DE LA FORCE, il n'est pas ecrit. Et il ne depend
+   NI du selecteur de vitesse NI du temps de reaction : le signe de la force
+   est le meme dans les deux regimes.                                       */
+function effortDe(v) {
+  var f = (pression(v) - pAtm()) * section();
+  if (Math.abs(f) < PHYS.SEUIL_F.v) return "aucun";
+  return f > 0 ? "résistance croissante" : "le piston est aspiré";
+}
+function phenomeneDe(v) {
+  if (!ETAT.v0) return "—";
+  if (Math.abs(v - ETAT.v0) < 0.6) return "—";
+  return v < ETAT.v0 ? "compression" : "expansion (détente)";
+}
+/* La consigne de securite de la fiche, CHIFFRÉE : « ne pas comprimer au-dela
+   de la moitie du volume ». C'est elle qui borne la course, et la page le dit. */
+function vMinSecurite() { return ETAT.bouche ? ETAT.v0 / 2 : 0; }
+/* Magnus-Tetens : la pression de vapeur saturante de l'eau. */
+function pSat(tc) { return 610.94 * Math.exp(17.625 * tc / (tc + 243.04)); }
+function fractionVapeur() { return pSat(REG.teau) / pAtm(); }
+/* Regime de calotte spherique : la vitesse d'ascension d'une bulle. */
+function vitesseBulle() { return 0.71 * Math.sqrt(PHYS.G.v * PHYS.D_BULLE.v); }
+function dureeMontee() { return (HAUT_EAU / 1000) / vitesseBulle(); }   /* s */
+/* La lecture sur la seringue : une division vaut 1 mL, l'oeil partage
+   l'intervalle jusqu'au cinquieme, et le resultat s'ecrit SANS decimale —
+   une division de 1 mL n'en justifie aucune (SKILL §12.21). */
+function lireVolume(v) { return Math.round(v * 2) / 2; }
+function ecrireVolume(v) { return nb(Math.round(v), 0); }
+
+/* ==================================================================
+   4. L'ÉTAT
+   ==================================================================
+   ⚠ SKILL §12.17 — toute cle lue dans le code figure ici.                 */
+function neufEtat() {
+  return { tSeance: 0, nCell: 0, horsProto: false, diverge: "", divNoms: "",
+           eauCuve: 0, retournee: false, relie: false, sous: false,
+           recueilli: 0, bulle: 0, bulleOn: false,
+           eauVue: 0, recVu: 0,
+           v: 0, vVu: 0, v0: 0, bouche: false, ressort: false,
+           releve: [false, false, false], mes: [null, null, null],
+           extreme: 0, dernier: "" };
+}
+
+/* ==================================================================
+   5. GÉOMÉTRIE
+   ==================================================================
+   ⚠ Zones interdites, remesurees sur cette page a 1900 x 900 : consigne
+   x 238..882 y <= 110 ; journal x 14..272 y <= 150 ; boutons ronds x >= 1000
+   y <= 62. Le point le plus haut de la scene est le fond de l'eprouvette
+   retournee, a y = 171, et son intitule a 157 : a droite du journal, donc,
+   et sous la consigne.                                                     */
+var W = 1120, H = 760;
+var BANC = 566, Y_BOUTONS = 690;
+var ECH = 1.5;                        /* le poste sur cuve : 1,5 unite / mm */
+var ECH_S = 3.0;                      /* LA SERINGUE EST GROSSIE DEUX FOIS  */
+var CUVE = { L: 200, Hc: 90, x: 300, eau: 74 };            /* mm */
+var EPR = { d: 26, haut: 250, x: 350, bouche: 546 };        /* mm, sauf x/bouche */
+var HAUT_EAU = 150;                   /* mm parcourus par une bulle */
+/* ⚠ SKILL §12.49 — une place se lit sur le BORD du receveur, elle ne se regle
+   pas a l'oeil. Le repos de l'eprouvette se deduit du bord gauche de la cuve
+   et de son propre rayon : posee a 150, elle se tenait DANS la paroi.      */
+var X_EPR_REPOS = 300 - 200 * 1.5 / 2 - 26 * 1.5 / 2 - 22;
+var SER = { x0: 646, y: 502, h: 60 }; /* le corps de pompe, pose sur le banc */
+var BALLON0 = { x: 528, y: 566 }, RACCORD = { x: 612, y: 508 };
+var BOUT0 = { x: 470, y: 556 }, BOUCHON0 = { x: 1075, y: 556 };
+var Y_ETIQ = { epr: 157, cuve: 418, ballon: 452, seringue: 470, bouchon: 583 };
+function uParmL() { return 1000 / (Math.PI * Math.pow(PHYS.D_SER.v * 500, 2)) * ECH_S; }
+function xDeVol(v) { return SER.x0 + v * uParmL(); }
+function volDeX(x) { return (x - SER.x0) / uParmL(); }
+function yPiston() { return SER.y + SER.h / 2; }
+
+/* ==================================================================
+   6. LES DÉFS
+   ================================================================== */
+function ajouterDefs() {
+  var g;
+  g = el("linearGradient", { id: "plateau", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#eef2f6" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#cfd8e2" }));
+  DEFS.appendChild(g);
+  g = el("radialGradient", { id: "baudruche", cx: .34, cy: .28, r: .85 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#ffd7a0" }));
+  g.appendChild(el("stop", { offset: .45, "stop-color": "#f0904f" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#b4530f" }));
+  DEFS.appendChild(g);
+  g = el("linearGradient", { id: "piston", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.appendChild(el("stop", { offset: 0, "stop-color": "#8d97a5" }));
+  g.appendChild(el("stop", { offset: .3, "stop-color": "#e7ecf1" }));
+  g.appendChild(el("stop", { offset: 1, "stop-color": "#79838f" }));
+  DEFS.appendChild(g);
+}
+
+/* ==================================================================
+   7. LE DÉCOR
+   ================================================================== */
+function construireDecor() {
+  ajout("fond", el("rect", { x: 0, y: 0, width: W, height: BANC, fill: "url(#mur)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC, width: W, height: 30, fill: "url(#bois)" }));
+  ajout("fond", el("rect", { x: 0, y: BANC + 30, width: W, height: H - BANC - 30,
+                             fill: "url(#banc)" }));
+  ajout("fond", el("line", { x1: 0, y1: BANC, x2: W, y2: BANC,
+                             stroke: "#8a6a2a", "stroke-width": 2 }));
+  ajout("fond", el("rect", { x: 0, y: Y_BOUTONS - 34, width: W, height: 68,
+                             fill: "#12203a", opacity: .07 }));
+}
+
+/* ==================================================================
+   8. LES POSTES
+   ================================================================== */
+var VUE = { bulles: [] };
+
+function construireCuve() {
+  var L = CUVE.L * ECH, Hc = CUVE.Hc * ECH, x = CUVE.x, y = BANC, e = 4;
+  var gA = ajout("arriere", el("g", {})), gV = ajout("avant", el("g", {}));
+  ombreAuSol(x, L / 2, .3);
+  VUE.eauCuve = gA.appendChild(el("rect", { x: x - L / 2, y: y, width: L, height: 0,
+    fill: "url(#eau)", opacity: .86 }));
+  gV.appendChild(el("path", {
+    d: "M " + pt(x - L / 2 - e, y - Hc) + " L " + pt(x - L / 2 - e, y + e) +
+       " L " + pt(x + L / 2 + e, y + e) + " L " + pt(x + L / 2 + e, y - Hc) +
+       " L " + pt(x + L / 2, y - Hc) + " L " + pt(x + L / 2, y) +
+       " L " + pt(x - L / 2, y) + " L " + pt(x - L / 2, y - Hc) + " Z",
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2.4,
+    "stroke-linejoin": "round" }));
+  gV.appendChild(el("path", { d: "M " + pt(x - L / 2 + 12, y - Hc + 16) + " L " +
+    pt(x - L / 2 + 12, y - 14), fill: "none", stroke: "#ffffff", "stroke-width": 3.6,
+    opacity: .6, "stroke-linecap": "round" }));
+}
+/* L'ÉPROUVETTE RETOURNÉE. Son fond est en haut, sa bouche en bas, sous l'eau :
+   c'est la seule chose qui permette au gaz de s'y accumuler en chassant l'eau
+   vers le bas — et c'est pour cela que la fiche dit « sans bulle ».        */
+function dessinerEprouvette(g) {
+  var d = EPR.d * ECH, h = EPR.haut * ECH, m = h / 2, r = d / 2;
+  /* ⚠ ELLE SE DESSINE AUTOUR DE SON CENTRE. Dessinee autour de sa bouche, la
+     tourner de 180° l'aurait envoyee sous la paillasse : une rotation ne
+     deplace pas ce qui est a son origine. Fond FERMÉ en +m, bouche OUVERTE
+     en -m ; retournee, les deux echangent leur place a l'ecran, et rien
+     d'autre ne change. */
+  g.appendChild(el("rect", { x: -r - 8, y: -m, width: d + 16, height: h, rx: 8,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  VUE.eauEpr = g.appendChild(el("rect", { x: -r, y: -m, width: d, height: h,
+    fill: "url(#eau)", opacity: .86 }));
+  VUE.gazEpr = g.appendChild(el("rect", { x: -r, y: m, width: d, height: 0,
+    fill: "#eaf6fb", opacity: .75 }));
+  g.appendChild(el("path", { d: "M " + pt(-r, -m) + " L " + pt(-r, m - 10) +
+    " A " + r.toFixed(1) + " 10 0 0 0 " + pt(r, m - 10) + " L " + pt(r, -m),
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2.2,
+    "stroke-linejoin": "round" }));
+  g.appendChild(el("path", { d: "M " + pt(-r + 5, -m + 34) + " L " +
+    pt(-r + 5, m - 40), fill: "none", stroke: "#ffffff", "stroke-width": 3,
+    opacity: .6, "stroke-linecap": "round" }));
+}
+function dessinerBallon(g) {
+  g.appendChild(el("rect", { x: -40, y: -104, width: 80, height: 110, rx: 12,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  g.appendChild(el("ellipse", { cx: 0, cy: -60, rx: 34, ry: 42, fill: "url(#baudruche)",
+    stroke: "#8d3f07", "stroke-width": 1.6 }));
+  g.appendChild(el("path", { d: "M -9 -22 L 9 -22 L 6 4 L -6 4 Z", fill: "#c9601a",
+    stroke: "#8d3f07", "stroke-width": 1.4 }));
+  g.appendChild(el("ellipse", { cx: -12, cy: -74, rx: 9, ry: 13, fill: "#ffffff",
+    opacity: .5, transform: "rotate(-22 -12 -74)" }));
+}
+function dessinerBout(g) {
+  g.appendChild(el("rect", { x: -16, y: -18, width: 32, height: 34, rx: 8,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  g.appendChild(el("path", { d: "M -6 -12 L 6 -12 L 4 10 L -4 10 Z", fill: "#c9d2dc",
+    stroke: "#79838f", "stroke-width": 1.4 }));
+  g.appendChild(el("ellipse", { cx: 0, cy: -12, rx: 6.5, ry: 2.6, fill: "#e7ecf1",
+    stroke: "#79838f", "stroke-width": 1.2 }));
+}
+function dessinerBouchon(g) {
+  g.appendChild(el("rect", { x: -16, y: -18, width: 32, height: 32, rx: 7,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  g.appendChild(el("path", { d: "M -11 -12 L 11 -12 L 8 10 L -8 10 Z", fill: "#c2775f",
+    stroke: "#8d4f3c", "stroke-width": 1.5 }));
+  g.appendChild(el("ellipse", { cx: 0, cy: -12, rx: 11, ry: 3.4, fill: "#d99277",
+    stroke: "#8d4f3c", "stroke-width": 1.3 }));
+}
+/* LE PISTON. Son groupe porte le disque, la tige et l'appui du pouce ; sa
+   plaque de prehension couvre les trois (SKILL §12.38).                    */
+function dessinerPiston(g) {
+  var h = SER.h;
+  g.appendChild(el("rect", { x: -8, y: -h / 2 - 10, width: 104, height: h + 20, rx: 10,
+    fill: "#ffffff", "fill-opacity": 0.001 }));
+  g.appendChild(el("rect", { x: -6, y: -h / 2 + 2, width: 15, height: h - 4, rx: 4,
+    fill: "url(#piston)", stroke: "#5a6474", "stroke-width": 1.5 }));
+  g.appendChild(el("rect", { x: 9, y: -7, width: 72, height: 14, rx: 5,
+    fill: "url(#piston)", stroke: "#5a6474", "stroke-width": 1.3 }));
+  g.appendChild(el("rect", { x: 78, y: -h / 2 - 4, width: 13, height: h + 8, rx: 5,
+    fill: "url(#piston)", stroke: "#5a6474", "stroke-width": 1.5 }));
+}
+
+function construireScene() {
+  var i, L = CUVE.L * ECH, x, y0, y1;
+  construireCuve();
+  titrePoste(CUVE.x, Y_ETIQ.cuve, "Cristallisoir");
+  titrePoste(EPR.x, Y_ETIQ.epr, "Éprouvette retournée");
+  titrePoste(BALLON0.x, Y_ETIQ.ballon, "Ballon gonflé d'air");
+  titrePoste(SER.x0 + 170, Y_ETIQ.seringue,
+             "Seringue de " + nb(V_NOM, 0) + " mL — grossie deux fois");
+  txt("avant", BOUCHON0.x, Y_ETIQ.bouchon, "bouchon",
+      { taille: 9.5, couleur: INK, halo: true });
+
+  /* le tube a degagement : un trait qui RELIT les deux bouts, jamais deux
+     dessins voisins (SKILL §12.18) */
+  VUE.tube = ajout("fils", el("path", { d: "", fill: "none", stroke: "#8a94a4",
+    "stroke-width": 6, "stroke-linecap": "round" }));
+  VUE.raccord = ajout("poste", el("g", {}));
+  VUE.raccord.appendChild(el("rect", { x: RACCORD.x - 9, y: RACCORD.y - 12,
+    width: 18, height: 24, rx: 4, fill: "#aab4c0", stroke: "#79838f",
+    "stroke-width": 1.4 }));
+  VUE.raccord.appendChild(el("rect", { x: RACCORD.x - 5, y: RACCORD.y + 12,
+    width: 10, height: BANC - RACCORD.y - 12, fill: "#8a94a4" }));
+  txt("avant", RACCORD.x + 4, RACCORD.y - 20, "tube à dégagement",
+      { ancre: "start", taille: 9, couleur: GRIS, halo: true });
+
+  /* LA SERINGUE — corps de pompe, graduations, embout */
+  x = SER.x0; y0 = SER.y; y1 = SER.y + SER.h;
+  ajout("poste", el("rect", { x: x - 2, y: y1 - 4, width: xDeVol(V_MAX) - x + 26,
+    height: 8, rx: 4, fill: "#cfd8e2" }));
+  ajout("arriere", el("rect", { x: x, y: y0, width: xDeVol(V_MAX) - x, height: SER.h,
+    fill: "#f4f8fb" }));
+  VUE.air = ajout("arriere", el("rect", { x: x, y: y0, width: 0, height: SER.h,
+    fill: "#cfe9f5", opacity: .8 }));
+  VUE.embout = ajout("poste", el("path", { d: "M " + pt(x, y0 + 16) + " L " +
+    pt(x - 22, y0 + 24) + " L " + pt(x - 22, y0 + 36) + " L " + pt(x, y0 + 44) + " Z",
+    fill: "url(#verrerie)", stroke: "#7f93a6", "stroke-width": 2 }));
+  ajout("avant", el("path", { d: "M " + pt(x, y0) + " L " + pt(xDeVol(V_MAX), y0) +
+    " M " + pt(x, y1) + " L " + pt(xDeVol(V_MAX), y1) + " M " + pt(x, y0) + " L " + pt(x, y1),
+    fill: "none", stroke: "#7f93a6", "stroke-width": 2.4 }));
+  for (i = 0; i <= V_MAX; i += 1) {
+    ajout("avant", el("line", { x1: xDeVol(i), y1: y0, x2: xDeVol(i),
+      y2: y0 + (i % 5 === 0 ? 14 : 7), stroke: "#5a6474",
+      "stroke-width": i % 5 === 0 ? 1.5 : 1 }));
+    if (i % 5 === 0 && i > 0) {
+      ajout("avant", el("text", { x: xDeVol(i), y: y0 - 6, "text-anchor": "middle",
+        "font-size": 9, fill: "#5a6474", "pointer-events": "none" }, String(i)));
+    }
+  }
+  /* les bulles : six disques qui MONTENT, du bout du tube a la bouche de
+     l'eprouvette. Leur duree vient de la vitesse d'ascension calculee. */
+  for (i = 0; i < 6; i++) {
+    VUE.bulles.push(ajout("arriere", el("circle", { cx: 0, cy: 0,
+      r: PHYS.D_BULLE.v * 1000 * ECH / 2, fill: "#ffffff", opacity: 0,
+      stroke: "#9fd4e8", "stroke-width": 1.2 })));
+  }
+
+  objet("eprouvette", "banc", dessinerEprouvette);
+  objet("ballon", "banc", dessinerBallon);
+  objet("bout", "banc", dessinerBout);
+  objet("bouchon", "poste", dessinerBouchon);
+  objet("piston", "seringue", dessinerPiston);
+  brancherPrise(Object.keys(OBJ));
+
+  boutonScene(150, Y_BOUTONS, 208, 46, "Remplir le", "cristallisoir", "remplir");
+  boutonScene(382, Y_BOUTONS, 208, 46, "Ouvrir le", "ballon", "ouvrir");
+  boutonScene(614, Y_BOUTONS, 208, 46, "Pousser le", "piston", "pousser");
+  boutonScene(846, Y_BOUTONS, 208, 46, "Tirer le", "piston", "tirer");
+  brancherActe("remplir", function () { remplirCuve(); });
+  brancherActe("ouvrir", function () { ouvrirBallon(); });
+  brancherActe("pousser", function () { pousser(); });
+  brancherActe("tirer", function () { tirer(); });
+  txt("avant", 1030, Y_BOUTONS - 6, "échelles", { taille: 10, couleur: GRIS });
+  txt("avant", 1030, Y_BOUTONS + 12, "1,5 / 3,0 u par mm",
+      { taille: 12, gras: true, couleur: INK });
+}
+function objet(id, chez, dessin) {
+  var g = ajout("objets", el("g", { cursor: "grab" }));
+  GROUPES[id] = g;
+  OBJ[id] = { x: 0, y: 0, rot: 0, ech: 1, place: chez, chez: chez };
+  dessin(g);
+  return g;
+}
+
+/* ==================================================================
+   9. LES PLACES ET LES ZONES
+   ================================================================== */
+function ancre(id, place) {
+  if (id === "eprouvette") {
+    var m = EPR.haut * ECH / 2;
+    if (place === "cuve") return [EPR.x, EPR.bouche - m, 180];
+    return [X_EPR_REPOS, BANC - m, 0];
+  }
+  if (id === "ballon") {
+    if (place === "raccord") return [RACCORD.x, RACCORD.y - 6, 0];
+    return [BALLON0.x, BALLON0.y, 0];
+  }
+  if (id === "bout") {
+    if (place === "sous") return [EPR.x, EPR.bouche + 16, 180];
+    return [BOUT0.x, BOUT0.y, 0];
+  }
+  if (id === "bouchon") {
+    if (place === "embout") return [SER.x0 - 24, SER.y + 30, -90];
+    return [BOUCHON0.x, BOUCHON0.y, 0];
+  }
+  return [xDeVol(ETAT.v), yPiston(), 0];
+}
+/* ⚠ SKILL §12.16 — de la plus PETITE zone a la plus GRANDE. */
+function emplacements(id) {
+  var z = [];
+  if (id === "eprouvette") {
+    if (ETAT.eauCuve > 0.9 && !ETAT.retournee) {
+      z.push({ type: "cuve", quoi: "l'éprouvette retournée dans la cuve",
+               x: EPR.x, y: BANC - CUVE.Hc * ECH / 2, hw: 44,
+               hh: CUVE.Hc * ECH / 2, r: 150 });
+    }
+    z.push({ type: "banc", propre: true, quoi: "l'éprouvette sur la paillasse",
+             x: X_EPR_REPOS, y: BANC - EPR.haut * ECH / 2, hw: 30,
+             hh: EPR.haut * ECH / 2, r: 90 });
+    return z;
+  }
+  if (id === "ballon") {
+    if (!ETAT.relie) {
+      z.push({ type: "raccord", quoi: "le ballon sur le raccord du tube",
+               x: RACCORD.x, y: RACCORD.y, hw: 26, hh: 30, r: 120 });
+    }
+    z.push({ type: "banc", propre: true, quoi: "le ballon sur la paillasse",
+             x: BALLON0.x, y: BALLON0.y - 60, hw: 40, hh: 52, r: 110 });
+    return z;
+  }
+  if (id === "bout") {
+    if (ETAT.retournee) {
+      z.push({ type: "sous", quoi: "le bout du tube sous l'éprouvette",
+               x: EPR.x, y: EPR.bouche + 10, hw: 34, hh: 28, r: 130 });
+    }
+    z.push({ type: "banc", propre: true, quoi: "le tube sur la paillasse",
+             x: BOUT0.x, y: BOUT0.y - 8, hw: 24, hh: 24, r: 100 });
+    return z;
+  }
+  if (id === "bouchon") {
+    if (!ETAT.bouche) {
+      z.push({ type: "embout", quoi: "le bouchon sur l'orifice de la seringue",
+               x: SER.x0 - 18, y: SER.y + 30, hw: 26, hh: 24, r: 110 });
+    }
+    z.push({ type: "poste", propre: true, quoi: "le bouchon à sa place",
+             x: BOUCHON0.x, y: BOUCHON0.y, hw: 22, hh: 22, r: 100 });
+    return z;
+  }
+  /* le piston : une seule zone, toute la course. Le relachement s'y fait. */
+  z.push({ type: "course", quoi: "le piston dans son corps de pompe",
+           x: (SER.x0 + xDeVol(V_MAX)) / 2, y: yPiston(),
+           hw: (xDeVol(V_MAX) - SER.x0) / 2 + 90, hh: 90, r: 1e4 });
+  return z;
+}
+function refusPrise(id) {
+  if (id === "eprouvette" && ETAT.retournee) return false;
+  if (id === "ballon" && ETAT.relie) return false;
+  if (id === "bouchon" && ETAT.bouche) {
+    return "Le bouchon retient l'air emprisonné : l'ôter le laisserait " +
+           "s'échapper, et il n'y aurait plus rien à comprimer.";
+  }
+  if (id === "piston" && !ETAT.retournee) return null;
+  return null;
+}
+function accepter(id, z) {
+  if (id === "eprouvette" && z.type === "cuve") { retourner(); return; }
+  if (id === "ballon" && z.type === "raccord") { relier(); return; }
+  if (id === "bout" && z.type === "sous") { placerBout(); return; }
+  if (id === "bouchon" && z.type === "embout") { boucher(); return; }
+  if (id === "piston") { relacherPiston(); return; }
+  replacer(id);
+  dessiner();
+}
+
+/* ==================================================================
+   10. LES GESTES
+   ================================================================== */
+function remplirCuve() {
+  if (ETAT.eauCuve > 0.9) { signaler("Le cristallisoir est déjà plein."); return 0; }
+  ETAT.eauCuve = 1;
+  noter("Cristallisoir rempli d'eau — " + nb(CUVE.eau, 0) + " mm de profondeur.", true);
+  succes();
+  avancer();
+  ETAT.eauVue = 0;
+  animerVers(function () { return ETAT.eauVue; },
+             function (v) { ETAT.eauVue = v; }, 1, 620);
+  return 760;
+}
+function retourner() {
+  var a;
+  if (ETAT.eauCuve < 0.9) {
+    replacerAnime("eprouvette");
+    signaler("Remplir d'abord le cristallisoir : une éprouvette retournée à sec " +
+             "ne retient rien.");
+    return 0;
+  }
+  ETAT.retournee = true;
+  OBJ.eprouvette.place = "cuve";
+  noter("Éprouvette retournée, entièrement pleine d'eau, sans bulle : le gaz qui " +
+        "y entrera chassera l'eau vers le bas.", true);
+  succes();
+  avancer();
+  a = ancre("eprouvette", "cuve");
+  /* elle BASCULE sous les yeux : cent quatre-vingts degres en six cents
+     millisecondes, et non un saut d'une assiette a l'autre */
+  glisserVers("eprouvette", a[0], a[1], 180, 620);
+  return 860;
+}
+function relier() {
+  var a;
+  ETAT.relie = true;
+  OBJ.ballon.place = "raccord";
+  noter("Ballon relié au tube à dégagement — il est gonflé à " +
+        nb(PHYS.DP_BALLON.v / 100, 0) + " hPa au-dessus de l'air de la salle.", true);
+  succes();
+  avancer();
+  a = ancre("ballon", "raccord");
+  glisserVers("ballon", a[0], a[1], 0, 480);
+  return 700;
+}
+function placerBout() {
+  var a;
+  ETAT.sous = true;
+  OBJ.bout.place = "sous";
+  noter("Extrémité du tube amenée sous l'éprouvette.", true);
+  succes();
+  avancer();
+  a = ancre("bout", "sous");
+  glisserVers("bout", a[0], a[1], 180, 480);
+  return 700;
+}
+function ouvrirBallon() {
+  if (!ETAT.relie || !ETAT.sous) {
+    signaler("Relier d'abord le ballon au tube, et amener le tube sous l'éprouvette.");
+    return 0;
+  }
+  if (ETAT.recueilli > 0.9) { signaler("L'éprouvette est déjà pleine d'air."); return 0; }
+  ETAT.recueilli = 1;                          /* l'etat, tout de suite */
+  ETAT.bulleOn = true;
+  noter("L'air quitte la forme arrondie du ballon et prend la forme cylindrique " +
+        "de l'éprouvette, en chassant l'eau vers le bas.", true);
+  succes();
+  avancer();
+  /* LES BULLES MONTENT, et leur duree vient du calcul : une bulle de 5 mm
+     s'eleve a 0,157 m/s, soit 0,95 s pour les 150 mm de la cuve. */
+  var ms = Math.round(dureeMontee() * 1000);
+  ETAT.recVu = 0;
+  animerVers(function () { return ETAT.bulle; },
+             function (v) { ETAT.bulle = v; }, 3, ms * 2);
+  tard(function () {
+    animerVers(function () { return ETAT.recVu; },
+               function (v) { ETAT.recVu = v; }, 1, ms, function () {
+      ETAT.bulleOn = false;
+      dessiner();
+    });
+  }, Math.round(ms * 0.35));
+  return ms * 2 + 300;
+}
+/* ⚠ LE PISTON EST TENU À LA SOURIS : c'est `dessiner()` qui lit sa position et
+   en DÉDUIT le volume, puis le repose sur son axe. Le modele et le dessin
+   partagent ainsi le meme parametrage (SKILL §12.18) — et la course reste
+   bornee par la consigne de securite de la fiche.                          */
+function deplacerPiston(v) {
+  v = borne(lireVolume(v), vMinSecurite(), V_MAX);
+  if (!ETAT.bouche) v = borne(v, 0, V_MAX);
+  ETAT.v = v;
+  ETAT.vVu = v;
+  if (ETAT.bouche) {
+    if (v < ETAT.extreme || ETAT.extreme === 0) ETAT.extreme = v;
+  }
+  poser("piston", xDeVol(v), yPiston());
+  return v;
+}
+/* La course du piston, jouee : le volume rejoint sa valeur d'arrivee, que le
+   solveur a deja calculee. L'animation ne decide de rien (SKILL §1.2 bis). */
+function courseVers(cible, ms, fin) {
+  animerVers(function () { return ETAT.v; }, function (x) {
+    ETAT.v = borne(x, 0, V_MAX);
+    ETAT.vVu = ETAT.v;
+    poser("piston", xDeVol(ETAT.v), yPiston());
+  }, cible, ms, fin);
+}
+function relacherPiston() {
+  var v = ETAT.v, col = 0;
+  if (!ETAT.bouche) {
+    /* orifice ouvert : l'air entre ou sort librement, rien n'est emprisonne */
+    noter("Orifice ouvert : le piston reste où on le laisse, et l'air entre " +
+          "librement. Il n'y a encore rien d'emprisonné.", false);
+    succes();
+    avancer();
+    dessiner();
+    return 300;
+  }
+  if (v < ETAT.v0 - 0.6) col = 1;
+  else if (v > ETAT.v0 + 0.6) col = 2;
+  if (col) relever(col, v);
+  /* ⚠ LE PISTON REVIENT DE LUI-MÊME. Ce n'est pas une animation decorative :
+     l'equilibre est en F = 0, donc en V = V0, et la page ne fait que l'y
+     ramener. La fiche l'observe ; ici, c'est une consequence.              */
+  ETAT.ressort = true;
+  courseVers(ETAT.v0, 620, function () {
+    ETAT.ressort = false;
+    majPanneaux();
+  });
+  return 820;
+}
+function relever(col, v) {
+  var i;
+  ETAT.releve[col] = true;
+  ETAT.mes[col] = { v: v, p: pression(v), f: force(v), t: temperature(v) };
+  for (i = 0; i < 3; i++) revelerCellule(i, col + 1);
+  noter(COLONNES[col] + " : " + ecrireVolume(v) + " mL — " + phenomeneDe(v) +
+        ", " + effortDe(v) + " (" + nb(Math.abs(force(v)), 0) + " N).", true);
+  succes();
+  if (ETAT.nCell >= N_CELL) $("concl").classList.remove("masque");
+  avancer(ETAT.nCell >= N_CELL);
+}
+function boucher() {
+  var a;
+  if (Math.abs(ETAT.v - V_NOM) > 1) {
+    replacerAnime("bouchon");
+    signaler("Le protocole demande d'emprisonner " + nb(V_NOM, 0) + " mL : tirer " +
+             "le piston jusqu'à cette graduation avant d'obturer (il est à " +
+             ecrireVolume(ETAT.v) + " mL).");
+    return 0;
+  }
+  ETAT.bouche = true;
+  ETAT.v0 = ETAT.v;
+  ETAT.extreme = ETAT.v;
+  OBJ.bouchon.place = "embout";
+  relever(0, ETAT.v);
+  noter("Orifice obturé : " + ecrireVolume(ETAT.v0) + " mL d'air sont emprisonnés. " +
+        "Aucun effort n'est ressenti — la pression intérieure vaut celle de la salle.",
+        true);
+  succes();
+  avancer();
+  a = ancre("bouchon", "embout");
+  glisserVers("bouchon", a[0], a[1], -90, 460);
+  return 700;
+}
+/* Les deux boutons DOUBLENT le glisser, et passent par la MÊME fonction : la
+   cible est la valeur que la fiche releve, et la securite la borne. */
+function pousser() {
+  var cible;
+  if (!ETAT.bouche) {
+    signaler("Emprisonner d'abord l'air : tirer le piston à " + nb(V_NOM, 0) +
+             " mL, puis obturer l'orifice.");
+    return 0;
+  }
+  cible = vMinSecurite();
+  ETAT.extreme = cible;
+  relever(1, cible);                     /* l'ÉTAT d'abord (SKILL §6.2) */
+  courseVers(cible, 560, function () {
+    ETAT.ressort = true;
+    courseVers(ETAT.v0, 620, function () { ETAT.ressort = false; majPanneaux(); });
+  });
+  return 1420;
+}
+function tirer() {
+  var cible;
+  if (!ETAT.bouche) {
+    noter("Piston tiré jusqu'à la graduation " + nb(V_NOM, 0) + " mL : de l'air " +
+          "est entré par l'orifice, il reste à l'obturer.", true);
+    succes();
+    avancer();
+    courseVers(V_NOM, 560);
+    return 760;
+  }
+  cible = ETAT.v0 * 1.5;
+  relever(2, cible);
+  courseVers(cible, 560, function () {
+    ETAT.ressort = true;
+    courseVers(ETAT.v0, 620, function () { ETAT.ressort = false; majPanneaux(); });
+  });
+  return 1420;
+}
+function replacerAnime(id) {
+  var a = ancre(id, OBJ[id].place);
+  glisserVers(id, a[0], a[1], a.length > 2 ? a[2] : 0, 420);
+}
+
+/* ==================================================================
+   11. LE RENDU
+   ================================================================== */
+function dessiner() {
+  var L = CUVE.L * ECH, Hc = CUVE.Hc * ECH, he, hEau, i, ph, y, x0, x1, o, d;
+  /* ⚠ LE PISTON TENU À LA SOURIS : on lit sa position, on en deduit le volume
+     — borne par la securite —, et on le repose sur son axe. Le dessin ne
+     recopie pas le modele : c'est le modele qui relit le dessin.           */
+  if (typeof prise !== "undefined" && prise && prise.id === "piston" && !ETAT.ressort) {
+    deplacerPiston(volDeX(OBJ.piston.x));
+  }
+  hEau = CUVE.eau * ECH * ETAT.eauVue;
+  VUE.eauCuve.setAttribute("y", (BANC - hEau).toFixed(1));
+  VUE.eauCuve.setAttribute("height", hEau.toFixed(1));
+
+  he = EPR.haut * ECH;
+  d = ETAT.recVu;
+  /* l'eprouvette est RETOURNÉE : dans son repere local, tourne de 180°, le
+     gaz s'accumule du cote du fond — donc en bas du rectangle local. */
+  d = borne(d, 0, 1);
+  VUE.gazEpr.setAttribute("y", (he / 2 - he * d).toFixed(1));
+  VUE.gazEpr.setAttribute("height", (he * d).toFixed(1));
+  VUE.eauEpr.setAttribute("y", (-he / 2).toFixed(1));
+  VUE.eauEpr.setAttribute("height", (he * (1 - d)).toFixed(1));
+
+  /* le tube : il RELIT les deux bouts */
+  VUE.tube.setAttribute("d", "M " + pt(RACCORD.x, RACCORD.y + 6) + " C " +
+    pt(RACCORD.x, RACCORD.y + 70) + " " + pt(OBJ.bout.x + 40, OBJ.bout.y - 60) +
+    " " + pt(OBJ.bout.x, OBJ.bout.y - 8));
+
+  /* les bulles : elles MONTENT du bout du tube a la bouche de l'eprouvette */
+  for (i = 0; i < VUE.bulles.length; i++) {
+    if (!ETAT.bulleOn) { VUE.bulles[i].setAttribute("opacity", 0); continue; }
+    ph = (ETAT.bulle + i / VUE.bulles.length) % 1;
+    y = OBJ.bout.y - 10 - ph * (OBJ.bout.y - 10 - (EPR.bouche - he * d - 6));
+    VUE.bulles[i].setAttribute("cx", (EPR.x + (i % 2 ? 7 : -7) * (1 - ph)).toFixed(1));
+    VUE.bulles[i].setAttribute("cy", y.toFixed(1));
+    VUE.bulles[i].setAttribute("opacity", (0.9 * Math.sin(Math.PI * ph)).toFixed(2));
+  }
+
+  /* la seringue : l'air emprisonne va de l'embout a la face du piston */
+  x0 = SER.x0;
+  x1 = xDeVol(ETAT.vVu);
+  VUE.air.setAttribute("x", x0.toFixed(1));
+  VUE.air.setAttribute("width", Math.max(0, x1 - x0).toFixed(1));
+  VUE.air.setAttribute("opacity", ETAT.bouche ? .92 : .55);
+  poser("piston", xDeVol(ETAT.vVu), yPiston());
+}
+
+/* ==================================================================
+   12. LES PANNEAUX
+   ================================================================== */
+function majPanneaux() {
+  var v = ETAT.v, f, t, i, c;
+  $("lV").textContent = ETAT.bouche || v > 0 ? ecrireVolume(v) + " mL" : "—";
+  $("lV").className = "v" + (ETAT.bouche || v > 0 ? "" : " off");
+  $("lP").textContent = ETAT.bouche ? nb(pressionInstant(v) / 100, 0) + " hPa" : "—";
+  $("lP").className = "v" + (ETAT.bouche ? "" : " off");
+  f = ETAT.bouche ? force(v) : 0;
+  $("lF").textContent = ETAT.bouche ? nb(f, 1) + " N" : "—";
+  $("lF").className = "v" + (ETAT.bouche ? "" : " off");
+  $("lEff").textContent = ETAT.bouche ? effortDe(v) : "—";
+  $("lEff").className = "v" + (ETAT.bouche ? "" : " off");
+  $("lRec").textContent = ETAT.recueilli > 0
+    ? nb(100 * ETAT.recueilli, 0) + " % de l'éprouvette" : "—";
+  $("lRec").className = "v" + (ETAT.recueilli > 0 ? "" : " off");
+  $("lVap").textContent = nb(100 * fractionVapeur(), 1) + " %";
+  $("lS").textContent = nb(section() * 1e4, 2) + " cm²";
+  $("lFmax").textContent = ETAT.v0
+    ? nb((pAtm() * ETAT.v0 / (ETAT.v0 / 2) - pAtm()) * section(), 0) + " N"
+    : nb(pAtm() * section(), 0) + " N";
+
+  t = $("carnet");
+  vide(t);
+  t.appendChild(ligneTab(["Action", "volume", "pression", "force", "effort ressenti",
+                          "température"], true));
+  for (i = 0; i < 3; i++) {
+    if (!ETAT.mes[i]) {
+      t.appendChild(ligneTab([COLONNES[i] || "—", "—", "—", "—", "—", "—"]));
+      continue;
+    }
+    c = ETAT.mes[i];
+    t.appendChild(ligneTab([COLONNES[i], ecrireVolume(c.v) + " mL",
+      nb(c.p / 100, 0) + " hPa", nb(c.f, 1) + " N", effortDe(c.v),
+      nb(c.t, 0) + " °C"]));
+    if (effortDe(c.v) !== cel(2, i + 1)) {
+      signalerDivergence(COLONNES[i], "Sur <b>" + COLONNES[i] + "</b>, le modèle " +
+        "donne l'effort « " + effortDe(c.v) + " » là où la fiche écrit « " +
+        cel(2, i + 1) + " ».");
+    }
+  }
+  t.appendChild(ligneTab(["Gaz recueilli sur l'eau",
+    ETAT.recueilli > 0 ? "l'éprouvette entière" : "—", nb(REG.patm, 0) + " hPa",
+    "—", "il prend la forme du récipient",
+    nb(REG.teau, 0) + " °C — " + nb(100 * fractionVapeur(), 1) + " % de vapeur"]));
+
+  c = $("capotCst");
+  if (c && !c.children.length) {
+    c.appendChild(ligneTab(["Grandeur", "valeur", "d'où elle sort"], true));
+    c.appendChild(ligneTab(["section du piston", nb(section() * 1e4, 2) + " cm²",
+      "pi d² / 4, d = 20 mm"]));
+    c.appendChild(ligneTab(["force à V0/2", nb(pAtm() * section(), 0) + " N",
+      "(P - P_atm) x S, avec P = 2 P_atm"]));
+    c.appendChild(ligneTab(["vitesse d'une bulle", nb(vitesseBulle(), 3) + " m/s",
+      "0,71 racine(g d), d = 5 mm"]));
+    c.appendChild(ligneTab(["montée de la bulle", nb(dureeMontee(), 2) + " s",
+      "150 mm à cette vitesse"]));
+    c.appendChild(ligneTab(["vapeur à 20 °C", nb(100 * pSat(20) / 101325, 1) + " %",
+      "Magnus-Tetens, rapportée à P_atm"]));
+  }
+  if ($("eqCapot") && !$("eqCapot").textContent) {
+    $("eqCapot").textContent =
+      "P x V = constante          Boyle-Mariotte, a temperature constante\n" +
+      "P(V)  = P_atm x V0 / V     la pression de l'air emprisonne\n" +
+      "F(V)  = (P - P_atm) x S    CE QUE LA MAIN SENT — S = 3,14 cm²\n" +
+      "\n" +
+      "equilibre : F = 0, donc V = V0. LE PISTON Y REVIENT TOUT SEUL —\n" +
+      "rien n'a ete ecrit pour cela, c'est la meme equation.\n" +
+      "\n" +
+      "geste RAPIDE (adiabatique, gamma = 1,40) :\n" +
+      "   P = P_atm (V0/V)^gamma     T = T0 (V0/V)^(gamma-1)\n" +
+      "   a V0/2 : 113 °C, et 52 N au lieu de 32 N\n" +
+      "\n" +
+      "gaz recueilli sur l'eau : fraction de vapeur = p_sat(T) / P_atm\n" +
+      "bulle : v = 0,71 racine(g d) — regime de calotte spherique";
+  }
+}
+
+/* ==================================================================
+   13. LA CONSIGNE, LES ÉTAPES
+   ================================================================== */
+function consigne() {
+  if (ETAT.eauCuve < 0.9) return "Remplir le cristallisoir d'eau.";
+  if (!ETAT.retournee) return "Y retourner l'éprouvette entièrement pleine d'eau, sans bulle.";
+  if (!ETAT.relie) return "Relier le ballon gonflé d'air au tube à dégagement.";
+  if (!ETAT.sous) return "Amener l'extrémité du tube sous l'éprouvette.";
+  if (ETAT.recueilli < 0.9) return "Ouvrir le ballon et observer les bulles.";
+  if (!ETAT.bouche) {
+    return Math.abs(ETAT.v - V_NOM) > 1
+      ? "Tirer le piston jusqu'à la graduation " + nb(V_NOM, 0) + " mL."
+      : "Obturer l'orifice de la seringue avec le bouchon.";
+  }
+  if (!ETAT.releve[1]) return "Pousser le piston : lire le volume et l'effort ressenti.";
+  if (!ETAT.releve[2]) return "Relâcher le piston, puis le tirer : lire le volume et l'effort.";
+  return "Un gaz n'a ni forme propre ni volume propre : il est compressible et expansible.";
+}
+function armer() {
+  var c = etapeCourante();
+  BOUTONS.remplir.armer(c === 0 && ETAT.eauCuve < 0.9);
+  BOUTONS.ouvrir.armer(c === 2);
+  BOUTONS.pousser.armer(c === 4);
+  BOUTONS.tirer.armer(c === 5 || (c === 3 && !ETAT.bouche));
+  if (ETAT.eauCuve > 0.9) BOUTONS.remplir.fait();
+  if (ETAT.recueilli > 0.9) BOUTONS.ouvrir.fait();
+  if (ETAT.releve[1]) BOUTONS.pousser.fait();
+  if (ETAT.releve[2]) BOUTONS.tirer.fait();
+}
+function surReglage() {
+  /* ⚠ SKILL §12.19 — un curseur perime l'enregistrement : les mesures ont ete
+     prises sous une autre pression, ou a une autre temperature. On les
+     recalcule ; les gestes, eux, ne sont pas defaits (§12.32 — un curseur ne
+     defait pas ce qu'il ne commande pas : le bouchon reste en place). */
+  var i, c;
+  for (i = 0; i < 3; i++) {
+    c = ETAT.mes[i];
+    if (!c) continue;
+    c.p = pression(c.v);
+    c.f = force(c.v);
+    c.t = temperature(c.v);
+  }
+  majPanneaux();
+}
+var ETAPES = ["Remplir le cristallisoir",
+              "Retourner l'éprouvette pleine d'eau",
+              "Relier le ballon, tube sous l'éprouvette",
+              "Ouvrir le ballon : les bulles",
+              "Emprisonner 20 mL et obturer",
+              "Pousser le piston",
+              "Relâcher, puis tirer",
+              "Lire la conclusion"];
+function faits() {
+  return [ETAT.eauCuve > 0.9, ETAT.retournee, ETAT.relie && ETAT.sous,
+          ETAT.recueilli > 0.9, ETAT.bouche, ETAT.releve[1], ETAT.releve[2],
+          ETAT.nCell >= N_CELL];
+}
+function remettreScene() {
+  var k;
+  for (k in OBJ) { OBJ[k].place = OBJ[k].chez; OBJ[k].ech = 1; OBJ[k].rot = 0; }
+}
+
+/* ==================================================================
+   L. LE PROTOCOLE GUIDÉ (SKILL §12 bis)
+   ==================================================================
+   ⚠️ DEUX RÈGLES, ET ELLES SE TIENNENT.
+
+   1. L'étape courante se DÉDUIT de l'état (SKILL §11.1), jamais d'un
+      compteur. Le panneau avance donc TOUT SEUL dès que le geste est fait —
+      et il RECULE si l'on défait un geste, ce qu'un compteur ne saurait pas
+      faire.
+
+   2. « Montrer l'étape suivante » GUIDE, il n'exécute pas. Une page où
+      l'élève clique et regarde la réponse s'écrire ne manipule rien : c'est
+      le refus explicite de l'enseignant. Le bouton écrit la consigne,
+      SURLIGNE l'objet à prendre et la zone où le poser — le geste reste à
+      faire.
+
+   D'où le libellé : « MONTRER l'étape suivante », et non « Étape suivante ». */
+var guideSurb = [], guideMinuteur = null;
+function effacerGuide() {
+  guideSurb.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+  guideSurb = [];
+  if (guideMinuteur) { clearTimeout(guideMinuteur); guideMinuteur = null; }
+}
+/* Le halo bat. L'animation est SMIL et purement décorative : si le navigateur
+   ne la joue pas — c'est le cas sous le pilote —, le halo reste visible et
+   rien du guidage ne se perd. */
+function halo(x, y, w, h, r) {
+  var g = ajout("ui", el("rect", {
+    x: x, y: y, width: w, height: h, rx: r === undefined ? 12 : r,
+    fill: "none", stroke: GOLD, "stroke-width": 3.4,
+    "stroke-dasharray": "10 6", "pointer-events": "none" }));
+  g.appendChild(el("animate", { attributeName: "opacity",
+    values: "1;0.35;1", dur: "1.3s", repeatCount: "indefinite" }));
+  guideSurb.push(g);
+  return g;
+}
+/* ⚠️ SKILL §12bis.3-5 — `getBBox()` est LOCAL : sous un groupe translaté ou
+   tourné, le halo tombe à côté. On passe par la boîte écran, ramenée au
+   repère du viewBox. */
+function boiteSVG(n) {
+  if (!n) return null;
+  var r = n.getBoundingClientRect(), s = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  if (!s.width || !r.width) return null;
+  var kx = vb.width / s.width, ky = vb.height / s.height;
+  return { x: (r.left - s.left) * kx, y: (r.top - s.top) * ky,
+           w: r.width * kx, h: r.height * ky };
+}
+function surlignerObjet(id) {
+  var b = boiteSVG(GROUPES[id]);
+  if (b) { halo(b.x - 9, b.y - 9, b.w + 18, b.h + 18, 16); return; }
+  var o = OBJ[id];                              /* repli, si la mise en page manque */
+  if (o) halo(o.x - 60, o.y - 60, 120, 120, 16);
+}
+function surlignerZone(id, type) {
+  var z = zoneVoulue(id, type);
+  if (z) halo(z.x - z.hw - 6, z.y - z.hh - 6, 2 * z.hw + 12, 2 * z.hh + 12, 14);
+}
+function surlignerBouton(act) {
+  var b = BOUTONS[act];
+  if (!b) return;
+  halo(b.cx - b.w / 2 - 7, b.cy - b.h / 2 - 7, b.w + 14, b.h + 14, 13);
+}
+function surlignerHTML(id) {
+  /* ⚠️ SKILL §12bis.3-7 — un `<button>` de la colonne ne peut pas recevoir un
+     halo SVG. Contour en style en ligne, et une fermeture d'annulation :
+     un style ne se défait pas par `removeChild`. */
+  var n = $(id);
+  if (!n) return;
+  var av = n.style.boxShadow;
+  n.style.boxShadow = "0 0 0 3px " + GOLD;
+  guideSurb.push({ parentNode: { removeChild: function () { n.style.boxShadow = av; } } });
+}
+
+/* Un predicat par ligne du protocole, dans SON ordre. Les six sont monotones :
+   aucun ne se defait plus tard, et « Recommencer » est le seul chemin qui les
+   remette a faux — tous a la fois.
+
+   ⚠ L'etape 1 et l'etape 4 demandent chacune DEUX gestes (remplir puis
+   retourner ; tirer puis obturer). Elles restent courantes entre les deux, et
+   c'est l'AIDE qui porte le compte — c'est plus honnete qu'un compteur, et
+   cela se voit. */
+var GUIDE = [
+  { fait: function () { return ETAT.retournee; },
+    aide: function () {
+      if (ETAT.eauCuve < 0.9) {
+        return "<b>1 sur 2.</b> Remplir le cristallisoir d'eau — le bouton le " +
+          "fait d'un geste, comme le protocole.";
+      }
+      return "<b>2 sur 2.</b> Glisser l'<b>éprouvette</b> dans la cuve : elle " +
+        "s'y retourne, bouche en bas, entièrement pleine d'eau.";
+    },
+    montre: function () {
+      if (ETAT.eauCuve < 0.9) { surlignerBouton("remplir"); return; }
+      surlignerObjet("eprouvette");
+      surlignerZone("eprouvette", "cuve");
+    } },
+
+  { fait: function () { return ETAT.relie && ETAT.sous; },
+    aide: function () {
+      if (!ETAT.relie) {
+        return "<b>1 sur 2.</b> Glisser le <b>ballon gonflé</b> sur le raccord " +
+          "du tube à dégagement.";
+      }
+      return "<b>2 sur 2.</b> Amener l'<b>extrémité du tube</b> sous la bouche " +
+        "de l'éprouvette.";
+    },
+    montre: function () {
+      if (!ETAT.relie) {
+        surlignerObjet("ballon");
+        surlignerZone("ballon", "raccord");
+        return;
+      }
+      surlignerObjet("bout");
+      surlignerZone("bout", "sous");
+    } },
+
+  { fait: function () { return ETAT.recueilli > 0.9; },
+    aide: "Ouvrir le ballon. Les bulles mettent <b>0,95 s</b> à monter — la " +
+          "durée sort de leur vitesse d'ascension, elle n'est pas choisie.",
+    montre: function () { surlignerBouton("ouvrir"); } },
+
+  { fait: function () { return ETAT.bouche; },
+    aide: function () {
+      if (Math.abs(ETAT.v - V_NOM) > 1) {
+        return "<b>1 sur 2.</b> Tirer le <b>piston</b> jusqu'à la graduation " +
+          nb(V_NOM, 0) + " mL — le glisser marche, le bouton aussi.";
+      }
+      return "<b>2 sur 2.</b> Obturer l'orifice avec le <b>bouchon</b> : c'est " +
+        "lui qui emprisonne l'air.";
+    },
+    montre: function () {
+      if (Math.abs(ETAT.v - V_NOM) > 1) {
+        surlignerObjet("piston");
+        surlignerBouton("tirer");
+        return;
+      }
+      surlignerObjet("bouchon");
+      surlignerZone("bouchon", "embout");
+    } },
+
+  { fait: function () { return ETAT.releve[1]; },
+    aide: function () {
+      return "Pousser le piston. La page <b>refuse</b> d'aller sous " +
+        nb(vMinSecurite(), 0) + " mL : c'est la consigne de sécurité de la " +
+        "fiche, et elle vaut " + nb(pAtm() * section(), 0) + " N sur la main.";
+    },
+    montre: function () { surlignerObjet("piston"); surlignerBouton("pousser"); } },
+
+  { fait: function () { return ETAT.releve[2]; },
+    aide: "Relâcher — le piston revient tout seul à sa position de départ —, " +
+          "puis le tirer. Cette fois, il est <b>aspiré</b>.",
+    montre: function () { surlignerObjet("piston"); surlignerBouton("tirer"); } }
+];
+
+/* L'étape courante : la PREMIÈRE qui n'est pas faite. Déduite, jamais
+   comptée — c'est ce qui lui permet de reculer quand on défait un geste. */
+function etapeCourante() {
+  var i, n = Math.min(GUIDE.length, (DONNEES.protocole || []).length);
+  for (i = 0; i < n; i++) if (!GUIDE[i].fait()) return i;
+  return n;
+}
+function texteAide(i) {
+  if (i >= GUIDE.length) return "Le protocole est terminé.";
+  var a = GUIDE[i].aide;
+  return typeof a === "function" ? a() : a;
+}
+/* ==================================================================
+   LE PLEIN ÉCRAN
+   ==================================================================
+   C'est par lui qu'on projette la scène au tableau, premier usage de cette
+   page en classe. On agrandit le CADRE, pas la mise en page.             */
+function brancherPlein() {
+  var b = $("plein"), cadre = $("paillasse");
+  if (!b || !cadre) return;
+  b.addEventListener("click", function () {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else if (cadre.requestFullscreen) {
+      cadre.requestFullscreen();
+    } else if (cadre.webkitRequestFullscreen) {
+      cadre.webkitRequestFullscreen();
+    }
+  });
+  document.addEventListener("fullscreenchange", function () {
+    var plein = !!document.fullscreenElement;
+    b.textContent = plein ? "⛶ Quitter" : "⛶";
+    b.title = plein ? "Quitter le plein écran"
+                    : "Plein écran — pour projeter au tableau";
+  });
+}
+function construireProtocole() {
+  var ol = $("protocole"), pr = DONNEES.protocole || [], i, li;
+  if (!ol) return;
+  vide(ol);
+  for (i = 0; i < pr.length; i++) {
+    li = document.createElement("li");
+    li.innerHTML = md(pr[i]);
+    ol.appendChild(li);
+  }
+  $("protoTot").textContent = pr.length;
+}
+function majProtocole() {
+  var ol = $("protocole"), c = etapeCourante(), i, b;
+  if (!ol || !ol.children.length) return;
+  for (i = 0; i < ol.children.length; i++) {
+    ol.children[i].className = i < c ? "faite" : (i === c ? "actif" : "");
+  }
+  $("protoNum").textContent = Math.min(c + 1, ol.children.length);
+  if (ol.children[c] && ol.scrollHeight > ol.clientHeight) {
+    ol.scrollTop = Math.max(0, ol.children[c].offsetTop - ol.offsetTop - 46);
+  }
+  $("protoAide").innerHTML = texteAide(c);
+  b = $("bEtape");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Protocole terminé" : "Montrer l'étape suivante";
+  }
+  /* Le bouton qui exécute, et le déroulé. Les deux premiers se ferment
+     pendant un déroulé : deux gestes concurrents sur la même étape se
+     marcheraient dessus. */
+  b = $("bFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.textContent = c >= GUIDE.length ? "Terminé" : "Faire l'étape";
+  }
+  b = $("bDerouler");
+  if (b) {
+    b.disabled = !deroule && c >= GUIDE.length;
+    b.textContent = deroule ? "Arrêter le déroulé" : "Dérouler jusqu'au bout";
+    b.className = "sec" + (deroule ? " on" : "");
+  }
+  /* La flèche du cadre : en plein écran, c'est le seul moyen d'avancer, et
+     elle porte le numéro de l'étape pour qu'on sache où l'on en est. */
+  b = $("pleinFaire");
+  if (b) {
+    b.disabled = deroule || c >= GUIDE.length;
+    b.title = c >= GUIDE.length
+      ? "Protocole terminé"
+      : "Faire l'étape " + (c + 1) + " sur " + GUIDE.length;
+    var pn = $("pleinNum");
+    if (pn) pn.textContent = Math.min(c + 1, GUIDE.length) + "/" + GUIDE.length;
+  }
+}
+/* Le bouton : il écrit la consigne et MONTRE. Il ne touche à aucun état. */
+function montrerEtape() {
+  var c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return;
+  dire(consigne(), false);
+  GUIDE[c].montre();
+  guideMinuteur = setTimeout(function () { effacerGuide(); }, 6000);
+}
+
+
+/* ==================================================================
+   LE BOUTON QUI EXÉCUTE, ET LE DÉROULÉ
+   ==================================================================
+   Demande de l'enseignant : la paillasse est trop longue à manipuler pour
+   arriver au résultat en classe. D'où « Faire l'étape », à côté de
+   « Montrer l'étape suivante » qui ne change pas, et « Dérouler jusqu'au
+   bout », qui enchaîne ce qui reste.
+
+   ⚠ LA RÈGLE. `faire()` n'écrit AUCUN résultat : il appelle les fonctions du
+   geste lui-même — un vrai clic sur le bouton de scène, `deposer()` du
+   glisser-déposer, `appliquerOutil()` des outils. C'est le modèle qui
+   produit les nombres, exactement comme sous la main de l'élève.
+
+   ET CELA SE VÉRIFIE TOUT SEUL : `fait()` DÉDUIT l'étape de l'état. Un
+   `faire()` qui aurait triché laisserait son étape non cochée.
+
+   « Montrer » n'est pas remplacé : il reste le geste par défaut (§1.1). */
+
+var deroule = false, derouleN = 0, derouleTotal = 0;
+var DEROULE_PATIENCE = 12000, DEROULE_STALL = 3, DEROULE_MAX = 60;
+
+/* Presser un bouton de scène comme l'élève le presse : un vrai clic sur le
+   nœud, donc le même écouteur, verrous et refus du protocole compris. */
+function presserBouton(act) {
+  var n = svg.querySelector('[data-act="' + act + '"]');
+  if (!n) return false;
+  n.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  return true;
+}
+/* Un bouton de la colonne HTML — l'éphéméride, par exemple. */
+function presserHTML(id) {
+  var b = $(id);
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+}
+/* L'emplacement de dépôt d'un objet, tel qu'`emplacements()` le propose DANS
+   L'ÉTAT COURANT — jamais une position écrite en dur. Si le protocole ne
+   l'autorise pas encore, il n'y en a pas, et le geste ne se fait pas. */
+function zoneDe(quoi, type) {
+  if (typeof emplacements !== "function") return null;
+  var z = emplacements(quoi) || [], i;
+  for (i = 0; i < z.length; i++) if (!type || z[i].type === type) return z[i];
+  return null;
+}
+function plusTard(fn, ms) {
+  return (typeof tard === "function") ? tard(fn, ms) : setTimeout(fn, ms);
+}
+/* ⚠ `noter` N'EST PAS UNIVERSEL. E3AC-19 nomme cette fonction `note(s)` et
+   confie l'affichage à `redessiner()` : le module y levait
+   `noter is not defined` deux fois par séance. On passe par un relais. */
+function direDeroule(t) {
+  if (typeof noter === "function") { noter(t, false); return; }
+  if (typeof note === "function") {
+    note(t);
+    if (typeof redessiner === "function") redessiner();
+    return;
+  }
+  if (typeof dire === "function") dire(t, false);
+}
+/* Pousser le temps de la page à sa vitesse maximale — par le SÉLECTEUR que
+   l'élève a sous la main, jamais par une variable interne. Une étape qui
+   demande d'attendre deux minutes ne s'attend pas en classe. */
+function accelererTemps() {
+  var bs = document.querySelectorAll('#vit button[data-v]'), i, v = -1, best = null;
+  for (i = 0; i < bs.length; i++) {
+    if (+bs[i].getAttribute("data-v") > v) {
+      v = +bs[i].getAttribute("data-v"); best = bs[i];
+    }
+  }
+  if (!best || best.className.indexOf("on") >= 0) return false;
+  best.click();
+  return true;
+}
+
+/* Exécuter l'étape courante. Rend le délai MINIMUM à lui laisser. */
+function faireEtape(c) {
+  var f, d;
+  if (c === undefined || c === null) c = etapeCourante();
+  effacerGuide();
+  if (c >= GUIDE.length) return 0;
+  f = GUIDE[c].faire;
+  d = typeof f === "function" ? f() : 0;
+  return d || 0;
+}
+
+/* ⚠ L'EMPREINTE — ce qui dit que quelque chose a bougé.
+   L'indice d'étape ne suffit pas : une étape demande parfois plusieurs
+   gestes, et reste courante entre-temps. L'AIDE porte le compte, et
+   `noter()` écrit dans `#obs` à chaque geste qui prend. On guette les trois,
+   et l'on attend que l'ÉTAT bouge plutôt qu'un délai fixe : certaines étapes
+   exposent une coupelle plusieurs secondes, d'autres ne coûtent rien. */
+function empreinte() {
+  var c = etapeCourante(), o = $("obs");
+  return c + "|" + texteAide(c) + "|" + (o ? o.textContent : "");
+}
+
+function arreterDeroule() {
+  deroule = false; derouleN = 0;
+  /* ⚠ ARRÊTER LE DÉROULÉ DOIT ARRÊTER LE GESTE EN COURS.
+     Sans cela, sur une page animée, le chariot finit sa course tout seul et
+     renseigne une colonne que l'enseignant venait d'interrompre — mesuré sur
+     E3AC-11 : l'étape passait de 4 à 7 dans les 2,6 s suivant l'arrêt.
+     L'animation est coupée où elle en est ; sa fonction de fin n'est pas
+     appelée, donc aucun résultat n'est écrit. */
+  if (typeof ANIM_ON !== "undefined") ANIM_ON = false;
+  majProtocole();
+}
+function basculerDeroule() {
+  if (deroule) {
+    arreterDeroule();
+    direDeroule("Déroulé interrompu — la main revient à la classe.");
+    return;
+  }
+  deroule = true; derouleN = 0; derouleTotal = 0;
+  majProtocole();
+  suiteDuDeroule();
+}
+function suiteDuDeroule() {
+  if (!deroule) return;
+  /* Plafond dur : quoi qu'il arrive, un déroulé ne peut pas enchaîner
+     indéfiniment — un refus qui se répète ne doit pas tourner en boucle. */
+  if (++derouleTotal > DEROULE_MAX) {
+    arreterDeroule();
+    direDeroule("Déroulé arrêté : trop de gestes enchaînés sans arriver au terme.");
+    return;
+  }
+  var c = etapeCourante();
+  if (c >= GUIDE.length) {
+    arreterDeroule();
+    /* ⚠ NE PAS APPELER `avancer()` ICI. Il n'est pas universel : certaines
+       pages ne l'ont pas — `avancer is not defined`, et toute la séance part
+       en erreur JS —, et E3AC-13 en a un HOMONYME, `avancer(x, v, a, t)`,
+       qui est la cinématique de la bille : l'appel ne lève rien et ne
+       rafraîchit rien. On ne se sert que de ce dont on est sûr. */
+    majProtocole();
+    if (typeof dire === "function" && typeof consigne === "function") {
+      dire(consigne(), true);
+    }
+    return;
+  }
+  var av = empreinte(), rendu = faireEtape(c), t0 = Date.now();
+  /* ⚠ UN DÉLAI NÉGATIF DIT « J'ATTENDS », ET CE N'EST PAS UN BLOCAGE.
+     Certaines étapes font passer le temps : une exposition de cinq minutes,
+     une macération d'une semaine. Le geste n'a alors rien à presser, et
+     l'état ne bouge pas — ce qu'un compteur d'immobilité prend pour une
+     panne. Le geste le dit en rendant son délai NÉGATIF : on repasse, aussi
+     souvent qu'il le faut, sans jamais conclure que l'étape est morte. */
+  var patiente = rendu < 0, attente = Math.abs(rendu);
+  /* ⚠ LE DÉLAI RENDU PAR `faire()` NE BLOQUE PAS LA DÉTECTION.
+     Une étape qui annonce cinq minutes d'exposition n'est pas immobile
+     pendant cinq minutes : dès que l'état bouge, on enchaîne. Le délai ne
+     sert qu'à deux choses — laisser une animation se poser (le plancher),
+     et repousser d'autant le moment où l'on déclare l'étape bloquée (le
+     plafond). Les confondre faisait attendre trois cents secondes une
+     chose qui en prenait trente. */
+  var plancher = Math.min(attente, 1200);
+  var plafond = Math.max(DEROULE_PATIENCE, attente + 4000);
+  function guetter() {
+    if (!deroule) return;
+    var ecoule = Date.now() - t0;
+    if (ecoule >= plancher && empreinte() !== av) { derouleN = 0; suiteDuDeroule(); return; }
+    if (ecoule > plafond) {
+      /* Rien n'a bougé de tout ce temps : le geste ne prend pas, ou le
+         protocole le refuse. On s'arrête EN LE DISANT plutôt que de tourner
+         en rond en silence — sauf si le geste a annoncé qu'il attendait. */
+      if (!patiente) derouleN++;
+      if (derouleN >= DEROULE_STALL) {
+        arreterDeroule();
+        direDeroule("Déroulé arrêté : l'étape " + (c + 1) + " du protocole n'avance plus.");
+        return;
+      }
+      suiteDuDeroule();
+      return;
+    }
+    plusTard(guetter, 150);
+  }
+  plusTard(guetter, 100);
+}
+
+/* Les gestes, dans l'ordre du protocole. ATTACHÉS au GUIDE plutôt qu'écrits
+   dedans : un seul point d'insertion par page, et une entrée restée sans
+   geste se voit au balayage. */
+[
+  /* 1. REMPLIR, PUIS RETOURNER. Deux gestes pour une ligne de protocole :
+     l'etape reste courante entre les deux, et l'aide porte le compte. */
+  function () {
+    var z;
+    if (ETAT.eauCuve < 0.9) { presserBouton("remplir"); return 800; }
+    z = zoneDe("eprouvette", "cuve");
+    if (z) { deposer("eprouvette", z); return 880; }
+    return 0;
+  },
+
+  /* 2. LE BALLON SUR LE RACCORD, PUIS LE TUBE SOUS L'ÉPROUVETTE. Deux
+     GLISSERS, sur les zones qu'`emplacements()` propose dans l'etat courant. */
+  function () {
+    var z;
+    if (!ETAT.relie) {
+      z = zoneDe("ballon", "raccord");
+      if (z) { deposer("ballon", z); return 720; }
+      return 0;
+    }
+    z = zoneDe("bout", "sous");
+    if (z) { deposer("bout", z); return 720; }
+    return 0;
+  },
+
+  /* 3. OUVRIR LE BALLON. Le protocole l'ecrit d'un seul trait ; le delai rendu
+     est celui que met la bulle a monter, et il est CALCULÉ. */
+  function () { return ouvrirBallon(); },
+
+  /* 4. TIRER À 20 mL, PUIS OBTURER. Le bouton `tirer` passe par la meme
+     fonction que le glisser du piston. */
+  function () {
+    var z;
+    if (Math.abs(ETAT.v - V_NOM) > 1) { presserBouton("tirer"); return 460; }
+    z = zoneDe("bouchon", "embout");
+    if (z) { deposer("bouchon", z); return 720; }
+    return 0;
+  },
+
+  /* 5. POUSSER LE PISTON. La cible est la borne de securite de la fiche —
+     la moitie du volume —, et elle est CALCULÉE, pas ecrite. */
+  function () { return pousser(); },
+
+  /* 6. RELÂCHER, PUIS TIRER. `tirer()` releve la detente et laisse le piston
+     revenir tout seul : c'est la meme equation qui le ramene. */
+  function () { return tirer(); }
+].forEach(function (f, i) { if (GUIDE[i]) GUIDE[i].faire = f; });
+
+
+/* ==================================================================
+   DÉMARRAGE
+   ================================================================== */
+demarrer();
+
+})();
+</script>
+</body>
+</html>
